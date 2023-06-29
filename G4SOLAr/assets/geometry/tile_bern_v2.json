@@ -95,73 +95,7 @@
       {"component" : "pixel" , "name" : "pix59" , "copy" :59, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
       {"component" : "pixel" , "name" : "pix60" , "copy" :60, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}}
     ], 
-    "pixelmap" : [
-      {"name" : "qpix1", "edges" : [
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}
-      ]}, 
-      {"name" : "qpix2", "edges" : [
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}
-      ]},
-      {"name" : "qpix3", "edges" : [
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}, 
-        {"z" : {"val": 6, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}, 
-        {"z" : {"val": 6, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-6, "unit":"mm"}}
-      ]},
-
-      {"name" : "qpix1", "edges" : [
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}
-      ]}, 
-      {"name" : "qpix2", "edges" : [
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}
-      ]},
-      {"name" : "qpix3", "edges" : [
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val": 6, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}, 
-        {"z" : {"val": 6, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val":-2, "unit":"mm"}}
-      ]},
-
-      {"name" : "qpix1", "edges" : [
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 6, "unit":"mm"}}, 
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val": 6, "unit":"mm"}}, 
-        {"z" : {"val":-6, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}
-      ]}, 
-      {"name" : "qpix2", "edges" : [
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 6, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 6, "unit":"mm"}}, 
-        {"z" : {"val":-2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}
-      ]},
-      {"name" : "qpix3", "edges" : [
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val": 6, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}, 
-        {"z" : {"val": 6, "unit": "mm"}, "x":{"val": 6, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 6, "unit":"mm"}}, 
-        {"z" : {"val": 2, "unit": "mm"}, "x":{"val": 2, "unit":"mm"}}
-      ]}
-    ]
+    #include "tile_v2_pixmap.json"
   },
   "tile_assembly" : [
     {
