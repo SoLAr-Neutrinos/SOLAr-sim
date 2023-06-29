@@ -1,0 +1,5 @@
+"Cryostat" : {
+  "Cryostat_structure" : [
+    {"id" : 33 , "name" : "inner_frame"     , "material" : "Steel"               , "thickness" : {"val":  1.2 , "unit" : "mm"}, "importance" :1}
+  ]
+}

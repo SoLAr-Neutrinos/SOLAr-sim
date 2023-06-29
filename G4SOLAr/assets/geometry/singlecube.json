@@ -1,0 +1,18 @@
+{
+  "World" : {
+    "copyID" : 0, 
+    "dimensions" : [
+      {"name" : "size_x" , "val" :  3.0, "unit": "m"},    
+      {"name" : "size_y" , "val" :  3.0, "unit": "m"},   
+      {"name" : "size_z" , "val" :  3.0, "unit": "m"}
+    ]
+  },
+  #include "singlecube_tpc.json"
+  ,
+  #include "singlecube_cryostat.json"
+  ,
+  #include "tile_bern_v2.json"
+  ,
+  #include "singlecube_pds.json"
+}
+

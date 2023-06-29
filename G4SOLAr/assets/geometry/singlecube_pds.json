@@ -1,0 +1,9 @@
+"SuperCell" : {
+  "dimensions" : [
+    {"name" : "cell_z"   , "val" : 60.0, "unit" : "cm"}, 
+    {"name" : "cell_x"   , "val" : 20.0, "unit" : "cm"}, 
+    {"name" : "cell_y"   , "val" :  1.0, "unit" : "cm"}, 
+    {"name" : "coating_y", "val" :  1.0, "unit" : "mm"} 
+  ]
+},
+"PhotoDetectionSystem": [ ]

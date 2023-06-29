@@ -195,8 +195,8 @@ void SLArDetReadoutTile::BuildUnitCell() {
   
   for (const auto& comp : fCellStructure) {
     G4ThreeVector yshift(0, 0, 0); 
-    //if (comp.fMod == fChargePix && hq < hl) yshift.setY(0.5*(hq-hl));
-    if (comp.fMod == fChargePix && hq < hl) continue; // spare some RAM 
+    if (comp.fMod == fChargePix && hq < hl) yshift.setY(0.5*(hq-hl));
+    //if (comp.fMod == fChargePix && hq < hl) continue; // spare some RAM 
                                                       // for DUNE-size module
     else if (comp.fMod == fSiPM && hl < hq) yshift.setY(0.5*(hl-hq));
     comp.fMod->GetModPV(comp.fName, 0, comp.fPos+yshift, 
@@ -286,13 +286,13 @@ void SLArDetReadoutTile::SetVisAttributes()
 {
   G4VisAttributes* visAttributes = new G4VisAttributes();
   visAttributes->SetColor(0.0824, 0.635, 0.019);
-  fBasePCB->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
+  //fBasePCB->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
 
   visAttributes = new G4VisAttributes( G4Color(0.753, 0.753, 0.753) );
-  fSiPM->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
-  for (size_t ii=0; ii < fSiPM->GetModLV()->GetNoDaughters(); ii++) {
-    fSiPM->GetModLV()->GetDaughter(ii)->GetLogicalVolume()->SetVisAttributes( G4VisAttributes(false) ); 
-  }
+  //fSiPM->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
+  //for (size_t ii=0; ii < fSiPM->GetModLV()->GetNoDaughters(); ii++) {
+    //fSiPM->GetModLV()->GetDaughter(ii)->GetLogicalVolume()->SetVisAttributes( G4VisAttributes(false) ); 
+  //}
 
   if (fChargePix) {
     visAttributes = new G4VisAttributes( G4Color(0.921, 0.659, 0.007) );
@@ -306,7 +306,7 @@ void SLArDetReadoutTile::SetVisAttributes()
   for (size_t ii=0; ii < fModLV->GetNoDaughters(); ii++) {
     auto lv = fModLV->GetDaughter(ii)->GetLogicalVolume(); 
     if ( std::strcmp(lv->GetName().data(), "rdtile_cell_plane_lv") == 0) {
-      lv->SetVisAttributes( G4VisAttributes(false) ); 
+      //lv->SetVisAttributes( G4VisAttributes(false) ); 
     }
   }
 

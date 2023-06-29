@@ -1,0 +1,43 @@
+"TPC" : [
+    {"copyID" : 10, 
+      "position": {"xyz" : [0, 0, 0], "unit" : "cm"},
+      "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
+      "dimensions" : [
+        {"name" : "tpc_x"  , "val" : 35.0, "unit" :  "cm"},
+        {"name" : "tpc_y"  , "val" : 46.0, "unit" :  "cm"},
+        {"name" : "tpc_z"  , "val" : 46.0, "unit" :  "cm"}
+      ], 
+      "field_cage" : {
+        "corner_radius" : {"val" : 1, "unit" : "cm"}, 
+        "thickness" : {"val" : 2.5, "unit" : "mm"}, 
+        "wall_distance" : {"val" : 10, "unit" : "cm"},
+        "spacing" : {"val" : 30, "unit" : "cm"}, 
+        "height_long_side" : {"val" : 30, "unit" : "cm"},
+        "height_short_side" : {"val" : 30, "unit" : "cm"}
+      }
+    } 
+],
+  "Cathode" : [
+    {"copyID": 15, 
+     "position" : {"xyz": [14.95, 0, 0], "unit" : "cm"}, 
+     "dimensions" : [
+       {"name" : "dim_x", "val" : 1.00, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 36.0, "unit" : "cm" },
+       {"name" : "dim_z", "val" : 36.0, "unit" : "cm" }
+     ]
+    }
+  ],
+  "Anode" : [
+    {"copyID" : 50, 
+      "tpcID" : 10,
+      "position" : {"xyz" : [-15.5, 0, 0], "unit" : "cm"}, 
+      "normal" : [1, 0, 0],
+      "rot" : {"val" : [0, 0, -90], "unit" : "degree"}, 
+      "tile_assembly" : "StdReadoutPlane", 
+      "dimensions" : [
+        {"name" : "dim_y", "val" : 1.00, "unit" : "cm"},
+        {"name" : "dim_x", "val" : 36.0, "unit" : "cm"},
+        {"name" : "dim_z", "val" : 36.0, "unit" : "cm"}
+      ]
+    } 
+  ]

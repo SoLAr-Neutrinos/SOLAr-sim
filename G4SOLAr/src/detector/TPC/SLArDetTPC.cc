@@ -88,7 +88,7 @@ void SLArDetTPC::BuildFieldCage() {
       Dfc[idim] = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - wd; 
       idim++;
     } else {
-      DDriftLength = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - 2*CLHEP::cm; 
+      DDriftLength = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - 2*CLHEP::mm; 
     }
   }
   
@@ -191,8 +191,15 @@ void SLArDetTPC::BuildFieldCage() {
     len_tmp += sp; 
   } 
 
-  auto parameterisation = new SLArPlaneParameterisation(kXAxis, 
-      G4ThreeVector(-0.5*(len - sp + hl) , 0, 0), sp); 
+  G4ThreeVector start_pos; 
+  if (n_replica == 1) {
+    start_pos = G4ThreeVector(0, 0, 0); 
+  }
+  else {
+    start_pos = G4ThreeVector(-0.5*(len - sp + hl) , 0, 0); 
+  }
+
+  auto parameterisation = new SLArPlaneParameterisation(kXAxis, start_pos, sp); 
 
   fFieldCage->SetModPV( new G4PVParameterised("fieldCage_ppv", 
       fc_layer_lv, fc_volume_lv, 
@@ -238,6 +245,7 @@ void SLArDetTPC::BuildTPC()
     if (rot_axis.mag2() < 1e-6) rot_axis = _fcAxis;
     rot->set(rot_axis, _angle); 
     fFieldCage->GetModPV("field_cage", rot, G4ThreeVector(0, 0, 0), this->GetModLV(), 0, 99); 
+    fFieldCage->GetModPV()->CheckOverlaps(); 
   }
 }
 
