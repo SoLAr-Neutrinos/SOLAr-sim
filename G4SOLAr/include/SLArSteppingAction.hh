@@ -13,7 +13,8 @@
 #include "SLArEventAction.hh"
 
 #include "G4UserSteppingAction.hh"
-#include "globals.hh"
+#include "event/SLArEventTrajectory.hh"
+//#include "globals.hh"
 
 #include "G4OpBoundaryProcess.hh"
 
@@ -27,6 +28,7 @@ class SLArSteppingAction : public G4UserSteppingAction
     virtual void UserSteppingAction(const G4Step*);
 
   private:
+    trj_point set_evtrj_point(const G4StepPoint* point, const int nel = 0, const int nph = 0); 
     G4OpBoundaryProcessStatus fExpectedNextStatus;
     SLArEventAction*          fEventAction;
     SLArTrackingAction*       fTrackinAction;

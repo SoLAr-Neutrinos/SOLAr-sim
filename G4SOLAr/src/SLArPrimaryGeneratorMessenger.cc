@@ -5,6 +5,7 @@
  */
 
 
+#include <cstdlib>
 #include "SLArPrimaryGeneratorMessenger.hh"
 
 #include "SLArPrimaryGeneratorAction.hh"
@@ -133,6 +134,11 @@ SLArPrimaryGeneratorMessenger::
   fCmdGENIEFile->SetParameterName("GENIE_file",false);
   fCmdGENIEFile->SetDefaultValue("enubet_genie_seed.root");
 
+  fCmdVerbose = 
+    new G4UIcmdWithAnInteger("/SLAr/gen/verbose", this); 
+  fCmdVerbose->SetGuidance("verbose level"); 
+  fCmdVerbose->SetParameterName("verbose", true, false); 
+  fCmdVerbose->SetDefaultValue( 1 ); 
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -154,6 +160,7 @@ SLArPrimaryGeneratorMessenger::~SLArPrimaryGeneratorMessenger()
   delete fCmdDriftElectrons;
   delete fCmdGENIEEvtSeed;
   delete fCmdGENIEFile;
+  delete fCmdVerbose;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -242,7 +249,10 @@ void SLArPrimaryGeneratorMessenger::SetNewValue(
     G4String filename = newValue; 
     fSLArAction->SetGENIEFile(filename); 
   } //--JM
-
+  else if (command == fCmdVerbose) {
+    G4String verbose_str = newValue; 
+    fSLArAction->SetVerboseLevel( std::stoi( verbose_str ) ); 
+  } //--JM
 
 }
 

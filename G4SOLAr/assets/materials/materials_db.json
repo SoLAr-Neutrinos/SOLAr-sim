@@ -26,6 +26,38 @@
         }
       ]
     },
+    {"name" : "cavern_rock", 
+      "density" : {"val": 2.65, "unit" : "g/cm3"}, 
+      "mixture_components" : [
+        {"name" : "Oxygen"   , "NIST": "G4_O" , "massFraction" : 0.4963},
+        {"name" : "Iron"     , "NIST": "G4_Fe", "massFraction" : 0.0443}, 
+        {"name" : "Manganese", "NIST": "G4_Mn", "massFraction" : 0.0009}, 
+        {"name" : "Calcium"  , "NIST": "G4_Ca", "massFraction" : 0.0024}, 
+        {"name" : "Potassium", "NIST": "G4_K" , "massFraction" : 0.0321}, 
+        {"name" : "Silicon"  , "NIST": "G4_Si", "massFraction" : 0.2946}, 
+        {"name" : "Aluminum" , "NIST": "G4_Al", "massFraction" : 0.0704}, 
+        {"name" : "Magnesium", "NIST": "G4_Mg", "massFraction" : 0.0460}, 
+        {"name" : "Sodium"   , "NIST": "G4_Na", "massFraction" : 0.0084}, 
+        {"name" : "Hydrogen" , "NIST": "G4_H" , "massFraction" : 0.0048}
+      ]
+    },
+    {"name" : "cavern_shotcrete", 
+      "density" : {"val": 2.40, "unit" : "g/cm3"}, 
+      "mixture_components" : [
+        {"name" : "Oxygen"    , "NIST": "G4_O" , "massFraction" : 0.4182}, 
+        {"name" : "Iron"      , "NIST": "G4_Fe", "massFraction" : 0.0257}, 
+        {"name" : "Manganese" , "NIST": "G4_Mn", "massFraction" : 0.0005}, 
+        {"name" : "Calcium"   , "NIST": "G4_Ca", "massFraction" : 0.3319}, 
+        {"name" : "Potassium" , "NIST": "G4_K" , "massFraction" : 0.0237}, 
+        {"name" : "Silicon"   , "NIST": "G4_Si", "massFraction" : 0.1480}, 
+        {"name" : "Aluminum"  , "NIST": "G4_Al", "massFraction" : 0.0184}, 
+        {"name" : "Magnesium" , "NIST": "G4_Mg", "massFraction" : 0.0042}, 
+        {"name" : "Sodium"    , "NIST": "G4_Na", "massFraction" : 0.0030}, 
+        {"name" : "Nitrogen"  , "NIST": "G4_N" , "massFraction" : 0.0006}, 
+        {"name" : "Carbon"    , "NIST": "G4_C" , "massFraction" : 0.0237}, 
+        {"name" : "Hydrogen"  , "NIST": "G4_H" , "massFraction" : 0.0022}
+      ]
+    },
     {"name" : "Steel", 
       "NIST" : "G4_STAINLESS-STEEL"
     },

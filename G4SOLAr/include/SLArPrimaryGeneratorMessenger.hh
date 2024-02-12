@@ -52,6 +52,8 @@ class SLArPrimaryGeneratorMessenger: public G4UImessenger
 
     G4UIcmdWithAnInteger*               fCmdGENIEEvtSeed; //--JM
     G4UIcmdWithAString*                 fCmdGENIEFile; //--JM
+                                                       
+    G4UIcmdWithAnInteger*               fCmdVerbose;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

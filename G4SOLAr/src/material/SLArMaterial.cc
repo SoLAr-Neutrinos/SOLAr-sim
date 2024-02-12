@@ -96,8 +96,11 @@ G4Material* SLArMaterial::ParseMaterialDB(G4String mat_id) {
     }
   }
 
-  printf("SLArMaterial::BuildMaterialFromDB(%s) ERROR:", mat_id.c_str()); 
+  printf("SLArMaterial::BuildMaterialFromDB(%s) WARNING:", mat_id.c_str()); 
   printf(" Unable to find %s in material DB (%s)\n",mat_id.c_str(), fDBFile.c_str());
+  printf("Falling back to NIST databse\n"); 
+  material = G4NistManager::Instance()->FindOrBuildMaterial(mat_id, true); 
+  material->SetName(mat_id); 
 
   fclose(mat_cfg_file);
 
@@ -197,7 +200,6 @@ G4Material* SLArMaterial::BuildFromMixture(const rapidjson::Value& jmaterial) {
   if (density.HasMember("unit")) 
     vunit = G4UIcommand::ValueOf(density["unit"].GetString()); 
 
-
   material = new G4Material(jmaterial["name"].GetString(), 
       density["val"].GetDouble()*vunit, components.Size()); 
 
@@ -208,7 +210,10 @@ G4Material* SLArMaterial::BuildFromMixture(const rapidjson::Value& jmaterial) {
 
     G4Material* mat = FindInMaterialTable(comp_name); 
     if (!mat) {
-      mat = ParseMaterialDB(comp_name);  
+      if (comp.HasMember("NIST")) mat = BuildFromNist( comp );  
+      else {
+        mat = ParseMaterialDB(comp_name);
+      }
     }
     G4double mass_fraction = comp["massFraction"].GetDouble(); 
 
@@ -383,7 +388,7 @@ G4double SLArMaterial::ParseUnit(const rapidjson::Value& junit) {
     char front = unit_match.front(); 
     if (front == '*') {
       unit_match.erase(0, 1); 
-      printf("Multiply %s\n", unit_match.c_str());
+      //printf("Multiply %s\n", unit_match.c_str());
       vunit *= G4UIcommand::ValueOf(unit_match); 
     } else if (front == '/') {
       unit_match.erase(0, 1); 
@@ -395,7 +400,7 @@ G4double SLArMaterial::ParseUnit(const rapidjson::Value& junit) {
     }
   }
 
-  printf("vunit is %g\n", vunit);
+  //printf("vunit is %g\n", vunit);
 
   return vunit; 
 }

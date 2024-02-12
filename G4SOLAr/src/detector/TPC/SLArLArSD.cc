@@ -111,11 +111,11 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
       for (size_t iproc = 0; iproc < stepMngr->GetMAXofPostStepLoops(); iproc++) {
         G4VProcess* proc = (*process_vector)[iproc]; 
 
-        if (proc->GetProcessName() == "Scintillation") {
+        if (proc->GetProcessName() == "Scintillation")  {
           SLArScintillation* scint_process = (SLArScintillation*)proc; 
           n_ph = scint_process->GetNumPhotons(); 
           n_el = scint_process->GetNumIonElectrons(); 
-          
+
           break;
         } 
       }

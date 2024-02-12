@@ -13,6 +13,7 @@
 #include "globals.hh"
 
 class SLArEventAction;
+class G4LogicalVolume;
 
 class G4Run;
 
@@ -27,9 +28,10 @@ class SLArRunAction : public G4UserRunAction
     virtual G4Run* GenerateRun();
     virtual void   BeginOfRunAction(const G4Run*);
     virtual void   EndOfRunAction(const G4Run*);
-    SLArElectronDrift* GetElectronDrift() {return fElectronDrift;}
-    G4String GetG4MacroFile() {return fG4MacroFile;}
-    void SetG4MacroFile(const G4String file_path) {fG4MacroFile = file_path;}
+    inline SLArElectronDrift* GetElectronDrift() {return fElectronDrift;}
+    inline G4String GetG4MacroFile() const {return fG4MacroFile;}
+    inline void SetG4MacroFile(const G4String file_path) {fG4MacroFile = file_path;}
+    inline void RegisterExtScorerLV(G4LogicalVolume* lv) {fExtScorerLV.push_back(lv);}
 
   private:
     G4String fG4MacroFile; 
@@ -37,6 +39,7 @@ class SLArRunAction : public G4UserRunAction
     SLArElectronDrift* fElectronDrift; 
 
     std::vector<G4String> fSDName;  
+    std::vector<G4LogicalVolume*> fExtScorerLV; 
 };
 
 

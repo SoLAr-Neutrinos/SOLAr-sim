@@ -16,7 +16,7 @@
 #include "G4Box.hh"
 #include "G4ThreeVector.hh"
 #include "G4RotationMatrix.hh"
-#include "detector/SLArGeoUtils.hpp"
+#include "detector/SLArGeoUtils.hh"
 
 class SLArBoxSurfaceVertexGenerator : 
   public bxdecay0_g4::VertexGeneratorInterface 

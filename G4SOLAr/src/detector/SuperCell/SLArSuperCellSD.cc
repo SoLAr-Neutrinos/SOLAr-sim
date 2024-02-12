@@ -59,13 +59,13 @@ SLArSuperCellSD::~SLArSuperCellSD()
 
 void SLArSuperCellSD::Initialize(G4HCofThisEvent* hce)
 {
-    fHitsCollection 
-      = new SLArSuperCellHitsCollection(SensitiveDetectorName,collectionName[0]);
-    if (fHCID<0)
-    { fHCID = G4SDManager::GetSDMpointer()
-              ->GetCollectionID(fHitsCollection); }
+  fHitsCollection 
+    = new SLArSuperCellHitsCollection(SensitiveDetectorName,collectionName[0]);
+  if (fHCID<0) { 
+    fHCID = G4SDManager::GetSDMpointer()->GetCollectionID(fHitsCollection); 
+  }
 
-    hce->AddHitsCollection(fHCID,fHitsCollection);
+  hce->AddHitsCollection(fHCID,fHitsCollection);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -161,12 +161,13 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
     hit->SetWorldPos(worldPos);
     hit->SetLocalPos(localPos);
     hit->SetTime(preStepPoint->GetGlobalTime());
-    //for (int i=0; i<5; i++) {
-      //printf("[%i] volume: %s - copyNo: %i\n", 
-          //i, touchable->GetVolume(i)->GetName().data(), touchable->GetCopyNumber(i));
-    //}
-    //getchar(); 
-
+    if (verboseLevel > 2) {
+      for (int i=0; i<5; i++) {
+        printf("[%i] volume: %s - copyNo: %i\n", 
+            i, touchable->GetVolume(i)->GetName().data(), touchable->GetCopyNumber(i));
+      }
+      //getchar(); 
+    }
     //hit->SetSuperCellIdx(postStepPoint->
         //GetTouchableHandle()->GetCopyNumber(1));
     hit->SetSuperCellNo( touchable->GetCopyNumber(1) ); 

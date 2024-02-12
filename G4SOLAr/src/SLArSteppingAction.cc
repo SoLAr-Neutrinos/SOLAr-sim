@@ -9,7 +9,6 @@
 #include "SLArSteppingAction.hh"
 #include "SLArUserPhotonTrackInformation.hh"
 #include "SLArUserTrackInformation.hh"
-#include "SLArTrajectory.hh"
 #include "SLArAnalysisManager.hh"
 
 #include "detector/SuperCell/SLArSuperCellSD.hh"
@@ -41,9 +40,38 @@ SLArSteppingAction::SLArSteppingAction(SLArEventAction* ea, SLArTrackingAction* 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SLArSteppingAction::~SLArSteppingAction()
-{ ; }
+{ }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+trj_point SLArSteppingAction::set_evtrj_point(const G4StepPoint* point, const int nel, const int nph) {
+  trj_point step_point; 
+
+  const auto pos = point->GetPosition(); 
+  step_point.fX = pos.x(); 
+  step_point.fY = pos.y(); 
+  step_point.fZ = pos.z(); 
+  step_point.fKEnergy = point->GetKineticEnergy(); 
+  step_point.fEdep = 0.; 
+  const auto physicalVol = point->GetPhysicalVolume();
+  if (physicalVol) {
+    step_point.fCopy = point->GetPhysicalVolume()->GetCopyNo(); 
+    const auto material_name = 
+      point->GetPhysicalVolume()->GetLogicalVolume()->GetMaterial()->GetName();
+    if ( G4StrUtil::contains(material_name, "LAr") ) {
+      step_point.fLAr = true;
+    }
+  }
+  else {
+    step_point.fCopy = -1;
+    step_point.fLAr = false;
+  }
+
+  step_point.fNel = nel;
+  step_point.fNph = nph; 
+
+  return step_point;
+}
 
 void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 {
@@ -99,42 +127,15 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 
     if (trkInfo->CheckStoreTrajectory() == true) {
       if (trajectory->DoStoreTrajectoryPts()) {
-        trj_point step_point; 
-
         //printf("SLArSteppingAction::here we go\n"); 
         //printf("trajectory has %lu points\n", trajectory->GetPoints().size());
         if (trajectory->GetPoints().empty()) {
           // record origin point
-          const auto pos = thePrePoint->GetPosition(); 
-          step_point.fX = pos.x(); 
-          step_point.fY = pos.y(); 
-          step_point.fZ = pos.z(); 
-          step_point.fKEnergy = thePrePoint->GetKineticEnergy(); 
-          step_point.fEdep = 0.; 
-          step_point.fCopy = thePrePV->GetCopyNo(); 
-          const auto material_name = 
-            thePostPV->GetLogicalVolume()->GetMaterial()->GetName();
-          if ( G4StrUtil::contains(material_name, "LAr") ) {
-            step_point.fLAr = true;
-          }
-          step_point.fNel = 0.;
-          step_point.fNph = 0.; 
+          trj_point step_point = set_evtrj_point( thePrePoint, 0, 0 ); 
           trajectory->RegisterPoint(step_point); 
         }
-        const auto pos = step->GetPostStepPoint()->GetPosition(); 
-        step_point.fX = pos.x(); 
-        step_point.fY = pos.y(); 
-        step_point.fZ = pos.z(); 
-        step_point.fKEnergy = thePostPoint->GetKineticEnergy(); 
-        step_point.fEdep = edep; 
-        step_point.fCopy = thePostPV->GetCopyNo(); 
-        const auto material_name = 
-          thePostPV->GetLogicalVolume()->GetMaterial()->GetName();
-        if ( G4StrUtil::contains(material_name, "LAr") ) {
-          step_point.fLAr = true;
-        }
-        step_point.fNel = n_el;
-        step_point.fNph = n_ph; 
+
+        trj_point step_point = set_evtrj_point( thePostPoint, n_el, n_ph ); 
         trajectory->RegisterPoint(step_point); 
       }
     }

@@ -10,10 +10,11 @@
 #include "SLArRunAction.hh"
 #include "SLArReadoutTileHit.hh"
 #include "SLArSuperCellHit.hh"
-#include "SLArTrajectory.hh"
 #include "SLArDetectorConstruction.hh"
 #include "detector/TPC/SLArLArHit.hh"
 #include "physics/SLArElectronDrift.hh"
+#include "detector/TPC/SLArExtScorerSD.hh"
+#include "detector/TPC/SLArExtHit.hh"
 
 #include "G4Event.hh"
 #include "G4RunManager.hh"
@@ -21,9 +22,7 @@
 #include "G4HCofThisEvent.hh"
 #include "G4VHitsCollection.hh"
 #include "G4SDManager.hh"
-#include "G4UnitsTable.hh"
-#include "G4TrajectoryContainer.hh"
-#include "G4Trajectory.hh"
+#include <G4PhysicalVolumeStore.hh>
 
 #include "G4ios.hh"
 #include <cstdio>
@@ -79,19 +78,30 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
     }
   }
 
+  #ifdef SLAR_EXTERNAL
+  if (fExtScorerHCollID.empty()) {
+    auto scorer_pv = G4PhysicalVolumeStore::GetInstance()->GetVolume("cavern_scorer_pv"); 
+    if (scorer_pv) {
+      const auto sd = (SLArExtScorerSD*)scorer_pv->GetLogicalVolume()->GetSensitiveDetector(); 
+      fExtScorerHCollID.push_back( sd->GetHitsCollectionID() ); 
+    }
+    else {
+      printf("SLArEventAction::BeginofEventAction() WARNING cannot find volume 'cavern_scorer_pv' in Pysical Volume Store\n");
+    }
+  }
+  #endif // DEBUG
 
 #ifdef SLAR_DEBUG
     G4cout << "SLArEventAction::BeginOfEventAction():" << G4endl;
     G4cout << "ReadoutTile ID = " << fTileHCollID   << G4endl;
     G4cout << "SuperCell ID   = " << fSuperCellHCollID << G4endl;
     G4cout << "LAr volume ID  = "; 
-    for (const auto &id : fLArHCollID) printf("%i ", id);
+    for (const auto &id : fLArHCollID) G4cout << id << " "; 
+    G4cout << G4endl;
+    G4cout << "Ext background scorer volume ID  = "; 
+    for (const auto &id : fExtScorerHCollID) G4cout << id << " ";
     G4cout << G4endl;
 #endif
-
-    // Reset hits in DST event 
-    //SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
-    //SLArAnaMgr->GetEvent()->GetPMTSystem()->ResetHits();
 
     // reset counters
     fHitCount                = 0;
@@ -104,12 +114,14 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
     fReadoutTileHits         = 0; 
     fSuperCellHits           = 0; 
 
+    return;
 }     
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void SLArEventAction::EndOfEventAction(const G4Event* event)
 {
+  G4int verbose = G4EventManager::GetEventManager()->GetVerboseLevel(); 
 #ifdef SLAR_DEBUG
   printf("SLArEventAction::EndOfEventAction()\n"); 
 #endif
@@ -128,13 +140,13 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     //RecordEventLAr( event );
 
     if ( !SLArAnaMgr->GetAnodeCfg().empty() ) {
-      RecordEventReadoutTile ( event );
+      RecordEventReadoutTile ( event, verbose );
     }
 
     if (SLArAnaMgr->GetPDSCfg()) {
-      printf("Recording SuperCell hits...\n");
-      RecordEventSuperCell( event );
-      printf("DONE\n");
+      if (verbose > 1) printf("Recording SuperCell hits...\n");
+      RecordEventSuperCell( event, verbose );
+      if (verbose > 1) printf("DONE\n");
     }
 
      
@@ -150,27 +162,32 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     }
     
     SLArAnaMgr->FillEvTree();
-    
 
-    printf("SLArEventAction::EndOfEventAction()\n"); 
-    printf("OpticalPhoton Monitor:\nCherenkov: %i\nScintillation: %i\n\n", 
-        fPhotonCount_Cher, fPhotonCount_Scnt);
-    printf("Primary particles:\n");
-    auto& primaries = slar_event->GetPrimaries();
-    for (const auto &p : primaries ) {
-      printf("%s - %g MeV - trk ID %i\n", 
-          p.GetParticleName().Data(), p.GetEnergy(), p.GetTrackID());
-      printf("\t%i scintillation ph\n\t%i Cerenkov photons\n", 
-          p.GetTotalScintPhotons(), p.GetTotalCerenkovPhotons()); 
-      printf("ReadoutTile Photon Hits: %i\nSuperCell Photon Hits: %i\n\n", 
-          fReadoutTileHits, fSuperCellHits);
-      printf("Charge Collection Monitor:\n"); 
-      for (const auto &evanode : slar_event->GetEventAnode()) {
-        printf("\t- %s - %lu MT hit(s))\n", 
-            evanode.second.GetName(), evanode.second.GetConstMegaTilesMap().size()); 
+    if (verbose > 0) {
+      printf("SLArEventAction::EndOfEventAction()\n"); 
+      printf("OpticalPhoton Monitor:\nCherenkov: %i\nScintillation: %i\n\n", 
+          fPhotonCount_Cher, fPhotonCount_Scnt);
+      printf("Primary particles:\n");
+      auto& primaries = slar_event->GetPrimaries();
+      for (const auto &p : primaries ) {
+        printf("%s - %g MeV - trk ID %i\n", 
+            p.GetParticleName().Data(), p.GetEnergy(), p.GetTrackID());
+        printf("\t%i scintillation ph\n\t%i Cerenkov photons\n", 
+            p.GetTotalScintPhotons(), p.GetTotalCerenkovPhotons()); 
+        printf("ReadoutTile Photon Hits: %i\nSuperCell Photon Hits: %i\n\n", 
+            fReadoutTileHits, fSuperCellHits);
+        printf("Charge Collection Monitor:\n"); 
+        for (const auto &evanode : slar_event->GetEventAnode()) {
+          printf("\t- %s - %lu MT hit(s))\n", 
+              evanode.second.GetName(), evanode.second.GetConstMegaTilesMap().size()); 
+        }
+        printf("\n");
       }
-      printf("\n");
     }
+
+#ifdef SLAR_EXTERNAL
+    RecordEventExtScorer( event, verbose ); 
+#endif 
 
     fParentIDMap.clear(); 
     fExtraProcessInfo.clear(); 
@@ -178,7 +195,7 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     SLArAnaMgr->GetEvent()->Reset();
 }
 
-void SLArEventAction::RecordEventReadoutTile(const G4Event* ev)
+void SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& verbose)
 {
 
   G4HCofThisEvent* hce = ev->GetHCofThisEvent();
@@ -274,10 +291,10 @@ void SLArEventAction::RecordEventReadoutTile(const G4Event* ev)
     if ( printModulo==0 || ev->GetEventID() % printModulo != 0) return;
   }
 
-  printf("SLArEventAction::RecordEventReadoutTile() DONE\n");
+  if (verbose > 1) printf("SLArEventAction::RecordEventReadoutTile() DONE\n");
 }
 
-void SLArEventAction::RecordEventSuperCell(const G4Event* ev)
+void SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verbose)
 {
 
   G4HCofThisEvent* hce = ev->GetHCofThisEvent();
@@ -368,11 +385,11 @@ void SLArEventAction::RecordEventSuperCell(const G4Event* ev)
     if ( printModulo==0 || ev->GetEventID() % printModulo != 0) return;
   }
 
-  printf("SLArEventAction::RecordEventSuperCell() DONE\n");
+  if (verbose > 2) printf("SLArEventAction::RecordEventSuperCell() DONE\n");
 }
 
 
-void SLArEventAction::RecordEventLAr(const G4Event* ev)
+void SLArEventAction::RecordEventLAr(const G4Event* ev, const G4int& verbose)
 {
 //#ifdef SLAR_DEBUG
   //printf("  -> RecordEventLAr()\n");
@@ -398,6 +415,49 @@ void SLArEventAction::RecordEventLAr(const G4Event* ev)
 //#ifdef SLAR_DEBUG
   //printf("     DONE\n"); 
 //#endif
+}
+
+void SLArEventAction::RecordEventExtScorer(const G4Event* ev, const G4int& verbose) {
+  G4HCofThisEvent* hce = ev->GetHCofThisEvent();
+  if (fExtScorerHCollID.empty()) return;
+
+#ifdef SLAR_EXTERNAL
+  auto anaMngr = SLArAnalysisManager::Instance(); 
+  for (const auto& id : fExtScorerHCollID) {
+    SLArExtHitsCollection* hHC1 = static_cast<SLArExtHitsCollection*>(hce->GetHC(id)); 
+    if (verbose > 1) printf("SLArExtHitsCollection hce[%i] = %p\n", id, static_cast<void*>(hHC1)); 
+    if (!hHC1) {
+      G4ExceptionDescription msg;
+      msg << "Some of hits collections of this event not found." 
+        << G4endl; 
+      G4Exception("SLArEventAction::RecordEventExtScorer",
+          "SLArCode001", JustWarning, msg);
+      return;
+    }   
+
+    for (size_t i = 0; i < hHC1->entries(); i++) {
+      SLArExtHit* scorer_hit = (*hHC1)[i];   
+      //printf("recording scorer hit:\n"); 
+      //scorer_hit->Print(); 
+      auto& ext_record = anaMngr->GetExternalRecord();
+      ext_record->Reset(); 
+      ext_record->SetEvNumber( ev->GetEventID() ); 
+      ext_record->SetPDGCode( scorer_hit->fPDGCode ); 
+      ext_record->SetTrackID( scorer_hit->fTrkID ); 
+      ext_record->SetParentID( scorer_hit->fParentID ); 
+      ext_record->SetOriginVol( scorer_hit->fOriginVol ); 
+      ext_record->SetOriginEnergy( scorer_hit->fOriginEnergy ); 
+      ext_record->SetEnergyAtLAr( scorer_hit->fEnergy ); 
+      ext_record->SetWeight( scorer_hit->fWeight ); 
+      ext_record->SetCreator( scorer_hit->fCreator.data() ); 
+      ext_record->SetTime( scorer_hit->fTime ); 
+      ext_record->SetVertex( scorer_hit->fVertex );
+
+      anaMngr->GetExternalsTree()->Fill(); 
+    }
+  }
+
+#endif
 }
 
 void SLArEventAction::RegisterNewTrackPID(int trk_id, int p_id) {

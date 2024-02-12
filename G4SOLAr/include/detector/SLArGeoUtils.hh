@@ -11,6 +11,8 @@
 #include <map>
 #include <G4ThreeVector.hh>
 
+class G4VSolid;
+
 namespace slargeo {
   enum EBoxFace {kXplus=0, kXminus=1, kYplus=2, kYminus=3, kZplus=4, kZminus=5}; 
   static std::map<EBoxFace, G4ThreeVector> BoxFaceNormal  = {
@@ -21,6 +23,8 @@ namespace slargeo {
     {kZplus, G4ThreeVector(0, 0, -1)},
     {kZminus, G4ThreeVector(0, 0, +1)}
   };
+
+  G4double get_bounding_volume_surface(const G4VSolid* solid);
 }
 
 

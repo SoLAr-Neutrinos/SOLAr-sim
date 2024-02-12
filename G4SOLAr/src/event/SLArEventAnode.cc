@@ -110,7 +110,8 @@ SLArEventChargePixel& SLArEventAnode::RegisterChargeHit(const SLArCfgAnode::SLAr
 }
 
 int SLArEventAnode::ResetHits() {
-  printf("SLArEventAnode::ResetHits() clear event on anode %i\n", fID);
+
+  //printf("SLArEventAnode::ResetHits() clear event on anode %i\n", fID);
   int nn = 0; 
   for (auto &mgtile : fMegaTilesMap) {
     nn += mgtile.second.ResetHits(); 

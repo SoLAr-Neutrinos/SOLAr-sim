@@ -144,7 +144,7 @@ class SLArEventTrajectoryLite : public TObject {
     inline void SetCreator(const TString& creator) {fCreator = creator;}
     inline void SetOriginVol(const Int_t& ovol) {fOriginVol = ovol;}
     inline void SetVertex(const Float_t* vtx) {
-      assert(sizeof(vtx)/sizeof(Float_t) == 3); 
+      //assert(sizeof(vtx)/sizeof(Float_t) == 3); 
       for (int i=0; i<3; i++) {
         fVertex[i] = vtx[i]; 
       }

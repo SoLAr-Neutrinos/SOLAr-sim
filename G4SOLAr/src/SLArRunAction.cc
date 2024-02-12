@@ -13,6 +13,7 @@
 
 #include "G4Run.hh"
 #include "G4RunManager.hh"
+#include "G4SDManager.hh"
 #include "G4UnitsTable.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -140,6 +141,13 @@ void SLArRunAction::EndOfRunAction(const G4Run* aRun)
     G4double area = gen->GetVertexGenerator()->GetSurfaceGenerator(); 
     printf("surface box area is %g mm2\n", area);
     SLArAnaMgr->WriteVariable("surface_generator", area); 
+
+    for (const auto& scorer : fExtScorerLV) {
+      auto scorer_solid = scorer->GetSolid(); 
+      printf("scorer solid volume is %s\n", scorer_solid->GetName().data()); 
+      SLArAnaMgr->WriteVariable("surface_scorer_"+scorer->GetName(), 
+          slargeo::get_bounding_volume_surface(scorer_solid)); 
+    }
   }
 
   SLArAnaMgr->WriteCfg("git_hash", GIT_COMMIT_HASH); 

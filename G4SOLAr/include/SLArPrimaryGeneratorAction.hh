@@ -81,19 +81,19 @@ class SLArPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     inline void SetTraceOptPhotons(bool do_trace) {fDoTraceOptPhotons = do_trace;}
     inline void SetDriftElectrons(bool do_drift) {fDoDriftElectrons = do_drift;}
 
-    G4String GetMarleyConf() {return fMarleyCfg;}
-    EDirectionMode GetDirectionMode() {return fDirectionMode;}
-    void SetDirectionMode(EDirectionMode kMode) {fDirectionMode = kMode;}
-    EGenerator GetGeneratorIndex() const {return fGeneratorEnum;}
-    void SetGenerator(EGenerator gen) {fGeneratorEnum = gen;}
-    G4VUserPrimaryGeneratorAction* GetGenerator(int index = -1) {
+    inline G4String GetMarleyConf() {return fMarleyCfg;}
+    inline EDirectionMode GetDirectionMode() {return fDirectionMode;}
+    inline void SetDirectionMode(EDirectionMode kMode) {fDirectionMode = kMode;}
+    inline EGenerator GetGeneratorIndex() const {return fGeneratorEnum;}
+    inline void SetGenerator(EGenerator gen) {fGeneratorEnum = gen;}
+    inline G4VUserPrimaryGeneratorAction* GetGenerator(int index = -1) {
       if (index == -1) index = fGeneratorEnum;
       return fGeneratorActions.at(index); 
     }
-    G4ThreeVector GetSourcePosition() const {return fGunPosition;}
-    void SetSourcePosition(G4ThreeVector pos) {fGunPosition = pos;}
-    G4ThreeVector GetGunDirection() const {return fGunDirection;}
-    void SetEventDirection(G4ThreeVector dir) {fGunDirection = dir;}
+    inline G4ThreeVector GetSourcePosition() const {return fGunPosition;}
+    inline void SetSourcePosition(G4ThreeVector pos) {fGunPosition = pos;}
+    inline G4ThreeVector GetGunDirection() const {return fGunDirection;}
+    inline void SetEventDirection(G4ThreeVector dir) {fGunDirection = dir;}
     void SetBulkName(G4String vol);
     void SetBoxName(G4String vol); 
     void SetBackgroundConf(G4String background_conf); 
@@ -108,6 +108,8 @@ class SLArPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     void SetGENIEEvntExt(G4int evntID); //--JM
     void SetGENIEFile(G4String filename); //--JM
 
+    inline void SetVerboseLevel( G4int verbose) { fVerbose = verbose; }
+    inline G4int GetVerboseLevel() const {return fVerbose;}
 
   private:
     std::vector<G4VUserPrimaryGeneratorAction*> fGeneratorActions; 
@@ -135,6 +137,7 @@ class SLArPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     G4int fGENIEEvntNum; //--JM
     G4String fGENIEFile;
 
+    G4int fVerbose;
 
     friend class SLArPrimaryGeneratorMessenger;
 };

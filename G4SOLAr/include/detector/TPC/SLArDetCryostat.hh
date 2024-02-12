@@ -9,7 +9,7 @@
 #define SLARDETCRYOSTAT_HH
 
 #include "detector/SLArBaseDetModule.hh"
-#include "detector/SLArGeoUtils.hpp"
+#include "detector/SLArGeoUtils.hh"
 #include "G4VPVParameterisation.hh"
 
 struct SLArCryostatLayer{

@@ -80,7 +80,6 @@ public:
       inline TrackIdHelpInfo_t() : parent(-1), pdg(-1), quadrimomentum{0} {}
       inline TrackIdHelpInfo_t(const int& _pid, const int& _pdg, const double* p) 
         : parent(_pid), pdg(_pdg) {
-          //assert( sizeof(p)/sizeof(double) == 4);
           for (size_t i = 0; i < 4; i++) {
             quadrimomentum[i] = p[i];
           }
@@ -119,6 +118,7 @@ private:
     G4int fTileHCollID;
     G4int fSuperCellHCollID;
     std::vector<G4int> fLArHCollID;
+    std::vector<G4int> fExtScorerHCollID;
 
     G4int fHitCount;
     G4int fPhotonCount_Scnt;
@@ -133,9 +133,10 @@ private:
     std::map<int, int> fParentIDMap;
     std::map<TrackIdHelpInfo_t, G4String> fExtraProcessInfo;
 
-    void RecordEventReadoutTile (const G4Event* ev);
-    void RecordEventSuperCell( const G4Event* ev); 
-    void RecordEventLAr(const G4Event* ev);
+    void RecordEventReadoutTile (const G4Event* ev, const G4int& verbose = 0);
+    void RecordEventSuperCell( const G4Event* ev, const G4int& verbose = 0); 
+    void RecordEventLAr(const G4Event* ev, const G4int& verbose = 0);
+    void RecordEventExtScorer(const G4Event* ev, const G4int& verbose = 0); 
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

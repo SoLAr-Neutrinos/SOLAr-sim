@@ -237,7 +237,14 @@ int main(int argc,char** argv)
   printf("solar-sim WARNING: target built with SLAR_EXTERNAL flag but external particle is not specified"); 
 #else
   const char* ext_particle = SLAR_EXTERNAL_PARTICLE;
-  G4GeometrySampler mgs(detector->GetPhysicalWorld(), ext_particle);
+  G4GeometrySampler* mgs = nullptr; 
+  G4bool activate_importance_sampling = true;
+  if (G4ParticleTable::GetParticleTable()->FindParticle(ext_particle) == nullptr) {
+    activate_importance_sampling = false;   
+  }
+  else {
+    mgs = new G4GeometrySampler(detector->GetPhysicalWorld(), ext_particle);
+  }
   printf("Built with SLAR_EXTERNAL flag for particle %s\n", ext_particle);
 #endif
 #endif
@@ -248,7 +255,7 @@ int main(int argc,char** argv)
   printf("Creating Phiscs Lists...\n");
   auto physicsList = new SLArPhysicsList(physName, do_cerenkov);
 #if (defined SLAR_EXTERNAL &&  defined SLAR_EXTERNAL_PARTICLE)
-  physicsList->RegisterPhysics(new G4ImportanceBiasing(&mgs));
+  if (activate_importance_sampling) physicsList->RegisterPhysics(new G4ImportanceBiasing(mgs));
 #endif
   if ( do_bias ) {
     auto biasingPhysics = new G4GenericBiasingPhysics("biasing_"+bias_particle);  
@@ -272,7 +279,7 @@ int main(int argc,char** argv)
   runManager->Initialize();
 
   #ifdef SLAR_EXTERNAL
-    detector->CreateImportanceStore(); 
+  if (activate_importance_sampling) detector->CreateImportanceStore(); 
   #endif
 
   // Initialize visualization

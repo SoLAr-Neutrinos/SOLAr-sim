@@ -38,9 +38,9 @@ void SLArReadoutTileSD::Initialize(G4HCofThisEvent* hce)
 {
     fHitsCollection 
       = new SLArReadoutTileHitsCollection(SensitiveDetectorName,collectionName[0]);
-    if (fHCID<0)
-    { fHCID = G4SDManager::GetSDMpointer()
-              ->GetCollectionID(fHitsCollection); }
+    if (fHCID<0) { 
+      fHCID = G4SDManager::GetSDMpointer()->GetCollectionID(fHitsCollection); 
+    }
 
     hce->AddHitsCollection(fHCID,fHitsCollection);
 }

@@ -4,7 +4,7 @@
  * @created     : Wed Feb 12, 2020 18:26:02 CET
  */
 
-#include "G4ParticlePropertyTable.hh"
+#include "G4ParticleTable.hh"
 #include "G4Material.hh"
 #include "G4ProcessManager.hh"
 #include "G4ProcessVector.hh"
@@ -576,7 +576,6 @@ void SLArAnalysisManager::SetupExternalsTree() {
   fExternalsTree->Branch("lar_energy", &fExternalRecord->fEnergy); 
   fExternalsTree->Branch("vertex", &fExternalRecord->fVertex, "vertex[3]/F");
   fExternalsTree->Branch("creator", &fExternalRecord->fCreator); 
-  
 }
 #endif // SLAR_EXTERNAL
 

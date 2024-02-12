@@ -165,7 +165,7 @@ G4double SLArGeoInfo::Unit2Val(const char* cunit) {
     }
   }
 
-  printf("SLArGeoInfo::Unit2Val(%s): %g\n", cunit, vunit); 
+  //printf("SLArGeoInfo::Unit2Val(%s): %g\n", cunit, vunit); 
   return vunit; 
 }
 
