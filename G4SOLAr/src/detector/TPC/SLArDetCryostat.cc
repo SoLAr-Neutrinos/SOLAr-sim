@@ -40,8 +40,6 @@ SLArCryostatLayer::SLArCryostatLayer(
   fMaterialName = material_name;
 }
 
-
-
 SLArDetCryostat::SLArDetCryostat() : 
   fMatWorld(nullptr), fMatWaffle(nullptr), fMatBrick(nullptr), 
   fWaffleUnit(nullptr), fWaffleEdgeUnit(nullptr), 
@@ -618,7 +616,7 @@ void SLArDetCryostat::BuildCryostat()
 
   // Create outer box 
   G4Box* boxOut = new G4Box("fBoxOut_solid", 
-      x_, y_, z_); 
+      x_ + 1*CLHEP::cm, y_ + 1*CLHEP::cm, z_ + 1*CLHEP::cm); 
 
   // Create inner box 
   G4Box* boxInn = new G4Box("fBoxInn_solid", 
