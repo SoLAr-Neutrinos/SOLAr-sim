@@ -239,7 +239,12 @@ void SLArAnalysisManagerMsgr::SetNewValue
 
     auto construction = 
       (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
-    construction->AddExternalScorer(_phys_vol_name, _alias);
+    try {
+      construction->AddExternalScorer(_phys_vol_name, _alias);
+    }
+    catch (const std::exception& e) {
+      G4cerr << e.what() << G4endl; 
+    }
     return;
   }
   else if ( cmd == fCmdElectronLifetime ) {

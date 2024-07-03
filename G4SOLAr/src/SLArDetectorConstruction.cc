@@ -596,6 +596,7 @@ void SLArDetectorConstruction::AddExternalScorer(const G4String phys_volume_name
   else {
     printf("SLArDetectorConstruction::AddExternalScorer(): ERROR "); 
     printf("Unable to fond physical volume %s in physical volume store\n", phys_volume_name.data()); 
+    throw std::invalid_argument("AddExternalScorer ERROR: cannot find %s in Physical Volume Store"); 
   }
 #else
   G4cout << "SLArDetectorConstruction::AddExternalScorer WARNING: " << G4endl;
