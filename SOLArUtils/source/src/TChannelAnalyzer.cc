@@ -64,6 +64,7 @@ int TChannelAnalyzer::record_hit(const Int_t& pix_bin, const UInt_t& q, const UI
     TVector3 pad_pos = get_bin_center( bin, fCfgAnode->GetAxis0(), fCfgAnode->GetAxis1() ); 
     TVector3 t_phys( fCfgTile->GetPhysX(), fCfgTile->GetPhysY(), fCfgTile->GetPhysZ() ); 
     TVector3 anode_pos( fCfgAnode->GetX(), fCfgAnode->GetY(), fCfgAnode->GetZ()); 
+    anode_pos += (*fTPCCenterPosition); 
     TVector3 mt_pos ( fCfgMegaTile->GetX(), fCfgMegaTile->GetY(), fCfgMegaTile->GetZ()); 
     TVector3 t_pos ( fCfgTile->GetX(), fCfgTile->GetY(), fCfgTile->GetZ()); 
 

@@ -9,6 +9,12 @@
 #include <getopt.h>
 #include <iterator>
 
+// rapidjson
+#include <rapidjson/document.h>
+
+// SOLAr-sim unit utility
+#include <SLArUnit.hpp>
+
 // config
 #include <config/SLArCfgAnode.hh>
 #include <config/SLArCfgMegaTile.hh>
@@ -28,6 +34,7 @@
 // root
 #include <TFile.h>
 #include <TTree.h>
+#include <TObjString.h>
 #include <TH2Poly.h>
 #include <TVector.h>
 #include <TRotation.h>
@@ -121,8 +128,34 @@ int main (int argc, char *argv[]) {
   mc_tree->SetBranchAddress("MCEvent", &mc_ev); 
   // Setup anode configuration
   std::map<Int_t, SLArCfgAnode*> anodeConfig; 
+  std::map<Int_t, TVector3> tpcCenterPos;
   anodeConfig.insert( {10, input_file->Get<SLArCfgAnode>("AnodeCfg50")} );
   anodeConfig.insert( {11, input_file->Get<SLArCfgAnode>("AnodeCfg51")} );
+
+  auto geometry_str = input_file->Get<TObjString>("geometry"); 
+  rapidjson::Document d; 
+  d.Parse( geometry_str->GetString() ); 
+  if (d.HasMember("TPC")) {
+    for (const auto& jtpc : d["TPC"].GetArray()) {
+      printf("found tpc with id %i\n", jtpc["copyID"].GetInt()); 
+      if (jtpc.HasMember("position") == false) {
+        throw std::invalid_argument("Error reading TPC configuration: mandatory \"position\" field is not defined");
+      }
+
+      const auto& jposition = jtpc["position"]; 
+      const auto& jxyz = jposition["xyz"]; 
+      const double unit = unit::Unit2Val( jposition["unit"] ); 
+      TVector3 position( jxyz.GetArray()[0].GetDouble()*unit, 
+                         jxyz.GetArray()[1].GetDouble()*unit,
+                         jxyz.GetArray()[2].GetDouble()*unit ); 
+    
+      tpcCenterPos.insert( {jtpc["copyID"].GetInt(), position} ); 
+    }
+  }
+
+
+
+
   Float_t drift_velocity = 1.582e-3; // mm/ns
 
   // Setup output file
@@ -158,7 +191,9 @@ int main (int argc, char *argv[]) {
       ch_analyzer.set_drift_direction( drift_direction ); 
       ch_analyzer.set_drift_velocity( drift_velocity );
       ch_analyzer.set_tpc_id( itpc ); 
+      ch_analyzer.set_tpc_center_position( tpcCenterPos[itpc] ); 
       ch_analyzer.set_channel_rms( noise_rms_eeV ); 
+
 
       const auto& mt_map = anode.GetConstMegaTilesMap();
       for (const auto& mt_itr : mt_map) {

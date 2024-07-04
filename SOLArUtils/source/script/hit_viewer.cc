@@ -27,8 +27,8 @@ void print_usage() {
   printf("SoLAr hit_viewer: Display simulated events into hits collection\n"); 
   printf("Usage: "); 
   printf("hit_viewer\n"); 
-  printf("\t[--input     | -i] input_simulatin_file\n"); 
-  printf("\t[--control   | -c] output_hit_file\n"); 
+  printf("\t[--input     | -i] hit_file path\n"); 
+  printf("\t[--control   | -c] simulation_output_path\n"); 
   exit( EXIT_SUCCESS );
 }
 

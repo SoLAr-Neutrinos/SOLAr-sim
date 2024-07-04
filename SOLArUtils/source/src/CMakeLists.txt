@@ -10,7 +10,8 @@ add_library(SLArHitConverter
   ${SOLAR_UTILS_INC_DIR}/TChannelAnalyzer.hh)
 
 target_link_libraries(SLArHitConverter PUBLIC 
-  ${ROOT_LIBRARIES})
+  ${ROOT_LIBRARIES}
+  Geant4::G4clhep Geant4::G4intercoms)
 
 add_library(SLArEveDisplay
   SHARED

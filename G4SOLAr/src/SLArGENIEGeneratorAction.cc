@@ -1,4 +1,5 @@
 #include "SLArGENIEGeneratorAction.hh"
+#include <G4SystemOfUnits.hh>
 #include <G4String.hh>
 
 #include <rapidjson/document.h>
@@ -93,17 +94,17 @@ void SLArGENIEGeneratorAction::GeneratePrimaries(G4Event *ev)
   size_t particle_idx = 0; // Think this can be done in a better way
 
   G4ThreeVector vtx(0.,0.,0.);
-  vtx.set(gVar.vtx[0]*10, gVar.vtx[1]*10, gVar.vtx[2]*10);
+  vtx.set(gVar.vtx[0]*CLHEP::m, gVar.vtx[1]*CLHEP::m, gVar.vtx[2]*CLHEP::m);
   std::vector<G4PrimaryVertex*> primary_vertices;
 
   for (int i=0; i<gVar.nPart; i++){
 
     if (gVar.status[i] == 1){ // 0 - incoming; 1 - outgoing; x - virtual
       G4PrimaryParticle *particle = new G4PrimaryParticle(gVar.pdg[i],
-          gVar.p4[i][0]*1E3,
-          gVar.p4[i][1]*1E3,
-          gVar.p4[i][2]*1E3,
-          gVar.p4[i][3]*1E3);
+          gVar.p4[i][0]*CLHEP::GeV,
+          gVar.p4[i][1]*CLHEP::GeV,
+          gVar.p4[i][2]*CLHEP::GeV,
+          gVar.p4[i][3]*CLHEP::GeV);
       auto vertex = new G4PrimaryVertex(vtx, 0.); // Not sure which is better here
       //    auto vertex = new G4PrimaryVertex(vtx, gVar.vtx[3]); 
       vertex->SetPrimary(particle);

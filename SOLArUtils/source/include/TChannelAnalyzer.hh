@@ -20,6 +20,7 @@ class TChannelAnalyzer {
     inline void set_integration_window(const Float_t win) {fIntegrationWindow = win;}
     inline void set_drift_velocity(const Float_t v) {fDriftVelocity = v;}
     inline void set_drift_direction(const TVector3& v) {fDriftDirection = &v;}
+    inline void set_tpc_center_position(const TVector3& pos) {fTPCCenterPosition = &pos;}
     inline void set_channel_rms(const Float_t rms) {fChannelPedestalRMS = rms;}
     inline void set_anode_config(SLArCfgAnode* anode_cfg) {
       fCfgAnode = anode_cfg;
@@ -43,6 +44,7 @@ class TChannelAnalyzer {
     SLArCfgAnode* fCfgAnode = {};
     const SLArCfgMegaTile* fCfgMegaTile = {};
     const TVector3* fDriftDirection = {};
+    const TVector3* fTPCCenterPosition = {};
 
     int record_hit(const Int_t& pix_bin, const UInt_t& q, const UInt_t& trigger_t, hitvarContainers_t& hitvars);
     TVector3 get_bin_center(TH2PolyBin* bin, const TVector3& axis_x, const TVector3& axis_y);

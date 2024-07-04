@@ -7,6 +7,7 @@
 #include "TObject.h"
 #include <SLArEveDisplay.hh>
 #include <SLArUnit.hpp>
+#include <cstdio>
 #include <event/SLArMCPrimaryInfo.hh>
 #include <event/SLArEventTrajectory.hh>
 #include <TParticle.h>
@@ -43,6 +44,45 @@ namespace display {
     fTimer = std::make_unique<TTimer>("gSystem->ProcessEvents();", 50, kFALSE);
     fEveManager = std::unique_ptr<TEveManager>( TEveManager::Create() );
     fPalette = std::make_unique<TEveRGBAPalette>();
+
+    fParticleSelector.insert( {"gammas", MCParticleSelector_t("gammas", true, 1.0, kYellow-7, 7)} ); 
+    fParticleSelector.insert( {"light leptons", MCParticleSelector_t("light leptons", true, 1.0, kOrange+7)} ); 
+    fParticleSelector.insert( {"heavy leptons", MCParticleSelector_t("heavy leptons", true, 1.0, kOrange)} ); 
+    fParticleSelector.insert( {"neutrinos", MCParticleSelector_t("neutrinos", false, 1.0, kAzure-9, 2)} ); 
+    fParticleSelector.insert( {"mesons", MCParticleSelector_t("mesons", true, 1.0, kMagenta+1)} ); 
+    fParticleSelector.insert( {"neutrons", MCParticleSelector_t("neutrons", true, 1.0, kBlue-4)} ); 
+    fParticleSelector.insert( {"protons", MCParticleSelector_t("protons", true, 1.0, kRed-4)} ); 
+    fParticleSelector.insert( {"baryons", MCParticleSelector_t("baryons", true, 1.0, kRed+2)} ); 
+    fParticleSelector.insert( {"ions", MCParticleSelector_t("ions", true, 1.0, kViolet+4)} ); 
+    fParticleSelector.insert( {"others", MCParticleSelector_t("others", true, 1.0, kWhite)} ); 
+  }
+
+  const MCParticleSelector_t& SLArEveDisplay::get_particle_selection(const int pdg) {
+    auto pdgDB = TDatabasePDG::Instance(); 
+
+    if (pdg == 22) return fParticleSelector["gammas"]; 
+    else if ( fabs(pdg) == 11) return fParticleSelector["electrons"]; 
+    else if ( fabs(pdg) == 13 || fabs(pdg) == 15) return fParticleSelector["heavy leptons"]; 
+    else if ( fabs(pdg) == 12 || fabs(pdg) == 14 || fabs(pdg) == 16) return fParticleSelector["neutrinos"]; 
+    else if ( fabs(pdg) == 2212 ) return fParticleSelector["protons"]; 
+    else if ( fabs(pdg) == 2112 ) return fParticleSelector["neutrons"]; 
+    else {
+      TParticlePDG* particlePDG = pdgDB->GetParticle( pdg );
+      if (particlePDG) {
+        const TString particleClass = particlePDG->ParticleClass(); 
+        if ( particleClass == "Meson" ) {
+          return fParticleSelector["mesons"]; 
+        }
+        else if ( particleClass == "Baryon" ){
+          return fParticleSelector["baryons"]; 
+        }
+      }
+      else {
+        return fParticleSelector["ions"]; 
+      }
+    }
+
+    return fParticleSelector["others"]; 
   }
 
   SLArEveDisplay::~SLArEveDisplay()
@@ -131,7 +171,7 @@ namespace display {
     geo_tpc.fVolume->SetAABoxCenterHalfSize( 
         geo_tpc.fPosition.x(), geo_tpc.fPosition.y(), geo_tpc.fPosition.z(), 
         0.5*geo_tpc.fDimension.x(), 0.5*geo_tpc.fDimension.y(), 0.5*geo_tpc.fDimension.z()); 
-    geo_tpc.fVolume->SetFrameColor( kCyan ); 
+    geo_tpc.fVolume->SetFrameColor( kGray+2 ); 
     //printf("Adding TPC at (%.2f %.2f, %.2f) with size (%.2f %.2f, %.2f)\n\n", 
         //geo_tpc.fPosition.x(), geo_tpc.fPosition.y(), geo_tpc.fPosition.z(), 
         //0.5*geo_tpc.fDimension.x(), 0.5*geo_tpc.fDimension.y(), 0.5*geo_tpc.fDimension.z()); 
@@ -189,6 +229,8 @@ namespace display {
       fEveManager->AddElement( track_list.get() );
     }
 
+    fEveManager->GetEditor(); 
+
     fEveManager->Redraw3D( false, true ); 
 
     return 0;
@@ -226,6 +268,7 @@ namespace display {
   }
 
   int SLArEveDisplay::ReadTracks() {
+    fMCEvent->Reset();
     fMCTruthTree->GetEntry( fCurEvent );
 
     const auto& primaries = fMCEvent->GetPrimaries();
@@ -234,10 +277,25 @@ namespace display {
       auto track_list = std::unique_ptr<TEveTrackList>( 
           new TEveTrackList(Form("%s_%i", p.GetName(), p.GetTrackID())) ); 
       auto propagator = track_list->GetPropagator();
+      propagator->SetMaxZ(1e4); 
+      propagator->SetMaxR(1e4); 
       const auto& trajectories = p.GetConstTrajectories(); 
+      double p_tot = 0.0; 
+      for (const auto& p_ : p.GetMomentum()) p_tot += TMath::Sq( p_ ); 
+      p_tot = sqrt(p_tot); 
+      printf("%s - vertex @ [%.2f, %.2f, %.2f] m, t = %g ns, direction = [%.2f, %.2f, %.2f]\n", 
+          p.GetName(),
+          p.GetVertex().at(0), p.GetVertex().at(1), p.GetVertex().at(2), p.GetTime(),
+          p.GetMomentum().at(0) / p_tot,  p.GetMomentum().at(1) / p_tot,  p.GetMomentum().at(2) / p_tot); 
+
       for (const auto& t : trajectories) {
-        if (t->GetInitKineticEne() < 0.1) continue;
         const int pdg_code = t->GetPDGID();
+        const auto& selector = get_particle_selection( pdg_code ); 
+
+        if ( selector.fIsEnabled == false ) continue;
+
+        if ( t->GetInitKineticEne() < selector.fLowerEnergyThreshold ) continue;
+
         const auto& points = t->GetConstPoints();
         const auto& vertex = points.front();
         
@@ -257,14 +315,20 @@ namespace display {
         auto track = new TEveTrack(particle, t->GetTrackID(), propagator);
         if (pdgP) track->SetCharge( pdgP->Charge() ); 
         
+        Long64_t istep = 0;
         for (const auto& step : points) {
           TEveVectorF v( step.fX, step.fY, step.fZ );
-          auto pm = new TEvePathMarkF(TEvePathMarkF::kReference, v, t->GetTime());
-          track->AddPathMark( *pm );
+          //printf("adding steppoint at [%.2f, %.2f, %.2f] mm - t %g ns\n", v.fX, v.fY, v.fZ, t->GetTime()); 
+          if (istep%10 == 0) {
+            auto pm = new TEvePathMarkF(TEvePathMarkF::kReference, v, t->GetTime());
+            track->AddPathMark( *pm );
+          }
         }
         track->ComputeBBox();
         
-        set_track_style( track ); 
+        //set_track_style( track ); 
+        track->SetLineColor( selector.fTrackColor ); 
+        track->SetLineStyle( selector.fTrackStyle ); 
         
         track->SetName( Form("%s_%i", t->GetParticleName().Data(), t->GetTrackID()) );
 
@@ -345,36 +409,76 @@ namespace display {
    frmMain->SetCleanup(kDeepCleanup);
 
    auto hf = new TGHorizontalFrame(frmMain);
-   //{
    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")));
    TGPictureButton* b = 0;
 
-   b = new TGPictureButton(hf, gClient->GetPicture(icondir+"GoBack.gif"));
-   hf->AddFrame(b);
+   b = new TGPictureButton(hf, gClient->GetPicture(icondir+"GoBack.gif"), fIDs.GetUnID() );
+   hf->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
    b->Connect("Clicked()", "display::SLArEveDisplay", this, "PrevEvent()");
 
-   fEnterEntry = new TGNumberEntry(hf, 0, 6, 999, 
+   fEnterEntry = new TGNumberEntry(hf, 0, 5, fIDs.GetUnID(),  
        TGNumberFormat::kNESInteger, TGNumberFormat::kNEANonNegative, 
        TGNumberFormat::kNELLimitMin);
 
    fEnterEntry->Connect("ValueSet(Long_t)", "display::SLArEveDisplay", this, "SetEntry()");
-   (fEnterEntry->GetNumberEntry())->Connect("ReturnPressed()", "display::SLArEveDisplay", this,
-       "SetEntry()");
    hf->AddFrame(fEnterEntry, new TGLayoutHints(kLHintsTop | kLHintsLeft, 5, 5, 5, 5));
 
-   b = new TGPictureButton(hf, gClient->GetPicture(icondir+"GoForward.gif"));
-   hf->AddFrame(b);
+   b = new TGPictureButton(hf, gClient->GetPicture(icondir+"GoForward.gif"), fIDs.GetUnID());
+   hf->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
    b->Connect("Clicked()", "display::SLArEveDisplay", this, "NextEvent()");
-   //}
    frmMain->AddFrame(hf);
 
-   fGframeEntry = new TGHorizontalFrame(frmMain);
-   fGframeEntry->SetName("Entry number");
-   fEntryLabel = new TGLabel(fGframeEntry, "No input.");
-   fGframeEntry->AddFrame(fEntryLabel, new TGLayoutHints(kLHintsTop | kLHintsLeft,
-         5, 5, 5, 5));
+   fGgroupframeParticleSelection = new TGGroupFrame(frmMain, "MC truth selection"); 
+   fGframeParticleSelection = new TGVerticalFrame(fGgroupframeParticleSelection);
+   fGframeParticleSelection->SetName("MC truth selection");
 
-   frmMain->AddFrame(fGframeEntry, new TGLayoutHints(kLHintsExpandX, 0, 0, 0, 1));
+   size_t isel = 0;
+   for (auto& selector : fParticleSelector) {
+     fGframeParticleSetting[isel] = new TGHorizontalFrame( fGframeParticleSelection ); 
+
+     fGParticleSelectionButton[isel] = new TGCheckButton(fGframeParticleSetting[isel], 
+         new TGHotString(selector.second.fName), fIDs.GetUnID()); 
+     fGParticleSelectionButton[isel]->Connect(
+         "Toggled(Bool_t)", 
+         "display::MCParticleSelector_t", 
+         &(selector.second), "ToggleEnable()");
+
+     fGParticleEnergyThreshold[isel] = new TGNumberEntry(fGframeParticleSetting[isel], 0, 5, fIDs.GetUnID(), 
+         TGNumberFormat::kNESReal, TGNumberFormat::kNEAPositive, TGNumberFormat::kNELLimitMinMax, 0, 1000 );
+     selector.second.fEntryForm = fGParticleEnergyThreshold[isel]; 
+     fGParticleEnergyThreshold[isel]->SetNumber( selector.second.fLowerEnergyThreshold ); 
+     fGParticleEnergyThreshold[isel]->Connect("ValueSet(Long_t)", 
+         "display::MCParticleSelector_t", 
+         &(selector.second), "SetLowerEnergyDisplayThreshold()");
+     EButtonState button_state; 
+     if ( selector.second.fIsEnabled ) {
+       button_state = EButtonState::kButtonDown;
+     }
+     else {
+       button_state = EButtonState::kButtonUp;
+     }
+
+     fGParticleSelectionButton[isel]->SetState( button_state ); 
+
+     fGframeParticleSetting[isel]->AddFrame( fGParticleSelectionButton[isel], 
+         new TGLayoutHints(kLHintsLeft|kLHintsCenterY, 1, 1, 2, 2) ); 
+     fGframeParticleSetting[isel]->AddFrame( fGParticleEnergyThreshold[isel], 
+         new TGLayoutHints(kLHintsRight|kLHintsCenterY, 0, 0, 2, 2) ); 
+
+     fGframeParticleSetting[isel]->MapSubwindows();
+     fGframeParticleSetting[isel]->Resize();  
+     fGframeParticleSelection->AddFrame(fGframeParticleSetting[isel],
+         new TGLayoutHints(kLHintsExpandX|kLHintsCenterY, 1, 1, 1, 1) );
+     isel++;
+   }
+   
+   auto button_update = new TGTextButton(fGframeParticleSelection, "&Update", fIDs.GetUnID());
+   button_update->Connect("Clicked()", "display::SLArEveDisplay", this, "ProcessEvent()");
+   fGframeParticleSelection->AddFrame( button_update, new TGLayoutHints(kLHintsExpandX) ); 
+   fGframeParticleSelection->MapSubwindows();
+   fGgroupframeParticleSelection->AddFrame( fGframeParticleSelection );  
+
+   frmMain->AddFrame(fGgroupframeParticleSelection);
 
    frmMain->MapSubwindows();
    frmMain->Resize();
