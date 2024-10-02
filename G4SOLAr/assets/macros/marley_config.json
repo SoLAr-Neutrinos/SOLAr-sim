@@ -3,27 +3,13 @@
     "type" : "marley", 
     "label" : "marley_test", 
     "config" : {
-      "neutrino": "ve",
-      "direction" : {
-        "mode" : "isotropic"
-      },
-      "energy" : {
-        "mode" : "custom", 
-        "label" : "histogram", 
-        "E_bin_lefts" : [5,10],
-        "weights" : [1.0,1.0],
-        "Emax" : 20
-      }, 
-      "target" : {
-        "nuclides" : [1000180400],
-        "atom_fractions" : [1.0]
-      },
-      "reactions" : ["ve40ArCC_Bhattacharya2009.react"], 
+      "marley_config_path" : "assets/marley_cfg/b8_osc_spect_CC_nue.js", 
+      "direction" : "isotropic", 
       "vertex_gen" : {
         "type" : "bulk", 
         "config" : {
           "volume" : "TPC11", 
-          "fiducial_fraction" : 0.80, 
+          "fiducial_fraction" : 0.75, 
           "avoid_daughters" : false
         }
       }

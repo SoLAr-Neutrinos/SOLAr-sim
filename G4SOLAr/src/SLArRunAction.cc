@@ -21,8 +21,8 @@
 SLArRunAction::SLArRunAction()
  : G4UserRunAction(), fG4MacroFile(""), fEventAction(nullptr), fElectronDrift(nullptr)
 { 
+  // Create custom SLAr Analysis Manager
   SLArAnalysisManager* anamgr = SLArAnalysisManager::Instance();
-  fTRandomInterface = new SLArRandom(); 
 
   const auto detector = (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
   fElectronDrift = new SLArElectronDrift(detector->GetLArProperties()); 
@@ -32,7 +32,6 @@ SLArRunAction::SLArRunAction()
 
 SLArRunAction::~SLArRunAction()
 {
-  delete fTRandomInterface;
   delete SLArAnalysisManager::Instance();
   fSDName.clear(); 
 }

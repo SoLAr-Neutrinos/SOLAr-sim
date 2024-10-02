@@ -8,31 +8,10 @@
 
 #define SLARRANDOMEXTRA_HH
 
-#include <memory>
-
 #include "G4ThreeVector.hh"
 #include "G4RandomTools.hh"
 
-#include <TRandom3.h>
-#include <TH1.h>
-
-class SLArRandom {
-  public:
-    inline SLArRandom() {
-      fRandomEngine = std::make_unique<TRandom3>( G4Random::getTheSeed() ); 
-    }
-    inline ~SLArRandom() {}; 
-
-    std::unique_ptr<TRandom3>& GetEngine() {return fRandomEngine;}
-    inline G4double SampleFromHist(const TH1& h) {return h.GetRandom(fRandomEngine.get());}
-    inline G4double SampleFromHist(const TH1* h) {return h->GetRandom(fRandomEngine.get());}
-    static G4ThreeVector SampleRandomDirection();
-    static G4ThreeVector SampleLinearPolarization(const G4ThreeVector& momentum); 
-    static std::array<G4ThreeVector,2> SampleRandomDirectionAndPolarization();
-
-  protected: 
-    std::unique_ptr<TRandom3> fRandomEngine; 
-};
+G4ThreeVector SampleRandomDirection();
 
 #endif /* end of include guard SLARRANDOMEXTRA_HH */
 

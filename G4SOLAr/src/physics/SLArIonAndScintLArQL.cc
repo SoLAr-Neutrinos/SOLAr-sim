@@ -54,6 +54,7 @@ double SLArIonAndScintLArQL::QChi(double& dEdx, const double& E) const {
       (fLArQLChiPars[1]+exp(fLArQLChiPars[2] + fLArQLChiPars[3]*dEdx));
 }
 
+
 double SLArIonAndScintLArQL::QChi(const double& dE, const double& dx, const double& E) const {
     double dEdx = dE/dx;
     if(dEdx<1) dEdx = 1.;

@@ -8,7 +8,6 @@
 #define SLArRunAction_h 1
 
 #include "physics/SLArElectronDrift.hh"
-#include <SLArRandomExtra.hh>
 
 #include "G4UserRunAction.hh"
 #include "globals.hh"
@@ -33,13 +32,11 @@ class SLArRunAction : public G4UserRunAction
     inline G4String GetG4MacroFile() const {return fG4MacroFile;}
     inline void SetG4MacroFile(const G4String file_path) {fG4MacroFile = file_path;}
     inline void RegisterExtScorerLV(G4LogicalVolume* lv) {fExtScorerLV.push_back(lv);}
-    inline SLArRandom* GetTRandomInterface() {return fTRandomInterface;}
 
   private:
     G4String fG4MacroFile; 
-    SLArEventAction* fEventAction = {};
-    SLArElectronDrift* fElectronDrift = {}; 
-    SLArRandom* fTRandomInterface = {};
+    SLArEventAction* fEventAction;
+    SLArElectronDrift* fElectronDrift; 
 
     std::vector<G4String> fSDName;  
     std::vector<G4LogicalVolume*> fExtScorerLV; 

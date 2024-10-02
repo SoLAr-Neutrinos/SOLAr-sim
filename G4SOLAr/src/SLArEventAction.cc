@@ -144,9 +144,7 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
 
     auto& slar_event = SLArAnaMgr->GetEvent();
-    auto& slar_gen_records = SLArAnaMgr->GetGenRecords();
     slar_event.SetEvNumber(event->GetEventID());
-    slar_gen_records.SetEventNumber( event->GetEventID() ); 
 
     // set global edep, electrons and photon counts per primary
     auto& primaries = slar_event.GetPrimaries(); 
@@ -194,13 +192,11 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
 #endif 
     
     SLArAnaMgr->FillEvTree();
-    SLArAnaMgr->FillGenTree();
-    
 
     if (verbose > 0) {
       printf("SLArEventAction::EndOfEventAction()\n"); 
-      printf("OpticalPhoton Monitor:\nCherenkov: %i\nScintillation: %i\n\n", 
-          fPhotonCount_Cher, fPhotonCount_Scnt);
+      printf("OpticalPhoton Monitor:\nCherenkov: %i\nScintillation: %i\nWLS: %i\nAbsorption %i\n\n", 
+          fPhotonCount_Cher, fPhotonCount_Scnt, fPhotonCount_WLS, fAbsorptionCount);
       printf("Primary particles:\n");
       auto& primaries = slar_event.GetPrimaries();
       for (const auto &p : primaries ) {
@@ -223,8 +219,7 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     fParentIDMap.clear(); 
     fExtraProcessInfo.clear(); 
 
-    slar_event.Reset();
-    slar_gen_records.Reset();
+    SLArAnaMgr->GetEvent().Reset();
 }
 
 G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& verbose)
@@ -536,7 +531,6 @@ int SLArEventAction::FindAncestorID(int trkid) {
       fprintf(stderr, "SLArEventAction::FindAncestorID(%i) ERROR: cannot find track in event track table\n", trkid);
       break;
     }
-
     pid = fParentIDMap[trkid];
 #ifdef SLAR_DEBUG
     printf("local parent id: %i\n", pid);

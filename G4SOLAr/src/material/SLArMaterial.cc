@@ -123,6 +123,8 @@ void SLArMaterial::BuildMaterialFromDB(G4String db_file, G4String mat_id) {
   return;
 }
 
+
+
 G4Material* SLArMaterial::BuildFromNist(const rapidjson::Value& jmaterial) {
   auto nistManager = G4NistManager::Instance(); 
   G4Material* material = nullptr; 
@@ -132,6 +134,7 @@ G4Material* SLArMaterial::BuildFromNist(const rapidjson::Value& jmaterial) {
   return material;
 }
 
+//Build from atoms -> This is how PEN is built
 G4Material* SLArMaterial::BuildFromAtoms(const rapidjson::Value& jmaterial) {
   auto nistManager = G4NistManager::Instance(); 
   G4Material* material = nullptr; 
@@ -231,6 +234,7 @@ G4Material* SLArMaterial::BuildFromMixture(const rapidjson::Value& jmaterial) {
   return material; 
 }
 
+//Parsing material information
 G4Material* SLArMaterial::ParseMaterial(const rapidjson::Value& jmaterial) {
   printf("SLArMaterial::BuildMaterialFromDB(%s)\n", jmaterial["name"].GetString()); 
   G4Material* material = nullptr; 
@@ -264,6 +268,7 @@ G4Material* SLArMaterial::ParseMaterial(const rapidjson::Value& jmaterial) {
   return material; 
 }
 
+//Parsing Material Property table
 void SLArMaterial::ParseMPT(const rapidjson::Value& jptable, G4MaterialPropertiesTable* mpt, G4Material* mat) {
 
   assert(jptable.IsArray());
@@ -321,11 +326,15 @@ void SLArMaterial::ParseMPT(const rapidjson::Value& jptable, G4MaterialPropertie
       } else {
         mpt->AddConstProperty(pname, pvalue*punit, is_custom);
       }
+   //   if (pname == "WLSEFFICIENCY") {
+     //   mpt->AddConstProperty(pname, pvalue*punit);
+       //   }
     }
   }
   return;
 }
 
+//Surface Properties
 void SLArMaterial::ParseSurfaceProperties(const rapidjson::Value& jptable) {
   assert(jptable.IsObject());
   auto surfcfg = jptable.GetObject(); 

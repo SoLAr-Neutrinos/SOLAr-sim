@@ -55,9 +55,6 @@ SLArAnalysisManager::SLArAnalysisManager(G4bool isMaster)
     fIsMaster(isMaster), fSeed( time(NULL) ), fOutputPath(""),
     fOutputFileName("solarsim_output.root"), 
     fTrajectoryFull( true ),
-    fRootFile(nullptr), 
-    fEventTree(nullptr), 
-    fGenTree(nullptr),
     fSuperCellBacktrackerManager(nullptr), 
     fVUVSiPMBacktrackerManager(nullptr), 
     fChargeBacktrackerManager(nullptr), 
@@ -91,7 +88,6 @@ SLArAnalysisManager::~SLArAnalysisManager()
     if (fRootFile->IsOpen()) {
       fRootFile->cd();
       if (fEventTree) fEventTree->Write();
-      if (fGenTree) fGenTree->Write();
 #ifdef SLAR_EXTERNAL
       fExternalsTree->Write(); 
 #endif // SLAR_EXTERNAL
@@ -127,11 +123,8 @@ G4bool SLArAnalysisManager::CreateFileStructure()
 
   printf("setting up ROOT TTree Branch...\n");
   fEventTree->Branch("MCEvent", &fMCEvent);
-  printf("MCEvent tree created with AutoFlush set to %lld\n", fEventTree->GetAutoFlush());
 
-  fGenTree = new TTree("GenTree", "Generator status tree"); 
-  printf("GenRecords tree created with AutoFlush set to %lld\n", fGenTree->GetAutoFlush());
-  fGenTree->Branch("GenRecords", &fGenRecords); 
+  printf("MCEvent tree created with AutoFlush set to %lld\n", fEventTree->GetAutoFlush());
 
 #ifdef SLAR_EXTERNAL
   SetupExternalsTree(); 
@@ -158,10 +151,6 @@ G4bool SLArAnalysisManager::Save()
 
   if (fEventTree) {
     fEventTree->Write();
-  }
-
-  if (fGenTree) {
-    fGenTree->Write(); 
   }
 
   WriteSysCfg(); 
@@ -237,25 +226,6 @@ G4bool SLArAnalysisManager::FillEvTree() {
 #endif
   return true;
 }
-
-G4bool SLArAnalysisManager::FillGenTree() {
-#ifdef SLAR_DEBUG
-  printf("SLArAnalysisManager::FillGenTree...");
-#endif
-  if (!fGenTree) {
-#ifdef SLAR_DEBUG
-    printf(" GenTree is NULL!\n");
-#endif
-    return false;
-  }
-  
-  fGenTree->Fill();
-#ifdef SLAR_DEBUG
-  printf(" OK\n");
-#endif
-  return true;
-}
-
 
 //template<typename T> 
 //int SLArAnalysisManager::WriteVariable (G4String name, T val) {

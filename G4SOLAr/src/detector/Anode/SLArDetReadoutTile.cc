@@ -374,21 +374,22 @@ SLArMaterial* SLArDetReadoutTile::GetSiPMActiveMaterial()
 
 
 void SLArDetReadoutTile::SetPerfectQE(G4bool kQE)
-{
-  if (fPerfectQE==kQE) return;
+{ 
+if (fPerfectQE==kQE) return;
   else 
   {     
-    fPerfectQE = kQE;
+    fPerfectQE = kQE;   
     G4cout << "SLArDetReadoutTile::SetPerfectQE: Setting 100% QE between "
            << "1 and 5 eV" << G4endl;
-    G4double phEne[2] = {1*CLHEP::eV, 13*CLHEP::eV};
-    G4double eff  [2] = {1.0 , 1.0 };
+    G4double phEne[2] = {2*CLHEP::eV, 13*CLHEP::eV};
+    G4double eff  [2] = {0.15, 0.15};
+    
+    auto SiPMproperties = new G4MaterialPropertiesTable();
     
     fMatSiPM->GetMaterialOpticalSurf()
-               ->GetMaterialPropertiesTable()
-                  ->AddProperty("EFFICIENCY", phEne, eff, 2);  
-  }
-
+            ->GetMaterialPropertiesTable()
+            ->AddProperty("EFFICIENCY", phEne, eff, 2);
+  }           
   return;
 }
 
@@ -502,11 +503,16 @@ void SLArDetReadoutTile::BuildUnitCellPixMap(const rapidjson::Value& pixblueprin
 
 
 G4LogicalSkinSurface* SLArDetReadoutTile::BuildLogicalSkinSurface() {
-  fSkinSurface = 
-    new G4LogicalSkinSurface(
-        "SiPM_LgSkin", 
-        fSiPMActive->GetModLV(), 
-        fMatSiPM->GetMaterialOpticalSurf());
+/*
+  auto SiPMproperties = new G4MaterialPropertiesTable();
+  
+  G4double phEne[2] = {2.0*CLHEP::eV, 13.0*CLHEP::eV};
+  G4double eff  [2] = {0, 0};
+  
+  SiPMproperties->AddProperty("EFFICIENCY", phEne, eff, 2);
+  fMatSiPM->GetMaterialOpticalSurf()->SetMaterialPropertiesTable(SiPMproperties);
+*/  
+  fSkinSurface = new G4LogicalSkinSurface("SiPM_LgSkin", fSiPMActive->GetModLV(), fMatSiPM->GetMaterialOpticalSurf());
 
   return fSkinSurface;
 }

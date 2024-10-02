@@ -4,11 +4,9 @@
  * @created     Tua Apr 11, 2023 09:44:12 CEST
  */
 
-#include <SLArAnalysisManager.hh>
 #include <SLArExternalGeneratorAction.hh>
 #include <SLArBoxSurfaceVertexGenerator.hh>
 #include <SLArBulkVertexGenerator.hh>
-#include <SLArRunAction.hh>
 #include <SLArRandomExtra.hh>
 
 #include <stdio.h>
@@ -21,10 +19,10 @@
 #include <rapidjson/prettywriter.h>
 
 #include <TFile.h>
+#include <TRandom3.h>
 
 #include "G4RandomTools.hh"
 #include "G4Poisson.hh"
-#include <G4RunManager.hh>
 #include <G4Event.hh>
 #include <G4RunManager.hh>
 
@@ -34,10 +32,12 @@ SLArExternalGeneratorAction::SLArExternalGeneratorAction(const G4String label)
   : SLArBaseGenerator(label)
 {
   fParticleGun = std::make_unique<G4ParticleGun>(); 
+  fRandomEngine = std::make_unique<TRandom3>( G4Random::getTheSeed() ); 
 }
 
 SLArExternalGeneratorAction::~SLArExternalGeneratorAction()
-{}
+{
+}
 
 //G4double SLArExternalGeneratorAction::SourceExternalConfig(const G4String ext_cfg_path) {
   //FILE* ext_cfg_file = std::fopen(, "r");
@@ -99,21 +99,17 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
 #ifdef SLAR_DEBUG
   printf("SLArExternalGeneratorAction::GeneratePrimaries\n");
 #endif
-
-  auto& gen_records = SLArAnalysisManager::Instance()->GetGenRecords();
-  SLArRunAction* run_action = (SLArRunAction*)G4RunManager::GetRunManager()->GetUserRunAction();
-  const auto slar_random = run_action->GetTRandomInterface();
   
   for (size_t iev = 0; iev < fConfig.n_particles; iev++) {
     G4ThreeVector vtx_pos(0, 0, 0); 
     fVtxGen->ShootVertex(vtx_pos);
-    //G4double vtx_time = fVtxGen->GetTimeGenerator().SampleTime();
 
     //printf("Energy spectrum pointer: %p\n", fEnergySpectrum.get());
     //printf("Energy spectrum from %s\n", fEnergySpectrum->GetName());
-    fConfig.ene_config.energy_tmp = SampleEnergy(fConfig.ene_config); 
+    G4double energy = fEnergySpectrum->GetRandom( fRandomEngine.get() ); 
 
-    G4ThreeVector dir = SampleDirection(fConfig.dir_config); 
+
+    G4ThreeVector dir = SampleRandomDirection(); 
 
     if (dynamic_cast<SLArBoxSurfaceVertexGenerator*>(fVtxGen.get())) {
       auto face = static_cast<SLArBoxSurfaceVertexGenerator*>(fVtxGen.get())->GetVertexFace(); 
@@ -123,111 +119,102 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
       //face_normal.x(), face_normal.y(), face_normal.z()); 
 
       while ( dir.dot(face_normal) < 0 ) {
-        dir = SLArRandom::SampleRandomDirection(); 
+        dir = SampleRandomDirection(); 
       }
     }
 
-    fConfig.dir_config.direction_tmp = dir;
     //G4cout << "Momentum direction is: " << dir << G4endl; 
     fParticleGun->SetParticleDefinition(fParticleDef); 
-    fParticleGun->SetParticleMomentumDirection(fConfig.dir_config.direction_tmp); 
+    fParticleGun->SetParticleMomentumDirection(dir); 
     fParticleGun->SetParticlePosition(vtx_pos); 
-    fParticleGun->SetParticleEnergy(fConfig.ene_config.energy_tmp); 
-    //fParticleGun->SetParticleTime(vtx_time); 
+    fParticleGun->SetParticleEnergy(energy); 
+    fParticleGun->SetParticleTime(0); 
 
     fParticleGun->GeneratePrimaryVertex(ev); 
 
-    auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
+    //getchar(); 
   }
 
   return;
 }
 
-void SLArExternalGeneratorAction::Configure() {
-  if (fConfig.dir_config.mode == EDirectionMode::kSunDir) {
-    TH1D* hist_nadir = this->GetFromRootfile<TH1D>(
-        fConfig.dir_config.nadir_hist.filename, 
-        fConfig.dir_config.nadir_hist.objname);
-
-    fNadirDistribution = std::unique_ptr<TH1D>( std::move(hist_nadir) ); 
-    printf("SLArExternalGenerator::Configure() Sourcing nadir angle distribution\n"); 
-    printf("fNadirDistribution ptr: %p\n", fNadirDistribution.get());
-  }
-  if (fConfig.ene_config.mode == EEnergyMode::kExtSpectrum) {
-    TH1D* hist_spectrum = this->GetFromRootfile<TH1D>( 
-        fConfig.ene_config.spectrum_hist.filename , 
-        fConfig.ene_config.spectrum_hist.objname );
-
-    fEnergySpectrum = std::unique_ptr<TH1D>( std::move(hist_spectrum) ); 
-    printf("SLArExternalGenerator::Configure() Sourcing external energy spectrum\n"); 
-    printf("fEnergySpectrum ptr: %p\n", fNadirDistribution.get());
-  }
-
-  fParticleDef = G4ParticleTable::GetParticleTable()->FindParticle( fConfig.ext_primary_particle ); 
-}
-
-void SLArExternalGeneratorAction::SourceConfiguration(const rapidjson::Value& config) {
-
-  CopyConfigurationToString(config); 
-
-  if (config.HasMember("energy")) {
-    SourceEnergyConfig(config["energy"], fConfig.ene_config);
-  }
-  if (config.HasMember("direction")) {
-    SourceDirectionConfig(config["direction"], fConfig.dir_config);
-  }
-  if (config.HasMember("n_particles")) {
-    fConfig.n_particles = config["n_particles"].GetInt();
-  }
-
+void SLArExternalGeneratorAction::Configure(const rapidjson::Value& config) {
   if (config.HasMember("particle")) {
     fConfig.ext_primary_particle = config["particle"].GetString(); 
+    fParticleDef = G4ParticleTable::GetParticleTable()->FindParticle( fConfig.ext_primary_particle ); 
   } else {
     throw std::invalid_argument("ext gen missing mandatory \"particle\" field.\n"); 
   }
 
-  if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
+  if (config.HasMember("n_particles")) {
+    fConfig.n_particles = config["n_particles"].GetInt(); 
   }
-  else {
-    fVtxGen = std::make_unique<SLArPointVertexGenerator>();
+
+  if (config.HasMember("energy_spectrum_file")) {
+    fConfig.ext_spectrum_path = config["energy_spectrum_file"].GetString(); 
+    if (config.HasMember("energy_spectrum_key")) {
+      fConfig.ext_spectrum_key = config["energy_spectrum_key"].GetString(); 
+    }
+  } else if (config.HasMember("energy")) {
+    fConfig.ext_particle_energy = unit::ParseJsonVal( config["energy"] ); 
+  } else {
+    fConfig.ext_particle_energy = 1.0; 
+  }
+
+  if (config.HasMember("vertex_gen")) {
+    ConfigureVertexGenerator( config["vertex_gen"] ); 
+  }
+
+  if (fConfig.ext_spectrum_path) {
+    TFile input_file(fConfig.ext_spectrum_path); 
+    if (input_file.IsOpen() == false) {
+      char err_msg[200]; 
+      sprintf(err_msg, "SLArExternalGeneratorAction::Configure ERROR\nCannot open external background file %s.\n", fConfig.ext_spectrum_path.data()); 
+      throw std::runtime_error(err_msg);
+    }
+    TH1D* h = input_file.Get<TH1D>(fConfig.ext_spectrum_key); 
+    h->SetDirectory( nullptr ); 
+    input_file.Close(); 
+
+    fEnergySpectrum = std::make_unique<TH1D>( *h ); 
+    if (!fEnergySpectrum) {
+      char err_msg[200]; 
+      sprintf(err_msg,"SLArExternalGeneratorAction::SourceExternalConfig ERROR\nCannot read key %s from external background file %s.\n", 
+          fConfig.ext_spectrum_key.data(), fConfig.ext_spectrum_path.data() ); 
+      throw std::runtime_error( err_msg ); 
+    }
   }
 
   return;
 }
 
-//G4String SLArExternalGeneratorAction::WriteConfig() const {
-  //G4String config_str = "";
+G4String SLArExternalGeneratorAction::WriteConfig() const {
+  G4String config_str = "";
 
-  //rapidjson::Document d; 
-  //d.SetObject(); 
-  //rapidjson::StringBuffer buffer;
-  //rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-  //G4String gen_type = GetGeneratorType(); 
+  rapidjson::Document d; 
+  d.SetObject(); 
+  rapidjson::StringBuffer buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+  G4String gen_type = GetGeneratorType(); 
 
-  //d.AddMember("type" , rapidjson::StringRef(gen_type.data()), d.GetAllocator()); 
-  //d.AddMember("label", rapidjson::StringRef(fLabel.data()), d.GetAllocator()); 
-  //d.AddMember("particle", rapidjson::StringRef(fConfig.ext_primary_particle.data()), d.GetAllocator()); 
-  //d.AddMember("n_particles", fConfig.n_particles, d.GetAllocator()); 
-
-  //const rapidjson::Document ene_doc = ExportEnergyConfig(); 
-  //rapidjson::Value ene_val; 
-  //ene_val.CopyFrom(ene_doc, d.GetAllocator()); 
-  //d.AddMember("energy", ene_val, d.GetAllocator()); 
-
-  //const rapidjson::Document dir_doc = ExportDirectionConfig(); 
-  //rapidjson::Value dir_val; 
-  //dir_val.CopyFrom(dir_doc, d.GetAllocator()); 
-  //d.AddMember("direction", dir_val, d.GetAllocator()); 
-
-  //const rapidjson::Document vtx_json = fVtxGen->ExportConfig(); 
-  //rapidjson::Value vtx_config;
-  //vtx_config.CopyFrom(vtx_json, d.GetAllocator()); 
-  //d.AddMember("vertex_generator", vtx_config, d.GetAllocator()); 
+  d.AddMember("type" , rapidjson::StringRef(gen_type.data()), d.GetAllocator()); 
+  d.AddMember("label", rapidjson::StringRef(fLabel.data()), d.GetAllocator()); 
+  d.AddMember("particle", rapidjson::StringRef(fConfig.ext_primary_particle.data()), d.GetAllocator()); 
+  d.AddMember("n_particles", fConfig.n_particles, d.GetAllocator()); 
+  if (fConfig.ext_spectrum_path.empty()) {
+    d.AddMember("energy", rapidjson::StringRef(fEnergySpectrum->GetName()), d.GetAllocator()); 
+  } else {
+    d.AddMember("energy_spectrum_key", rapidjson::StringRef(fConfig.ext_spectrum_key.data()), d.GetAllocator());
+    d.AddMember("energy_spectrum_file", rapidjson::StringRef(fConfig.ext_spectrum_path.data()), d.GetAllocator());
+  }
+  const rapidjson::Document vtx_json = fVtxGen->ExportConfig(); 
+  rapidjson::Value vtx_config;
+  vtx_config.CopyFrom(vtx_json, d.GetAllocator()); 
+  d.AddMember("vertex_generator", vtx_config, d.GetAllocator()); 
 
 
-  //d.Accept(writer);
-  //config_str = buffer.GetString();
-  //return config_str;
-//}
+  d.Accept(writer);
+  config_str = buffer.GetString();
+  return config_str;
+}
 }

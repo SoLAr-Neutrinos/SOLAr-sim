@@ -82,8 +82,8 @@ namespace gen {
 
       virtual void GeneratePrimaries(G4Event*);
       void AddGenerator(const rapidjson::Value& generatorConfig);
-      void SourceConfiguration(const rapidjson::Value& config); 
-      void SourceConfiguration(const G4String config_file_path); 
+      void Configure(const rapidjson::Value& config); 
+      void Configure(const G4String config_file_path); 
 
       inline bool DoTraceOptPhotons() {return fDoTraceOptPhotons;}
       inline bool DoDriftElectrons() {return fDoDriftElectrons;}

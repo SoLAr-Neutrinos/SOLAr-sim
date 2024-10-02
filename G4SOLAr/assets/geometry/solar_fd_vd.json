@@ -11,7 +11,7 @@
   ,
   #include "solar_fd_cryostat.json"
   ,
-  #include "./tile_bern_v2_full_pixel_unitcell4x4.json"
+  #include "tile_full_sipm_fd.json"
   ,
   #include "solar_fd_vd_pds.json"
 }

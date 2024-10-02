@@ -19,18 +19,80 @@
 #include "G4PhysicalConstants.hh"
 #include "G4OpticalPhoton.hh"
 
+#include <string>
+#include <fstream>
+#include <vector>
+#include <utility> // std::pair
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SLArReadoutTileSD::SLArReadoutTileSD(G4String name)
 : G4VSensitiveDetector(name), fHitsCollection(0), fHCID(-2)
 {
     collectionName.insert("ReadoutTileColl");
+    
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileSD::~SLArReadoutTileSD()
-{}
+
+void write_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
+    // Make a CSV file with one or more columns of integer values
+    // Each column of data is represented by the pair <column name, column data>
+    //   as std::pair<std::string, std::vector<int>>
+    // The dataset is represented as a vector of these columns
+    // Note that all columns should be the same size
+    
+    // Create an output filestream object
+    std::ofstream myFile(filename);
+    
+    // Send column names to the stream
+    for(int j = 0; j < dataset.size(); ++j)
+    {
+        myFile << dataset.at(j).first;
+        if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+    }
+    myFile << "\n";
+    
+    // Send data to the stream
+    for(int i = 0; i < dataset.at(0).second.size(); ++i)
+    {
+        for(int j = 0; j < dataset.size(); ++j)
+        {
+            myFile << dataset.at(j).second.at(i);
+            if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+        }
+        myFile << "\n";
+    }
+    
+    // Close the file
+    myFile.close();
+}
+
+ 
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+SLArReadoutTileSD::~SLArReadoutTileSD() {
+G4cout << "The No. of SiPM hits is : " << ph_hits << G4endl;
+G4cout << "The SiPM Kinetic Energy is : " << E_Kin << G4endl;
+std::vector<std::pair<std::string, std::vector<double>>> PosVec = {{"x", xVec}, {"y", yVec}, {"z", zVec}};
+write_csv("SiPMPos_vec.csv", PosVec);
+
+
+std::sort(energyVec.begin(),energyVec.end());//Sorting the vector
+std::vector<int>::size_type sz = energyVec.size();
+
+for(unsigned i=0; i<sz; i++){
+	wavelengthVec.push_back(hc/energyVec.at(i));
+}
+
+std::vector<std::pair<std::string, std::vector<double>>> EnergyVec = {{"Energy - eV", energyVec}, {"Wavelength - m", wavelengthVec}}; 
+write_csv("sipm_energy_vec.csv", EnergyVec);
+	
+
+   
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -47,39 +109,52 @@ void SLArReadoutTileSD::Initialize(G4HCofThisEvent* hce)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+
 G4bool SLArReadoutTileSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
 
   auto particleDef = step->GetTrack()->GetDynamicParticle()->GetParticleDefinition(); 
   if (particleDef != G4OpticalPhoton::OpticalPhotonDefinition()) {
-#ifdef SLAR_DEBUG
+//#ifdef SLAR_DEBUG
     printf("SLArReadoutTileSD::ProcessHits() WARNING: ");
     printf("ReadoutTile is an optical detector, while this hit comes from a %s\n", 
         particleDef->GetParticleName().c_str());
-#endif
+//#endif
   } else {
-#ifdef SLAR_DEBUG
+//#ifdef SLAR_DEBUG
     printf("SLArReadoutTileSD::ProcessHits() WARNING ");
     printf("OpticalPhotons should be processed by ProcessHits_constStep\n");
-#endif
+//#endif
   }    
 
   return true;
 }
 
+
 G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
                                        G4TouchableHistory* ){
 
   G4Track* track = step->GetTrack();
-  if(track->GetDefinition()
-     != G4OpticalPhoton::OpticalPhotonDefinition()) return false;
+  if(track->GetDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) 
+  return false;
 
-#ifdef SLAR_DEBUG
-  printf("SLArReadoutTileSD::ProcessHits_constStep(): processing %s [%i] TPC hit\n", 
-      step->GetTrack()->GetParticleDefinition()->GetParticleName().data(), 
-      step->GetTrack()->GetTrackID());
-  //getchar(); 
-#endif
+  if(step->GetTrack()->GetDefinition() == G4OpticalPhoton::OpticalPhotonDefinition()) {
+
+      //G4cout << "PDG is " << step->GetTrack()->GetDefinition()->GetPDGEncoding()<< G4endl;
+      //G4cout << "Physical Volume is: " << step -> GetPreStepPoint()->GetPhysicalVolume()->GetName() << G4endl;
+      //G4cout << "Logical Volume is: " << step->GetPreStepPoint()->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
+      //G4cout << "Track ID : " << step->GetTrack()->GetTrackID() << G4endl;
+      
+      energyVec.push_back(step->GetPreStepPoint()->GetKineticEnergy()/CLHEP::eV);
+      xVec.push_back(step->GetPreStepPoint()->GetPosition().x()/CLHEP::mm);
+      yVec.push_back(step->GetPreStepPoint()->GetPosition().y()/CLHEP::mm);
+      zVec.push_back(step->GetPreStepPoint()->GetPosition().z()/CLHEP::mm);
+      
+      ph_hits = ph_hits + 1;
+      E_Kin = E_Kin + step->GetPreStepPoint()->GetKineticEnergy()/CLHEP::eV;
+      
+      
+}
 
 
   G4double phEne = 0*CLHEP::eV;
@@ -121,14 +196,18 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
   hit->SetPhotonProcess(procName);
   hit->SetProducerID( track->GetParentID() ); 
 
-#ifdef SLAR_DEBUG
+  
+
+//#ifdef SLAR_DEBUG
   printf("SLArReadoutTileSD::ProcessHits_constStep\n");
   printf("%s photon hit at t = %g ns\n", procName.c_str(), hit->GetTime());
-  //if (hit->GetTime() < 1*CLHEP::ns) getchar(); 
-#endif
+  if (hit->GetTime() < 1*CLHEP::ns) getchar(); 
+//#endif
   fHitsCollection->insert(hit);
 
   return true;
 }
+
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

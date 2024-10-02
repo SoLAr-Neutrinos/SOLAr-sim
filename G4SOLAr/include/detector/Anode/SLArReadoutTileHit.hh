@@ -80,8 +80,7 @@ public:
     G4int GetRowCellNr() {return fRowCellNr;}
 
     G4String GetProcessName(int kType) const;
-
-private:
+    
     G4int         fAnodeIdx; 
     G4int         fRowMegaTileIdx;
     G4int         fMegaTileIdx;
@@ -95,6 +94,9 @@ private:
     G4int         fPhProducerID;
     G4ThreeVector fLocalPos;
     G4ThreeVector fWorldPos;
+
+private:
+
 };
 
 typedef G4THitsCollection<SLArReadoutTileHit> SLArReadoutTileHitsCollection;

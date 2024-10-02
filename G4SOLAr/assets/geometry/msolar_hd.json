@@ -2,16 +2,16 @@
   "World" : {
     "copyID" : 0, 
     "dimensions" : [
-      {"name" : "size_x" , "val" :  8.0, "unit": "m"},    
-      {"name" : "size_y" , "val" :  8.0, "unit": "m"},   
-      {"name" : "size_z" , "val" :  8.0, "unit": "m"}
+      {"name" : "size_x" , "val" :  3.5, "unit": "m"},    
+      {"name" : "size_y" , "val" :  4.0, "unit": "m"},   
+      {"name" : "size_z" , "val" :  6.5, "unit": "m"}
     ]
   },
   #include "msolar_tpc_hd.json"
   ,
   #include "msolar_cryostat.json"
   ,
-  #include "tile_bern_v2_full_pixel_unitcell4x4.json"
+  #include "tile_full_sipm.json"
   ,
   #include "msolar_pds_hd.json"
 }

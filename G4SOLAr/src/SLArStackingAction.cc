@@ -173,16 +173,18 @@ SLArStackingAction::ClassifyNewTrack(const G4Track * aTrack)
       //SLArMCPrimaryInfoPtr* primary = nullptr; 
       auto& primaries = anaMngr->GetEvent().GetPrimaries();
 
-      int primary_parent_id = fEventAction->FindAncestorID(aTrack->GetParentID()); 
-      
-      const G4String creator_process = aTrack->GetCreatorProcess()->GetProcessName(); 
+      int ancestor_id = -1;
 
-      if (creator_process != "OpWLS") {
+      const auto creator_process = aTrack->GetCreatorProcess()->GetProcessName();
+      G4cout << creator_process << G4endl;
+
+      if ( creator_process != "OpWLS" ) { 
+        fEventAction->FindAncestorID(aTrack->GetParentID()); 
         //#ifdef SLAR_DEBUG
-        //printf("Creator process: %s, Primary parent ID %i\n", primary_parent_id, creator_process.data());
+        //printf("Primary parent ID %i\n", primary_parent_id);
         //#endif
         for (auto &p : primaries) {
-          if (p.GetTrackID() == primary_parent_id) {
+          if (p.GetTrackID() == ancestor_id) {
             primary = &p; 
             //#ifdef SLAR_DEBUG
             //printf("primary parent found\n");
@@ -191,20 +193,21 @@ SLArStackingAction::ClassifyNewTrack(const G4Track * aTrack)
           }
         }
 
+
 #ifdef SLAR_DEBUG
         if (!primary) printf("Unable to find corresponding primary particle\n");
 #endif
 
-        if(creator_process == "Scintillation") {
+        if( creator_process == "Scintillation") {
           fEventAction->IncPhotonCount_Scnt();
           if (primary) primary->IncrementScintPhotons(); 
         }
-        else if(creator_process == "Cerenkov") {
+        else if( creator_process == "Cerenkov") {
           fEventAction->IncPhotonCount_Cher();
           if (primary) primary->IncrementCherPhotons();
         }
       }
-      else if(creator_process == "OpWLS") {
+      else {
         fEventAction->IncPhotonCount_WLS();
       }
 #ifdef SLAR_DEBUG

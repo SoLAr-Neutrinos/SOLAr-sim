@@ -726,17 +726,24 @@ namespace bxdecay0_g4{
     if (IsTrace()) std::cerr << "[trace] bxdecay0_g4::SLArDecay0GeneratorAction::GeneratePrimaries: Entering..." << '\n';
     bxdecay0::event gendecay;
 
-    auto& gen_records = SLArAnalysisManager::Instance()->GetGenRecords();
-
     for (int iev = 0; iev < fConfig.n_decays; iev++) {
 
-            const auto & particles = gendecay.get_particles();
+      //printf("Setting gendecay time to %g\n", _decaytime_);
+      _pimpl_->get_decay0().shoot(_pimpl_->get_prng(), gendecay);
+      double event_time = 0.0 * CLHEP::second;
+      //Force event reference time to be zero (even if the generator tells something else):
+
+      gendecay.set_time(_decaytime_); 
+      if (gendecay.has_time()) {
+        event_time = gendecay.get_time() * CLHEP::second;
+      }
+      //printf("event time is %g\n", event_time);
+      double particle_time = 0.0 * CLHEP::second;
+      const auto & particles = gendecay.get_particles();
       if (IsDebug()) std::cerr << "[debug] bxdecay0_g4::SLArDecay0GeneratorAction::GeneratePrimaries: Nb particles=" << particles.size() << '\n';
 
       // Shoot the common vertex:
       G4ThreeVector vertex(0.0, 0.0, 0.0);
-      G4double event_time = 0.0*CLHEP::ns;
-      G4double reference_time = 0.0*CLHEP::ns;
       if (HasVertexGenerator()) {
         if (not fVtxGen->HasNextVertex()) {
           G4RunManager::GetRunManager()->AbortRun();
@@ -746,16 +753,7 @@ namespace bxdecay0_g4{
               "Vertex generator has no more vertex available! Abort run!");
         }
         fVtxGen->ShootVertex(vertex);  
-        reference_time = fVtxGen->GetTimeGenerator().SampleTime();
       }
-      //printf("Setting gendecay time to %g\n", _decaytime_);
-      _pimpl_->get_decay0().shoot(_pimpl_->get_prng(), gendecay);
-      //Force event reference time to be zero (even if the generator tells something else):
-      gendecay.set_time(reference_time / CLHEP::second); 
-      if (gendecay.has_time()) {
-        event_time = gendecay.get_time() * CLHEP::second;
-      }
-      double particle_time = 0.0 * CLHEP::second;
 
       // Scan the list of BxDecay0 generated particles:
       for (const auto & particle : particles) {
@@ -793,25 +791,12 @@ namespace bxdecay0_g4{
         // Push the BxDecay0 generated  particle in the stack of Geant4 primaries:
         _particle_gun_->GeneratePrimaryVertex(event_);
       }
-
-      gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
-
     }
     if (IsTrace()) std::cerr << "[trace] bxdecay0_g4::SLArDecay0GeneratorAction::GeneratePrimaries: Exiting..." << '\n';
     return;
   }
 
-  void SLArDecay0GeneratorAction::SourceConfiguration(const rapidjson::Value& config) {
-    CopyConfigurationToString(config);
-
-    if (config.HasMember("direction")) {
-      SourceDirectionConfig( config["direction"], fConfig.dir_config );
-    }
-
-    if (config.HasMember("energy")) {
-      SourceEnergyConfig( config["energy"], fConfig.ene_config );
-    }
-
+  void SLArDecay0GeneratorAction::Configure(const rapidjson::Value& config) {
     if ( config.HasMember("nuclide")) {
       fConfig.nuclide = config["nuclide"].GetString();
     } else {
@@ -828,17 +813,21 @@ namespace bxdecay0_g4{
       fConfig.n_decays = config["n_decays"].GetInt(); 
     }
 
+    if (config.HasMember("seed")) {
+      fConfig.seed = config["seed"].GetInt();
+    } else {
+      fConfig.seed = SLArAnalysisManager::Instance()->GetSeed(); 
+    }
+
     if (config.HasMember("vertex_gen")) {
-      SetupVertexGenerator( config["vertex_gen"] ); 
+      ConfigureVertexGenerator( config["vertex_gen"] ); 
     }
     else {
       fVtxGen = std::make_unique<SLArPointVertexGenerator>();
     }
-    return;
-  }
 
-  void SLArDecay0GeneratorAction::Configure() {
-    SetConfiguration( fConfig ); 
+    SetConfiguration(fConfig); 
+    return;
   }
 
   G4String SLArDecay0GeneratorAction::WriteConfig() const {

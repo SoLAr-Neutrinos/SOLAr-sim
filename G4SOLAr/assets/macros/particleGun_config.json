@@ -4,11 +4,12 @@
     "label" : "pgun_test", 
     "config" : {
       "particle" : "e-", 
-      "energy" : { "mode": "mono", "value" : {"val": 3.5, "unit": "MeV"} },
-      "direction" : {"mode" : "fixed", "axis" : [0, 1, 0]},
+      "energy" : {"val": 3.5, "unit": "MeV"}, 
+      "n_particles" : 1,
+      "direction" : [-1, 0, 0],
       "vertex_gen" : {
         "type" : "point", 
-        "config" : {"xyz" : [0, 15, 35], "unit" : "cm"}
+        "config" : {"xyz" : [15, 15, 35], "unit" : "cm"}
       }
     }
   }

@@ -10,6 +10,7 @@
 
 #include "G4Material.hh"
 #include "G4MaterialPropertiesTable.hh"
+#include "G4OpWLS.hh"
 #include "G4OpticalSurface.hh"
 #include "rapidjson/document.h"
 
@@ -39,12 +40,18 @@ class SLArMaterial {
     G4Material*         BuildFromNist(const rapidjson::Value& jptable); 
     G4Material*         BuildFromAtoms(const rapidjson::Value& jptable); 
     G4Material*         BuildFromMixture(const rapidjson::Value& jptable); 
-
+    //G4Material*         fPEN = nullptr;
   private:
+  
+    
+    void CreateMaterials();
+    
     G4String            fDBFile     ; 
     G4String            fMaterialID ;
     G4Material*         fMaterial   ;
     G4OpticalSurface*   fOpticalSurf;
+    //G4NistManager* fNistMan = nullptr;
+    //G4Material* fMatPEN = nullptr;
 };
 
 

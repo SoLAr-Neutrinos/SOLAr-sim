@@ -4,10 +4,9 @@
  * @created     Mon Jan 02, 2023 15:52:56 CET
  */
 
-#include <SLArPGunGeneratorAction.hh>
-#include <SLArAnalysisManager.hh>
-#include <SLArRandomExtra.hh>
-#include <G4ParticlePropertyTable.hh>
+#include "SLArPGunGeneratorAction.hh"
+#include "SLArRandomExtra.hh"
+#include "G4ParticlePropertyTable.hh"
 
 
 #include <G4Types.hh>
@@ -23,25 +22,6 @@ SLArPGunGeneratorAction::SLArPGunGeneratorAction(const G4String label)
   fParticleTable = G4ParticleTable::GetParticleTable(); 
 }
 
-void SLArPGunGeneratorAction::Configure() {
-  if (fConfig.dir_config.mode == EDirectionMode::kSunDir) {
-    TH1D* hist_nadir = this->GetFromRootfile<TH1D>(
-        fConfig.dir_config.nadir_hist.filename, 
-        fConfig.dir_config.nadir_hist.objname);
-
-    fNadirDistribution = std::unique_ptr<TH1D>( std::move(hist_nadir) ); 
-    printf("fNadirDistribution ptr: %p\n", fNadirDistribution.get());
-  }
-  if (fConfig.ene_config.mode == EEnergyMode::kExtSpectrum) {
-    TH1D* hist_spectrum = this->GetFromRootfile<TH1D>( 
-        fConfig.ene_config.spectrum_hist.filename , 
-        fConfig.ene_config.spectrum_hist.objname );
-
-    fEnergySpectrum = std::unique_ptr<TH1D>( std::move(hist_spectrum) ); 
-    printf("fEnergySpectrum ptr: %p\n", fNadirDistribution.get());
-  }
-  SetParticle( fConfig.particle_name.data() ); 
-}
 
 void SLArPGunGeneratorAction::SetParticle(const char* particle_name) {
   G4ParticleDefinition* particle = fParticleTable->FindParticle(particle_name); 
@@ -63,28 +43,21 @@ void SLArPGunGeneratorAction::SetParticle(G4ParticleDefinition* particle_def)
 
 void SLArPGunGeneratorAction::GeneratePrimaries(G4Event* anEvent) 
 {
-  SLArAnalysisManager* mngr = SLArAnalysisManager::Instance();
-  auto& gen_status_vec = mngr->GetGenRecords();
-
-  for (size_t i = 0; i < fConfig.n_particles; i++) {
+  for (size_t i = 0; i < fGunConfig.n_particles; i++) {
     G4ThreeVector vtx(0, 0, 0); 
-    
+    G4ParticleMomentum p(0, 0, 1); 
+    if (fGunConfig.direction_mode == EDirectionMode::kFixedDir) {
+      p.set( fGunConfig.direction.x(), fGunConfig.direction.y(), fGunConfig.direction.z()); 
+    } 
+    else if (fGunConfig.direction_mode == EDirectionMode::kRandomDir) {
+      G4ThreeVector random_dir = SampleRandomDirection(); 
+      p.set(random_dir.x(), random_dir.y(), random_dir.z()); 
+    }
     fVtxGen->ShootVertex( vtx ); 
-    const G4double vtx_time = fVtxGen->GetTimeGenerator().SampleTime();
     fParticleGun->SetParticlePosition( vtx ); 
-    fParticleGun->SetParticleMomentumDirection( SampleDirection(fConfig.dir_config) );
-    fParticleGun->SetParticleEnergy( SampleEnergy(fConfig.ene_config) ); 
-    fParticleGun->SetParticleTime( vtx_time ); 
-    printf("PGun time: %g\n", vtx_time);
+    fParticleGun->SetParticleMomentumDirection( p );
+    fParticleGun->SetParticleEnergy( fGunConfig.particle_energy ); 
     fParticleGun->GeneratePrimaryVertex(anEvent);
-
-    fConfig.ene_config.energy_tmp = fParticleGun->GetParticleEnergy();
-    fConfig.dir_config.direction_tmp.set(
-        fParticleGun->GetParticleMomentumDirection().x(), 
-        fParticleGun->GetParticleMomentumDirection().y(), 
-        fParticleGun->GetParticleMomentumDirection().z());
-    
-    auto& record = gen_status_vec.AddRecord(GetGeneratorEnum(), GetLabel());
   }
 }
 
@@ -95,29 +68,40 @@ SLArPGunGeneratorAction::~SLArPGunGeneratorAction()
   printf("DONE\n");
 }
 
-void SLArPGunGeneratorAction::SourceConfiguration(const rapidjson::Value& config) {
-
-  CopyConfigurationToString(config);
-
-  if (config.HasMember("n_particles")) {
-    fConfig.n_particles = config["n_particles"].GetInt();
-  }
-
-  if (config.HasMember("direction")) {
-    SourceDirectionConfig( config["direction"], fConfig.dir_config );
-  }
-
-  if (config.HasMember("energy")) {
-    SourceEnergyConfig( config["energy"], fConfig.ene_config );
-  }
-
+void SLArPGunGeneratorAction::Configure(const rapidjson::Value& config) {
   if (config.HasMember("particle")) {
-    fConfig.particle_name = config["particle"].GetString();
-    SetParticle( fConfig.particle_name ); 
+    fGunConfig.particle_name = config["particle"].GetString();
+    SetParticle( fGunConfig.particle_name ); 
   }
-
+  if (config.HasMember("energy")) {
+    fGunConfig.particle_energy = unit::ParseJsonVal( config["energy"] ); 
+  }
+  if (config.HasMember("n_particles")) {
+    fGunConfig.n_particles = config["n_particles"].GetInt();
+  }
+  if (config.HasMember("direction")) {
+    if (config["direction"].IsString()) {
+      G4String dir_mode = config["direction"].GetString(); 
+      if (dir_mode == "isotropic") {
+        fGunConfig.direction_mode = EDirectionMode::kRandomDir;
+      } else if (dir_mode == "fixed") {
+        fGunConfig.direction_mode = EDirectionMode::kFixedDir;
+        fGunConfig.direction.set(0, 0, 1); 
+      }
+    }
+    else if (config["direction"].IsArray()) {
+      fGunConfig.direction_mode = EDirectionMode::kFixedDir;
+      assert( config["direction"].GetArray().Size() == 3 ); 
+      G4double dir[3] = {0}; 
+      G4int idir = 0; 
+      for (const auto& p : config["direction"].GetArray()) {
+        dir[idir] = p.GetDouble(); idir++; 
+      }
+      fGunConfig.direction.set(dir[0], dir[1], dir[2]); 
+    }
+  }
   if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
+    ConfigureVertexGenerator( config["vertex_gen"] ); 
   }
   else {
     fVtxGen = std::make_unique<SLArPointVertexGenerator>();
@@ -126,38 +110,41 @@ void SLArPGunGeneratorAction::SourceConfiguration(const rapidjson::Value& config
   return;
 }
 
-//G4String SLArPGunGeneratorAction::WriteConfig() const {
-  //G4String config_str = "";
+G4String SLArPGunGeneratorAction::WriteConfig() const {
+  G4String config_str = "";
 
-  //rapidjson::Document d; 
-  //d.SetObject(); 
-  //rapidjson::StringBuffer buffer;
-  //rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+  rapidjson::Document d; 
+  d.SetObject(); 
+  rapidjson::StringBuffer buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
 
-  //G4String gen_type = GetGeneratorType(); 
+  G4String gen_type = GetGeneratorType(); 
 
-  //d.AddMember("type" , rapidjson::StringRef(gen_type.data()), d.GetAllocator()); 
-  //d.AddMember("label", rapidjson::StringRef(fLabel.data()), d.GetAllocator()); 
-  //d.AddMember("particle", rapidjson::StringRef(fConfig.particle_name.data()), d.GetAllocator()); 
+  d.AddMember("type" , rapidjson::StringRef(gen_type.data()), d.GetAllocator()); 
+  d.AddMember("label", rapidjson::StringRef(fLabel.data()), d.GetAllocator()); 
+  d.AddMember("particle", rapidjson::StringRef(fGunConfig.particle_name.data()), d.GetAllocator()); 
+  d.AddMember("energy", fGunConfig.particle_energy, d.GetAllocator()); 
+  if (fGunConfig.direction_mode == EDirectionMode::kFixedDir) {
+    d.AddMember("direction_mode", rapidjson::StringRef("fixed"), d.GetAllocator()); 
+    rapidjson::Value jdir; 
+    jdir.SetArray();
+    jdir.PushBack( fGunConfig.direction.x(), d.GetAllocator() ); 
+    jdir.PushBack( fGunConfig.direction.y(), d.GetAllocator() ); 
+    jdir.PushBack( fGunConfig.direction.z(), d.GetAllocator() ); 
+    d.AddMember("direction", jdir, d.GetAllocator()); 
+  }
+  else if (fGunConfig.direction_mode == EDirectionMode::kRandomDir) {
+    d.AddMember("direction_mode", rapidjson::StringRef("isotropic"), d.GetAllocator()); 
+  }
 
-  //const rapidjson::Document ene_doc = ExportEnergyConfig(); 
-  //rapidjson::Value ene_val; 
-  //ene_val.CopyFrom(ene_doc, d.GetAllocator()); 
-  //d.AddMember("energy", ene_val, d.GetAllocator()); 
+  const rapidjson::Document vtx_json = fVtxGen->ExportConfig(); 
+  rapidjson::Value vtx_config;
+  vtx_config.CopyFrom(vtx_json, d.GetAllocator()); 
+  d.AddMember("vertex_generator", vtx_config, d.GetAllocator()); 
 
-  //const rapidjson::Document dir_doc = ExportDirectionConfig(); 
-  //rapidjson::Value dir_val; 
-  //dir_val.CopyFrom(dir_doc, d.GetAllocator()); 
-  //d.AddMember("direction", dir_val, d.GetAllocator()); 
-
-  //const rapidjson::Document vtx_json = fVtxGen->ExportConfig(); 
-  //rapidjson::Value vtx_config;
-  //vtx_config.CopyFrom(vtx_json, d.GetAllocator()); 
-  //d.AddMember("vertex_generator", vtx_config, d.GetAllocator()); 
-
-  //d.Accept(writer);
-  //config_str = buffer.GetString();
-  //return config_str;
-//}
+  d.Accept(writer);
+  config_str = buffer.GetString();
+  return config_str;
+}
 
 }

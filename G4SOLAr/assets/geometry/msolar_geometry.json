@@ -2,9 +2,19 @@
   "World" : {
     "copyID" : 0, 
     "dimensions" : [
-      {"name" : "size_x" , "val" :  3.5, "unit": "m"},    
-      {"name" : "size_y" , "val" :  4.0, "unit": "m"},   
-      {"name" : "size_z" , "val" :  6.5, "unit": "m"}
+      {"name" : "size_x" , "val" :  5.5, "unit": "m"},    
+      {"name" : "size_y" , "val" :  6.0, "unit": "m"},   
+      {"name" : "size_z" , "val" :  8.5, "unit": "m"}
+    ]
+  },
+  "Cavern" : {
+    "copyID" : 1,
+    "dimensions" : [
+      {"name" : "inner_size_x" , "val" : 5.35, "unit" : "m"},
+      {"name" : "inner_size_y" , "val" : 5.85, "unit" : "m"},
+      {"name" : "inner_size_z" , "val" : 7.35, "unit" : "m"},
+      {"name" : "rock_thickness" , "val" : 40.0, "unit" : "cm"},
+      {"name" : "shotcrete_thickness", "val" : 15.0, "unit" : "cm"}
     ]
   },
   "TPC" : [
@@ -12,7 +22,7 @@
       "position": {"xyz" : [-50.05, 0, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
       "dimensions" : [
-        {"name" : "tpc_x"  , "val" : 1.01, "unit" :  "m"},
+        {"name" : "tpc_x"  , "val" : 99.9, "unit" :  "cm"},
         {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
         {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
       ], 
@@ -25,11 +35,31 @@
         "height_short_side" : {"val" : 46, "unit" : "mm"}
       }
     },
+    
+    {"copyID" : 44, 
+      "position": {"xyz" : [-0.7375, 0, 0], "unit" : "mm"},
+      "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
+      "dimensions" : [
+        {"name" : "tpc_x"  , "val" : 0.475, "unit" :  "mm"},
+        {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
+        {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
+        ]
+    },
+    {"copyID" : 45, 
+      "position": {"xyz" : [0.7375, 0, 0], "unit" : "mm"},
+      "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [-1, 0, 0]},
+      "dimensions" : [
+        {"name" : "tpc_x"  , "val" : 0.475, "unit" :  "mm"},
+        {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
+        {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
+        ]
+    },
+    
     {"copyID" : 11, 
       "position": {"xyz" : [50.05, 0, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [-1, 0, 0]},
       "dimensions" : [
-        {"name" : "tpc_x"  , "val" : 1.01, "unit" :  "m"},
+        {"name" : "tpc_x"  , "val" : 99.9, "unit" :  "cm"},
         {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
         {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
       ], 
@@ -53,6 +83,46 @@
      ]
     }
   ],
+
+   "PENFilm" : [
+   {"copyID": 42,
+    "position" : {"xyz": [0.9875, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 0.025, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     },
+   {"copyID": 43,
+    "position" : {"xyz": [-0.9875, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 0.025, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     }
+   ],
+  /*
+   "ESRFilm" : [
+   {"copyID": 44,
+    "position" : {"xyz": [1.01, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 65, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     },
+   {"copyID": 45,
+    "position" : {"xyz": [-1.01, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 65, "unit" : "um"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     }
+   ],   
+*/
+
   "Anode" : [
     {"copyID" : 50, 
       "tpcID" : 10,

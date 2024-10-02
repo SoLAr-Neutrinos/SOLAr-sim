@@ -4,9 +4,9 @@
     "label" : "pbomb_test", 
     "config" : {
       "particle" : "opticalphoton", 
-      "energy" : {"mode" : "mono", "value" : {"val" : 9.68, "unit" : "eV"}}, 
+      "energy" : {"val" : 10, "unit" : "eV"}, 
       "n_particles" : 5000, 
-      "direction" : {"mode":"isotropic"}, 
+      "direction" : "isotropic", 
       "vertex_gen" : {
         "type" : "point", 
         "config" : {"xyz" : [-50, -30, -60], "unit" : "cm"}

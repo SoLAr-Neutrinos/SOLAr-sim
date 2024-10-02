@@ -13,7 +13,7 @@
         "wall_distance" : {"val" : 50, "unit" : "cm"},
         "spacing" : {"val" : 60, "unit" : "mm"}, 
         "height_long_side" : {"val" : 13, "unit" : "mm"},
-        "height_short_side" : {"val" : 15, "unit" : "mm"}
+        "height_short_side" : {"val" : 46, "unit" : "mm"}
       }
     },
     {"copyID" : 11, 
@@ -30,7 +30,7 @@
         "wall_distance" : {"val" : 50, "unit" : "cm"},
         "spacing" : {"val" : 60, "unit" : "mm"}, 
         "height_long_side" : {"val" : 13, "unit" : "mm"},
-        "height_short_side" : {"val" : 15, "unit" : "mm"}
+        "height_short_side" : {"val" : 46, "unit" : "mm"}
       }
     }
   ],

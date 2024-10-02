@@ -38,6 +38,7 @@
 #include "globals.hh"
 
 #include "G4OpWLS.hh"
+#include "G4OpWLS2.hh"
 #include "G4Cerenkov.hh"
 #include "G4Scintillation.hh"
 
@@ -46,6 +47,7 @@
 #include "G4OpAbsorption.hh"
 #include "G4OpBoundaryProcess.hh"
 #include "SLArScintillation.h"
+
 
 #include "G4VPhysicsConstructor.hh"
 
@@ -59,8 +61,8 @@ class SLArOpticalPhysics : public G4VPhysicsConstructor
     virtual void ConstructParticle();
     virtual void ConstructProcess();
 
-    //G4OpWLS*         GetWLSProcess()
-                                           //{return fWLSProcess;}
+    G4OpWLS*         GetWLSProcess()
+                                           {return fWLSProcess;}
     G4Cerenkov*      GetCerenkovProcess()
                                            {return fCerenkovProcess;}
     SLArScintillation* GetScintillationProcess()
@@ -78,7 +80,7 @@ class SLArOpticalPhysics : public G4VPhysicsConstructor
 
   private:
 
-    //G4OpWLS*             fWLSProcess;
+    G4OpWLS*             fWLSProcess;
     G4Cerenkov*          fCerenkovProcess;
     SLArScintillation*   fScintProcess;
     G4OpAbsorption*      fAbsorptionProcess;

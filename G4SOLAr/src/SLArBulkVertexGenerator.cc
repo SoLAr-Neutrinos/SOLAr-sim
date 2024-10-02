@@ -4,13 +4,11 @@
  * @created     : giovedì giu 23, 2022 15:34:13 CEST
  */
 
-#include <SLArBulkVertexGenerator.hh>
-#include <G4PhysicalVolumeStore.hh>
+#include "SLArBulkVertexGenerator.hh"
+#include "G4PhysicalVolumeStore.hh"
 #include <G4TransportationManager.hh>
 #include <G4Material.hh>
-#include <G4RandomTools.hh>
-
-#include <TMath.h>
+#include "G4RandomTools.hh"
 
 namespace gen {
 SLArBulkVertexGenerator::SLArBulkVertexGenerator()
@@ -111,18 +109,19 @@ void SLArBulkVertexGenerator::SetNoDaughters(bool no_daughters_)
  
 void SLArBulkVertexGenerator::ShootVertex(G4ThreeVector & vertex_)
 {
+
   // sample a random vertex inside the volume given by fVolumeName
   G4ThreeVector lo; 
   G4ThreeVector hi;
   fSolid->BoundingLimits(lo, hi);
 
-  printf("lo: [%.1f, %.1f, %.1f]\nhi: [%.1f, %.1f, %.1f]\n", 
-      lo.x(), lo.y(), lo.z(), hi.x(), hi.y(), hi.z());
+  //printf("lo: [%.1f, %.1f, %.1f]\nhi: [%.1f, %.1f, %.1f]\n", 
+      //lo.x(), lo.y(), lo.z(), hi.x(), hi.y(), hi.z());
 
   double delta = 0.; 
   if (fFVFraction < 1.0) {
     delta = ComputeDeltaX(lo, hi); 
-    printf("delta = %g\n", delta);
+    //printf("delta = %g\n", delta);
   }
 
   auto navigator = G4TransportationManager::GetTransportationManager()->GetNavigator("World"); 
@@ -138,8 +137,6 @@ void SLArBulkVertexGenerator::ShootVertex(G4ThreeVector & vertex_)
 
     G4VPhysicalVolume* vol = navigator->LocateGlobalPointAndSetup(localVertex);
     localMaterial = vol->GetLogicalVolume()->GetMaterial()->GetName();
-    printf("coords: [%.0f, %.0f, %.0f] mm. vol: %s - material: %s\n", 
-        localVertex.x(), localVertex.y(), localVertex.z(), vol->GetName().data(), localMaterial.data());
   } while (!fSolid->Inside(localVertex) && ++itry < maxtries && strcmp(fMaterial, localMaterial) != 0) ;
 
   G4ThreeVector vtx = fBulkInverseRotation(localVertex) + fBulkTranslation;
@@ -148,47 +145,29 @@ void SLArBulkVertexGenerator::ShootVertex(G4ThreeVector & vertex_)
 }
 
 double SLArBulkVertexGenerator::ComputeDeltaX(
-    const G4ThreeVector& lo, const G4ThreeVector& hi) const {
-  return ComputeDeltaX(lo, hi, fFVFraction);
-}
+    G4ThreeVector& lo, G4ThreeVector& hi, double fiducialf) {
+  if (fiducialf == 0) fiducialf = fFVFraction; 
 
-double SLArBulkVertexGenerator::ComputeDeltaX(
-    const G4ThreeVector& lo, const G4ThreeVector& hi, const double fiducialf) const {
-  // box dimensions in m reduce rounding errors
-  const std::array<double,3> dx = {
-    (hi.x() - lo.x())/CLHEP::m,
-    (hi.y() - lo.y())/CLHEP::m,
-    (hi.z() - lo.z())/CLHEP::m}; 
-  const double short_side = *( std::min_element(dx.begin(), dx.end()) );
+  double deltax = 0.; 
+  double A = hi.x() - lo.x(); 
+  double B = hi.y() - lo.y(); 
+  double C = hi.z() - lo.z(); 
 
-  const double a = 1.0; 
-  const double b = -dx[0]-dx[1]-dx[2]; 
-  const double c = dx[0]*dx[1] + dx[0]*dx[2] + dx[1]*dx[2]; 
-  const double d = -dx[0]*dx[1]*dx[2]*(1-fiducialf);
+  //printf("A: %g, B: %g, C: %g, f: %g\n", A, B, C, fiducialf);
 
-  double r0 = 0, r1 = 0, r2 = 0; 
-  const double coeff[4] = {d, c, b, a};
-  bool has_one_rroot = TMath::RootsCubic(coeff, r0, r1, r2); 
+  double a = 1.0; 
+  double b = -1.0*(A+B+C); 
+  double c = (A*B + A*C + B*C); 
+  double d = -1.0*(A*B*C)*(1-fiducialf); 
 
-  auto is_a_good_root = [short_side] (const double rroot) {
-    if (rroot < 0) {return false;}
-    if (rroot > short_side) {return false;}
-    return true;
-  };
+  double D0 = b*b - 3*a*c; 
+  double D1 = 2*b*b*b -9*a*b*c +27*a*a*d; 
+  double DD = std::cbrt(0.5*(D1 + std::sqrt(D1*D1 -4*D0*D0*D0)));
 
-  if (has_one_rroot) {
-    r0 = 0.5*r0*CLHEP::m;
-    return r0;
-  }
-  else {
-    if      ( is_a_good_root(r0) ) {r0 = 0.5*r0*CLHEP::m; return r0;}
-    else if ( is_a_good_root(r1) ) {r1 = 0.5*r1*CLHEP::m; return r1;}
-    else if ( is_a_good_root(r2) ) {r2 = 0.5*r2*CLHEP::m; return r2;}
-    else {
-      printf("SLArBulkVertexGenerator::ComputeDeltaX() WARNING: no root matches the required conditions\n"); 
-      return 0.0;
-    }
-  }
+  deltax = - (b + DD + D0/DD) / (3*a); 
+  //printf("deltax: %g\n", deltax); 
+
+  return deltax; 
 }
 
 void SLArBulkVertexGenerator::Config(const G4String& volumeName) {
@@ -206,7 +185,7 @@ void SLArBulkVertexGenerator::Config(const G4String& volumeName) {
 }
 
 void SLArBulkVertexGenerator::Config(const rapidjson::Value& cfg) {
-  if ( cfg.HasMember("volume")==false ) {
+  if ( !cfg.HasMember("volume") ) {
     throw std::invalid_argument("Missing mandatory \"volume\" field from bulk vtx generator specs.\n"); 
   }
   G4String volName = cfg["volume"].GetString(); 
@@ -220,10 +199,6 @@ void SLArBulkVertexGenerator::Config(const rapidjson::Value& cfg) {
     fMaterial = cfg["material"].GetString(); 
     fRequireMaterialMatch = true;
   }
-  if ( cfg.HasMember("time") ) {
-    fTimeGen.SourceConfiguration( cfg["time"] );
-  }
-
   Config(volName);
 }
 
@@ -264,13 +239,6 @@ const rapidjson::Document SLArBulkVertexGenerator::ExportConfig() const {
   mass_val.AddMember("val", GetMassVolumeGenerator()/CLHEP::kg, vtx_info.GetAllocator()); 
   mass_val.AddMember("unit", "kg", vtx_info.GetAllocator()); 
   vtx_info.AddMember("mass", mass_val, vtx_info.GetAllocator()); 
-
-  auto dtime = fTimeGen.ExportConfig();
-  rapidjson::Value jtime; jtime.SetObject();
-  jtime.CopyFrom( dtime, vtx_info.GetAllocator() );
-  vtx_info.AddMember("time", jtime, vtx_info.GetAllocator());
-
-
   return vtx_info;
 }
 }

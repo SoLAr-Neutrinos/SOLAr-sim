@@ -198,6 +198,13 @@ class SLArScintillation : public G4VRestDiscreteProcess
 
   void SetVerboseLevel(G4int);
   // sets verbosity
+  
+  std::vector<double> energyVec ={}; 
+  std::vector<double> wavelengthVec={}; 
+  const double h = 6.626e-34;
+  const double c = 2.99e8;
+  const double e_charge = 1.6e-19;
+  const double hc = (h*c)/e_charge;
 
  private:
 

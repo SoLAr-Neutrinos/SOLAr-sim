@@ -18,6 +18,7 @@
 #include "detector/TPC/SLArLArSD.hh"
 #include "detector/TPC/SLArExtScorerSD.hh"
 
+
 #include "detector/Anode/SLArDetReadoutTile.hh"
 #include "detector/Anode/SLArReadoutTileSD.hh"
 
@@ -144,11 +145,11 @@ void SLArDetectorConstruction::Init() {
     fCavernGeoPars.ReadFromJSON(jcavern["dimensions"].GetArray()); 
   }
   else {
-    fCavernGeoPars.RegisterGeoPar("inner_size_x", fWorldGeoPars.GetGeoPar("size_x")-1.0*CLHEP::m); 
-    fCavernGeoPars.RegisterGeoPar("inner_size_y", fWorldGeoPars.GetGeoPar("size_y")-1.0*CLHEP::m); 
-    fCavernGeoPars.RegisterGeoPar("inner_size_z", fWorldGeoPars.GetGeoPar("size_z")-1.0*CLHEP::m);
-    fCavernGeoPars.RegisterGeoPar("rock_thickness", 10*CLHEP::cm); 
-    fCavernGeoPars.RegisterGeoPar("shotcrete_thickness", 5*CLHEP::cm); 
+    fCavernGeoPars.RegisterGeoPar("inner_size_x", 3*CLHEP::m); 
+    fCavernGeoPars.RegisterGeoPar("inner_size_y", 5*CLHEP::m); 
+    fCavernGeoPars.RegisterGeoPar("inner_size_z",18*CLHEP::m);
+    fCavernGeoPars.RegisterGeoPar("rock_thickness", 1*CLHEP::m); 
+    fCavernGeoPars.RegisterGeoPar("shotcrete_thickness", 20*CLHEP::cm); 
   }
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -156,6 +157,9 @@ void SLArDetectorConstruction::Init() {
   G4cerr << "SLArDetectorConstruction::Init TPC" << G4endl;
   InitTPC(d["TPC"]); 
   InitCathode(d["Cathode"]);
+  InitPENFilm(d["PENFilm"]);
+  //fCathodeSkin = new SLArDetCathode();
+  //InitESRFilm(d["ESRFilm"]);
   ConstructTarget(); 
 
   fCryostat = new SLArDetCryostat(); 
@@ -204,14 +208,34 @@ void SLArDetectorConstruction::InitTPC(const rapidjson::Value& jtpc) {
 
 void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
   assert(jcathode.IsArray()); 
-
+  //fCathodeSkin = new SLArDetCathode();
   for (const auto &jcath : jcathode.GetArray()) {
     SLArDetCathode* detCathode = new SLArDetCathode(); 
     detCathode->Init(jcath); 
     fCathode.insert(std::make_pair(detCathode->GetID(), detCathode)); 
   }
-} 
+}
 
+void SLArDetectorConstruction::InitPENFilm(const rapidjson::Value& jpenfilm) {
+  assert(jpenfilm.IsArray());
+  
+  for (const auto &jpen : jpenfilm.GetArray()) {
+  SLArPENFilm* PENFILM = new SLArPENFilm();
+  PENFILM->Init(jpen);
+  fPENFilm.insert(std::make_pair(PENFILM->GetID(), PENFILM));
+  }
+} 
+/*
+void SLArDetectorConstruction::InitESRFilm(const rapidjson::Value& jesrfilm) {
+  assert(jesrfilm.IsArray());
+  
+  for (const auto &jpen : jesrfilm.GetArray()) {
+  SLArESRFilm* ESRFILM = new SLArESRFilm();
+  ESRFILM->Init(jpen);
+  fESRFilm.insert(std::make_pair(ESRFILM->GetID(), ESRFILM));
+  }
+} 
+*/
 void SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell) {
   fSuperCell = new SLArDetSuperCell(); 
   assert(jsupercell.HasMember("dimensions")); 
@@ -422,7 +446,9 @@ void SLArDetectorConstruction::ConstructCryostat() {
 void SLArDetectorConstruction::ConstructCathode() {
   for (auto &cathode : fCathode) {
     cathode.second->BuildMaterial(fMaterialDBFile); 
-    cathode.second->BuildCathode(); 
+    cathode.second->BuildCathode();
+    //cathode.second->BuildLogicalSkinSurface(); 
+    G4cout << "Building logical skin surface" << G4endl;
     auto geoinfo = cathode.second->GetGeoInfo(); 
     cathode.second->GetModPV(
         "cathode_pv_"+std::to_string(cathode.first), 0, 
@@ -432,6 +458,39 @@ void SLArDetectorConstruction::ConstructCathode() {
         fDetector->GetModLV(), 0, cathode.first); 
   }
 }
+
+void SLArDetectorConstruction::ConstructPENFilm() {
+  for (auto &penfilm : fPENFilm) {
+    penfilm.second->BuildMaterial(fMaterialDBFile);
+    penfilm.second->BuildPEN();
+    auto geoinfo = penfilm.second->GetGeoInfo();
+    penfilm.second->GetModPV(
+    "penfilm_pv_"+std::to_string(penfilm.first), 0,
+    G4ThreeVector(geoinfo -> GetGeoPar("pos_x"),
+      geoinfo->GetGeoPar("pos_y"),
+      geoinfo->GetGeoPar("pos_z")),
+    fDetector->GetModLV(), 0, penfilm.first);
+  }  
+}
+
+/*
+void SLArDetectorConstruction::ConstructESRFilm() {
+	
+  for (auto &esrfilm : fESRFilm) {
+    esrfilm.second->BuildMaterial(fMaterialDBFile);
+    esrfilm.second->BuildESR();
+    esrfilm.second->BuildLogicalSkinSurface();
+    auto geoinfo = esrfilm.second->GetGeoInfo();
+    esrfilm.second->GetModPV(
+    "esrfilm_pv_"+std::to_string(esrfilm.first), 0,
+    G4ThreeVector(geoinfo -> GetGeoPar("pos_x"),
+      geoinfo->GetGeoPar("pos_y"),
+      geoinfo->GetGeoPar("pos_z")),
+    fDetector->GetModLV(), 0, esrfilm.first);
+  }  
+  G4cout << "We want to see here!" << G4endl;
+}
+/*
 
 /**
  * @details Construct the world volume, build and place the 
@@ -483,6 +542,13 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
 
   G4cout << "\nSLArDetectorConstruction: Building the Cathode" << G4endl;
   ConstructCathode(); 
+
+
+  G4cout << "\nSLArDetectorConstruction: Building the PEN film" << G4endl;
+  ConstructPENFilm();
+  
+  //G4cout << "\nSLArDetectorConstruction: Building the ESR film" << G4endl;
+  //ConstructESRFilm();
 
   G4cout << "\nSLArDetectorConstruction: Building the TPCs" << G4endl;
   for (auto &tpc : fTPC) {

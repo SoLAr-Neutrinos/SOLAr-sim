@@ -60,7 +60,7 @@ SLArPrimaryGeneratorAction::SLArPrimaryGeneratorAction()
 SLArPrimaryGeneratorAction::SLArPrimaryGeneratorAction(const rapidjson::Value& config) 
 : SLArPrimaryGeneratorAction()
 {
-  SourceConfiguration( config ); 
+  Configure( config ); 
 
   return;
 }
@@ -76,15 +76,15 @@ SLArPrimaryGeneratorAction::SLArPrimaryGeneratorAction(const G4String config_fil
   d.ParseStream<rapidjson::kParseCommentsFlag>(is);
   assert(d.IsObject());
 
-  SourceConfiguration( d ); 
+  Configure( d ); 
 
   std::fclose( config_file ); 
 }
 
-void SLArPrimaryGeneratorAction::SourceConfiguration(const G4String config_file_path) {
+void SLArPrimaryGeneratorAction::Configure(const G4String config_file_path) {
   FILE* gen_cfg_file = std::fopen(config_file_path, "r");
   if (gen_cfg_file == nullptr) {
-    fprintf(stderr, "SLArPrimaryGeneratorAction::SourceConfiguration ERROR: Cannot open configuration file %s",
+    fprintf(stderr, "SLArPrimaryGeneratorAction::Configure ERROR: Cannot open configuration file %s",
         config_file_path.data());
     exit( EXIT_FAILURE ); 
   }
@@ -95,13 +95,13 @@ void SLArPrimaryGeneratorAction::SourceConfiguration(const G4String config_file_
   d.ParseStream<rapidjson::kParseCommentsFlag>(is);
   assert(d.IsObject());
 
-  SourceConfiguration( d );
+  Configure( d );
 
   fclose( gen_cfg_file ); 
   return;
 }  
 
-void SLArPrimaryGeneratorAction::SourceConfiguration(const rapidjson::Value& configuration) {
+void SLArPrimaryGeneratorAction::Configure(const rapidjson::Value& configuration) {
   if (fGeneratorActions.empty() == false) {
     Reset();
   }
@@ -115,7 +115,7 @@ void SLArPrimaryGeneratorAction::SourceConfiguration(const rapidjson::Value& con
         AddGenerator(gen_config); 
       }
       catch (const std::invalid_argument& e) {
-        std::cerr << "SLArPrimaryGeneratorAction::SourceConfiguration ERROR:" << std::endl;
+        std::cerr << "SLArPrimaryGeneratorAction::Configure ERROR:" << std::endl;
         std::cerr << e.what() <<std::endl;
         exit( EXIT_FAILURE ); 
       }
@@ -124,7 +124,7 @@ void SLArPrimaryGeneratorAction::SourceConfiguration(const rapidjson::Value& con
   else if (gen_list.IsObject()) {
     try {AddGenerator( gen_list );}
     catch (const std::invalid_argument& e) {
-      std::cerr << "SLArPrimaryGeneratorAction::SourceConfiguration ERROR:" << std::endl;
+      std::cerr << "SLArPrimaryGeneratorAction::Configure ERROR:" << std::endl;
       std::cerr << e.what() <<std::endl;
       exit( EXIT_FAILURE ); 
     }
@@ -166,17 +166,15 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kParticleGun) : 
       {
         auto gen = new SLArPGunGeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen; 
         break;
       }
 
     case (kParticleBomb) : 
       {
-        auto gen = new SLArPBombGeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        auto gen = new SLArPGunGeneratorAction(label); 
+        gen->Configure( jgen["config"] ); 
         this_gen = gen; 
         break;
       }
@@ -184,8 +182,7 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kDecay0) : 
       {
         auto gen = new bxdecay0_g4::SLArDecay0GeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen; 
         break;
       }
@@ -193,8 +190,7 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kMarley) : 
       {
         auto gen = new marley::SLArMarleyGeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen;
         break;
       }
@@ -202,8 +198,7 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kExternalGen) : 
       {
         auto gen = new SLArExternalGeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen; 
         break;
       }
@@ -211,8 +206,7 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kGENIE) : 
       {
         auto gen = new SLArGENIEGeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen; 
         break;
       }
@@ -221,8 +215,7 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kCRY) : 
       {
         auto gen = new cry::SLArCRYGeneratorAction(label); 
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen; 
         break;
       }
@@ -232,8 +225,7 @@ void SLArPrimaryGeneratorAction::AddGenerator(const rapidjson::Value& jgen) {
     case (kRadSrc) : 
       {
         auto gen = new radsrc::SLArRadSrcGeneratorAction(label);
-        gen->SourceConfiguration( jgen["config"] ); 
-        gen->Configure();
+        gen->Configure( jgen["config"] ); 
         this_gen = gen;
         break;
       }
@@ -262,7 +254,7 @@ SLArPrimaryGeneratorAction::~SLArPrimaryGeneratorAction()
     igen = gen.second->GetGeneratorEnum();
     printf("igen = %i\n", igen);
     if (gen.second) {
-      printf("Deleting gen %i [%s]\n", igen, gen.second->GetLabel().data());
+      printf("Deleting gen %i\n", igen);
       if (igen == kParticleGun) {
         SLArPGunGeneratorAction* local = (SLArPGunGeneratorAction*)gen.second;
         delete local;

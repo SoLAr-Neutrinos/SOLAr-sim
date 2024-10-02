@@ -50,6 +50,8 @@ class SLArMCEvent : public TObject
     void SetDirection(double* dir = nullptr); 
     //! Set the event direction
     void SetDirection(double px, double py, double pz);
+    //! Get the event direction
+    inline std::array<double, 3> GetDirection() {return fDirection;}
     int ConfigAnode (const std::map<int, SLArCfgAnode>& anodeCfg);
     int ConfigSuperCellSystem (const SLArCfgSystemSuperCell& supercellSysCfg); 
 
@@ -77,7 +79,7 @@ class SLArMCEvent : public TObject
 
   private:
     int fEvNumber; //!< Event number
-    //std::array<double, 3>  fDirection; //!< Event Direction 
+    std::array<double, 3>  fDirection; //!< Event Direction 
     //! Event's primary particles (and associated secondaries)
     std::vector<SLArMCPrimaryInfo> fSLArPrimary;  
     //! Event data structure of the readout tile system

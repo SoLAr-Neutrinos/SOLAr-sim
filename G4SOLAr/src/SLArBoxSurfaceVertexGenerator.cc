@@ -224,9 +224,6 @@ void SLArBoxSurfaceVertexGenerator::ShootVertex(G4ThreeVector & vertex_)
 }
 
 void SLArBoxSurfaceVertexGenerator::Config( const rapidjson::Value& config) {
-if ( config.HasMember("time") ) {
-    fTimeGen.SourceConfiguration( config["time"] );
-  }
   if ( !config.HasMember("volume") ) {
     throw std::invalid_argument("box surface vtx gen missing mandatory \"volume\" field\n");
   }
@@ -321,12 +318,7 @@ const rapidjson::Document SLArBoxSurfaceVertexGenerator::ExportConfig() const {
   surface_val.AddMember("val", GetSurfaceGenerator() / CLHEP::cm2, vtx_info.GetAllocator()); 
   surface_val.AddMember("unit", "cm2", vtx_info.GetAllocator()); 
   vtx_info.AddMember("surface", surface_val, vtx_info.GetAllocator()); 
-
-  auto dtime = fTimeGen.ExportConfig();
-  rapidjson::Value jtime; jtime.SetObject();
-  jtime.CopyFrom( dtime, vtx_info.GetAllocator() );
-  vtx_info.AddMember("time", jtime, vtx_info.GetAllocator());
-
+  
   return vtx_info;
 }
 }

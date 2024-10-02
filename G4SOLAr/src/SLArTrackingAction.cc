@@ -92,18 +92,16 @@ void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
 
   //Lets choose to draw only the photons that hit the sphere and a pmt
   if (fpTrackingManager->GetStoreTrajectory()) {
-    if(aTrack->GetDefinition()==
-        G4OpticalPhoton::OpticalPhotonDefinition()){
+    if(aTrack->GetDefinition()==G4OpticalPhoton::OpticalPhotonDefinition()){
       SLArUserPhotonTrackInformation*
         trackInformation=(SLArUserPhotonTrackInformation*)aTrack->GetUserInformation();
 
-      /*
-       *const G4VProcess* creator=aTrack->GetCreatorProcess();
-       *if(creator && creator->GetProcessName()=="OpWLS"){
-       *  trajectory->WLS();
-       *  trajectory->SetDrawTrajectory(true);
-       *}
-       */
+      //const G4VProcess* creator=aTrack->GetCreatorProcess();
+      //if(creator && creator->GetProcessName()=="OpWLS"){
+      // trajectory->WLS();
+      // trajectory->SetDrawTrajectory(false);
+      //trajectory->SetDrawTrajectory(true);
+      //}
 
       //if((trackInformation->GetTrackStatus()&hitPMT)|| 
       //(trackInformation->GetTrackStatus()&absorbed) ||

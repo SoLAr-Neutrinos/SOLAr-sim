@@ -28,10 +28,6 @@
 // MARLEY includes
 #include <marley/Generator.hh>
 
-// ROOT includes
-#include <TH2F.h>
-#include <TH1F.h>
-
 class G4Event;
 
 namespace gen {
@@ -40,41 +36,35 @@ namespace marley {
 class SLArMarleyGeneratorAction : public SLArBaseGenerator
 {
   public:
-    struct TargetConfig_t {
-      std::vector<G4int> nuclides; 
-      std::vector<G4double> fraction; 
-    }; 
-
-    struct MarleyConfig_t : public GenConfig_t {
-      G4String neutrino_label = "ve"; 
-      std::vector<G4String> reactions; 
-      TargetConfig_t target; 
-      ExtSourceInfo_t oscillogram_info;
+    struct MarleyConfig_t {
+      G4String marley_config_path {};
+      G4double time = 0.0; 
+      G4int    n_particles = 1; 
+      EDirectionMode direction_mode = EDirectionMode::kRandomDir;
+      G4ThreeVector direction {0, 0, 0};
     };
-
     SLArMarleyGeneratorAction(G4String label = "");
     ~SLArMarleyGeneratorAction() {};
 
     G4String GetGeneratorType() const override {return "marley";}
     EGenerator GetGeneratorEnum() const override {return kMarley;}
 
-    void Configure() override; 
-    void SourceConfiguration(const rapidjson::Value& config) override;
+    void Configure(const rapidjson::Value& config) override;
     void SetupMarleyGen(const std::string& config_file_name);
     void SetupMarleyGen(); 
     virtual void GeneratePrimaries(G4Event*) override;
-    inline virtual void SetGenRecord( SLArGenRecord& record) const override {
-      SLArBaseGenerator::SetGenRecord(record, fConfig);
-    } 
-    //G4String WriteConfig() const override;
+    void SetNuDirection(G4ThreeVector dir) {fMarleyConfig.direction.set(dir.x(), dir.y(), dir.z());} 
+    G4ThreeVector GetNuDirection() {return fMarleyConfig.direction;}
+
+    G4String WriteConfig() const override;
 
   protected:
     // MARLEY event generator object
-    MarleyConfig_t fConfig;
+    MarleyConfig_t fMarleyConfig;
     ::marley::Generator fMarleyGenerator;
-    std::map<double, double> fHalfLifeTable;
-    std::unique_ptr<TH2F> fOscillogram;
     double SampleDecayTime(const double half_life) const;
+    std::map<double, double> fHalfLifeTable;
+    
 };
 }
 }

@@ -22,7 +22,6 @@
 
 namespace gen {
 namespace cry {
-
 template<class T>
 class RNGWrapper { 
   public:
@@ -46,7 +45,7 @@ template<class T> double RNGWrapper<T>::rng(void) { return (m_obj->*m_func)(); }
 class SLArCRYGeneratorAction : public SLArBaseGenerator 
 {
   public: 
-    struct CRYConfig_t : public GenConfig_t {
+    struct CRYConfig_t {
       std::map<G4String, G4bool> activeParticles {
         {"electrons", false}, 
         {"gammas", false}, 
@@ -71,8 +70,7 @@ class SLArCRYGeneratorAction : public SLArBaseGenerator
 
     virtual void GeneratePrimaries(G4Event* ev) override; 
 
-    void SourceConfiguration(const rapidjson::Value& config) override; 
-    void Configure() override;
+    void Configure(const rapidjson::Value& config) override; 
     G4String WriteConfig() const override;
 
     G4String GetGeneratorType() const override {return "cry";}

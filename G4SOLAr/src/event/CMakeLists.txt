@@ -84,7 +84,6 @@ add_library(SLArMCEvent
   SHARED
   ${G4SOLAR_SRC_DIR}/event/SLArMCEvent.cc
   ${G4SOLAR_INCLUDE_DIR}/event/SLArMCEvent.hh
-  ${G4SOLAR_INCLUDE_DIR}/event/SLArGenRecords.hpp
   )
 target_include_directories(SLArMCEvent 
   PUBLIC 
@@ -96,7 +95,6 @@ target_link_libraries(SLArMCEvent
                       SLArMCEventReadout)
 ROOT_GENERATE_DICTIONARY(G__SLArMCEvent
   ${G4SOLAR_INCLUDE_DIR}/event/SLArMCEvent.hh
-  ${G4SOLAR_INCLUDE_DIR}/event/SLArGenRecords.hpp
   MODULE SLArMCEvent
   LINKDEF
   ${G4SOLAR_INCLUDE_DIR}/event/SLArMCEventLinkDef.h

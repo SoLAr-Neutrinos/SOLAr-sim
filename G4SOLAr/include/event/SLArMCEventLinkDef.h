@@ -7,8 +7,5 @@
 #pragma link C++ class std::map<int, SLArEventSuperCellArray>++;
 #pragma link C++ class std::map<int, SLArEventAnode>++;
 #pragma link C++ class SLArMCEvent+;
-#pragma link C++ class SLArGenRecord+; 
-#pragma link C++ class std::vector<SLArGenRecord>+; 
-#pragma link C++ class SLArGenRecordsVector+;
 #endif
 

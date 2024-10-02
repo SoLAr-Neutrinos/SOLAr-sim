@@ -18,15 +18,18 @@ namespace gen {
 class SLArPGunGeneratorAction : public SLArBaseGenerator
 {
   public: 
-    struct PGunConfig_t : public GenConfig_t {
+    struct PGunConfig_t {
       G4String particle_name = "e-"; 
+      G4double particle_energy = 1.0; 
+      G4int    n_particles = 1; 
+      EDirectionMode direction_mode = EDirectionMode::kFixedDir;
+      G4ThreeVector direction {0, 0, 1};
     };
 
     SLArPGunGeneratorAction(const G4String label=""); 
     ~SLArPGunGeneratorAction(); 
 
-    void SourceConfiguration(const rapidjson::Value& config) override;
-    void Configure() override;
+    void Configure(const rapidjson::Value& config) override;
 
     G4String GetGeneratorType() const override {return "particlegun";}
     EGenerator GetGeneratorEnum() const override {return kParticleGun;}
@@ -41,16 +44,13 @@ class SLArPGunGeneratorAction : public SLArBaseGenerator
       {fParticleGun->SetParticleTime(time);}
     void SetParticle(const char* particle_name); 
     void SetParticle(G4ParticleDefinition* particle_def); 
-    inline virtual void SetGenRecord( SLArGenRecord& record) const override {
-      SLArBaseGenerator::SetGenRecord(record, fConfig);
-    } 
     void GeneratePrimaries(G4Event*) override; 
 
-    //G4String WriteConfig() const override; 
+    G4String WriteConfig() const override; 
 
 
   protected: 
-    PGunConfig_t fConfig; 
+    PGunConfig_t fGunConfig; 
     std::unique_ptr<G4ParticleGun> fParticleGun; 
     G4ParticleTable* fParticleTable; 
 

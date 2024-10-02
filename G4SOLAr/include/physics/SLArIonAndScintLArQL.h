@@ -17,7 +17,7 @@
 
 class SLArIonAndScintLArQL : public SLArIonAndScintModel {
 
-  public:
+  private:
     // ************************************************************************
     // LArQL Argon Scintillation Prediction PARAMETRIZATION
     // https://lss.fnal.gov/archive/2022/conf/fermilab-conf-22-088-nd.pdf

@@ -111,10 +111,10 @@ SLArScintillation::SLArScintillation(const G4String& processName,
   secID = G4PhysicsModelCatalog::GetModelID("model_Scintillation");
   SetProcessSubType(fScintillation);
 
-#ifdef G4DEBUG_SCINTILLATION
+//#ifdef G4DEBUG_SCINTILLATION
   ScintTrackEDep  = 0.;
   ScintTrackYield = 0.;
-#endif
+//#endif
 
   // Messenger for configuration of the electric field
   scint_mesg_ = new G4GenericMessenger(this, "/SLAr/scint/", "Control Scinitllation Process");
@@ -135,6 +135,41 @@ SLArScintillation::SLArScintillation(const G4String& processName,
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+/*
+void write_to_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
+    // Make a CSV file with one or more columns of integer values
+    // Each column of data is represented by the pair <column name, column data>
+    //   as std::pair<std::string, std::vector<int>>
+    // The dataset is represented as a vector of these columns
+    // Note that all columns should be the same size
+    
+    // Create an output filestream object
+    std::ofstream myFile(filename);
+    
+    // Send column names to the stream
+    for(int j = 0; j < dataset.size(); ++j)
+    {
+        myFile << dataset.at(j).first;
+        if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+    }
+    myFile << "\n";
+    
+    // Send data to the stream
+    for(int i = 0; i < dataset.at(0).second.size(); ++i)
+    {
+        for(int j = 0; j < dataset.size(); ++j)
+        {
+            myFile << dataset.at(j).second.at(i);
+            if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+        }
+        myFile << "\n";
+    }
+    
+    // Close the file
+    myFile.close();
+}
+*/
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 SLArScintillation::~SLArScintillation()
 {
   if(fIntegralTable1 != nullptr)
@@ -152,7 +187,17 @@ SLArScintillation::~SLArScintillation()
     fIntegralTable3->clearAndDestroy();
     delete fIntegralTable3;
   }
+/*
+std::sort(energyVec.begin(),energyVec.end()); //Sorting the vector
+std::vector<int>::size_type sz = energyVec.size();
 
+for(unsigned i=0; i<sz; i++){
+	wavelengthVec.push_back(hc/energyVec.at(i));
+}
+
+std::vector<std::pair<std::string, std::vector<double>>> EnergyVec = {{"Energy - eV", energyVec}, {"Wavelength - m", wavelengthVec}}; 
+write_to_csv("energy_vec.csv", EnergyVec);
+*/
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -640,6 +685,7 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
       // Determine photon energy
       G4double CIIvalue      = G4UniformRand() * CIImax;
       G4double sampledEnergy = scintIntegral->GetEnergy(CIIvalue);
+      
 
       if(verboseLevel > 1)
       {
@@ -668,6 +714,7 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
         new G4DynamicParticle(opticalphoton, photonMomentum);
       scintPhoton->SetPolarization(photonPolarization);
       scintPhoton->SetKineticEnergy(sampledEnergy);
+      //energyVec.push_back(sampledEnergy/CLHEP::eV); 
 
       // Generate new G4Track object:
       G4double rand = G4UniformRand();
@@ -916,7 +963,7 @@ G4double SLArScintillation::GetScintillationYieldByParticleType(
                          yieldVector->GetMaxEnergy() * StepEnergyDeposit;
   }
 
-#ifdef G4DEBUG_SCINTILLATION
+//#ifdef G4DEBUG_SCINTILLATION
   // Increment track aggregators
   ScintTrackYield += ScintillationYield;
   ScintTrackEDep += StepEnergyDeposit;
@@ -946,7 +993,7 @@ G4double SLArScintillation::GetScintillationYieldByParticleType(
     ScintTrackEDep  = 0.;
     ScintTrackYield = 0.;
   }
-#endif
+//#endif
 
   return ScintillationYield;
 }

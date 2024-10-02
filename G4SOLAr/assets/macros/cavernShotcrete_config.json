@@ -5,14 +5,8 @@
     "config" : {
       "particle" : "neutron", 
       "n_particles" : 1,
-      "direction" : {"mode" : "isotropic"},
-      "energy" : {
-        "mode" : "ext_spectrum", 
-        "energy_distribution" : {
-          "filename" : "./assets/background/neutron_rates_20240313.root", 
-          "objname" : "shotcrete/shotcrete_total"
-        }
-      },
+      "energy_spectrum_file" : "/home/guff/Dune/SOLAr/SOLAr-sim/install/assets/background/neutron_rates_20240313.root",
+      "energy_spectrum_key" : "shotcrete/shotcrete_total",
       "vertex_gen" : {
         "type" : "bulk", 
         "config" : {

@@ -33,7 +33,7 @@ class SLArDecay0GeneratorAction : public SLArBaseGenerator {
     /// \brief BxDecay0 generator configuration interface for Geant4 (used also by the associated messenger class)
     ///
     /// @see PrimaryGeneratorAction::SetConfiguration
-    struct Decay0Config_t : public GenConfig_t
+    struct Decay0Config_t
     {
       void print(std::ostream & out_, const std::string & indent_ = "") const;
       void reset_base();
@@ -68,14 +68,14 @@ class SLArDecay0GeneratorAction : public SLArBaseGenerator {
       G4double  mdl_cone_aperture   = 0.0; // degree 
       G4double  mdl_cone_aperture2  = -1.0; // degree (only for rectangular aperture)
       G4bool    mdl_error_on_missing_particle = false;
+      
     };
  
     SLArDecay0GeneratorAction(const G4String label = "decay0", int verbosity_ = 0); 
     SLArDecay0GeneratorAction(const Decay0Config_t&, const G4String label, int verbosity_); 
     ~SLArDecay0GeneratorAction() override;    
 
-    void Configure() override;
-    void SourceConfiguration( const rapidjson::Value& config) override;
+    void Configure( const rapidjson::Value& config) override;
 
     G4String GetGeneratorType() const override {return "decay0";}
     EGenerator GetGeneratorEnum() const override {return kDecay0;}
@@ -116,10 +116,6 @@ class SLArDecay0GeneratorAction : public SLArBaseGenerator {
     int GetVerbosity() const;
 
     void SetDecayTime(const double time); 
-
-    inline virtual void SetGenRecord( SLArGenRecord& record) const override {
-      SLArBaseGenerator::SetGenRecord(record, fConfig);
-    } 
 
     bool IsInfo() const;
  

@@ -10,6 +10,8 @@
 #include "SLArUserPhotonTrackInformation.hh"
 #include "SLArUserTrackInformation.hh"
 #include "SLArAnalysisManager.hh"
+#include "SLArEventPhotonHit.hh"
+#include "SLArReadoutTileHit.hh"
 
 #include "detector/SuperCell/SLArSuperCellSD.hh"
 #include "detector/Anode/SLArReadoutTileSD.hh"
@@ -39,8 +41,13 @@ SLArSteppingAction::SLArSteppingAction(SLArEventAction* ea, SLArTrackingAction* 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArSteppingAction::~SLArSteppingAction()
-{ }
+SLArSteppingAction::~SLArSteppingAction(){ 
+G4cout << "Cumulative Ek: " << ek_count << G4endl;
+G4cout << "Ek per scint: " << ek_count/count << G4endl;
+G4cout << "Photons produced: " << ph_count << G4endl;
+G4cout << "Scintillation events: " << count << G4endl;
+
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -52,7 +59,7 @@ trj_point SLArSteppingAction::set_evtrj_point(const G4StepPoint* point, const in
   step_point.fY = pos.y(); 
   step_point.fZ = pos.z(); 
   step_point.fKEnergy = point->GetKineticEnergy(); 
-  step_point.fEdep = 0.; 
+  step_point.fEdep = 0.;
   const auto physicalVol = point->GetPhysicalVolume();
   if (physicalVol) {
     step_point.fCopy = point->GetPhysicalVolume()->GetCopyNo(); 
@@ -76,6 +83,8 @@ trj_point SLArSteppingAction::set_evtrj_point(const G4StepPoint* point, const in
 void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 {
   G4Track* track = step->GetTrack();
+  
+  
 
   const G4ParticleDefinition* particleDef = track->GetDynamicParticle()->
     GetParticleDefinition();
@@ -85,22 +94,25 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 
   G4StepPoint* thePostPoint = step->GetPostStepPoint();
   G4VPhysicalVolume* thePostPV = thePostPoint->GetPhysicalVolume();
+  
+  
+  auto secondary = step->GetSecondaryInCurrentStep();
+  size_t size_secondary = (*secondary).size();
+
+  if (size_secondary){
+     for (size_t i=0; i<(size_secondary);i++){
+     auto secstep = (*secondary)[i];
+
+     G4String secondaryName = secstep->GetDefinition()->GetParticleName();
+     G4cout << "Secondary Name: " << secondaryName << G4endl;
+     auto secondaryID = secstep->GetTrackID();
+ 	}
+      }
   // handle exception of particles reaching the end of the world
   if (!thePostPV) thePostPV = thePrePV;
 
-//#ifdef SLAR_DEBUG
-  //printf("Particle: %s at [%.0f , %0.f, %0.f] - trkID %i- Boundary check: %s (%s) | %s (%s)\n", 
-      //particleDef->GetParticleName().data(),
-      //thePrePoint->GetPosition().x(), thePrePoint->GetPosition().y(), thePrePoint->GetPosition().z(), 
-      //track->GetTrackID(),
-      //thePrePV->GetName().c_str(), 
-      //thePrePV->GetLogicalVolume()->GetMaterial()->GetName().c_str(), 
-      //thePostPV->GetName().c_str(), 
-      //thePostPV->GetLogicalVolume()->GetMaterial()->GetName().c_str());
-//#endif
 
 
-  
   if (track->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) {
     auto trkInfo = (SLArUserTrackInformation*)track->GetUserInformation(); 
     SLArEventTrajectory* trajectory = trkInfo->GimmeEvTrajectory();
@@ -108,22 +120,48 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     auto stepMngr = fTrackinAction->GetTrackingManager()->GetSteppingManager(); 
     int n_ph = 0; 
     int n_el = 0; 
+    
+    
+   
+
+
+
 
     if (stepMngr->GetfStepStatus() != fAtRestDoItProc) {
       G4ProcessVector* process_vector = stepMngr->GetfPostStepDoItVector(); 
       for (size_t iproc = 0; iproc < stepMngr->GetMAXofPostStepLoops(); iproc++) {
         G4VProcess* proc = (*process_vector)[iproc]; 
-
+        
+        //G4cout << proc->GetProcessName() << G4endl;
+		
         if (proc->GetProcessName() == "Scintillation") {
-          SLArScintillation* scint_process = (SLArScintillation*)proc; 
-
-          n_ph = scint_process->GetNumPhotons(); 
-          n_el = scint_process->GetNumIonElectrons(); 
+          SLArScintillation* scint_process = (SLArScintillation*)proc;       
           
-          break;
+          n_ph = scint_process->GetNumPhotons();  
+          n_el = scint_process->GetNumIonElectrons(); 
+          ek = step->GetTotalEnergyDeposit()*CLHEP::eV;
+          
+          ph_count = ph_count + n_ph;
+          ek_count = ek_count + ek;
+          count = count + 1;
+          
+       	
+       
+          //G4cout << "Physical Volume: " << thePostPoint->GetPhysicalVolume()->GetName() << G4endl;
+          //G4cout << "Logical Volume: " << thePostPoint->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
+          //G4cout << "Process Name: " << thePostPoint->GetProcessDefinedStep()->GetProcessName() << G4endl;
+          //G4cout << "Physical Volume: " << thePrePoint->GetPhysicalVolume()->GetName() << G4endl;
+          //G4cout << "Logical Volume: " << thePrePoint->GetPhysicalVolume()->GetLogicalVolume()->GetName() << G4endl;
+          //G4cout << "Process Name: " << thePrePoint->GetProcessDefinedStep()->GetProcessName() << G4endl;
+          
+         
+    
+   
+          break;	 
         } 
       }
     }
+
 
     if (trkInfo->CheckStoreTrajectory() == true) {
       if (trajectory->GetPoints().empty()) {
@@ -146,6 +184,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     trajectory->IncrementNion( n_el ); 
     trajectory->IncrementNph ( n_ph ); 
 
+
     //printf("SLArSteppingAction::UserSteppingAction: adding %i ph and %i e ion. to %s [%i]\n", 
         //n_ph, n_el, 
         //particleDef->GetParticleName().c_str(), track->GetTrackID());
@@ -159,11 +198,12 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 
     G4String terminator; 
 
+
 #ifdef SLAR_EXTERNAL
    if (thePostPoint->GetStepStatus() == fGeomBoundary) {
       if ( G4StrUtil::contains(thePostPV->GetLogicalVolume()->GetMaterial()->GetName(), "LAr") )
       {
-        track->SetTrackStatus( fStopAndKill ); 
+        track->SetTrackStatus( fStopAndKill ); phInfo
         
         auto& ext_record = SLArAnalysisManager::Instance()->GetExternalRecord(); 
         auto iev = G4RunManager::GetRunManager()->GetCurrentRun()->GetNumberOfEvent();
@@ -175,7 +215,6 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
                                       thePostPoint->GetPosition().z()); 
 
         SLArAnalysisManager::Instance()->GetExternalsTree()->Fill(); 
-
         ext_record.Reset(); 
 
         terminator = "SLArUserInterfaceKiller";
@@ -312,20 +351,20 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
       switch(boundaryStatus){
         case Absorption:
           {
-#ifdef SLAR_DEBUG
+
             G4cout << "SLArSteppingAction::UserSteppingAction Absorption" << G4endl;
             printf("ph E = %.2f eV; pre/post step point volume: %s/%s\n", 
                 track->GetTotalEnergy()*1e6,
                 thePrePV->GetName().c_str(), thePostPV->GetName().c_str()); 
-#endif
+
             if (phInfo) phInfo->AddTrackStatusFlag(boundaryAbsorbed);
             fEventAction->IncBoundaryAbsorption();
             break;
           }
         case NoRINDEX:
 #ifdef SLAR_DEBUG
-          printf("SLArSteppingAction::UserSteppingAction NoRINDEX\n");
-          printf("ph E = %.2f eV; pre/post step point volume: %s/%s\n", 
+          //printf("SLArSteppingAction::UserSteppingAction NoRINDEX\n");
+          //printf("ph E = %.2f eV; pre/post step point volume: %s/%s\n", 
               track->GetTotalEnergy()*1e6,
               thePrePV->GetName().c_str(), thePostPV->GetName().c_str()); 
 #endif
@@ -340,7 +379,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
             G4TouchableHistory* touchable = 
               (G4TouchableHistory*)thePostPoint->GetTouchable(); 
 #ifdef SLAR_DEBUG
-            G4cout << "SLArSteppingAction::UserSteppingAction Detection" << G4endl;
+          //  G4cout << "SLArSteppingAction::UserSteppingAction Detection" << G4endl;
 #endif
             G4SDManager* SDman = G4SDManager::GetSDMpointer();
             G4String volName = touchable->GetVolume()->GetName();
@@ -352,13 +391,14 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
             SLArSuperCellSD* supercellSD = nullptr; 
 
 #ifdef SLAR_DEBUG
-             printf("Detection in %s - copy id [%i]\n", 
+             //printf("Detection in %s - copy id [%i]\n", 
                  volName.c_str(), touchable->GetCopyNumber(0)); 
-             //getchar(); 
-#endif
+             //getchar();
+             
+#endif  
 
             if (phInfo) phInfo->AddTrackStatusFlag(hitPMT);
-            if (volName=="SiPMActivePV") {
+            	if (volName=="SiPMActivePV") {
 //#ifdef SLAR_DEBUG
               //printf("Copy No hierarchy: [%i, %i, %i, %i, %i, %i, %i, %i, %i, %i]\n", 
                   //touchable->GetCopyNumber(0), 
@@ -373,8 +413,8 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
                   //touchable->GetCopyNumber(9)
                   //);
               //for (int i=0; i<10; i++) {
-                //printf("depth %i: %s\n", i, touchable->GetVolume(i)->GetName().c_str());   
-              //}
+                //printf("depth %i: %s\n", i, touchable->GetVolume(i)->GetName());   
+             //}
 
               //getchar(); 
 //#endif
@@ -433,5 +473,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     //printf("PASSED\n");
 //#endif
 
-}
+} 
+
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

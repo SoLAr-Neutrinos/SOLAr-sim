@@ -1,5 +1,4 @@
-#----------------------------------------------------------------------------
-# Setup the project
+# setup the project
 cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 project(G4SOLAr)
 
@@ -303,5 +302,3 @@ install(TARGETS solar_sim
 # relies on these scripts being in the current working directory.
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/assets DESTINATION ${G4SOLAR_BIN_DIR})
-
-

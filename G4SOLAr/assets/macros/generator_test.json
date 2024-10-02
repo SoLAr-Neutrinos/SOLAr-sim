@@ -5,20 +5,12 @@
       "label" : "pgun_test", 
       "config" : {
         "particle" : "e-", 
-        "energy" : {
-          "mode" : "monoenergetic", 
-          "value" : {"val" : 2, "unit" : "MeV"}
-        },
-        "direction" : {
-          "mode" : "fixed", 
-          "axis" : [0, 1, 0]
-        },
+        "energy" : {"val": 2, "unit": "MeV"}, 
+        "n_particles" : 3,
+        "direction" : "isotropic",
         "vertex_gen" : {
           "type" : "point", 
-          "config" : {
-            "xyz" : [0, 15, 35], "unit" : "cm",
-            "time" : {"mode" : "fixed", "event_time" : {"val" : 4.0, "unit" : "ns"}}
-          }
+          "config" : {"xyz" : [0, 15, 35], "unit" : "cm"}
         }
       }
     }
@@ -28,9 +20,9 @@
       "label" : "pbomb_test", 
       "config" : {
         "particle" : "opticalphoton", 
-        "energy" : {"mode":"monoenergetic", "value":{"val" : 9.68, "unit" : "eV"}}, 
+        "energy" : {"val" : 9.68, "unit" : "eV"}, 
         "n_particles" : 5, 
-        "direction" : {"mode" : "isotropic"},
+        "direction" : "isotropic", 
         "vertex_gen" : {
           "type" : "point", 
           "config" : {"xyz" : [-50, -30, -60], "unit" : "cm"}
@@ -41,23 +33,8 @@
       "type" : "marley", 
       "label" : "marley_test", 
       "config" : {
-        "target" : {"nuclides" : [1000180400], "atom_fractions" : [1.0]}, 
-        "reactions" : ["ve40ArCC_Bhattacharya2009.react"], 
-        "direction" : {
-          "mode" : "sun", 
-          "nadir_histogram" : {
-            "filename" : "./assets/marley_cfg/nadir_pdf.root", 
-            "objname" : "nadir_hist_surf"
-          }
-        },
-        "energy" : {
-          "mode" : "mono", 
-          "value" : {"val" : 10, "unit" : "MeV"}
-        },
-        "oscillogram" : {
-          "filename" : "./assets/marley_cfg/B8_oscillogram_local.root", 
-          "objname" : "b8_oscillogram"
-        },
+        "marley_config_path" : "assets/marley_cfg/b8_osc_spect_CC_nue.js", 
+        "direction" : "isotropic", 
         "vertex_gen" : {
           "type" : "bulk", 
           "config" : {
@@ -74,19 +51,10 @@
       "config" : {
         "decay0_type" : "background",
         "nuclide" : "Ar39", 
-        "n_decays" : 5,
+        "n_decays" : 8,
         "vertex_gen" : {
           "type" : "bulk", 
-          "config" : {
-            "volume" : "TPC10", 
-            "fiducial_fraction" : 0.20,
-            "time" : {
-              "mode" : "window", 
-              "event_window_limits" : {
-                "t0" : {"val": -10, "unit" : "ns"}, "t1" : {"val" : 10, "unit" : "ns"}
-              }
-            }
-          } 
+          "config" : {"volume" : "TPC10", "fiducial_fraction" : 0.20}
         }
       }
     }, 
@@ -95,17 +63,9 @@
       "label" : "cryostat_box", 
       "config" : {
         "particle" : "neutron", 
-        "n_particles" : 4,
-        "energy" : {
-          "mode" : "ext_spectrum", 
-          "energy_distribution" : {
-            "filename" : "./assets/background/neutron_rates_20240313.root",
-            "objname" : "rock/rock_total"
-          }
-        },
-        "direction" : {
-          "mode" : "isotropic"
-        },
+        "n_particles" : 10,
+        "energy_spectrum_file" : "/scratch/ross-solar/SOLAr-sim-main/install/assets/background/dune_cavern_n.root",
+        "energy_spectrum_key" : "EnergySpectrum",
         "vertex_gen" : {
           "type" : "boxsurface", 
           "config" : {
@@ -113,6 +73,20 @@
           }
         }
       }
+    }, 
+    {
+      "type" : "cry", 
+      "label" : "cosmics", 
+      "config" : {
+        "particles" : [ "muons" ], 
+        "date" : "07-06-2023", 
+        "latitude" : 46.95, 
+        "altitude" : 0, 
+        "box_lenght" : {"val" : 5.0, "unit" : "m"}, 
+        "n_particles_min" : 1, 
+        "n_particles_max" : 10, 
+        "generator_y" : {"val" : 2.0, "unit" : "m"}
+      }
     }
-  ]
+]
 }

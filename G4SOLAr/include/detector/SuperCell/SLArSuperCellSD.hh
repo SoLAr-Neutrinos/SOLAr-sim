@@ -51,6 +51,20 @@ public:
     virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist);
     G4bool ProcessHits_constStep(const G4Step* ,
                                  G4TouchableHistory* );
+
+    int ph_hits = 0;
+    double E_Kin = 0;
+    std::vector<double> xVec = {};
+    std::vector<double> yVec = {};
+    std::vector<double> zVec = {};
+    std::vector<double> PosVec = {}; 
+    
+    std::vector<double> energyVec ={}; 
+    std::vector<double> wavelengthVec={}; 
+    const double h = 6.626e-34;
+    const double c = 2.99e8;
+    const double e_charge = 1.6e-19;
+    const double hc = (h*c)/e_charge;    
    
 private:
     SLArSuperCellHitsCollection* fHitsCollection;

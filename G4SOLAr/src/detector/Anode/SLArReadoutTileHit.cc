@@ -199,6 +199,7 @@ void SLArReadoutTileHit::Print()
            << " : time "         << fTime/CLHEP::ns << " (nsec)"
            << " --- global (x,y) "<< G4BestUnit(fWorldPos.x(), "Length")
            << ", " << G4BestUnit(fWorldPos.y(), "Length") << G4endl;
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

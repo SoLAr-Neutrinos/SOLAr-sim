@@ -223,7 +223,7 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
       for (int i_t_row = 0; i_t_row < rpl_t_row.fNreplica; i_t_row++) {
         G4ThreeVector pos_t_row = 
           rpl_t_row.fStartingPos + rpl_t_row.fWidth*(i_t_row)*rpl_t_row.fReplicaAxisVec;
-        //printf("pos_t_row: %.2f, %.2f, %.2f\n", pos_t_row.x(), pos_t_row.y(), pos_t_row.z()); 
+        printf("pos_t_row: %.2f, %.2f, %.2f\n", pos_t_row.x(), pos_t_row.y(), pos_t_row.z()); 
         for (int i_t_clm = 0; i_t_clm < rpl_t_clm.fNreplica; i_t_clm++) {
           G4ThreeVector t_pos = 
             rpl_t_clm.fStartingPos + rpl_t_clm.fWidth*(i_t_clm)*rpl_t_clm.fReplicaAxisVec;

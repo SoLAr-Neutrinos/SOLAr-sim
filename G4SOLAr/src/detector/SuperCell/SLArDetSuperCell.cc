@@ -203,21 +203,20 @@ G4double SLArDetSuperCell::GetTotalHeight()
 
 
 void SLArDetSuperCell::SetPerfectQE(G4bool kQE)
-{
-  if (fPerfectQE==kQE) return;
+{ 
+    if (fPerfectQE==kQE) return;
   else 
   {     
     fPerfectQE = kQE;
-    G4cout << "SLArDetSuperCell::SetPerfectQE: Setting 100% QE between "
-           << "2 and 5 eV" << G4endl;
-    G4double phEne[2] = {2*CLHEP::eV, 5*CLHEP::eV};
-    G4double eff  [2] = {1.0 , 1.0 };
+    G4cout << "SLArDetReadoutTile::SetPerfectQE: Setting 100% QE between "
+           << "1 and 5 eV" << G4endl;
+    G4double phEne[5] = {2*CLHEP::eV, 3*CLHEP::eV, 4*CLHEP::eV, 5*CLHEP::eV, 13*CLHEP::eV};
+    G4double eff  [5] = {0.15, 0.15, 0.15, 0.03, 0.03};
     
-    //fMatCoating->GetMaterialBuilder()->GetSurface()
-               //->GetMaterialPropertiesTable()
-               //->AddProperty("EFFICIENCY", phEne, eff, 2);  
-  }
-
+    fMatCoating->GetMaterialOpticalSurf()
+            ->GetMaterialPropertiesTable()
+            ->AddProperty("EFFICIENCY", phEne, eff, 6);
+  }                  
   return;
 }
 
@@ -254,11 +253,16 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
 }
 
 G4LogicalSkinSurface* SLArDetSuperCell::BuildLogicalSkinSurface() {
-  fSkinSurface = 
-    new G4LogicalSkinSurface(
-        "PTP_LgSkin", 
-        fCoating->GetModLV(), 
-        fMatCoating->GetMaterialOpticalSurf());
+/*
+  auto SCproperties = new G4MaterialPropertiesTable();
+  
+  G4double phEne[5] = {2.0*CLHEP::eV, 3.0*CLHEP::eV, 4.0*CLHEP::eV, 5.0*CLHEP::eV, 6.0*CLHEP::eV};
+  G4double eff  [5] = {0.0, 0.0, 0.0, 1.0, 1.0};
+  
+  SCproperties->AddProperty("EFFICIENCY", phEne, eff, 5);
+  fMatCoating->GetMaterialOpticalSurf()->SetMaterialPropertiesTable(SCproperties);
+*/
+  fSkinSurface = new G4LogicalSkinSurface("PTP_LgSkin", fCoating->GetModLV(), fMatCoating->GetMaterialOpticalSurf());
 
   return fSkinSurface;
 }
