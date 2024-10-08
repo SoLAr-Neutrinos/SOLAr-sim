@@ -26,7 +26,7 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     void  SetProcess (EPhProcess p) {fProcess = p;}
     void  SetLocalPos(float x, float y, float z);
     void  SetWavelength(float w) {fWavelength = w;}
-    void  SetMegaTileROwNr(int id) {fMegaTileRowNr = id;}
+    void  SetMegaTileRowNr(int id) {fMegaTileRowNr = id;}
     void  SetMegaTileNr(int id) {fMegaTileNr = id;}
     void  SetRowTileNr(int id) {fRowTileNr = id;}
     void  SetTileNr(int id) {fTileNr = id;}
@@ -37,8 +37,8 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     int   GetMegaTileNr() const {return fMegaTileNr;}
     int   GetRowTileNr() const {return fRowTileNr;}
     int   GetTileNr() const {return fTileNr;}
-    inline int GetTileIdx() const {return (fRowTileNr+1)*100 + fTileNr;}
-    inline int GetMegaTileIdx() const {return (fMegaTileRowNr+1)*1000 + fMegaTileNr;}
+    inline int GetTileID() const {return (fRowTileNr+1)*100 + fTileNr;}
+    inline int GetMegaTileID() const {return (fMegaTileRowNr+1)*1000 + fMegaTileNr;}
     int   GetCellNr() const {return fCellNr;}
     int   GetRowCellNr() const {return fRowCellNr;}
     float GetWavelength() const {return fWavelength;}

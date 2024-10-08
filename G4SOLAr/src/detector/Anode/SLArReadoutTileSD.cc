@@ -187,10 +187,10 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
   hit->SetLocalPos(localPos);
   hit->SetTime(postStepPoint->GetGlobalTime());
   hit->SetAnodeIdx(touchable->GetCopyNumber(9));
-  hit->SetRowMegaTileIdx(touchable->GetCopyNumber(8)); 
-  hit->SetMegaTileIdx(touchable->GetCopyNumber(7));
-  hit->SetRowTileIdx(touchable->GetCopyNumber(6));
-  hit->SetTileIdx(touchable->GetCopyNumber(5));
+  hit->SetRowMegaTileReplicaNr(touchable->GetCopyNumber(8)); 
+  hit->SetMegaTileReplicaNr(touchable->GetCopyNumber(7));
+  hit->SetRowTileReplicaNr(touchable->GetCopyNumber(6));
+  hit->SetTileReplicaNr(touchable->GetCopyNumber(5));
   hit->SetRowCellNr(touchable->GetCopyNumber(4)); 
   hit->SetCellNr(touchable->GetCopyNumber(3)); 
   hit->SetPhotonProcess(procName);

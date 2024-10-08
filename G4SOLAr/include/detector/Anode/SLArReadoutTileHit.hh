@@ -64,14 +64,14 @@ public:
 
     inline void SetAnodeIdx(G4int idx) { fAnodeIdx= idx; }
     inline G4int GetAnodeIdx() const { return fAnodeIdx; }
-    inline void SetRowMegaTileIdx(G4int idx) { fRowMegaTileIdx= idx; }
-    inline G4int GetRowMegaTileIdx() const { return fRowMegaTileIdx; }
-    inline void SetMegaTileIdx(G4int idx) { fMegaTileIdx= idx; }
-    inline G4int GetMegaTileIdx() const { return fMegaTileIdx; }
-    inline void SetRowTileIdx(G4int idx) { fRowTileIdx= idx; }
-    inline G4int GetRowTileIdx() const { return fRowTileIdx; }
-    inline void SetTileIdx(G4int idx) { fTileIdx= idx; }
-    inline G4int GetTileIdx() const { return fTileIdx; }
+    inline void SetRowMegaTileReplicaNr(G4int idx) { fRowMegaTileReplicaNr= idx; }
+    inline G4int GetRowMegaTileReplicaNr() const { return fRowMegaTileReplicaNr; }
+    inline void SetMegaTileReplicaNr(G4int idx) { fMegaTileReplicaNr= idx; }
+    inline G4int GetMegaTileReplicaNr() const { return fMegaTileReplicaNr; }
+    inline void SetRowTileReplicaNr(G4int idx) { fRowTileReplicaNr= idx; }
+    inline G4int GetRowTileReplicaNr() const { return fRowTileReplicaNr; }
+    inline void SetTileReplicaNr(G4int idx) { fTileReplicaNr= idx; }
+    inline G4int GetTileReplicaNr() const { return fTileReplicaNr; }
     inline void SetCellNr(G4int n) {fCellNr = n;}
     inline G4int GetCellNr() const {return fCellNr;}
     inline void SetProducerID(const int trk_id) {fPhProducerID = trk_id;}
@@ -82,10 +82,10 @@ public:
     G4String GetProcessName(int kType) const;
     
     G4int         fAnodeIdx; 
-    G4int         fRowMegaTileIdx;
-    G4int         fMegaTileIdx;
-    G4int         fRowTileIdx; 
-    G4int         fTileIdx;
+    G4int         fRowMegaTileReplicaNr;
+    G4int         fMegaTileReplicaNr;
+    G4int         fRowTileReplicaNr; 
+    G4int         fTileReplicaNr;
     G4int         fRowCellNr; 
     G4int         fCellNr; 
     G4double      fWavelength;
