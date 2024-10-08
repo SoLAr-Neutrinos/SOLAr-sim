@@ -105,32 +105,34 @@ void SLArCfgBaseSystem<TAssemblyModule>::RegisterElement(TAssemblyModule& mod)
   printf("DONE\n");
   fNElements++; 
 }
-
-template<class TAssemblyModule>
-TH2Poly* SLArCfgBaseSystem<TAssemblyModule>::BuildPolyBinHist()
-{
-  TH2Poly* h2Bins = new TH2Poly();
-  h2Bins->SetName(fName+"_bins");
-
-  h2Bins->SetFloat();
-
-  int iBin = 1;
-  for (auto &mod : fElementsMap) 
-  {
-    //if (!mod.second->GetGraphShape()) {
-      //mod.second->BuildGShape(); 
-    //}
-    auto g = mod.second.BuildGShape(); 
-    TString gBinName = Form("gBin%i", iBin);
-    g.SetName( gBinName ); 
-    printf("SLArCfgBaseSystem::BuildPolyBinHist: Adding bin %i\n", iBin);
-    int bin_idx = h2Bins->AddBin( std::move(new TGraph(g)) );
-    mod.second.SetBinIdx(bin_idx);
-    iBin ++;
-  }
-
-  return h2Bins;
-}
+/*
+ *
+ *template<class TAssemblyModule>
+ *TH2Poly* SLArCfgBaseSystem<TAssemblyModule>::BuildPolyBinHist()
+ *{
+ *  TH2Poly* h2Bins = new TH2Poly();
+ *  h2Bins->SetName(fName+"_bins");
+ *
+ *  h2Bins->SetFloat();
+ *
+ *  int iBin = 1;
+ *  for (auto &mod : fElementsMap) 
+ *  {
+ *    //if (!mod.second->GetGraphShape()) {
+ *      //mod.second->BuildGShape(); 
+ *    //}
+ *    auto g = mod.second.BuildGShape(); 
+ *    TString gBinName = Form("gBin%i", iBin);
+ *    g.SetName( gBinName ); 
+ *    printf("SLArCfgBaseSystem::BuildPolyBinHist: Adding bin %i\n", iBin);
+ *    int bin_idx = h2Bins->AddBin( std::move(new TGraph(g)) );
+ *    mod.second.SetBinIdx(bin_idx);
+ *    iBin ++;
+ *  }
+ *
+ *  return h2Bins;
+ *}
+ */
 
 template<class TAssemblyModule>
 void SLArCfgBaseSystem<TAssemblyModule>::DumpMap() const

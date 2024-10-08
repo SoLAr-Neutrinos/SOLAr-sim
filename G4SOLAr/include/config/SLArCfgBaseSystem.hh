@@ -27,7 +27,7 @@ class SLArCfgBaseSystem : public SLArCfgBaseModule
     SLArCfgBaseSystem(TString name);
     ~SLArCfgBaseSystem();
 
-    virtual TH2Poly* BuildPolyBinHist(); 
+    //virtual TH2Poly* BuildPolyBinHist(); 
     void DumpMap() const;
     void DumpInfo() const override;
     TAssemblyModule& GetBaseElement(int idx); 
