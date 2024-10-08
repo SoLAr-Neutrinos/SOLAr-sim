@@ -752,6 +752,11 @@ void SLArDetectorConstruction::BuildAndPlaceSuperCells()
     array_cfg.SetX( pos.x() ); array_cfg.SetPhysX( glb_pos.x() );
     array_cfg.SetY( pos.y() ); array_cfg.SetPhysY( glb_pos.y() );
     array_cfg.SetZ( pos.z() ); array_cfg.SetPhysZ( glb_pos.z() );
+
+    TH2Poly* h2 = array_cfg.BuildPolyBinHist(SLArCfgSuperCellArray::ESubModuleReferenceFrame::kWorld, true);
+
+    delete h2;
+
     pdsCfg.RegisterElement( array_cfg ); 
   }
 
@@ -842,10 +847,11 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
     SLArCfgMegaTile& mtileCfg = anodeCfg.GetMap().front(); 
 
     printf("creating TH2Poly for a megatile...\n"); 
-    auto hMapMegaTile = anodeCfg.BuildPolyBinHist();
+    auto hMapMegaTile = anodeCfg.BuildPolyBinHist(SLArCfgAnode::kWorld, true);
     printf("mapMegaTile\n");
     auto hMapTile     = mtileCfg.BuildPolyBinHist(
-        SLArCfgAssembly<SLArCfgReadoutTile>::ESubModuleReferenceFrame::kRelative); 
+        SLArCfgAssembly<SLArCfgReadoutTile>::ESubModuleReferenceFrame::kRelative, 
+        true); 
     printf("mapTile\n");
     G4RotationMatrix* mtile_rot = new G4RotationMatrix(
         mtileCfg.GetPhi(), 
