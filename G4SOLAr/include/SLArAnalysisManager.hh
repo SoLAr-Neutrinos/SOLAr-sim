@@ -92,13 +92,22 @@ class SLArAnalysisManager
     TFile* GetFile() const {return   fRootFile;}
     SLArCfgSystemSuperCell& GetPDSCfg() {return  fPDSysCfg;}
     std::map<int, SLArCfgAnode>& GetAnodeCfg() {return fAnodeCfg;}
-    inline SLArCfgAnode& GetAnodeCfg(int id) {
-      if ( fAnodeCfg.count(id) ) return fAnodeCfg[id];
+    inline SLArCfgAnode& GetAnodeCfgByTPC(const int tpc_id) {
+      if ( fAnodeCfg.count(tpc_id) ) return fAnodeCfg[tpc_id];
       else {
         char error_msg[100]; 
-        std::sprintf(error_msg, "No Anode with id %i found in register. abort.\n\n", id);
-        throw std::runtime_error(error_msg); 
+        std::fprintf(stderr, "No Anode associated with TPC id %i found in register. abort.\n\n", tpc_id);
+        exit(EXIT_FAILURE);
       }
+    }
+    inline SLArCfgAnode& GetAnodeCfgByID(const int anode_id) {
+      for (auto& anode_cfg : fAnodeCfg) {
+        if (anode_cfg.second.GetIdx() == anode_id) {
+          return anode_cfg.second;
+        }
+      }
+      std::fprintf(stderr, "No anode with id %i found in register. abort.\n\n", anode_id); 
+      exit(EXIT_FAILURE);
     }
     inline const std::map<G4String, G4double>& GetPhysicsBiasingMap() {return fBiasing;}
     inline const std::vector<SLArXSecDumpSpec>& GetXSecDumpVector() {return fXSecDump;}

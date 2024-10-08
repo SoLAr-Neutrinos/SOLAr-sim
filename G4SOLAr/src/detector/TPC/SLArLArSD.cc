@@ -121,7 +121,7 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
     }
 
     try {
-      auto& anodeCfg = anaMngr->GetAnodeCfg(fTPCID);  
+      auto& anodeCfg = anaMngr->GetAnodeCfgByTPC(fTPCID);  
 
 
 #ifdef SLAR_DEBUG
