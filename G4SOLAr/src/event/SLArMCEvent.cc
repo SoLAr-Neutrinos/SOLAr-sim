@@ -78,7 +78,7 @@ int SLArMCEvent::ConfigSuperCellSystem(const SLArCfgSystemSuperCell& supercellSy
     }
 
     fEvSuperCellArray.insert(std::make_pair(scArray.first, SLArEventSuperCellArray(scArray.second)));
-    fEvSuperCellArray[scArray.first].ConfigSystem(scArray.second);
+    //fEvSuperCellArray[scArray.first].ConfigSystem(scArray.second);
   }
 
   return fEvSuperCellArray.size();

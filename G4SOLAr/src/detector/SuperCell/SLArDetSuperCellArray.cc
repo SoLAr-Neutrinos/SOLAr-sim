@@ -33,10 +33,10 @@ void SLArDetSuperCellArray::Init(const rapidjson::Value& jconf) {
   G4String xyz_suffix[3] = {"x", "y", "z"}; 
   G4String ang_suffix[3] = {"phi", "theta", "psi"}; 
 
-  printf("0 - here\n");
   assert(jconf.IsObject()); 
   auto jarray = jconf.GetObject(); 
 
+  assert(jarrry.HasMember("name"));
   assert(jarray.HasMember("copyID")); 
   assert(jarray.HasMember("position")); 
   assert(jarray.HasMember("dimensions")); 
@@ -45,6 +45,7 @@ void SLArDetSuperCellArray::Init(const rapidjson::Value& jconf) {
   assert(jarray.HasMember("tpcID")); 
   assert(jarray.HasMember("photodet_model"));
 
+  fName = jarray["name"].GetString();
 
   SetID( jarray["copyID"].GetInt() ); 
 
@@ -217,8 +218,8 @@ std::pair<int, G4double> SLArDetSuperCellArray::ComputeArrayTrueLength(
 
 SLArCfgSuperCellArray SLArDetSuperCellArray::BuildSuperCellArrayCfg() {
   SLArCfgSuperCellArray arrayCfg("SC_array_"+std::to_string(fID), fID); 
-  arrayCfg.SetIdx( fID ); 
 
+  arrayCfg.SetIdx( fID ); 
   arrayCfg.SetNormal( fNormal.x(), fNormal.y(), fNormal.z() ); 
   arrayCfg.SetupAxes(); 
   arrayCfg.SetPhi  ( fGeoInfo->GetGeoPar("scarray_phi") ); 
@@ -276,8 +277,8 @@ SLArCfgSuperCellArray SLArDetSuperCellArray::BuildSuperCellArrayCfg() {
 
       const auto scBox = (G4Box*)fSuperCell->GetModSV();
       scCfg.SetSize( 2*scBox->GetXHalfLength(),
-                      2*scBox->GetYHalfLength(), 
-                      2*scBox->GetZHalfLength() ); 
+                     2*scBox->GetYHalfLength(), 
+                     2*scBox->GetZHalfLength() ); 
 
       arrayCfg.RegisterElement( scCfg );
     }
