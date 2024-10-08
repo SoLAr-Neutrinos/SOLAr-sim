@@ -108,8 +108,9 @@ void SLArCfgAssembly<TBaseModule>::RegisterElement(TBaseModule& element)
 
 template<class TBaseModule>
 TH2Poly* SLArCfgAssembly<TBaseModule>::BuildPolyBinHist(
-    ESubModuleReferenceFrame kFrame, 
-    int n, int m)
+    const ESubModuleReferenceFrame kFrame, 
+    const bool set_bin_idx,
+    const int n, const int m)
 {
   TH2Poly* h2Bins = new TH2Poly();
   
@@ -132,7 +133,7 @@ TH2Poly* SLArCfgAssembly<TBaseModule>::BuildPolyBinHist(
       //getchar(); 
     }
     TString gBinName = Form("gBin%i", iBin);
-    int bin_idx = h2Bins->AddBin((TGraph*)g.Clone(gBinName));
+    int bin_idx = h2Bins->AddBin(std::move((TGraph*)g.Clone(gBinName)));
     el.SetBinIdx(bin_idx);
     fBinToIdxMap.insert( std::make_pair(bin_idx, i_element) ); 
     iBin ++;

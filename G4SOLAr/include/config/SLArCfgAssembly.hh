@@ -28,28 +28,39 @@ class SLArCfgAssembly : public SLArCfgBaseModule {
     virtual void DumpMap() const;
     virtual void DumpInfo() const override; 
     inline TBaseModule& GetBaseElementByBin(const int ibin) {
-      int module_idx = fBinToIdxMap.find(ibin)->second;
+      auto itr = fBinToIdxMap.find(ibin); 
+      if (itr == fBinToIdxMap.end()) {
+        fprintf(stderr, "SLArCfgAssembly::GetBaseElementByBin ERROR: Module with Bin Index %i not found in records\n", ibin);
+        exit(EXIT_FAILURE);
+      }
+      int module_idx = itr->second;
       return fElementsMap.at(module_idx); 
     }
     inline const TBaseModule& GettBaseElementByBin(const int ibin) const {
-      int module_idx = fBinToIdxMap.find(ibin)->second;
+      auto itr = fBinToIdxMap.find(ibin); 
+      if (itr == fBinToIdxMap.end()) {
+        fprintf(stderr, "SLArCfgAssembly::GetBaseElementByBin ERROR: Module with Bin Index %i not found in records\n", ibin);
+        exit(EXIT_FAILURE);
+      }
+      int module_idx = itr->second;
       return fElementsMap.at(module_idx); 
     }; 
     inline TBaseModule& GetBaseElementByID(int const id) {
       auto itr = fIDtoIdxMap.find(id); 
       if (itr == fIDtoIdxMap.end()) {
-        // TODO: handle this with by throwing an exception
-        printf("WARNING: Cannot find base element with id %i in %s\n", id, fName.Data());
-        printf("IDtoIdx map has size: %lu\n", fIDtoIdxMap.size()); 
-        for (const auto& p : fIDtoIdxMap) {
-          printf("ID: %i -> idx: %i\n", p.first, p.second); 
-        }
+        fprintf(stderr, "SLArCfgAssembly::GetBaseElementByID ERROR: Module with ID %i not found in records\n", id);
+        exit(EXIT_FAILURE);
       }
       int module_idx = itr->second;
       return fElementsMap.at(module_idx); 
     }
     inline const TBaseModule& GetBaseElementByID(const int id) const {
-      int module_idx = fIDtoIdxMap.find(id)->second;
+      auto itr = fIDtoIdxMap.find(id);
+      if (itr == fIDtoIdxMap.end()) {
+        fprintf(stderr, "SLArCfgAssembly::GetBaseElementByID ERROR: Module with ID %i not found in records\n", id);
+        exit(EXIT_FAILURE);
+      }
+      const int module_idx = itr->second;
       return fElementsMap.at(module_idx); 
     }; 
     inline TBaseModule& GetBaseElement(int const idx) {
@@ -61,7 +72,7 @@ class SLArCfgAssembly : public SLArCfgBaseModule {
     inline std::vector<TBaseModule>& GetMap() {return fElementsMap;}
     inline const std::vector<TBaseModule>& GetConstMap() const {return fElementsMap;}
     void RegisterElement(TBaseModule& element);
-    virtual TH2Poly* BuildPolyBinHist(ESubModuleReferenceFrame kFrame = kWorld, int n = 25, int m = 25);
+    virtual TH2Poly* BuildPolyBinHist(const ESubModuleReferenceFrame kFrame = kWorld, const bool set_bin_idx = false, const int n = 25, const int m = 25);
     TGraph BuildGShape() const override; 
 
   protected: 
