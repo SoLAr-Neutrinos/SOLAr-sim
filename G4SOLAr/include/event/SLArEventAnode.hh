@@ -27,7 +27,7 @@ class SLArEventAnode : public TNamed {
     inline int GetNhits() const {return fNhits;}
     inline bool IsActive() const {return fIsActive;}
 
-    SLArEventTile& RegisterHit(const SLArEventPhotonHit& hit); 
+    SLArEventTile& RegisterHit(const SLArEventPhotonHit& hit, int mt_idx = -999, int t_idx = -999); 
     SLArEventChargePixel& RegisterChargeHit(const SLArCfgAnode::SLArPixIdx& pixId, const SLArEventChargeHit& hit); 
     int ResetHits(); 
     int SoftResetHits();

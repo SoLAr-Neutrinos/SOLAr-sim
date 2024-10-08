@@ -257,7 +257,6 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
           << "No hits on SiPMs or "
           << "issue in hit collection readout";
 #endif
-
         break;
       }
 
@@ -266,19 +265,11 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       G4double time = hit->GetTime();
       G4double wavelen = hit->GetPhotonWavelength(); 
       G4int anode_idx = hit->GetAnodeIdx();
-      G4int mtrow_nr = hit->GetRowMegaTileIdx(); 
-      G4int mgtile_nr = hit->GetMegaTileIdx(); 
-      G4int rowtile_nr = hit->GetRowTileIdx(); 
-      G4int tile_nr = hit->GetTileIdx(); 
-
-#ifdef SLAR_DEBUG
-      G4cout << "SLArEventAction::RecordEventReadoutTile() hit nr " << i << G4endl;
-      printf("Tile idx [%i, %i, %i, %i]\n", mtrow_nr, mgtile_nr, rowtile_nr, tile_nr);
-      G4cout << "x    = " << G4BestUnit(worldPos.x(), "Length") << "; "
-             << "y    = " << G4BestUnit(worldPos.y(), "Length") << "; "
-             << "time = " << G4BestUnit(time, "Time") << G4endl;
-#endif
-      
+      G4int mtrow_nr = hit->GetRowMegaTileReplicaNr(); 
+      G4int mgtile_nr = hit->GetMegaTileReplicaNr(); 
+      G4int rowtile_nr = hit->GetRowTileReplicaNr(); 
+      G4int tile_nr = hit->GetTileReplicaNr(); 
+     
       SLArEventPhotonHit dstHit(
           time, 
           hit->GetPhotonProcessId(), 
@@ -289,8 +280,25 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       dstHit.SetCellNr(hit->GetCellNr()); 
       dstHit.SetProducerTrkID( hit->GetProducerID() ); 
 
+      const auto& anodeCfg = SLArAnaMgr->GetAnodeCfgByID( hit->GetAnodeIdx() ); 
+      const auto& mtCfg = anodeCfg.GetBaseElementByID( dstHit.GetMegaTileID() ); 
+      const auto& tCfg = mtCfg.GetBaseElementByID( dstHit.GetTileID() ); 
+      const int mtIdx = mtCfg.GetIdx();
+      const int tIdx = tCfg.GetIdx();
+
       auto& ev_anode = SLArAnaMgr->GetEvent().GetEventAnodeByID(anode_idx);
-      auto& ev_tile = ev_anode.RegisterHit(dstHit);
+      auto& ev_tile = ev_anode.RegisterHit(dstHit, mtIdx, tIdx);
+      
+#ifdef SLAR_DEBUG
+      G4cout << "SLArEventAction::RecordEventReadoutTile() hit nr " << i << G4endl;
+      printf("Anode: %i\n", anode_idx);
+      printf("Tile idx [%i, %i, %i, %i]\n", mtrow_nr, mgtile_nr, rowtile_nr, tile_nr);
+      printf("megatile id: %i -> megatile index: %i\n", mgtile_nr, mtIdx); 
+      printf("tile id: %i -> tile idx: %i\n", tile_nr, tIdx); 
+      G4cout << "x    = " << G4BestUnit(worldPos.x(), "Length") << "; "
+             << "y    = " << G4BestUnit(worldPos.y(), "Length") << "; "
+             << "time = " << G4BestUnit(time, "Time") << G4endl;
+#endif
 
       if (bktManager) {
         if (bktManager->IsNull() == false) {
@@ -383,7 +391,10 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
       dstHit.SetTileInfo(0, array_nr, cellrow_nr, cell_nr); 
       dstHit.SetProducerTrkID( hit->GetProducerID() ); 
 
-      auto& ev_sc = SLArAnaMgr->GetEvent().GetEventSuperCellArray(array_nr).RegisterHit(dstHit);
+      const auto& cfgArray = SLArAnaMgr->GetPDSCfg().GetBaseElement(array_nr);
+      const int cell_idx = cfgArray.GetBaseElementByID( dstHit.GetTileID() ).GetIdx(); 
+
+      auto& ev_sc = SLArAnaMgr->GetEvent().GetEventSuperCellArray(array_nr).RegisterHit(dstHit, cell_idx);
 
       if (bktManager) {
         if (bktManager->IsNull() == false) {

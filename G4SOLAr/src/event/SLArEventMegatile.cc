@@ -5,6 +5,7 @@
  */
 
 #include <memory>
+#include <SLArAnalysisManager.hh>
 #include "event/SLArEventMegatile.hh"
 
 ClassImp(SLArEventMegatile)
@@ -87,10 +88,14 @@ SLArEventTile& SLArEventMegatile::GetOrCreateEventTile(const int& tileId)
 }
 
 
-SLArEventTile& SLArEventMegatile::RegisterHit(const SLArEventPhotonHit& hit) {
-  int tile_idx = hit.GetTileIdx(); 
-  fNhits++; 
+SLArEventTile& SLArEventMegatile::RegisterHit(const SLArEventPhotonHit& hit, const int idx) {
+  int tile_idx = idx;
+  if (idx < 0) {
+    tile_idx = hit.GetTileID();
+  }
 
+  fNhits++; 
+  
   auto& tile_ev = GetOrCreateEventTile(tile_idx);
   tile_ev.RegisterHit(hit);
   return tile_ev;

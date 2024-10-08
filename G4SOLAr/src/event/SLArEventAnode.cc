@@ -5,6 +5,7 @@
  */
 
 #include <memory>
+#include <SLArAnalysisManager.hh>
 #include "event/SLArEventAnode.hh"
 #include "config/SLArCfgMegaTile.hh"
 
@@ -78,10 +79,11 @@ SLArEventMegatile& SLArEventAnode::GetOrCreateEventMegatile(const int mtIdx) {
   }
 }
 
-SLArEventTile& SLArEventAnode::RegisterHit(const SLArEventPhotonHit& hit) {
-  int mgtile_idx = hit.GetMegaTileIdx(); 
+SLArEventTile& SLArEventAnode::RegisterHit(const SLArEventPhotonHit& hit, int mgtile_idx, int tile_idx) {
+  if (mgtile_idx < 0) mgtile_idx = hit.GetMegaTileID(); 
+  if (tile_idx < 0) tile_idx = hit.GetTileID(); 
   auto& mt_event = GetOrCreateEventMegatile(mgtile_idx);
-  auto& t_event = mt_event.RegisterHit(hit);
+  auto& t_event = mt_event.RegisterHit(hit, tile_idx);
   return t_event;
   //} else {
     //printf("SLArEventAnode::RegisterHit WARNING\n"); 
@@ -91,10 +93,10 @@ SLArEventTile& SLArEventAnode::RegisterHit(const SLArEventPhotonHit& hit) {
   //}
 }
 
-SLArEventChargePixel& SLArEventAnode::RegisterChargeHit(const SLArCfgAnode::SLArPixIdx& pixID, const SLArEventChargeHit& hit) {
-  const int mgtile_idx = pixID.at(0);
-  const int tile_idx = pixID.at(1); 
-  const int pix_idx = pixID.at(2); 
+SLArEventChargePixel& SLArEventAnode::RegisterChargeHit(const SLArCfgAnode::SLArPixIdx& pixIdx, const SLArEventChargeHit& hit) {
+  const int& mgtile_idx = pixIdx.at(0);
+  const int& tile_idx = pixIdx.at(1); 
+  const int& pix_idx = pixIdx.at(2); 
 
   auto& mt_event = GetOrCreateEventMegatile(mgtile_idx); 
   auto& t_event = mt_event.GetOrCreateEventTile(tile_idx);

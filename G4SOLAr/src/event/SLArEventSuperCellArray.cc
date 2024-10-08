@@ -3,7 +3,7 @@
  * @file        SLArEventSuperCellArray.cc
  * @created     Thur Oct 20, 2022 16:16:03 CEST
  */
-
+#include <SLArAnalysisManager.hh>
 #include "event/SLArEventSuperCellArray.hh"
 
 ClassImp(SLArEventSuperCellArray)
@@ -40,17 +40,17 @@ SLArEventSuperCellArray::~SLArEventSuperCellArray() {
   fSuperCellMap.clear(); 
 }
 
-int SLArEventSuperCellArray::ConfigSystem(const SLArCfgSuperCellArray& cfg) {
-  int nsc = 0; 
-  for (const auto &sc : cfg.GetConstMap()) {
-      if (fSuperCellMap.count(sc.GetID()) == 0) {
-        fSuperCellMap.insert( std::make_pair(sc.GetID(), SLArEventSuperCell(sc.GetID())) ); 
-        nsc++;
-    }
-  }
+//int SLArEventSuperCellArray::ConfigSystem(const SLArCfgSuperCellArray& cfg) {
+  //int nsc = 0; 
+  //for (const auto &sc : cfg.GetConstMap()) {
+      //if (fSuperCellMap.count(sc.GetID()) == 0) {
+        //fSuperCellMap.insert( std::make_pair(sc.GetID(), SLArEventSuperCell(sc.GetID())) ); 
+        //nsc++;
+    //}
+  //}
 
-  return nsc; 
-}
+  //return nsc; 
+//}
 
 SLArEventSuperCell& SLArEventSuperCellArray::GetOrCreateEventSuperCell(const int scIdx) {
   auto it = fSuperCellMap.find(scIdx); 
@@ -68,8 +68,9 @@ SLArEventSuperCell& SLArEventSuperCellArray::GetOrCreateEventSuperCell(const int
   }
 }
 
-SLArEventSuperCell& SLArEventSuperCellArray::RegisterHit(const SLArEventPhotonHit& hit) {
-  int sc_idx = hit.GetTileIdx(); 
+SLArEventSuperCell& SLArEventSuperCellArray::RegisterHit(const SLArEventPhotonHit& hit, int sc_idx) {
+  if (sc_idx < 0) sc_idx = hit.GetTileID();
+
   auto& sc_event = GetOrCreateEventSuperCell(sc_idx);
   sc_event.RegisterHit(hit); 
 
@@ -93,7 +94,6 @@ int SLArEventSuperCellArray::ResetHits() {
   fNhits = 0; 
   return nn; 
 }
-
 
 void SLArEventSuperCellArray::SetActive(bool is_active) {
   fIsActive = is_active; 

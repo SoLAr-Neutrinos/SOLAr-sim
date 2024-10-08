@@ -18,7 +18,7 @@ class SLArEventSuperCellArray : public TNamed {
     SLArEventSuperCellArray(const SLArEventSuperCellArray&); 
     ~SLArEventSuperCellArray();
 
-    int ConfigSystem(const SLArCfgSuperCellArray& cfg); 
+    //int ConfigSystem(const SLArCfgSuperCellArray& cfg); 
     inline std::map<int, SLArEventSuperCell>& GetSuperCellMap() {return fSuperCellMap;}
     inline const std::map<int, SLArEventSuperCell>& GetConstSuperCellMap() const {return fSuperCellMap;}
     inline int GetNhits() const {return fNhits;}
@@ -27,7 +27,7 @@ class SLArEventSuperCellArray : public TNamed {
     inline void SetLightBacktrackerRecordSize(const UShort_t size) {fLightBacktrackerRecordSize = size;}
     inline UShort_t GetLightBacktrackerRecordSize() const {return fLightBacktrackerRecordSize;}
     SLArEventSuperCell& GetOrCreateEventSuperCell(const int scIdx); 
-    SLArEventSuperCell& RegisterHit(const SLArEventPhotonHit& hit); 
+    SLArEventSuperCell& RegisterHit(const SLArEventPhotonHit& hit, int sc_idx = -999); 
     int ResetHits(); 
     int SoftResetHits();
 

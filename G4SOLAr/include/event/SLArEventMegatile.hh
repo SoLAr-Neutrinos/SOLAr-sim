@@ -30,7 +30,7 @@ class SLArEventMegatile : public TNamed {
     int GetNChargeHits() const; 
     inline int GetIdx() const {return fIdx;}
 
-    SLArEventTile& RegisterHit(const SLArEventPhotonHit& hit); 
+    SLArEventTile& RegisterHit(const SLArEventPhotonHit& hit, const int idx = -999); 
     int ResetHits(); 
     int SoftResetHits();
 
