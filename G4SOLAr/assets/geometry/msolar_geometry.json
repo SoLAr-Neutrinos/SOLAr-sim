@@ -12,7 +12,7 @@
       "position": {"xyz" : [-50.05, 0, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
       "dimensions" : [
-        {"name" : "tpc_x"  , "val" : 1.01, "unit" :  "m"},
+        {"name" : "tpc_x"  , "val" : 99.98, "unit" :  "cm"},
         {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
         {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
       ], 
@@ -25,11 +25,31 @@
         "height_short_side" : {"val" : 46, "unit" : "mm"}
       }
     },
+    /*
+    {"copyID" : 44, 
+      "position": {"xyz" : [-0.7375, 0, 0], "unit" : "mm"},
+      "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
+      "dimensions" : [
+        {"name" : "tpc_x"  , "val" : 0.475, "unit" :  "mm"},
+        {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
+        {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
+        ]
+    },
+    {"copyID" : 45, 
+      "position": {"xyz" : [0.7375, 0, 0], "unit" : "mm"},
+      "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [-1, 0, 0]},
+      "dimensions" : [
+        {"name" : "tpc_x"  , "val" : 0.475, "unit" :  "mm"},
+        {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
+        {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
+        ]
+    },
+    */
     {"copyID" : 11, 
       "position": {"xyz" : [50.05, 0, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [-1, 0, 0]},
       "dimensions" : [
-        {"name" : "tpc_x"  , "val" : 1.01, "unit" :  "m"},
+        {"name" : "tpc_x"  , "val" : 99.98, "unit" :  "cm"},
         {"name" : "tpc_y"  , "val" : 1.62, "unit" :  "m"},
         {"name" : "tpc_z"  , "val" : 2.60, "unit" :  "m"}
       ], 
@@ -53,6 +73,44 @@
      ]
     }
   ],
+/*
+     "PENFilm" : [
+   {"copyID": 42,
+    "position" : {"xyz": [0.9875, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 0.025, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     },
+   {"copyID": 43,
+    "position" : {"xyz": [-0.9875, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 0.025, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     }
+   ],
+*/
+        "PENFilm" : [
+   {"copyID": 42,
+    "position" : {"xyz": [0.55, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 0.1, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     },
+   {"copyID": 43,
+    "position" : {"xyz": [-0.55, 0, 0], "unit" : "mm"},
+    "dimensions" : [
+       {"name" : "dim_x", "val" : 0.1, "unit" : "mm"},
+       {"name" : "dim_y", "val" : 1.55, "unit" : "m" },
+       {"name" : "dim_z", "val" : 2.50, "unit" : "m" }
+      ]
+     }
+   ],  
   "Anode" : [
     {"copyID" : 50, 
       "tpcID" : 10,

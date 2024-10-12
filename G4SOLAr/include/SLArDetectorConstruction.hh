@@ -10,12 +10,14 @@
 #include "detector/TPC/SLArDetTPC.hh"
 #include "detector/TPC/SLArDetCryostat.hh"
 #include "detector/TPC/SLArDetCathode.hh"
+#include "detector/TPC/SLArPENFilm.hh"
 #include "detector/SuperCell/SLArDetSuperCell.hh"
 #include "detector/SuperCell/SLArDetSuperCellArray.hh"
 #include "detector/Anode/SLArDetReadoutTile.hh"
 #include "detector/Anode/SLArDetReadoutTileAssembly.hh"
 #include "detector/Anode/SLArDetAnodeAssembly.hh"
 #include <physics/SLArLArProperties.hh>
+#include "material/SLArMaterial.hh"
 
 #include "SLArAnalysisManagerMsgr.hh"
 
@@ -24,6 +26,7 @@
 #include "G4MaterialPropertyVector.hh"
 #include "G4MaterialPropertiesTable.hh"
 #include "G4VisAttributes.hh"
+#include "G4OpticalSurface.hh"
 
 #include "G4IStore.hh"
 #include "G4VIStore.hh"
@@ -58,6 +61,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void ConstructTarget(); 
     //! Construct Cathode
     void ConstructCathode();
+    //! Construct PEN Film
+    void ConstructPENFilm();
     //! Construct Cryostat
     void ConstructCryostat(); 
     //! Construct Sensitive Detectors and cryostat scorers
@@ -111,10 +116,12 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     SLArDetCryostat* fCryostat; 
     std::map<int, SLArDetTPC*> fTPC;
     std::map<int, SLArDetCathode*> fCathode; 
+    std::map<int, SLArPENFilm*> fPENFilm;
 
     SLArGeoInfo fWorldGeoPars;//!< World volume geometry parameters
     SLArGeoInfo fCavernGeoPars; //!< Cavern volume geometry attributes
     SLArDetSuperCell* fSuperCell; //!< SuperCell detector object
+    SLArDetCathode* fCathodeSkin; //!< ESR film for cathode
     std::map<int, SLArDetSuperCellArray*> fSCArray;
     SLArDetReadoutTile* fReadoutTile; //!< ReadoutTile detector object
     std::map<int, SLArDetAnodeAssembly*> fAnodes; 
@@ -141,6 +148,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void InitTPC(const rapidjson::Value&); 
     //! Parse the description of the cathode elements
     void InitCathode(const rapidjson::Value&); 
+    //!Parse the description of the PENFilm elements
+    void InitPENFilm(const rapidjson::Value&);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

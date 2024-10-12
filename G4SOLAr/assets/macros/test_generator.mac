@@ -11,10 +11,10 @@
 /SLAr/phys/positronCut 1.5 mm
 /SLAr/phys/gammaCut 2.5 mm
 /SLAr/phys/stepMax 2.5 mm
-/SLAr/scint/enablePhGeneration false
+/SLAr/scint/enablePhGeneration true
 
 # Set particle energy and source position 
-/SLAr/gen/configure assets/macros/generator_test.json
+/SLAr/gen/configure assets/macros/particleGun_config.json
 # Set output file name
 /SLAr/manager/SetOutputName gen_test.root
 

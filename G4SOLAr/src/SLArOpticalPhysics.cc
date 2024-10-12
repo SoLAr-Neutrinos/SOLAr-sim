@@ -40,7 +40,7 @@
 SLArOpticalPhysics::SLArOpticalPhysics(G4bool abs_toggle, G4bool cerenkov_toggle)
   : G4VPhysicsConstructor("Optical")
 {
-  //fWLSProcess                = NULL;
+  fWLSProcess                = NULL;
   fScintProcess              = NULL;
   fCerenkovProcess           = NULL;
   fBoundaryProcess           = NULL;
@@ -83,6 +83,7 @@ void SLArOpticalPhysics::ConstructProcess()
   fRayleighScattering     = new G4OpRayleigh();
   fMieHGScatteringProcess = new G4OpMieHG();
   fBoundaryProcess        = new G4OpBoundaryProcess();
+  fWLSProcess             = new G4OpWLS();
 
   G4ProcessManager* pManager =
     G4OpticalPhoton::OpticalPhoton()->GetProcessManager();
@@ -101,10 +102,10 @@ void SLArOpticalPhysics::ConstructProcess()
 
   pManager->AddDiscreteProcess(fBoundaryProcess);
 
-  //fWLSProcess->UseTimeProfile("delta");
+  fWLSProcess->UseTimeProfile("delta");
   //fWLSProcess->UseTimeProfile("exponential");
 
-  //pManager->AddDiscreteProcess(fWLSProcess);
+  pManager->AddDiscreteProcess(fWLSProcess);
 
   //fScintProcess->SetScintillationYieldFactor(1.);
   //fScintProcess->SetScintillationExcitationRatio(0.0);

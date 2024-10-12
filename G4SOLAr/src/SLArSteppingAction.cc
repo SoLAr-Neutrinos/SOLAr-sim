@@ -10,6 +10,8 @@
 #include "SLArUserPhotonTrackInformation.hh"
 #include "SLArUserTrackInformation.hh"
 #include "SLArAnalysisManager.hh"
+#include "SLArEventPhotonHit.hh"
+#include "SLArReadoutTileHit.hh"
 
 #include "detector/SuperCell/SLArSuperCellSD.hh"
 #include "detector/Anode/SLArReadoutTileSD.hh"
@@ -39,8 +41,14 @@ SLArSteppingAction::SLArSteppingAction(SLArEventAction* ea, SLArTrackingAction* 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArSteppingAction::~SLArSteppingAction()
-{ }
+SLArSteppingAction::~SLArSteppingAction(){
+
+G4cout << "Cumulative Ek: " << ek_count << G4endl;
+G4cout << "Ek per scint: " << ek_count/count << G4endl;
+G4cout << "Photons produced: " << ph_count << G4endl;
+G4cout << "Scintillation events: " << count << G4endl;
+
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -119,6 +127,13 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 
           n_ph = scint_process->GetNumPhotons(); 
           n_el = scint_process->GetNumIonElectrons(); 
+
+          
+          ek = step->GetTotalEnergyDeposit()*CLHEP::eV; //This is to count energy deposition but I don't think it works
+          ph_count = ph_count + n_ph; //Count the net number of scintillation photons
+          ek_count = ek_count + ek; //Count the net number of electrons
+          count = count + 1;
+
           
           break;
         } 

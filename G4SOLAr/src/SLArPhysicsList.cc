@@ -48,6 +48,9 @@
 #include "QGSP_BIC_AllHP.hh"
 #include "G4EmLivermorePhysics.hh"
 #include "G4EmStandardPhysics_option4.hh"
+#include "G4RunManagerFactory.hh"
+#include "G4Types.hh"
+#include "G4OpticalParameters.hh"
 
 #include "G4Gamma.hh"
 #include "G4Electron.hh"
@@ -110,6 +113,10 @@ SLArPhysicsList::SLArPhysicsList(G4String physName, G4bool do_cerenkov) :
   fAbsorptionOn = true;
   fCerenkovOn = do_cerenkov;
   fOpticalPhysics = new SLArOpticalPhysics(fAbsorptionOn, fCerenkovOn); 
+
+  //This Makes SCells active
+  auto opticalParams = G4OpticalParameters::Instance();
+  opticalParams->SetBoundaryInvokeSD(true);
 
   RegisterPhysics(new SLArExtraPhysics());
   RegisterPhysics(fOpticalPhysics);
@@ -364,4 +371,5 @@ void SLArPhysicsList::SetVerbose(G4int verbose)
   fOpticalPhysics->GetRayleighScatteringProcess()->SetVerboseLevel(verbose);
   fOpticalPhysics->GetMieHGScatteringProcess()->SetVerboseLevel(verbose);
   fOpticalPhysics->GetBoundaryProcess()->SetVerboseLevel(verbose);
+  fOpticalPhysics->GetWLSProcess()->SetVerboseLevel(verbose);
 }
