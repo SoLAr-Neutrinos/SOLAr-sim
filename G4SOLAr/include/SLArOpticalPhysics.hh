@@ -59,8 +59,8 @@ class SLArOpticalPhysics : public G4VPhysicsConstructor
     virtual void ConstructParticle();
     virtual void ConstructProcess();
 
-    //G4OpWLS*         GetWLSProcess()
-                                           //{return fWLSProcess;}
+    G4OpWLS*         GetWLSProcess()
+                                           {return fWLSProcess;}
     G4Cerenkov*      GetCerenkovProcess()
                                            {return fCerenkovProcess;}
     SLArScintillation* GetScintillationProcess()
@@ -78,7 +78,7 @@ class SLArOpticalPhysics : public G4VPhysicsConstructor
 
   private:
 
-    //G4OpWLS*             fWLSProcess;
+    G4OpWLS*             fWLSProcess;
     G4Cerenkov*          fCerenkovProcess;
     SLArScintillation*   fScintProcess;
     G4OpAbsorption*      fAbsorptionProcess;

@@ -156,6 +156,7 @@ void SLArDetectorConstruction::Init() {
   G4cerr << "SLArDetectorConstruction::Init TPC" << G4endl;
   InitTPC(d["TPC"]); 
   InitCathode(d["Cathode"]);
+  InitPENFilm(d["PENFilm"]);
   ConstructTarget(); 
 
   fCryostat = new SLArDetCryostat(); 
@@ -210,7 +211,17 @@ void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
     detCathode->Init(jcath); 
     fCathode.insert(std::make_pair(detCathode->GetID(), detCathode)); 
   }
-} 
+}
+
+void SLArDetectorConstruction::InitPENFilm(const rapidjson::Value& jpenfilm) {
+  assert(jpenfilm.IsArray());
+  
+  for (const auto &jpen : jpenfilm.GetArray()) {
+  SLArPENFilm* PENFILM = new SLArPENFilm();
+  PENFILM->Init(jpen);
+  fPENFilm.insert(std::make_pair(PENFILM->GetID(), PENFILM));
+  }
+}  
 
 void SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell) {
   fSuperCell = new SLArDetSuperCell(); 
@@ -433,6 +444,20 @@ void SLArDetectorConstruction::ConstructCathode() {
   }
 }
 
+void SLArDetectorConstruction::ConstructPENFilm() {
+  for (auto &penfilm : fPENFilm) {
+    penfilm.second->BuildMaterial(fMaterialDBFile);
+    penfilm.second->BuildPEN();
+    auto geoinfo = penfilm.second->GetGeoInfo();
+    penfilm.second->GetModPV(
+    "penfilm_pv_"+std::to_string(penfilm.first), 0,
+    G4ThreeVector(geoinfo -> GetGeoPar("pos_x"),
+      geoinfo->GetGeoPar("pos_y"),
+      geoinfo->GetGeoPar("pos_z")),
+    fDetector->GetModLV(), 0, penfilm.first);
+  }  
+}
+
 /**
  * @details Construct the world volume, build and place the 
  * SLArDetectorConstruction::fTPC object. 
@@ -483,6 +508,9 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
 
   G4cout << "\nSLArDetectorConstruction: Building the Cathode" << G4endl;
   ConstructCathode(); 
+
+  G4cout << "\nSLArDetectorConstruction: Building the PEN film" << G4endl;
+  ConstructPENFilm();
 
   G4cout << "\nSLArDetectorConstruction: Building the TPCs" << G4endl;
   for (auto &tpc : fTPC) {

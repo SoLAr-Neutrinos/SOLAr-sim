@@ -42,6 +42,11 @@
 #include "G4PhysicalConstants.hh"
 #include "G4OpticalPhoton.hh"
 
+#include <string>
+#include <fstream>
+#include <vector>
+#include <utility>
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SLArSuperCellSD::SLArSuperCellSD(G4String name)
@@ -52,8 +57,59 @@ SLArSuperCellSD::SLArSuperCellSD(G4String name)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArSuperCellSD::~SLArSuperCellSD()
-{}
+void write__csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
+    // Make a CSV file with one or more columns of integer values
+    // Each column of data is represented by the pair <column name, column data>
+    //   as std::pair<std::string, std::vector<int>>
+    // The dataset is represented as a vector of these columns
+    // Note that all columns should be the same size
+    
+    // Create an output filestream object
+    std::ofstream myFile(filename);
+    
+    // Send column names to the stream
+    for(int j = 0; j < dataset.size(); ++j)
+    {
+        myFile << dataset.at(j).first;
+        if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+    }
+    myFile << "\n";
+    
+    // Send data to the stream
+    for(int i = 0; i < dataset.at(0).second.size(); ++i)
+    {
+        for(int j = 0; j < dataset.size(); ++j)
+        {
+            myFile << dataset.at(j).second.at(i);
+            if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+        }
+        myFile << "\n";
+    }
+    
+    // Close the file
+    myFile.close();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+SLArSuperCellSD::~SLArSuperCellSD(){
+G4cout << "The No. of SCell hits is : " << ph_hits << G4endl;
+G4cout << "The SCell Kinetic Energy is : " << E_Kin << G4endl;
+std::vector<std::pair<std::string, std::vector<double>>> PosVec = {{"x", xVec}, {"y", yVec}, {"z", zVec}};
+write__csv("SCellPos_vec.csv", PosVec);
+
+
+std::sort(energyVec.begin(),energyVec.end());//Sorting the vector
+std::vector<int>::size_type sz = energyVec.size();
+
+for(unsigned i=0; i<sz; i++){
+  wavelengthVec.push_back(hc/energyVec.at(i));
+}
+
+std::vector<std::pair<std::string, std::vector<double>>> EnergyVec = {{"Energy - eV", energyVec}, {"Wavelength - m", wavelengthVec}}; 
+write__csv("sc_energy_vec.csv", EnergyVec);
+
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -119,6 +175,19 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
   //need to know if this is an optical photon
   if(track->GetDefinition()
      != G4OpticalPhoton::OpticalPhotonDefinition()) return false;
+
+  if(step->GetTrack()->GetDefinition() == G4OpticalPhoton::OpticalPhotonDefinition()) {
+      
+    energyVec.push_back(step->GetPreStepPoint()->GetKineticEnergy()/CLHEP::eV);
+    xVec.push_back(step->GetPreStepPoint()->GetPosition().x()/CLHEP::mm);
+    yVec.push_back(step->GetPreStepPoint()->GetPosition().y()/CLHEP::mm);
+    zVec.push_back(step->GetPreStepPoint()->GetPosition().z()/CLHEP::mm);
+      
+    ph_hits = ph_hits + 1;
+    E_Kin = E_Kin + step->GetPreStepPoint()->GetKineticEnergy()/CLHEP::eV;
+            
+}
+
 #ifdef SLAR_DEBUG
   printf("SLArSuperCellSD::ProcessHits_constStep(): processing %s [%i] TPC hit\n", 
       step->GetTrack()->GetParticleDefinition()->GetParticleName().data(), 
