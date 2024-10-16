@@ -112,7 +112,8 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
   if (track->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) {
     auto trkInfo = (SLArUserTrackInformation*)track->GetUserInformation(); 
     SLArEventTrajectory* trajectory = trkInfo->GimmeEvTrajectory();
-    double edep = step->GetTotalEnergyDeposit();
+    double edep = step->GetTotalEnergyDeposit()*CLHEP::eV;
+    ek_count = ek_count + edep;
     auto stepMngr = fTrackinAction->GetTrackingManager()->GetSteppingManager(); 
     int n_ph = 0; 
     int n_el = 0; 
@@ -131,7 +132,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
           
           ek = step->GetTotalEnergyDeposit()*CLHEP::eV; //This is to count energy deposition but I don't think it works
           ph_count = ph_count + n_ph; //Count the net number of scintillation photons
-          ek_count = ek_count + ek; //Count the net number of electrons
+          //ek_count = ek_count + ek; //Count the net number of electrons
           count = count + 1;
 
           

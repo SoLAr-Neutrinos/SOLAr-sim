@@ -71,7 +71,7 @@ void refactor_test_sc(const TString file_path, const int iev)
       printf("SC cfg config: %i - %lu super-cell\n", cfgSCArray_.first, 
           cfgSCArray.GetConstMap().size());
       printf("\tposition: [%g, %g, %g] mm\n", 
-          cfgSCArray.GetPhysX(), cfgSCArray.GetPhysY(), cfgSCArray.GetPhysZ()); 
+          cfgSCArray.GetPhysX(), cfgSCArray.GetPhysY(), cfgSCArray.GetPhysZ()); //Check if this is the same as the inital electron 
       printf("\tnormal: [%g, %g, %g]\n", 
           cfgSCArray.GetNormal().x(), cfgSCArray.GetNormal().y(), cfgSCArray.GetNormal().z() );
       printf("\teuler angles: [φ = %g, θ = %g, ψ = %g]\n", 
@@ -253,68 +253,68 @@ void refactor_test_sc(const TString file_path, const int iev)
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - plot charge hits
-/*
- *    TCanvas* c = new TCanvas(Form("cTPC%i", tpc_id), Form("TPC %i", tpc_id), 0, 0, 800, 500); 
- *    c->SetTicks(1, 1); 
- *    hAnode->Draw(); 
- *    for (const auto &hmt : h2mt) hmt->Draw("same"); 
- *    for (auto &ht : h2pix) {
- *      ht->GetZaxis()->SetRangeUser(0, z_max*1.05); 
- *      ht->Draw("col same"); 
- *    }
- *
- *    auto pdg = TDatabasePDG::Instance(); 
- *
- *    for (const auto &p : primaries) {
- *      printf("----------------------------------------\n");
- *      printf("[gen: %s] PRIMARY vertex: %s - K0 = %2f - t = %.2f - vtx [%.1f, %.1f, %.1f]\n", 
- *          p.GetGeneratorLabel().Data(),
- *          p.GetParticleName().Data(), p.GetEnergy(), p.GetTime(), 
- *          p.GetVertex()[0], p.GetVertex()[1], p.GetVertex()[2]);
- *      auto& trajectories = p.GetConstTrajectories(); 
- *      for (auto &t : trajectories) {
- *        auto points = t->GetConstPoints(); 
- *        auto pdg_particle = pdg->GetParticle(t->GetPDGID()); 
- *        printf("%s [%i]: t = %.2f, K = %.2f - n_scint = %g, n_elec = %g\n", 
- *            t->GetParticleName().Data(), t->GetTrackID(), 
- *            t->GetTime(),
- *            t->GetInitKineticEne(), 
- *            t->GetTotalNph(), t->GetTotalNel());
- *        if (t->GetInitKineticEne() < 0.01) continue;
- *        TGraph g; 
- *        Color_t col = kBlack; 
- *        TString name = ""; 
- *
- *        if (!pdg_particle) {
- *          col = kBlack; 
- *          name = Form("g_%i_trk%i", t->GetPDGID(), t->GetTrackID()); 
- *        }
- *        else {
- *          if (pdg_particle == pdg->GetParticle(22)) col = kYellow;
- *          else if (pdg_particle == pdg->GetParticle( 11)) col = kBlue-6;
- *          else if (pdg_particle == pdg->GetParticle(-11)) col = kRed-7;
- *          else if (pdg_particle == pdg->GetParticle(2212)) col = kRed; 
- *          else if (pdg_particle == pdg->GetParticle(2112)) col = kBlue;
- *          else if (pdg_particle == pdg->GetParticle(-211)) col = kOrange+7; 
- *          else if (pdg_particle == pdg->GetParticle( 211)) col = kViolet-2; 
- *          else if (pdg_particle == pdg->GetParticle( 111)) col = kGreen; 
- *          else    col = kGray+2;
- *          name = Form("g_%s_trk_%i", pdg_particle->GetName(), t->GetTrackID()); 
- *        }
- *        
- *        for (const auto &pt : points) {
- *          if (pt.fCopy == tpc_id) g.AddPoint( 
- *              TVector3(pt.fX, pt.fY, pt.fZ).Dot( AnodeSysCfg[tpc_id]->GetAxis0()), 
- *              TVector3(pt.fX, pt.fY, pt.fZ).Dot( AnodeSysCfg[tpc_id]->GetAxis1()) );
- *        }
- *
- *        g.SetName(name); 
- *        g.SetLineColor(col); 
- *        g.SetLineWidth(2);
- *        if (g.GetN() > 2) g.DrawClone("l");
- *      }
- *    }
- */
+
+     TCanvas* c = new TCanvas(Form("cTPC%i", tpc_id), Form("TPC %i", tpc_id), 0, 0, 800, 500); 
+     c->SetTicks(1, 1); 
+     hAnode->Draw(); 
+     for (const auto &hmt : h2mt) hmt->Draw("same"); 
+     for (auto &ht : h2pix) {
+       ht->GetZaxis()->SetRangeUser(0, 2.05); 
+       ht->Draw("col same"); 
+     }
+ 
+     auto pdg = TDatabasePDG::Instance(); 
+ 
+     for (const auto &p : primaries) {
+       printf("----------------------------------------\n");
+       printf("[gen: %s] PRIMARY vertex: %s - K0 = %2f - t = %.2f - vtx [%.1f, %.1f, %.1f]\n", 
+           p.GetGeneratorLabel().Data(),
+           p.GetParticleName().Data(), p.GetEnergy(), p.GetTime(), 
+           p.GetVertex()[0], p.GetVertex()[1], p.GetVertex()[2]);
+       auto& trajectories = p.GetConstTrajectories(); 
+       for (auto &t : trajectories) {
+       auto points = t->GetConstPoints(); 
+         auto pdg_particle = pdg->GetParticle(t->GetPDGID()); 
+         printf("%s [%i]: t = %.2f, K = %.2f - n_scint = %g, n_elec = %g\n", 
+             t->GetParticleName().Data(), t->GetTrackID(), 
+             t->GetTime(),
+             t->GetInitKineticEne(), 
+             t->GetTotalNph(), t->GetTotalNel());
+         if (t->GetInitKineticEne() < 0.01) continue;
+         TGraph g; 
+         Color_t col = kBlack; 
+         TString name = ""; 
+ 
+         if (!pdg_particle) {
+           col = kBlack; 
+           name = Form("g_%i_trk%i", t->GetPDGID(), t->GetTrackID()); 
+         }
+         else {
+           if (pdg_particle == pdg->GetParticle(22)) col = kYellow;
+           else if (pdg_particle == pdg->GetParticle( 11)) col = kBlue-6;
+           else if (pdg_particle == pdg->GetParticle(-11)) col = kRed-7;
+           else if (pdg_particle == pdg->GetParticle(2212)) col = kRed; 
+           else if (pdg_particle == pdg->GetParticle(2112)) col = kBlue;
+           else if (pdg_particle == pdg->GetParticle(-211)) col = kOrange+7; 
+           else if (pdg_particle == pdg->GetParticle( 211)) col = kViolet-2; 
+           else if (pdg_particle == pdg->GetParticle( 111)) col = kGreen; 
+           else    col = kGray+2;
+           name = Form("g_%s_trk_%i", pdg_particle->GetName(), t->GetTrackID()); 
+         }
+         
+         for (const auto &pt : points) {
+           if (pt.fCopy == tpc_id) g.AddPoint( 
+               TVector3(pt.fX, pt.fY, pt.fZ).Dot( AnodeSysCfg[tpc_id]->GetAxis0()), 
+               TVector3(pt.fX, pt.fY, pt.fZ).Dot( AnodeSysCfg[tpc_id]->GetAxis1()) );
+         }
+ 
+         g.SetName(name); 
+         g.SetLineColor(col); 
+         g.SetLineWidth(2);
+         if (g.GetN() > 2) g.DrawClone("l");
+       }
+     }
+ 
   }
 
   TCanvas* cTime = new TCanvas(); 

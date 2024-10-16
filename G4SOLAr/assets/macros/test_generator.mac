@@ -19,4 +19,4 @@
 /SLAr/manager/SetOutputName gen_test.root
 
 # Fire!
-/run/beamOn 1
+/run/beamOn 10
