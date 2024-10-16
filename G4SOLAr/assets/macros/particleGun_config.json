@@ -5,10 +5,11 @@
     "config" : {
       "particle" : "e-", 
       "energy" : { "mode": "mono", "value" : {"val": 3.5, "unit": "MeV"} },
-      "direction" : {"mode" : "fixed", "axis" : [-1, 0, 0]},
+      "direction" : {"mode" : "fixed", "axis" : [0, -1, 0]},
+      "n_particles" :1,
       "vertex_gen" : {
         "type" : "point", 
-        "config" : {"xyz" : [15, 15, 35], "unit" : "cm"}
+        "config" : {"xyz" : [0, 15, 35], "unit" : "cm"}
       }
     }
   }
