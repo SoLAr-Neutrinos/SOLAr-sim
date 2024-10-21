@@ -30,6 +30,7 @@
 
 #include "detector/SuperCell/SLArSuperCellSD.hh"
 #include "detector/SuperCell/SLArSuperCellHit.hh"
+#include "detector/Anode/SLArReadoutTileSD.hh"
 
 #include "G4HCofThisEvent.hh"
 #include "G4TouchableHistory.hh"
@@ -41,6 +42,7 @@
 #include "G4ios.hh"
 #include "G4PhysicalConstants.hh"
 #include "G4OpticalPhoton.hh"
+
 
 #include <string>
 #include <fstream>
@@ -57,13 +59,8 @@ SLArSuperCellSD::SLArSuperCellSD(G4String name)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void write__csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
-    // Make a CSV file with one or more columns of integer values
-    // Each column of data is represented by the pair <column name, column data>
-    //   as std::pair<std::string, std::vector<int>>
-    // The dataset is represented as a vector of these columns
-    // Note that all columns should be the same size
-    
+void SLArSuperCellSD::write_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
+
     // Create an output filestream object
     std::ofstream myFile(filename);
     
@@ -96,7 +93,7 @@ SLArSuperCellSD::~SLArSuperCellSD(){
 G4cout << "The No. of SCell hits is : " << ph_hits << G4endl;
 G4cout << "The SCell Kinetic Energy is : " << E_Kin << G4endl;
 std::vector<std::pair<std::string, std::vector<double>>> PosVec = {{"x", xVec}, {"y", yVec}, {"z", zVec}};
-write__csv("SCellPos_vec.csv", PosVec);
+write_csv("SCellPos_vec.csv", PosVec);
 
 
 std::sort(energyVec.begin(),energyVec.end());//Sorting the vector
@@ -107,7 +104,7 @@ for(unsigned i=0; i<sz; i++){
 }
 
 std::vector<std::pair<std::string, std::vector<double>>> EnergyVec = {{"Energy - eV", energyVec}, {"Wavelength - m", wavelengthVec}}; 
-write__csv("sc_energy_vec.csv", EnergyVec);
+write_csv("sc_energy_vec.csv", EnergyVec);
 
 }
 

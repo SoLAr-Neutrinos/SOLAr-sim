@@ -26,6 +26,7 @@ public:
     virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist);
     G4bool ProcessHits_constStep(const G4Step* ,
                                  G4TouchableHistory* );
+    inline void write_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset);
 
     int ph_hits = 0;
     double E_Kin = 0;

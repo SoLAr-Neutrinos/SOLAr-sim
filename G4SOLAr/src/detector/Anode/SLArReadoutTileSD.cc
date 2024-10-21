@@ -29,13 +29,8 @@ SLArReadoutTileSD::SLArReadoutTileSD(G4String name)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void write_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
-    // Make a CSV file with one or more columns of integer values
-    // Each column of data is represented by the pair <column name, column data>
-    //   as std::pair<std::string, std::vector<int>>
-    // The dataset is represented as a vector of these columns
-    // Note that all columns should be the same size
-    
+void SLArReadoutTileSD::write_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
+  
     // Create an output filestream object
     std::ofstream myFile(filename);
     

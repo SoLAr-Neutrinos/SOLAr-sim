@@ -8,8 +8,8 @@
       "direction" : {"mode" : "fixed", "axis" : [0, -1, 0]},
       "n_particles" :1,
       "vertex_gen" : {
-        "type" : "point", 
-        "config" : {"xyz" : [0, 15, 35], "unit" : "cm"}
+        "type" : "bulk", 
+        "config" : {"volume" : "TPC11", "fiducial_fraction" : 0.8}
       }
     }
   }

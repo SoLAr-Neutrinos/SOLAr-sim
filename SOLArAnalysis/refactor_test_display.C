@@ -8,6 +8,9 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <utility>
+#include <algorithm>
+#include <string>
 #include <map>
 #include "TFile.h"
 #include "TTree.h"
@@ -27,6 +30,38 @@
 #include "config/SLArCfgAnode.hh"
 #include "config/SLArCfgAssembly.hh"
 #include "config/SLArCfgSuperCellArray.hh"
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+inline void write_csv(std::string filename, std::vector<std::pair<std::string, std::vector<double>>> dataset){
+  
+    // Create an output filestream object
+    std::ofstream myFile(filename);
+    
+    // Send column names to the stream
+    for(int j = 0; j < dataset.size(); ++j)
+    {
+        myFile << dataset.at(j).first;
+        if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+    }
+    myFile << "\n";
+    
+    // Send data to the stream
+    for(int i = 0; i < dataset.at(0).second.size(); ++i)
+    {
+        for(int j = 0; j < dataset.size(); ++j)
+        {
+            myFile << dataset.at(j).second.at(i);
+            if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+        }
+        myFile << "\n";
+    }
+    
+    // Close the file
+    myFile.close();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 UInt_t fill_anode_cfg_map(TFile* file, std::map<int, SLArCfgAnode*>& map) {
   UInt_t n_anode = 0;
@@ -396,7 +431,16 @@ void refactor_test_full_display(const TString file_path)
   SLArMCEvent* ev = 0; 
   mc_tree->SetBranchAddress("MCEvent", &ev); 
 
+  auto& primaries = ev->GetPrimaries();
+
+
   TTimer* timer = new TTimer("gSystem->ProcessEvents();", 50, false); 
+  std::vector<double> event_vec={};
+  std::vector<double> hit_vec={};
+  std::vector<double> edep_vec={};
+  std::vector<double> x_vec={};
+  std::vector<double> y_vec={};
+  std::vector<double> z_vec={};
 
   for (Long64_t iev = 0; iev < mc_tree->GetEntries(); iev++) {
     // reset maps and clear canvas
@@ -419,7 +463,22 @@ void refactor_test_full_display(const TString file_path)
 
     // fill hit maps
     int n_photon_hits = 
-      process_event(ev, AnodeSysCfg, PDSSysConfig, h2AnodeTilesCharge, h2AnodeTiles, h2PDArray, hTime); 
+      process_event(ev, AnodeSysCfg, PDSSysConfig, h2AnodeTiles, h2PDArray, hTime); 
+
+    // Fill vectors with the event number and total photons detected per event.
+    hit_vec.push_back(n_photon_hits);
+    event_vec.push_back(iev);
+  
+
+    for (const auto &p : primaries) {
+      std::cout << "Total Edep in LAr is: " <<  p.GetTotalLArEdep() << std::endl;
+      std::cout << "Total Edep is: " <<  p.GetTotalEdep() << std::endl;
+      edep_vec.push_back(p.GetEnergy());
+      x_vec.push_back(p.GetVertex()[0]);
+      y_vec.push_back(p.GetVertex()[0]);
+      z_vec.push_back(p.GetVertex()[0]);
+    }
+
     // get the maximum number of hits in all the maps for proper colorscale handling
     double hit_max = 0; 
     for (const auto& h2 : h2PDArray) {
@@ -524,6 +583,14 @@ void refactor_test_full_display(const TString file_path)
   }
 
   mc_file->Close();
+
+  std::vector<std::pair<std::string, std::vector<double>>> DetectionVec = {{"Event", event_vec}, {"Photons Detected", hit_vec}};
+  std::vector<std::pair<std::string, std::vector<double>>> DepositionVec = {{"Energy Deposition (MeV)", edep_vec}};
+  std::vector<std::pair<std::string, std::vector<double>>> VertexVec = {{"x (mm)", x_vec}, {"y (mm)", y_vec}, {"z (mm)", z_vec}};
+
+  write_csv("Deposition_vector.csv", DepositionVec);
+  write_csv("Vertex_vector.csv", VertexVec);
+  write_csv("Detection_vector.csv", DetectionVec);
   return;
 }
 

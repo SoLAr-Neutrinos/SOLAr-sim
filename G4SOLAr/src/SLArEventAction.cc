@@ -544,7 +544,7 @@ int SLArEventAction::FindAncestorID(int trkid) {
 
   while ( !caught ) {
     if (fParentIDMap.find(trkid) == fParentIDMap.end()) {
-      fprintf(stderr, "SLArEventAction::FindAncestorID(%i) ERROR: cannot find track in event track table\n", trkid);
+      //fprintf(stderr, "SLArEventAction::FindAncestorID(%i) ERROR: cannot find track in event track table\n", trkid);
       break;
     }
 
