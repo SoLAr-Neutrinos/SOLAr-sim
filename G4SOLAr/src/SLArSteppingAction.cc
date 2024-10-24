@@ -43,10 +43,11 @@ SLArSteppingAction::SLArSteppingAction(SLArEventAction* ea, SLArTrackingAction* 
 
 SLArSteppingAction::~SLArSteppingAction(){
 
-G4cout << "Cumulative Ek: " << ek_count << G4endl;
-G4cout << "Ek per scint: " << ek_count/count << G4endl;
-G4cout << "Photons produced: " << ph_count << G4endl;
-G4cout << "Scintillation events: " << count << G4endl;
+G4cout << "Ek per scint in event: " << ek_count/count << G4endl;
+G4cout << "Photons produced in event: " << ph_count << G4endl;
+G4cout << "Scintillation events in event: " << count << G4endl;
+G4cout << "Cumulative energy deposited in TPC11 in event: " << ek_count/MeV << "MeV" << G4endl;
+G4cout << "Cumulative energy deposited in LAr in event: " << LAr_energy_count/MeV << "MeV" << G4endl;
 
 }
 
@@ -108,15 +109,25 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 //#endif
 
 
-  
   if (track->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) {
     auto trkInfo = (SLArUserTrackInformation*)track->GetUserInformation(); 
     SLArEventTrajectory* trajectory = trkInfo->GimmeEvTrajectory();
-    double edep = step->GetTotalEnergyDeposit()*CLHEP::eV;
-    ek_count = ek_count + edep;
+    double edep = step->GetTotalEnergyDeposit();
     auto stepMngr = fTrackinAction->GetTrackingManager()->GetSteppingManager(); 
     int n_ph = 0; 
     int n_el = 0; 
+
+    //if  thePrePoint->GetPhysicalVolume->GetName 
+
+    if (G4StrUtil::contains(thePrePV -> GetName(), "TPC11")){
+      ek_count += edep;
+    }
+
+
+    if (G4StrUtil::contains(thePrePV -> GetLogicalVolume() -> GetMaterial() -> GetName(), "LAr")){
+      //G4cout << "The volume is: " << thePrePV -> GetName() << G4endl;
+      LAr_energy_count += edep;
+    }
 
     if (stepMngr->GetfStepStatus() != fAtRestDoItProc) {
       G4ProcessVector* process_vector = stepMngr->GetfPostStepDoItVector(); 
@@ -129,17 +140,24 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
           n_ph = scint_process->GetNumPhotons(); 
           n_el = scint_process->GetNumIonElectrons(); 
 
-          
-          ek = step->GetTotalEnergyDeposit()*CLHEP::eV; //This is to count energy deposition but I don't think it works
+
           ph_count = ph_count + n_ph; //Count the net number of scintillation photons
-          //ek_count = ek_count + ek; //Count the net number of electrons
-          count = count + 1;
+          count = count + 1; //Count the number of scintillation events
 
           
           break;
         } 
       }
     }
+
+    //auto iev = G4RunManager::GetRunManager()->GetCurrentRun()->GetNumberOfEvent();
+    //G4cout << "Event is " << iev << G4endl;
+    //event_counter = iev;
+    //if (iev != current_iev){
+      //SLArSteppingAction::~SLArSteppingAction();
+    //}
+
+    //current_iev = iev;
 
     if (trkInfo->CheckStoreTrajectory() == true) {
       if (trajectory->GetPoints().empty()) {

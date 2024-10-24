@@ -435,6 +435,7 @@ void refactor_test_full_display(const TString file_path)
 
 
   TTimer* timer = new TTimer("gSystem->ProcessEvents();", 50, false); 
+
   std::vector<double> event_vec={};
   std::vector<double> hit_vec={};
   std::vector<double> edep_vec={};
@@ -463,21 +464,48 @@ void refactor_test_full_display(const TString file_path)
 
     // fill hit maps
     int n_photon_hits = 
-      process_event(ev, AnodeSysCfg, PDSSysConfig, h2AnodeTiles, h2PDArray, hTime); 
+      process_event(ev, AnodeSysCfg, PDSSysConfig, h2AnodeTilesCharge, h2AnodeTiles, h2PDArray, hTime); 
 
     // Fill vectors with the event number and total photons detected per event.
     hit_vec.push_back(n_photon_hits);
     event_vec.push_back(iev);
-  
+    
+    auto pdg = TDatabasePDG::Instance(); 
 
     for (const auto &p : primaries) {
-      std::cout << "Total Edep in LAr is: " <<  p.GetTotalLArEdep() << std::endl;
       std::cout << "Total Edep is: " <<  p.GetTotalEdep() << std::endl;
+      std::cout << "Total Edep in LAr is: " <<  p.GetTotalLArEdep() << std::endl;
       edep_vec.push_back(p.GetEnergy());
       x_vec.push_back(p.GetVertex()[0]);
-      y_vec.push_back(p.GetVertex()[0]);
-      z_vec.push_back(p.GetVertex()[0]);
+      y_vec.push_back(p.GetVertex()[1]);
+      z_vec.push_back(p.GetVertex()[2]);
+
+      /*
+      printf(
+            "[gen: %s] PRIMARY vertex: %s - K0 = %2f - t = %.2f - vtx [%.1f, %.1f, %.1f]\n", 
+            p.GetGeneratorLabel().Data(),
+            p.GetParticleName().Data(), p.GetEnergy(), p.GetTime(), 
+            p.GetVertex()[0], p.GetVertex()[1], p.GetVertex()[2]
+            );
+
+       auto& trajectories = p.GetConstTrajectories(); 
+
+       for (auto &t : trajectories) {
+        auto points = t->GetConstPoints(); 
+        auto pdg_particle = pdg->GetParticle(t->GetPDGID()); 
+         if (t -> GetInitKineticEne() < 2){
+          printf(
+             "%s [%i]: t = %.2f, K = %.2f - n_scint = %g, n_elec = %g\n", 
+             t->GetParticleName().Data(), t->GetTrackID(), 
+             t->GetTime(),
+             t->GetInitKineticEne(), 
+             t->GetTotalNph(), t->GetTotalNel()
+             );
+
+      }
     }
+    */
+  }
 
     // get the maximum number of hits in all the maps for proper colorscale handling
     double hit_max = 0; 

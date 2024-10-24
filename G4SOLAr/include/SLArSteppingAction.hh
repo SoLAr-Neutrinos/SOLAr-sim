@@ -30,7 +30,10 @@ class SLArSteppingAction : public G4UserSteppingAction
     double ph_count = 0;
     int count = 0;
     double ek_count = 0;
+    double LAr_energy_count = 0;
     double ek = 0;
+    int current_iev = 0;
+    int event_counter = 0;
 
   private:
     trj_point set_evtrj_point(const G4StepPoint* point, const int nel = 0, const int nph = 0); 
