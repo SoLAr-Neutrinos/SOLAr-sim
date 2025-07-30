@@ -65,7 +65,21 @@ namespace unit {
     G4double vunit = GetJSONunit(jval); 
 
     return jval["val"].GetDouble() * vunit; 
-  } 
+  }
+
+  static inline std::vector<double> ParseJsonVec(const rapidjson::Value& jval) {
+    assert(jval.HasMember("val"));
+    if (!jval["val"].IsArray()) {
+      fprintf(stderr, "ParseJsonVec: 'val' is not an array\n");
+      exit(EXIT_FAILURE);
+    }
+    G4double vunit = GetJSONunit(jval);
+    std::vector<double> vec; 
+    for (const auto& jv : jval["val"].GetArray()) {
+      vec.push_back(jv.GetDouble() * vunit); 
+    }
+    return vec; 
+  }
 }
 
 
