@@ -25,7 +25,7 @@
 SLArDetSuperCell::SLArDetSuperCell() : SLArBaseDetModule(),
   fPerfectQE(false),
   fLightGuide(nullptr), fCoating(nullptr),
-  fMatSuperCell(nullptr), fMatLightGuide(nullptr), fMatCoating(nullptr), 
+  fMatSuperCell(nullptr), fMatLightGuide(nullptr), fMatCoating(nullptr), fMatWLSCoating(nullptr),
   fSkinSurface(nullptr)
 {  
   fGeoInfo = new SLArGeoInfo();
@@ -41,6 +41,7 @@ SLArDetSuperCell::SLArDetSuperCell(const SLArDetSuperCell &detSuperCell)
   fMatSuperCell = new SLArMaterial(*detSuperCell.fMatSuperCell); 
   fMatLightGuide = new SLArMaterial(*detSuperCell.fMatLightGuide);
   fMatCoating   = new SLArMaterial(*detSuperCell.fMatCoating);
+  fMatWLSCoating = new SLArMaterial(*detSuperCell.fMatWLSCoating);
 
 }
 
@@ -51,6 +52,7 @@ SLArDetSuperCell::~SLArDetSuperCell() {
   if (fMatSuperCell) {delete fMatSuperCell; fMatSuperCell = 0;}
   if (fMatLightGuide){delete fMatLightGuide; fMatLightGuide = 0;}
   if (fMatCoating)   {delete fMatCoating; fMatCoating = 0;}
+  if (fMatWLSCoating){delete fMatWLSCoating; fMatWLSCoating = 0;}
   G4cerr << "SLArDetSuperCell DONE" <<  G4endl;
 }
 
@@ -94,7 +96,7 @@ void SLArDetSuperCell::BuildLightGuide()
 
 void SLArDetSuperCell::BuildCoating()
 {
-  G4cout << "Building SuperCell Coating..." << G4endl;
+  G4cout << "Building SuperCell sensitive coating..." << G4endl;
   fCoating = new SLArBaseDetModule();
   fCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_z"  ));
   fCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_x"  ));
@@ -115,15 +117,38 @@ void SLArDetSuperCell::BuildCoating()
       );
 }
 
+void SLArDetSuperCell::BuildWLSCoating()
+{
+  G4cout << "Building SuperCell wavelength-shifting Coating..." << G4endl;
+  fWLSCoating = new SLArBaseDetModule();
+  fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_z"  ));
+  fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_x"  ));
+  fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("wlscoating_y"));
+
+  fWLSCoating->SetMaterial(fMatCoating->GetMaterial());
+
+  fWLSCoating->SetSolidVolume(
+        new G4Box("WLSCoatingSV", 
+          0.5*fWLSCoating->GetGeoPar("cell_x"),
+          0.5*fWLSCoating->GetGeoPar("wlscoating_y"),
+          0.5*fWLSCoating->GetGeoPar("cell_z"))
+        );
+ 
+  fWLSCoating->SetLogicVolume(
+      new G4LogicalVolume(fWLSCoating->GetModSV(), 
+        fWLSCoating->GetMaterial(), "WLSCoatingLV", 0, 0, 0)
+      );
+}
 void SLArDetSuperCell::BuildSuperCell()
 {
   /*  *  *  *  *  *  *  *  *  *  *  *  * 
    * Build all the SuperCell components
    *  *  *  *  *  *  *  *  *  *  *  *  */
-
   BuildLightGuide();
   BuildCoating();
-
+  if (fGeoInfo->Contains("wlscoating_y")) {
+    BuildWLSCoating();
+  }
 
   //* * * * * * * * * * * * * * * * * * * * * * * * * * *//
   // Building a "empty" LV as SuperCell container        //
@@ -133,6 +158,9 @@ void SLArDetSuperCell::BuildSuperCell()
 
   fhTot = fGeoInfo->GetGeoPar("cell_y") 
     + fGeoInfo->GetGeoPar("coating_y");
+  if (fWLSCoating) {
+    fhTot += fWLSCoating->GetGeoPar("wlscoating_y");
+  }
 
   fModSV = new G4Box("SuperCell",
       fGeoInfo->GetGeoPar("cell_x")*0.5,
@@ -149,38 +177,39 @@ void SLArDetSuperCell::BuildSuperCell()
   /*  *  *  *  *  *  *  *  *  *  *  *  * 
    * Place SuperCell components
    *  *  *  *  *  *  *  *  *  *  *  *  */
+  printf("SLArDetSuperCell::BuildSuperCell: placing components...\n");
+  printf("  LightGuide: %s\n", fLightGuide->GetModLV()->GetName().c_str());
+  G4ThreeVector pos(0, -0.5*(fhTot-fLightGuide->GetGeoPar("cell_y")), 0);
+  fLightGuide->GetModPV("SuperCellLightGuide", 0, pos, fModLV, false, 100);
 
-  G4double h = 0*CLHEP::mm;
-  h = -0.5*fCoating->GetGeoPar("coating_y");
+  printf("  Photo-sensitive coating: %s\n", fCoating->GetModLV()->GetName().c_str());
+  pos[1] += 0.5*(fLightGuide->GetGeoPar("cell_y") + fCoating->GetGeoPar("coating_y"));
+  fCoating->GetModPV("SuperCellCoating", 0, pos, fModLV, false, 101);
 
-  G4cout<<"GetModPV light guide..." << G4endl; 
-  fLightGuide->GetModPV("SuperCellLightGuide", 0, 
-      G4ThreeVector(0, h, 0),
-      fModLV, false, 101);
-
-  h = 0.5*fhTot 
-      - 0.5*fCoating->GetGeoPar("coating_y");
-  G4cout<<"GetModPV coating..." << G4endl; 
-  fCoating->GetModPV("SuperCellCoating", 0, 
-      G4ThreeVector(0, h, 0),
-      fModLV, false, 102);
-
-   return;
+  if (fWLSCoating) {
+    printf("  WLS coating: %s\n", fWLSCoating->GetModLV()->GetName().c_str());
+    pos[1] += 0.5*(fCoating->GetGeoPar("coating_y") + fWLSCoating->GetGeoPar("wlscoating_y"));
+    fWLSCoating->GetModPV("SuperCellWLSCoating", 0, pos, fModLV, false, 102);
+  }
+  return;
 }
 
 
 void SLArDetSuperCell::SetVisAttributes()
 {
-  G4VisAttributes* visAttributes = new G4VisAttributes();
-  visAttributes->SetColor(0.862, 0.952, 0.976, 0.5);
-  fLightGuide->GetModLV()->SetVisAttributes( visAttributes );
+  G4VisAttributes* LGvisAttributes = new G4VisAttributes();
+  LGvisAttributes->SetColor(0.862, 0.952, 0.976, 0.5);
+  fLightGuide->GetModLV()->SetVisAttributes( LGvisAttributes );
 
-  visAttributes = new G4VisAttributes( G4Color(0.968, 0.494, 0.007) );
-  fCoating->GetModLV()->SetVisAttributes( visAttributes );
+  G4VisAttributes* CoatingvisAttributes = new G4VisAttributes( G4Color(0.968, 0.494, 0.007) );
+  fCoating->GetModLV()->SetVisAttributes( CoatingvisAttributes );
 
-  visAttributes = new G4VisAttributes();
-  visAttributes->SetColor(0.305, 0.294, 0.345, 0.0);
-  fModLV->SetVisAttributes( visAttributes );
+  if (fWLSCoating) {
+    G4VisAttributes* WLSvisAttributes = new G4VisAttributes( G4Color(0.0, 0.8, 0.0) );
+    fWLSCoating->GetModLV()->SetVisAttributes( WLSvisAttributes );
+  }
+
+  fModLV->SetVisAttributes( G4VisAttributes( false ) ); ;
 
   return;
 }
@@ -242,6 +271,7 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
   fMatLightGuide   = new SLArMaterial();
   fMatCoating      = new SLArMaterial();
   fMatSuperCell    = new SLArMaterial();
+  fMatWLSCoating   = new SLArMaterial();
 
   fMatSuperCell->SetMaterialID("Vacuum");
   fMatSuperCell->BuildMaterialFromDB(materials_db);
@@ -249,8 +279,11 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
   fMatLightGuide->SetMaterialID("Plastic");
   fMatLightGuide->BuildMaterialFromDB(materials_db);
 
-  fMatCoating->SetMaterialID("PTP");
+  fMatCoating->SetMaterialID("PTP_sensitive");
   fMatCoating->BuildMaterialFromDB(materials_db);
+
+  fMatWLSCoating->SetMaterialID("PTP_wls");
+  fMatWLSCoating->BuildMaterialFromDB(materials_db);
 }
 
 G4LogicalSkinSurface* SLArDetSuperCell::BuildLogicalSkinSurface() {

@@ -28,6 +28,7 @@ public:
   void          BuildSuperCell();
   void          BuildLightGuide();
   void          BuildCoating();
+  void          BuildWLSCoating();
   void          ReadParTable();
   void          SetVisAttributes();
 
@@ -52,10 +53,12 @@ private:
 
   SLArBaseDetModule* fLightGuide;
   SLArBaseDetModule* fCoating; 
+  SLArBaseDetModule* fWLSCoating;
 
   SLArMaterial* fMatSuperCell;
   SLArMaterial* fMatLightGuide;
   SLArMaterial* fMatCoating; 
+  SLArMaterial* fMatWLSCoating;
 
   G4LogicalSkinSurface* fSkinSurface;
 };
