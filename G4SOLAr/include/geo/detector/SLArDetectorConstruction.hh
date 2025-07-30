@@ -57,7 +57,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Construct world and place detectors
     virtual G4VPhysicalVolume* Construct();
     //! Construct Target
-    void ConstructTarget(); 
+    void ConstructTarget(const rapidjson::Value& d); 
     //! Construct Cathode
     void ConstructCathode();
     //! Construct Cryostat

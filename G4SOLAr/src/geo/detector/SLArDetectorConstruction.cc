@@ -164,7 +164,8 @@ void SLArDetectorConstruction::Init() {
   G4cout << "SLArDetectorConstruction::Init TPC" << G4endl;
   InitTPC(d["TPC"]); 
   InitCathode(d["Cathode"]);
-  ConstructTarget(); 
+
+  ConstructTarget(d); 
 
   fCryostat = new SLArDetCryostat(); 
   fCryostat->SetGeoPar( "target_size_x", fDetector->GetGeoPar("det_size_x") ); 
@@ -360,6 +361,10 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
 
     for (const auto &mtile : pixsys["tile_assembly"].GetArray()) {
       // Setup megatile
+      if (mtile.HasMember("name")) {
+        printf("SLArDetectorConstruction::InitReadoutTile: Setting up %s tile assembly\n", 
+            mtile["name"].GetString()); 
+      } 
       SLArDetReadoutTileAssembly* megatile = new SLArDetReadoutTileAssembly(); 
       assert(mtile.HasMember("dimensions")); 
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
@@ -380,37 +385,71 @@ void SLArDetectorConstruction::InitAnode(const rapidjson::Value& jconf) {
 
 }
 
-void SLArDetectorConstruction::ConstructTarget() {
+void SLArDetectorConstruction::ConstructTarget(const rapidjson::Value& d) {
   G4ThreeVector target_min   (0, 0, 0); 
   G4ThreeVector target_max   (0, 0, 0); 
 
   G4double eps = 1*CLHEP::mm;
 
-  for (const auto &tpc_ : fTPC) {
-    auto& tpc = tpc_.second; 
-    G4ThreeVector local_center; 
-    G4ThreeVector local_dim;  
-    local_center.setX(tpc->GetGeoPar("tpc_pos_x")); 
-    local_center.setY(tpc->GetGeoPar("tpc_pos_y")); 
-    local_center.setZ(tpc->GetGeoPar("tpc_pos_z"));
-    local_dim   .setX(tpc->GetGeoPar("tpc_x")); 
-    local_dim   .setY(tpc->GetGeoPar("tpc_y")); 
-    local_dim   .setZ(tpc->GetGeoPar("tpc_z"));
+  if (d.HasMember("LArTarget")) {
+    assert(d["LArTarget"].IsObject());
+    const rapidjson::Value& jlar_target = d["LArTarget"].GetObject();
+    G4ThreeVector lar_target_dim(0., 0., 0.);
+    G4ThreeVector lar_target_center(0., 0., 0.); 
 
-    G4ThreeVector local_min = local_center - 0.5*local_dim; 
-    G4ThreeVector local_max = local_center + 0.5*local_dim; 
+    if (!jlar_target.HasMember("dimensions")) {
+      fprintf(stderr, "LAr target dimensions not specified\n"); 
+      exit( EXIT_FAILURE ); 
+    }
 
-    G4cout << local_center << G4endl; 
-    G4cout << local_min << G4endl; 
-    G4cout << local_max << G4endl; 
+    const auto& jlar_target_dim = jlar_target["dimensions"];
+    assert(jlar_target_dim.IsArray());
+    assert(jlar_target_dim.Size() == 3);
+    for (const auto &dim : jlar_target_dim.GetArray()) {
+      assert(dim.IsObject());
+      assert(dim.HasMember("name")); 
+      TString dim_name = dim["name"].GetString();
+      int idx = -1;
+      if (dim_name == "size_x") {
+        idx = 0; 
+      } else if (dim_name == "size_y") {
+        idx = 1; 
+      } else if (dim_name == "size_z") {
+        idx = 2; 
+      } else {
+        fprintf(stderr, "LAr target dimension %s not recognized\n", dim_name.Data());
+        exit( EXIT_FAILURE ); 
+      }
 
-    for (int idim = 0; idim <3; idim++) {
-      if (local_min[idim] < target_min[idim]) target_min[idim] = local_min[idim]; 
-      if (local_max[idim] > target_max[idim]) target_max[idim] = local_max[idim]; 
+      lar_target_dim[idx] = unit::ParseJsonVal(dim);
+    }
+    
+    target_min = lar_target_center - 0.5*lar_target_dim;
+    target_max = lar_target_center + 0.5*lar_target_dim;
+  }
+  else {
+    for (const auto &tpc_ : fTPC) {
+      auto& tpc = tpc_.second; 
+      G4ThreeVector local_center; 
+      G4ThreeVector local_dim;  
+      local_center.setX(tpc->GetGeoPar("tpc_pos_x")); 
+      local_center.setY(tpc->GetGeoPar("tpc_pos_y")); 
+      local_center.setZ(tpc->GetGeoPar("tpc_pos_z"));
+      local_dim   .setX(tpc->GetGeoPar("tpc_x")); 
+      local_dim   .setY(tpc->GetGeoPar("tpc_y")); 
+      local_dim   .setZ(tpc->GetGeoPar("tpc_z"));
 
-      //printf("target_max: [%g, %g, %g], target_min: [%g, %g, %g]\n", 
-      //target_max[0], target_max[1], target_max[2], 
-      //target_min[0], target_min[1], target_min[2]); 
+      G4ThreeVector local_min = local_center - 0.5*local_dim; 
+      G4ThreeVector local_max = local_center + 0.5*local_dim; 
+
+      G4cout << local_center << G4endl; 
+      G4cout << local_min << G4endl; 
+      G4cout << local_max << G4endl; 
+
+      for (int idim = 0; idim <3; idim++) {
+        if (local_min[idim] < target_min[idim]) target_min[idim] = local_min[idim]; 
+        if (local_max[idim] > target_max[idim]) target_max[idim] = local_max[idim]; 
+      }
     }
   }
 
@@ -798,7 +837,8 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
     auto anode = anode_.second; 
     auto anode_id = anode_.first; 
     anode->BuildMaterial(fMaterialDBFile); 
-    printf("---- Building anode volume\n");
+    printf("---- Building anode volume with %s tile assembly\n", 
+        anode->GetTileAssemblyModel().c_str() );
     anode->BuildAnodeAssembly( 
         fReadoutMegaTile.find(anode->GetTileAssemblyModel())->second );
     auto pos = anode->GetPosition(); 
