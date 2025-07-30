@@ -193,7 +193,8 @@ void SLArDetTPC::BuildFieldCage() {
   auto parameterisation = new SLArPlaneParameterisation(kXAxis, 
       G4ThreeVector(-0.5*(len - sp + hl) , 0, 0), sp); 
 
-  fFieldCage->SetModPV( new G4PVParameterised("fieldCage_ppv", 
+  G4String fc_name = G4String("fieldCage_") + std::to_string(fID) + "_ppv";
+  fFieldCage->SetModPV( new G4PVParameterised(fc_name, 
       fc_layer_lv, fc_volume_lv, 
       parameterisation->GetReplicationAxis(), n_replica, parameterisation) 
       );
