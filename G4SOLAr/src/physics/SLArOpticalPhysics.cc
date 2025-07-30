@@ -40,7 +40,7 @@
 SLArOpticalPhysics::SLArOpticalPhysics(G4bool abs_toggle, G4bool cerenkov_toggle)
   : G4VPhysicsConstructor("Optical")
 {
-  //fWLSProcess                = NULL;
+  fWLSProcess                = NULL;
   fScintProcess              = NULL;
   fCerenkovProcess           = NULL;
   fBoundaryProcess           = NULL;
@@ -69,7 +69,7 @@ void SLArOpticalPhysics::ConstructProcess()
   G4cout << "SLArOpticalPhysics:: Add Optical Physics Processes"
     << G4endl;
 
-  //fWLSProcess = new G4OpWLS("WLS");
+  fWLSProcess = new G4OpWLS("WLS");
 
   fScintProcess = new SLArScintillation("Scintillation", fOptical);
   //fScintProcess = new G4Scintillation("Scintillation");
@@ -102,9 +102,9 @@ void SLArOpticalPhysics::ConstructProcess()
   pManager->AddDiscreteProcess(fBoundaryProcess);
 
   //fWLSProcess->UseTimeProfile("delta");
-  //fWLSProcess->UseTimeProfile("exponential");
+  fWLSProcess->UseTimeProfile("exponential");
 
-  //pManager->AddDiscreteProcess(fWLSProcess);
+  pManager->AddDiscreteProcess(fWLSProcess);
 
   //fScintProcess->SetScintillationYieldFactor(1.);
   //fScintProcess->SetScintillationExcitationRatio(0.0);
@@ -146,7 +146,6 @@ void SLArOpticalPhysics::ConstructProcess()
       pManager->SetProcessOrderingToLast(fScintProcess,idxAtRest);
       pManager->SetProcessOrderingToLast(fScintProcess,idxPostStep);
     }
-
   }
 }
 
