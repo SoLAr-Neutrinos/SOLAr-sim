@@ -22,25 +22,26 @@ G4ThreeVector SLArRandom::SampleRandomDirection() {
 }
 
 G4ThreeVector SLArRandom::SampleLinearPolarization(const G4ThreeVector& momentum) {
+  if (momentum.mag2() == 0) {
+    fprintf(stderr, "SLArRandom::SampleLinearPolarization: momentum is zero vector!\n");
+    return G4ThreeVector(0, 0, 1); // Default polarization along z-axis
+  }
+
   G4ThreeVector ref(0, 0, 1); 
-  if ( fabs( fabs(momentum.z()) - 1.0 ) < 0.01 ) {
+  if ( fabs( ref.dot(momentum) ) > 0.99 ) {
     ref.set(1, 0, 0); 
   }
   
-  G4ThreeVector p0 = momentum.cross(ref); 
-  p0 = p0.unit(); 
-
-  G4ThreeVector p1 = momentum.cross(p0); 
-  p1 = p1.unit(); 
+  G4ThreeVector p0 = momentum.cross(ref).unit(); 
+  G4ThreeVector p1 = momentum.cross(p0).unit(); 
 
   double phi = CLHEP::twopi*G4UniformRand();
   double cosPhi = std::cos(phi); 
   double sinPhi = std::sin(phi); 
 
   G4ThreeVector polarization = cosPhi * p0 + sinPhi * p1;
-  polarization = polarization.unit();
 
-  return polarization;
+  return polarization.unit();
 }
 
 std::array<G4ThreeVector,2> SLArRandom::SampleRandomDirectionAndPolarization() {
