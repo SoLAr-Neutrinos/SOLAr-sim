@@ -69,16 +69,16 @@ void SLArOpticalPhysics::ConstructProcess()
   G4cout << "SLArOpticalPhysics:: Add Optical Physics Processes"
     << G4endl;
 
-  fWLSProcess = new G4OpWLS("WLS");
+  fWLSProcess = new SLArOpWLS();
 
   fScintProcess = new SLArScintillation("Scintillation", fOptical);
-  //fScintProcess = new G4Scintillation("Scintillation");
 
   if (fCerenkovOn) {
     fCerenkovProcess = new G4Cerenkov("Cerenkov");
     fCerenkovProcess->SetMaxNumPhotonsPerStep(300);
     fCerenkovProcess->SetTrackSecondariesFirst(true);
   }
+
   fAbsorptionProcess      = new G4OpAbsorption();
   fRayleighScattering     = new G4OpRayleigh();
   fMieHGScatteringProcess = new G4OpMieHG();
