@@ -23,7 +23,7 @@ G4ThreeVector SLArRandom::SampleRandomDirection() {
 
 G4ThreeVector SLArRandom::SampleLinearPolarization(const G4ThreeVector& momentum) {
   G4ThreeVector ref(0, 0, 1); 
-  if ( ( fabs(momentum.z()) - 1.0 ) < 0.01 ) {
+  if ( fabs( fabs(momentum.z()) - 1.0 ) < 0.01 ) {
     ref.set(1, 0, 0); 
   }
   
