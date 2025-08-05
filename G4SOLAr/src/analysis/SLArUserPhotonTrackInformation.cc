@@ -7,7 +7,7 @@
 #include "SLArUserPhotonTrackInformation.hh"
 
 SLArUserPhotonTrackInformation::SLArUserPhotonTrackInformation()
-  : fStatus(active),fReflections(0),fForcedraw(false) {}
+  : fStatus(active),fAncestorID(-1),fCreator(optical::kUnknown),fReflections(0),fForcedraw(false) {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
