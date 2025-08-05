@@ -10,6 +10,7 @@
 
 #include "detector/SLArBaseDetModule.hh"
 #include "G4LogicalSkinSurface.hh"
+#include "G4LogicalBorderSurface.hh"
 
 class SLArDetSuperCell : public SLArBaseDetModule
 {
@@ -25,6 +26,7 @@ public:
   void          BuildMaterial(G4String materials_db);
   void          BuildDefalutGeoParMap();
   G4LogicalSkinSurface* BuildLogicalSkinSurface(); 
+  G4LogicalBorderSurface* BuildWLSLogicalBorderSurface();
   void          BuildSuperCell();
   void          BuildLightGuide();
   void          BuildCoating();

@@ -735,6 +735,7 @@ void SLArDetectorConstruction::BuildAndPlaceSuperCells()
   fSuperCell->BuildMaterial(fMaterialDBFile);
   fSuperCell->BuildSuperCell();
   fSuperCell->BuildLogicalSkinSurface(); 
+  fSuperCell->BuildWLSLogicalBorderSurface();
 
   // Get PMTSystem Configuration
   SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();

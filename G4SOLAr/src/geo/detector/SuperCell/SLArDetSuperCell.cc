@@ -296,4 +296,14 @@ G4LogicalSkinSurface* SLArDetSuperCell::BuildLogicalSkinSurface() {
   return fSkinSurface;
 }
 
+G4LogicalBorderSurface* SLArDetSuperCell::BuildWLSLogicalBorderSurface() {
+  G4LogicalBorderSurface* wlsSurf = 
+    new G4LogicalBorderSurface(
+        "WLSCoatingBorder", 
+        fModPV, 
+        fWLSCoating->GetModPV(), 
+        fMatWLSCoating->GetMaterialOpticalSurf());
+
+  return wlsSurf;
+}
 
