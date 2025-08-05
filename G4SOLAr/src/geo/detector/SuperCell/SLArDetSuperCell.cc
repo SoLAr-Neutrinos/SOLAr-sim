@@ -125,7 +125,7 @@ void SLArDetSuperCell::BuildWLSCoating()
   fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_x"  ));
   fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("wlscoating_y"));
 
-  fWLSCoating->SetMaterial(fMatCoating->GetMaterial());
+  fWLSCoating->SetMaterial(fMatWLSCoating->GetMaterial());
 
   fWLSCoating->SetSolidVolume(
         new G4Box("WLSCoatingSV", 
