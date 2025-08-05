@@ -273,7 +273,7 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
   fMatSuperCell    = new SLArMaterial();
   fMatWLSCoating   = new SLArMaterial();
 
-  fMatSuperCell->SetMaterialID("Vacuum");
+  fMatSuperCell->SetMaterialID("LAr");
   fMatSuperCell->BuildMaterialFromDB(materials_db);
 
   fMatLightGuide->SetMaterialID("Plastic");
