@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArTrackingAction
- * @created     : lunedì ago 31, 2020 18:35:29 CEST
+ * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @file        : SLArTrackingAction.hh
+ * @created     : Monday Aug 31, 2020 18:35:29 CEST
  *
  * Reimplemented from optical/LXe/include/LXeTrackingAction.hh
  */
@@ -10,9 +10,9 @@
 
 #define SLArTRACKINGACTION_HH
 
-#include <G4UserTrackingAction.hh>
-#include <G4TrackingManager.hh>
-#include <G4UImessenger.hh>
+#include "G4UserTrackingAction.hh"
+#include "G4TrackingManager.hh"
+#include "G4UImessenger.hh"
 #include "globals.hh"
 
 class SLArTrackingActionMessenger;

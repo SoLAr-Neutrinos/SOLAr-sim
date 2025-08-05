@@ -10,7 +10,6 @@
 #include "SLArTrackingAction.hh"
 #include "SLArUserPhotonTrackInformation.hh"
 #include "SLArUserTrackInformation.hh"
-#include "detector/SLArDetectorConstruction.hh"
 
 #include "G4TrackingManager.hh"
 #include "G4Track.hh"
@@ -63,14 +62,30 @@ void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
         }
       }
     }
-
   }
   else {
-    if (fpTrackingManager->GetStoreTrajectory()) {
+    auto photonInfo = (SLArUserPhotonTrackInformation*)aTrack->GetUserInformation();
+    if (photonInfo) {
+      const auto touchable_handle = aTrack->GetTouchableHandle();
+      if (!touchable_handle) {
+        G4Exception("SLArStackingAction::ClassifyNewTrackOpticalPhoton",
+            "InvalidTouchable", FatalException,
+            "SLArStackingAction: track has no touchable handle");
+      }
+      std::vector<int>& origin_vol = photonInfo->GetOriginVolume();
+      if (origin_vol.empty()) {
+        const auto touchableHandle = aTrack->GetTouchableHandle(); 
+        if (touchableHandle) {
+          G4int depth = touchableHandle->GetHistoryDepth();
+          origin_vol.reserve(depth + 1);
+          for (G4int i = 0; i <= depth; ++i) {
+            origin_vol.push_back(touchableHandle->GetCopyNumber(i));
+          }
+        }
+      }
+    }
+    if (_store_photon_trajectory_) {
       fpTrackingManager->SetStoreTrajectory( _store_photon_trajectory_ );
-      //This user track information is only relevant to the photons
-      fpTrackingManager->SetUserTrackInformation(
-          new SLArUserPhotonTrackInformation);
       if (fpTrackingManager->GetStoreTrajectory()) {
         fpTrackingManager->SetTrajectory(new SLArTrajectory(aTrack));
       }
@@ -113,11 +128,19 @@ void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
       if (trackInformation) {
         if(trackInformation->GetForceDrawTrajectory())
           trajectory->SetDrawTrajectory(true);
+        delete trackInformation; //delete the user info
+        aTrack->SetUserInformation(nullptr); //remove it from the track
       }
     }
     else //draw all other trajectories and store them in SLArMCPrimaryInfo
     {
       trajectory->SetDrawTrajectory(true);
+      SLArUserTrackInformation* trackInformation =
+        (SLArUserTrackInformation*)aTrack->GetUserInformation();
+      if (trackInformation) {
+        delete trackInformation; //delete the user info
+        aTrack->SetUserInformation(nullptr); //remove it from the track
+      }
     }  
   }
 
