@@ -78,6 +78,10 @@ class SLArPhysicsList: public G4VModularPhysicsList
     void SetAbsorption(G4bool);
     void SetNbOfPhotonsCerenkov(G4int);
 
+    //! Return the optical physics list
+    inline SLArOpticalPhysics* GetOpticalPhysics() {return fOpticalPhysics;}
+    inline const SLArOpticalPhysics* GetOpticalPhysics() const {return fOpticalPhysics;}
+
     void SetVerbose(G4int);
 
   private:
