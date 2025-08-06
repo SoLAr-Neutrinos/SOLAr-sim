@@ -5,13 +5,16 @@
  */
 
 #include "SLArAnalysisManager.hh"
+#include "SLArEventAction.hh"
 
 #include "SLArTrajectory.hh"
 #include "SLArTrackingAction.hh"
 #include "SLArUserPhotonTrackInformation.hh"
 #include "SLArUserTrackInformation.hh"
+#include "SLArAnalysisManager.hh"
 
 #include "G4TrackingManager.hh"
+#include "G4RunManager.hh"
 #include "G4Track.hh"
 #include "G4ParticleTypes.hh"
 #include "G4EventManager.hh"
@@ -32,19 +35,40 @@ SLArTrackingAction::~SLArTrackingAction() {
 
 void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 {
-//#ifdef SLAR_DEBUG
-  //printf("SLArTrackingAction::PreUserTrackingAction\n");
-//#endif // DEBUG
+  bool debug = false; 
 
-  //Let this be up to the user via vis.mac
   if (aTrack->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition())
   {
+    SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
     fpTrackingManager->SetStoreTrajectory( _store_particle_trajectory_ );
     auto trkInfo = (SLArUserTrackInformation*)aTrack->GetUserInformation();
 
     if (trkInfo) {
-      if (trkInfo->GimmeEvTrajectory()->GetConstPoints().empty()) {
-        fpTrackingManager->SetTrajectory(new SLArTrajectory(aTrack));
+      if (debug) {
+        printf("check info: track already has associated information\n");
+      }
+      if (aTrack->GetParentID() == 0) {
+        SLArEventTrajectory t = CreateNewTrajectory(aTrack); 
+        SLArMCPrimaryInfo* ancestor = nullptr; 
+        auto& primaries = SLArAnaMgr->GetMCTruth().GetPrimaries();
+        for (auto &p : primaries) {
+          if (p.GetTrackID() == trkInfo->GetTrackAncestor()) {
+            ancestor = &p; 
+            break;
+          }
+        }
+        if (!ancestor) {
+          printf("SLArTrackingAction::PostUserTrackingAction() WARNING"); 
+          printf(" Unable to find corresponding ancestor for primary particle %i\n", 
+              aTrack->GetTrackID());
+        }
+        ancestor->RegisterTrajectory( std::move(t) ); 
+        trkInfo->SetStoreTrajectory(true); 
+        trkInfo->SetTrajectory( ancestor->GetTrajectories().back() ); 
+
+        if (trkInfo->GimmeEvTrajectory()->GetConstPoints().empty()) {
+          fpTrackingManager->SetTrajectory(new SLArTrajectory(aTrack));
+        }
       }
       else {
         auto event = G4EventManager::GetEventManager()->GetNonconstCurrentEvent();
@@ -92,6 +116,11 @@ void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
     }
   }
 
+  if (debug) {
+    auto trkInfo = dynamic_cast<SLArUserTrackInformation*>(aTrack->GetUserInformation());
+    printf("check info: ancestor %i - trajectory %p\n", 
+        trkInfo->GetTrackAncestor(), trkInfo->GimmeEvTrajectory());
+  }
 //#ifdef SLAR_DEBUG
   //printf("SLArTrackingAction::PreUserTrackingAction() DONE\n");
 //#endif // DEBUG
@@ -101,49 +130,237 @@ void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
-
   SLArTrajectory* trajectory =
     (SLArTrajectory*)fpTrackingManager->GimmeTrajectory();
 
-  //Lets choose to draw only the photons that hit the sphere and a pmt
-  if (fpTrackingManager->GetStoreTrajectory()) {
-    if(aTrack->GetDefinition()==
-        G4OpticalPhoton::OpticalPhotonDefinition()){
-      SLArUserPhotonTrackInformation*
-        trackInformation=(SLArUserPhotonTrackInformation*)aTrack->GetUserInformation();
+  const G4TrackStatus status = aTrack->GetTrackStatus();
 
-      /*
-       *const G4VProcess* creator=aTrack->GetCreatorProcess();
-       *if(creator && creator->GetProcessName()=="OpWLS"){
-       *  trajectory->WLS();
-       *  trajectory->SetDrawTrajectory(true);
-       *}
-       */
-
-      //if((trackInformation->GetTrackStatus()&hitPMT)|| 
-      //(trackInformation->GetTrackStatus()&absorbed) ||
-      //(trackInformation->GetTrackStatus()&boundaryAbsorbed) )
-      trajectory->SetDrawTrajectory(true);
-
-      if (trackInformation) {
-        if(trackInformation->GetForceDrawTrajectory())
-          trajectory->SetDrawTrajectory(true);
-        delete trackInformation; //delete the user info
-        aTrack->SetUserInformation(nullptr); //remove it from the track
-      }
-    }
-    else //draw all other trajectories and store them in SLArMCPrimaryInfo
-    {
-      trajectory->SetDrawTrajectory(true);
-      SLArUserTrackInformation* trackInformation =
-        (SLArUserTrackInformation*)aTrack->GetUserInformation();
-      if (trackInformation) {
-        delete trackInformation; //delete the user info
-        aTrack->SetUserInformation(nullptr); //remove it from the track
-      }
-    }  
+  bool debug = false;
+  if (debug) {
+    printf("SLArTrackingAction::PostUserTrackingAction() Track ID %i, "
+        "Particle %s, Parent ID %i\n", 
+        aTrack->GetTrackID(), 
+        aTrack->GetParticleDefinition()->GetParticleName().data(),
+        aTrack->GetParentID());
   }
 
+  if (aTrack->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) {
+    if (fpTrackingManager->GetStoreTrajectory() == true) {
+      trajectory->SetDrawTrajectory(true);
+    }
+
+    SetupSecondaries(aTrack, debug);
+
+    auto trackInformation = (SLArUserTrackInformation*)aTrack->GetUserInformation();
+    if (trackInformation && status != fSuspend) {
+      delete trackInformation; //delete the user info
+      aTrack->SetUserInformation(nullptr); //remove it from the track
+    }
+  }
+  else {
+    SLArUserPhotonTrackInformation*
+      trackInformation=(SLArUserPhotonTrackInformation*)aTrack->GetUserInformation();
+
+    if (trackInformation) {
+      if (debug) {
+        printf("SLArTrackingAction::PostUserTrackingAction() Optical photon "
+            "Track ID %i, creator process %i\n", 
+            aTrack->GetTrackID(), trackInformation->GetCreator());
+      }
+
+      SetupSecondariesFromOpticalPhoton(aTrack, debug);
+
+      if(trackInformation->GetForceDrawTrajectory()) {
+        trajectory->SetDrawTrajectory(true);
+      }
+
+      if (status != fSuspend) {
+        delete trackInformation; //delete the user info
+        aTrack->SetUserInformation(nullptr); //remove it from the track
+      } 
+    }
+  }
+
+  if (debug) {
+    getchar();
+  }
+}
+
+void SLArTrackingAction::SetupSecondaries(const G4Track* aTrack, const bool debug) 
+{
+  const std::vector<G4Track*>* secondaries = aTrack->GetStep()->GetSecondary();
+  SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
+  const auto trackInformation = 
+    dynamic_cast<SLArUserTrackInformation*>(aTrack->GetUserInformation());
+
+  for (G4Track* sec : *secondaries) {
+    if (sec->GetParticleDefinition() == G4OpticalPhoton::OpticalPhotonDefinition()) {
+      SLArUserPhotonTrackInformation* photonInfo = 
+        dynamic_cast<SLArUserPhotonTrackInformation*>(sec->GetUserInformation());
+      if (photonInfo) {
+        photonInfo->SetForceDrawTrajectory( _store_photon_trajectory_ ); 
+        continue;
+      }
+
+      photonInfo = new SLArUserPhotonTrackInformation(); 
+      photonInfo->SetAncestorID( trackInformation->GetTrackAncestor() ); 
+      photonInfo->SetForceDrawTrajectory( _store_photon_trajectory_ ); 
+      sec->SetUserInformation(photonInfo);
+      continue;
+    }
+
+    if (sec->GetParentID() ==0 ) {
+      continue;
+    }
+
+    SLArUserTrackInformation* secInfo = new SLArUserTrackInformation();
+    if (sec->GetParentID() == 0) {
+      printf("SLArTrackingAction::PostUserTrackingAction() WARNING: "
+          "Primary particle %i in secondaries loop???\n", 
+          aTrack->GetTrackID());
+      secInfo->SetTrackAncestor( aTrack->GetTrackID() );
+    } else {
+      secInfo->SetTrackAncestor( trackInformation->GetTrackAncestor() );
+    }
+
+    SLArEventTrajectory t = CreateNewTrajectory(sec); 
+    SLArMCPrimaryInfo* ancestor = nullptr; 
+    auto& primaries = SLArAnaMgr->GetMCTruth().GetPrimaries();
+    for (auto &p : primaries) {
+      if (p.GetTrackID() == secInfo->GetTrackAncestor()) {
+        ancestor = &p; 
+        break;
+      }
+    }
+    if (!ancestor) {
+      printf("SLArTrackingAction::PostUserTrackingAction() WARNING"); 
+      printf(" Unable to find corresponding ancestor for secondary particle %i\n", 
+          sec->GetTrackID());
+    }
+    ancestor->RegisterTrajectory( std::move(t) ); 
+    secInfo->SetStoreTrajectory(true); 
+    secInfo->SetTrajectory( ancestor->GetTrajectories().back() ); 
+    if (debug) {
+      printf("SLArTrackingAction::SetupSecondaries() "
+          "Secondary particle PDG %i - %g MeV, ancestor %i - trajectory %p\n", 
+          sec->GetParticleDefinition()->GetPDGEncoding(), 
+          sec->GetKineticEnergy(),
+          secInfo->GetTrackAncestor(), 
+          secInfo->GimmeEvTrajectory());
+    }
+    sec->SetUserInformation(secInfo);
+  }
+
+  return;
+}
+
+void SLArTrackingAction::SetupSecondariesFromOpticalPhoton(const G4Track* aTrack, const bool debug) 
+{
+  const std::vector<G4Track*>* secondaries = aTrack->GetStep()->GetSecondary();
+  SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
+  const auto trackInformation = 
+    dynamic_cast<SLArUserPhotonTrackInformation*>(aTrack->GetUserInformation());
+
+  for (G4Track* sec : *secondaries) {
+    if (sec->GetParticleDefinition() == G4OpticalPhoton::OpticalPhotonDefinition()) {
+      SLArUserPhotonTrackInformation* photonInfo = 
+        dynamic_cast<SLArUserPhotonTrackInformation*>(sec->GetUserInformation());
+      if (photonInfo) {
+        photonInfo->SetForceDrawTrajectory( _store_photon_trajectory_ ); 
+        continue;
+      }
+
+      photonInfo = new SLArUserPhotonTrackInformation(); 
+      photonInfo->SetAncestorID( trackInformation->GetAncestorID() ); 
+      photonInfo->SetForceDrawTrajectory( _store_photon_trajectory_ ); 
+      sec->SetUserInformation(photonInfo);
+      continue;
+    }
+
+    if (sec->GetParentID() ==0 ) {
+      continue;
+    }
+
+    SLArUserTrackInformation* secInfo = new SLArUserTrackInformation();
+    if (sec->GetParentID() == 0) {
+      printf("SLArTrackingAction::PostUserTrackingAction() WARNING: "
+          "Primary particle %i in secondaries loop???\n", 
+          aTrack->GetTrackID());
+      secInfo->SetTrackAncestor( aTrack->GetTrackID() );
+    } else {
+      secInfo->SetTrackAncestor( trackInformation->GetAncestorID() );
+    }
+
+    SLArEventTrajectory t = CreateNewTrajectory(sec); 
+    SLArMCPrimaryInfo* ancestor = nullptr; 
+    auto& primaries = SLArAnaMgr->GetMCTruth().GetPrimaries();
+    for (auto &p : primaries) {
+      if (p.GetTrackID() == secInfo->GetTrackAncestor()) {
+        ancestor = &p; 
+        break;
+      }
+    }
+    if (!ancestor) {
+      printf("SLArTrackingAction::PostUserTrackingAction() WARNING"); 
+      printf(" Unable to find corresponding ancestor for secondary particle %i\n", 
+          sec->GetTrackID());
+    }
+    ancestor->RegisterTrajectory( std::move(t) ); 
+    secInfo->SetStoreTrajectory(true); 
+    secInfo->SetTrajectory( ancestor->GetTrajectories().back() ); 
+    sec->SetUserInformation(secInfo);
+  }
+
+  return;
+}
+
+G4String SLArTrackingAction::GetProcessName(const G4Track* aTrack) const
+{
+  auto fEventAction = static_cast<const SLArEventAction*>
+    (G4RunManager::GetRunManager()->GetUserEventAction());
+  G4String creatorProc  = "PrimaryGenerator"; 
+  if (aTrack->GetCreatorProcess()) {
+    creatorProc = aTrack->GetCreatorProcess()->GetProcessName(); 
+    G4double momentum_4[4] = {0}; 
+    for (size_t i = 0; i < 3; i++) {
+      momentum_4[i] = aTrack->GetMomentum()[i];
+    }
+    momentum_4[3] = aTrack->GetKineticEnergy(); 
+    auto trkIdHelp = SLArEventAction::TrackIdHelpInfo_t(
+        aTrack->GetParentID(), 
+        aTrack->GetDynamicParticle()->GetPDGcode(),
+        momentum_4); 
+    //std::printf("trkID: %i, ParentID: %i, pdg code: %i\n", 
+    //aTrack->GetTrackID(), aTrack->GetParentID(), trkIdHelp.pdg); 
+    if ( fEventAction->GetProcessExtraInfo().find(trkIdHelp) 
+        != fEventAction->GetProcessExtraInfo().end() ) {
+      creatorProc = fEventAction->GetProcessExtraInfo().at(trkIdHelp);
+    }
+  }
+  return creatorProc;
+}
+
+SLArEventTrajectory SLArTrackingAction::CreateNewTrajectory(const G4Track* aTrack) 
+{
+  SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
+  SLArEventTrajectory trajectory;
+
+  G4String creatorProc = GetProcessName(aTrack);
+
+  trajectory.SetTrackID( aTrack->GetTrackID() ); 
+  trajectory.SetParentID(aTrack->GetParentID()); 
+  trajectory.SetParticleName( aTrack->GetParticleDefinition()->GetParticleName() );
+  trajectory.SetPDGID( aTrack->GetDynamicParticle()->GetPDGcode() ); 
+  trajectory.SetCreatorProcess( creatorProc ); 
+  trajectory.SetTime( aTrack->GetGlobalTime() ); 
+  trajectory.SetWeight(aTrack->GetWeight()); 
+  trajectory.SetStoreTrajectoryPts( SLArAnaMgr->StoreTrajectoryFull() ); 
+  //trajectory.SetOriginVolCopyNo(aTrack->GetVolume()->GetCopyNo()); 
+  trajectory.SetInitKineticEne( aTrack->GetKineticEnergy() ); 
+  auto& vertex_momentum = aTrack->GetMomentumDirection();
+  trajectory.SetInitMomentum( vertex_momentum.x(), vertex_momentum.y(), vertex_momentum.z() );
+
+  return trajectory;
 }
 
 #include <G4UIcmdWithABool.hh>

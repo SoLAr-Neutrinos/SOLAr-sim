@@ -15,6 +15,8 @@
 #include "G4UImessenger.hh"
 #include "globals.hh"
 
+#include "event/SLArEventTrajectory.hh"
+
 class SLArTrackingActionMessenger;
 
 class SLArTrackingAction : public G4UserTrackingAction {
@@ -33,6 +35,11 @@ class SLArTrackingAction : public G4UserTrackingAction {
     SLArTrackingActionMessenger* fTrackingExtraMessenger;
     G4bool _store_particle_trajectory_  = false;
     G4bool _store_photon_trajectory_ = false;
+    SLArEventTrajectory CreateNewTrajectory(const G4Track*); 
+    void SetupSecondaries(const G4Track* aTrack, const bool debug = false); 
+    void SetupSecondariesFromOpticalPhoton(const G4Track* aTrack, const bool debug = false); 
+
+    G4String GetProcessName(const G4Track* aTrack) const;
 
     friend class SLArTrackingActionMessenger;
 };
