@@ -68,80 +68,98 @@ SLArStackingAction::ClassifyNewGeneralTrack(const G4Track* aTrack) const
 
   // check it the track already owns a user info 
   if (aTrack->GetUserInformation()) {
+    // check if the track ID is correctly registered in the trajectory object
+    auto trackInfo = dynamic_cast<SLArUserTrackInformation*>(aTrack->GetUserInformation());
+    if (trackInfo->GimmeEvTrajectory()->GetTrackID() != aTrack->GetTrackID()) {
+      // if not, we update the trajectory object with the correct track ID
+      trackInfo->GimmeEvTrajectory()->SetTrackID(aTrack->GetTrackID());
+    }
     return kClassification;
   }
 
-  //printf("Track ID %i is a new one!\n", aTrack->GetTrackID());
-  auto SLArAnaMgr = SLArAnalysisManager::Instance(); 
-  G4int parentID = 0; 
-  if (aTrack->GetParentID() == 0) { //----------------------- this is a primary
-    fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetTrackID()); 
-    parentID = aTrack->GetTrackID(); 
-    //printf("Track %i is a candidate primary with pdg id %i\n", 
-    //aTrack->GetTrackID(), aTrack->GetParticleDefinition()->GetPDGEncoding());
-    UpdatePrimaryTrackID(aTrack, SLArAnaMgr);
-  } else { //---------------------------------------------- this is a secondary
-    //printf("Not a primary, recording parent id\n");
-    fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetParentID()); 
-    parentID = aTrack->GetParentID();
-  }
+  // if not, we create a new one
+  auto trackInfo = new SLArUserTrackInformation();
+  if (aTrack->GetParentID() == 0) {
+    trackInfo->SetTrackAncestor(aTrack->GetTrackID());
+    UpdatePrimaryTrackID(aTrack, SLArAnalysisManager::Instance());
+  } 
 
-  const char* particleName = aTrack->GetParticleDefinition()->GetParticleName().data(); 
-  const char* creatorProc  = "PrimaryGenerator"; 
-  if (aTrack->GetCreatorProcess()) {
-    creatorProc = aTrack->GetCreatorProcess()->GetProcessName(); 
-    G4double momentum_4[4] = {0}; 
-    for (size_t i = 0; i < 3; i++) {
-      momentum_4[i] = aTrack->GetMomentum()[i];
-    }
-    momentum_4[3] = aTrack->GetKineticEnergy(); 
-    auto trkIdHelp = SLArEventAction::TrackIdHelpInfo_t(
-        aTrack->GetParentID(), 
-        aTrack->GetDynamicParticle()->GetPDGcode(),
-        momentum_4); 
-    //std::printf("trkID: %i, ParentID: %i, pdg code: %i\n", 
-    //aTrack->GetTrackID(), aTrack->GetParentID(), trkIdHelp.pdg); 
-    if ( fEventAction->GetProcessExtraInfo().count(trkIdHelp) ) {
-      creatorProc = fEventAction->GetProcessExtraInfo()[trkIdHelp];
-    }
-  }
+  trackInfo->SetStoreTrajectory(true); // store trajectory by default
+  aTrack->SetUserInformation(trackInfo);
 
-  //printf("creating trajectory...\n");
-  SLArEventTrajectory trajectory;
-  trajectory.SetTrackID( aTrack->GetTrackID() ); 
-  trajectory.SetParentID(aTrack->GetParentID()); 
-  trajectory.SetParticleName( particleName );
-  trajectory.SetPDGID( aTrack->GetDynamicParticle()->GetPDGcode() ); 
-  trajectory.SetCreatorProcess( creatorProc ); 
-  trajectory.SetTime( aTrack->GetGlobalTime() ); 
-  trajectory.SetWeight(aTrack->GetWeight()); 
-  trajectory.SetStoreTrajectoryPts( SLArAnaMgr->StoreTrajectoryFull() ); 
-  //trajectory.SetOriginVolCopyNo(aTrack->GetVolume()->GetCopyNo()); 
-  trajectory.SetInitKineticEne( aTrack->GetKineticEnergy() ); 
-  auto& vertex_momentum = aTrack->GetMomentumDirection();
-  trajectory.SetInitMomentum( vertex_momentum.x(), vertex_momentum.y(), vertex_momentum.z() );
-  G4int ancestor_id = fEventAction->FindAncestorID( parentID ); 
-
-  SLArMCPrimaryInfo* ancestor = nullptr; 
-  auto& primaries = SLArAnaMgr->GetMCTruth().GetPrimaries();
-  for (auto &p : primaries) {
-    if (p.GetTrackID() == ancestor_id) {
-      ancestor = &p; 
-      break;
-    }
-  }
-  if (!ancestor) printf("Unable to find corresponding primary particle\n");
-#ifdef SLAR_DEBUG
-  if (!ancestor) printf("Unable to find corresponding primary particle\n");
-#endif
-
-  ancestor->RegisterTrajectory( std::move(trajectory) ); 
-
-  auto trkInfo = new SLArUserTrackInformation( ancestor->GetTrajectories().back() ); 
-  trkInfo->SetStoreTrajectory(true); 
-
-  aTrack->SetUserInformation( trkInfo ); 
-
+/*
+ *  //printf("Track ID %i is a new one!\n", aTrack->GetTrackID());
+ *  auto SLArAnaMgr = SLArAnalysisManager::Instance(); 
+ *  G4int parentID = 0; 
+ *  if (aTrack->GetParentID() == 0) { //----------------------- this is a primary
+ *    fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetTrackID()); 
+ *    parentID = aTrack->GetTrackID(); 
+ *    //printf("Track %i is a candidate primary with pdg id %i\n", 
+ *    //aTrack->GetTrackID(), aTrack->GetParticleDefinition()->GetPDGEncoding());
+ *    UpdatePrimaryTrackID(aTrack, SLArAnaMgr);
+ *  } else { //---------------------------------------------- this is a secondary
+ *    //printf("Not a primary, recording parent id\n");
+ *    fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetParentID()); 
+ *    parentID = aTrack->GetParentID();
+ *  }
+ *
+ *  const char* particleName = aTrack->GetParticleDefinition()->GetParticleName().data(); 
+ *  const char* creatorProc  = "PrimaryGenerator"; 
+ *  if (aTrack->GetCreatorProcess()) {
+ *    creatorProc = aTrack->GetCreatorProcess()->GetProcessName(); 
+ *    G4double momentum_4[4] = {0}; 
+ *    for (size_t i = 0; i < 3; i++) {
+ *      momentum_4[i] = aTrack->GetMomentum()[i];
+ *    }
+ *    momentum_4[3] = aTrack->GetKineticEnergy(); 
+ *    auto trkIdHelp = SLArEventAction::TrackIdHelpInfo_t(
+ *        aTrack->GetParentID(), 
+ *        aTrack->GetDynamicParticle()->GetPDGcode(),
+ *        momentum_4); 
+ *    //std::printf("trkID: %i, ParentID: %i, pdg code: %i\n", 
+ *    //aTrack->GetTrackID(), aTrack->GetParentID(), trkIdHelp.pdg); 
+ *    if ( fEventAction->GetProcessExtraInfo().count(trkIdHelp) ) {
+ *      creatorProc = fEventAction->GetProcessExtraInfo()[trkIdHelp];
+ *    }
+ *  }
+ *
+ *  //printf("creating trajectory...\n");
+ *  SLArEventTrajectory trajectory;
+ *  trajectory.SetTrackID( aTrack->GetTrackID() ); 
+ *  trajectory.SetParentID(aTrack->GetParentID()); 
+ *  trajectory.SetParticleName( particleName );
+ *  trajectory.SetPDGID( aTrack->GetDynamicParticle()->GetPDGcode() ); 
+ *  trajectory.SetCreatorProcess( creatorProc ); 
+ *  trajectory.SetTime( aTrack->GetGlobalTime() ); 
+ *  trajectory.SetWeight(aTrack->GetWeight()); 
+ *  trajectory.SetStoreTrajectoryPts( SLArAnaMgr->StoreTrajectoryFull() ); 
+ *  //trajectory.SetOriginVolCopyNo(aTrack->GetVolume()->GetCopyNo()); 
+ *  trajectory.SetInitKineticEne( aTrack->GetKineticEnergy() ); 
+ *  auto& vertex_momentum = aTrack->GetMomentumDirection();
+ *  trajectory.SetInitMomentum( vertex_momentum.x(), vertex_momentum.y(), vertex_momentum.z() );
+ *  G4int ancestor_id = fEventAction->FindAncestorID( parentID ); 
+ *
+ *  SLArMCPrimaryInfo* ancestor = nullptr; 
+ *  auto& primaries = SLArAnaMgr->GetMCTruth().GetPrimaries();
+ *  for (auto &p : primaries) {
+ *    if (p.GetTrackID() == ancestor_id) {
+ *      ancestor = &p; 
+ *      break;
+ *    }
+ *  }
+ *  if (!ancestor) printf("Unable to find corresponding primary particle\n");
+ *#ifdef SLAR_DEBUG
+ *  if (!ancestor) printf("Unable to find corresponding primary particle\n");
+ *#endif
+ *
+ *  ancestor->RegisterTrajectory( std::move(trajectory) ); 
+ *
+ *  auto trkInfo = new SLArUserTrackInformation( ancestor->GetTrajectories().back() ); 
+ *  trkInfo->SetStoreTrajectory(true); 
+ *
+ *  aTrack->SetUserInformation( trkInfo ); 
+ *
+ */
   return kClassification;
 }
 
@@ -173,7 +191,8 @@ SLArStackingAction::ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const
   auto& primaries = anaMngr->GetMCTruth().GetPrimaries();
   
   if (aTrack->GetParentID() == 0) {
-    fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetTrackID()); 
+    //fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetTrackID()); 
+    photonInfo->SetAncestorID(aTrack->GetTrackID());
     UpdatePrimaryTrackID(aTrack, anaMngr);
     return kClassification;
   }
@@ -189,7 +208,7 @@ SLArStackingAction::ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const
 
   if (creator != opticalPhysics->GetWLSProcess()) {
 #ifdef SLAR_DEBUG
-    printf("Creator process: %s, Primary parent ID %i\n", creator_process_name.data(), primary_parent_id);
+    printf("Creator process: %s, Primary parent ID %i\n", creator_process_name.data(), ancestor_id);
 #endif
     for (auto &p : primaries) {
       if (p.GetTrackID() == ancestor_id) {
