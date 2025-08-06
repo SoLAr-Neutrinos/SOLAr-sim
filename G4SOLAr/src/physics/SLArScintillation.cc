@@ -87,6 +87,8 @@
 #include "G4PhysicsModelCatalog.hh"
 #include "G4RunManager.hh"
 #include "SLArScintillation.hh"
+#include "SLArUserTrackInformation.hh"
+#include "SLArUserPhotonTrackInformation.hh"
 #include "detector/SLArDetectorConstruction.hh"
 #include "LiquidArgon/SLArLArProperties.hh"
 #include "LiquidArgon/SLArIonAndScintLArQL.h"
@@ -642,6 +644,10 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
     //printf("[scnt %i] fNumPhotons: %i -> numPhot = %lu (%.2f\%%)\n", 
         //scnt, fNumPhotons, numPhot, G4double(numPhot) / fNumPhotons); 
     //getchar();
+
+    const auto trackInfo = (SLArUserTrackInformation*)aTrack.GetUserInformation();
+    const int ancestor_id = trackInfo->GetTrackAncestor();
+
     for(size_t i = 0; i < numPhot; ++i)
     {
       // Determine photon energy
@@ -707,9 +713,16 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
         aStep.GetPreStepPoint()->GetTouchableHandle());
       secTrack->SetParentID(aTrack.GetTrackID());
       secTrack->SetCreatorModelID(secID);
-      if(fScintillationTrackInfo)
+      if(fScintillationTrackInfo) {
         secTrack->SetUserInformation(
           new G4ScintillationTrackInformation(scintType));
+      }
+      else {
+        SLArUserPhotonTrackInformation* photonInfo = new SLArUserPhotonTrackInformation(); 
+        photonInfo->SetAncestorID( ancestor_id );
+        photonInfo->SetCreator( optical::kScintillation ); 
+        secTrack->SetUserInformation( photonInfo ); 
+      }
       aParticleChange.AddSecondary(secTrack);
     }
   }
