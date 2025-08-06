@@ -212,11 +212,17 @@ G4VParticleChange* SLArOpWLS::PostStepDoIt(const G4Track& aTrack,
     // SOLAr-sim: Set the parent ID to the same parent of the original photon
     secTrack->SetParentID(aTrack.GetParentID());
 
-    auto photonInfo = new SLArUserPhotonTrackInformation();
-    const auto evAction = (SLArEventAction*)G4RunManager::GetRunManager()->GetUserEventAction();
-    G4int ancestor = evAction->FindAncestorID(secTrack->GetParentID());
-    photonInfo->SetAncestorID(ancestor);
-    secTrack->SetUserInformation(photonInfo);
+    //const auto evAction = (SLArEventAction*)G4RunManager::GetRunManager()->GetUserEventAction();
+    //G4int ancestor = evAction->FindAncestorID(secTrack->GetParentID());
+    auto wlsphotonInfo = new SLArUserPhotonTrackInformation();
+    auto primaryphotonInfo = dynamic_cast<const SLArUserPhotonTrackInformation*>
+      (aTrack.GetUserInformation());
+    if (primaryphotonInfo) {
+      wlsphotonInfo->SetAncestorID(primaryphotonInfo->GetAncestorID());
+    }
+
+    wlsphotonInfo->SetCreator( optical::kWLS ); 
+    secTrack->SetUserInformation(wlsphotonInfo);
 
     proposedSecondaries.push_back(secTrack);
   }
