@@ -129,6 +129,19 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     }
 
     if (trkInfo->CheckStoreTrajectory() == true) {
+      if (!trajectory) {
+        printf("SLArSteppingAction::UserSteppingAction: ERROR ");
+        printf("trajectory is null for track %i [%s] - parent ID %i - ancestor %i, creator process: %s - Energy: %g MeV\n", 
+            track->GetTrackID(), 
+            particleDef->GetParticleName().c_str(), 
+            track->GetParentID(),
+            trkInfo->GetTrackAncestor(),
+            track->GetCreatorProcess() ? 
+              track->GetCreatorProcess()->GetProcessName().c_str() : "null",
+            track->GetKineticEnergy() / CLHEP::MeV
+            );
+        exit(EXIT_FAILURE);
+      }
       if (trajectory->GetPoints().empty()) {
         // record origin point
         //printf("recording origin point:\n"); 

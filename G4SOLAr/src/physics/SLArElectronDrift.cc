@@ -59,7 +59,7 @@ void SLArElectronDrift::Drift(const int& n,
   printf("axis projection: [%.0f, %.0f]\n", pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
   printf("Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
   driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
-  getchar(); 
+  //getchar(); 
 #endif
 
   G4int n_elec_anode = G4Poisson(n*f_surv); 
