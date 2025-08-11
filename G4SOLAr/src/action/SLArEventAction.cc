@@ -252,12 +252,6 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
     SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
     auto bktManager = SLArAnaMgr->GetBacktrackerManager( backtracker::kVUVSiPM ); 
 
-    const auto detector = 
-      static_cast<const SLArDetectorConstruction*>(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-    const auto tile = detector->GetReadoutTile(); 
-    const int n_cell_row = tile->GetNumberOfCellRows();
-    const int n_cell_col = tile->GetNumberOfCellCols();
-
     // Fill histograms
     G4int n_hit = hHC1->entries();
 
@@ -297,6 +291,8 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       const auto& tCfg = mtCfg.GetBaseElementByID( dstHit.GetTileID() ); 
       const int mtIdx = mtCfg.GetIdx();
       const int tIdx = tCfg.GetIdx();
+      const int n_cell_row = tCfg.GetNCellRows();
+      const int n_cell_col = tCfg.GetNCellCols();
 
       // Compute unique identifier of SiPM replacing cell nr
       const int sipm_nr = n_cell_row * dstHit.GetRowCellNr() + dstHit.GetCellNr();
@@ -551,7 +547,6 @@ int SLArEventAction::FindAncestorID(int trkid) {
   while ( !caught ) {
     if (fParentIDMap.find(trkid) == fParentIDMap.end()) {
       fprintf(stderr, "SLArEventAction::FindAncestorID(%i) ERROR: cannot find track in event track table\n", trkid);
-      getchar();
       break;
     }
 

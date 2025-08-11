@@ -69,9 +69,27 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Return SLArDetectorConstruction::fTPCs map
     inline std::map<G4int, SLArDetTPC*>& GetDetTPCs() {return fTPC;}
     //! Return ReadoutTile detector object
-    inline SLArDetReadoutTile* GetReadoutTile() {return fReadoutTile;}
+    inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) {
+      auto it = fReadoutTile.find(tile_model_name);
+      if (it != fReadoutTile.end()) {
+        return it->second;
+      } else {
+        return nullptr;
+      }
+    }
     //! Return ReadoutTile detector object
-    inline SLArDetReadoutTile* GetReadoutTile() const {return fReadoutTile;}
+    inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) const {
+      auto it = fReadoutTile.find(tile_model_name);
+      if (it != fReadoutTile.end()) {
+        return it->second;
+      } else {
+        return nullptr;
+      }
+    }
+    //! Return Readout tile model map
+    inline std::map<G4String, SLArDetReadoutTile*>& GetReadoutTileMap() {return fReadoutTile;}
+    //! Return readout tile model map
+    inline const std::map<G4String, SLArDetReadoutTile*>& GetReadoutTileMap() const {return fReadoutTile;}
     //! Return TPC with given id
     SLArDetTPC* GetDetTPC(G4int tpcid);
     //! Build SuperCell object and place the SuperCells according to the given configuration
@@ -126,7 +144,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     SLArDetExpHall* fExpHall; //!< Experimental Hall detector object
     SLArDetSuperCell* fSuperCell; //!< SuperCell detector object
     std::map<int, SLArDetSuperCellArray*> fSCArray;
-    SLArDetReadoutTile* fReadoutTile; //!< ReadoutTile detector object
+    std::map<G4String,SLArDetReadoutTile*> fReadoutTile; //!< ReadoutTile detector object map
     std::map<int, SLArDetAnodeAssembly*> fAnodes; 
     std::map<G4String, SLArDetReadoutTileAssembly*> fReadoutMegaTile; 
 
@@ -145,13 +163,15 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Parse the description of the SC PDS
     void InitPDS(const rapidjson::Value&);
     //! Parse the description of the ReadoutTile detector system
-    void InitReadoutTile(const rapidjson::Value&); 
+    void InitReadoutTiles(const rapidjson::Value&); 
     //! Parse the description of the ReadoutTile detector system
     void InitAnode(const rapidjson::Value&);
     //! Parse the description of the TPC volumes
     void InitTPC(const rapidjson::Value&); 
     //! Parse the description of the cathode elements
     void InitCathode(const rapidjson::Value&); 
+    //! Setup the readout tile detector element
+    void SetupReadoutTile(const rapidjson::Value& jtile);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

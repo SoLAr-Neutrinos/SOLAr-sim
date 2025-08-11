@@ -237,6 +237,9 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
           tileCfg.SetName( tileName.data() ); 
           //printf("tile name: %s\n", tileCfg->GetName()); 
 
+          tileCfg.SetNCellRows(rpl_t_row.fNreplica);
+          tileCfg.SetNCellCols(rpl_t_clm.fNreplica);
+
           tileCfg.SetPhi( anodeCfg.GetPhi() ); 
           tileCfg.SetTheta( anodeCfg.GetTheta() ); 
           tileCfg.SetPsi( anodeCfg.GetPsi() ); 
