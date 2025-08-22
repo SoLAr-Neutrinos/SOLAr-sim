@@ -877,8 +877,6 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
     ana_mgr->LoadAnodeCfg(anode_cfg); 
   }
 
-  getchar();
-
   ConstructAnodeMap(); 
 }
 
