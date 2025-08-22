@@ -183,7 +183,7 @@ void SLArDetectorConstruction::Init() {
   // Initialize ReadoutTile
   if (d.HasMember("ReadoutTile") && d.HasMember("Anode")) {
     G4cout << "SLArDetectorConstruction::Init Pix..." << G4endl;
-    InitReadoutTile(d["ReadoutTile"].GetObj()); 
+    InitReadoutTiles(d["ReadoutTile"].GetObj()); 
     InitAnode(d["Anode"]); 
     G4cout << "SLArDetectorConstruction::Init Pix DONE" << G4endl;
   }
@@ -306,6 +306,29 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
  *}
  *
  */
+
+
+void SLArDetectorConstruction::SetupReadoutTile(const rapidjson::Value& jtilemodel)
+{
+  G4String model_name = (jtilemodel.HasMember("name")) ? 
+    jtilemodel["name"].GetString() : "default";
+
+  fReadoutTile.emplace(model_name, new SLArDetReadoutTile());
+  auto& readout_tile = fReadoutTile.at(model_name); 
+  printf("SLArDetectorConstruction::SetupReadoutTile: %s [%p]\n", 
+      model_name.c_str(), static_cast<void*>(readout_tile));
+
+  assert(jtilemodel.HasMember("dimensions")); 
+  assert(jtilemodel.HasMember("components")); 
+  assert(jtilemodel.HasMember("unit_cell")); 
+
+  readout_tile->GetGeoInfo()->ReadFromJSON(jtilemodel["dimensions"].GetArray()); 
+  readout_tile->BuildComponentsDefinition(jtilemodel["components"]); 
+  readout_tile->BuildUnitCellStructure(jtilemodel["unit_cell"]); 
+  readout_tile->BuildMaterial(fMaterialDBFile);
+  return;
+}
+
 /**
  * @details Parse the description of the pixelated anode readout system. 
  * Build the fReadoutTile object, setup the anode readout configuration
@@ -314,17 +337,23 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
  *
  * @param pixsys Pixelated anode readout description
  */
-void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
-  fReadoutTile = new SLArDetReadoutTile();
-  
-  assert(pixsys.HasMember("dimensions")); 
-  assert(pixsys.HasMember("components")); 
-  assert(pixsys.HasMember("unit_cell")); 
-
-  fReadoutTile->GetGeoInfo()->ReadFromJSON(pixsys["dimensions"].GetArray()); 
-  fReadoutTile->BuildComponentsDefinition(pixsys["components"]); 
-  fReadoutTile->BuildUnitCellStructure(pixsys["unit_cell"]); 
-  fReadoutTile->BuildMaterial(fMaterialDBFile);
+void SLArDetectorConstruction::InitReadoutTiles(const rapidjson::Value& pixsys) 
+{
+  if (pixsys.HasMember("model") == false) {
+    fprintf(stderr, "SLArDetectorConstruction::InitReadoutTiles: "
+        "No model description found in the readout tile configuration\n");
+    exit( EXIT_FAILURE ); 
+  }
+  const auto& jmodel = pixsys["model"];
+  if (jmodel.IsObject()) {
+    SetupReadoutTile(jmodel);
+  }
+  else if (jmodel.IsArray()) {
+    for (const auto &jmod : jmodel.GetArray()) {
+      assert(jmod.IsObject());
+      SetupReadoutTile(jmod);
+    }
+  }
 
   if (pixsys.HasMember("tile_assembly")) {
     assert(pixsys["tile_assembly"].IsArray()); 
@@ -339,6 +368,12 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
       assert(mtile.HasMember("dimensions")); 
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
       megatile->BuildMaterial(fMaterialDBFile); 
+      if (mtile.HasMember("tile_model")) {
+        assert(mtile["tile_model"].IsString()); 
+        megatile->SetBaseTileModel(mtile["tile_model"].GetString());
+      } else {
+        megatile->SetBaseTileModel("default");
+      }
       fReadoutMegaTile.insert(std::make_pair(mtile["name"].GetString(),megatile)); 
     } // end of Megatile models loop
   } // endif pixsys.HasMember("tile_assembly")
@@ -613,13 +648,16 @@ void SLArDetectorConstruction::ConstructSDandField()
   }
 
   //Set ReadoutTile SD
-  if (fReadoutTile) {
-    G4VSensitiveDetector* sipmSD
-      = new SLArReadoutTileSD(SDname="/tile/sipm");
-    SDman->AddNewDetector(sipmSD);
-    SetSensitiveDetector(
-        fReadoutTile->GetSiPMActive()->GetModLV(), sipmSD );
+  for (auto& rt : fReadoutTile) {
+    if (rt.second) {
+      G4VSensitiveDetector* sipmSD
+        = new SLArReadoutTileSD(SDname="/tile/sipm");
+      SDman->AddNewDetector(sipmSD);
+      SetSensitiveDetector(
+          rt.second->GetSiPMActive()->GetModLV(), sipmSD );
+    }
   }
+
 
   //Set SuperCell SD
   if (fSuperCell) {
@@ -785,13 +823,30 @@ void SLArDetectorConstruction::BuildAndPlaceSuperCells()
 void SLArDetectorConstruction::BuildAndPlaceAnode() {
 
   printf("SLArDetectorConstruction::BuildAndPlaceAnode()...\n");
-  printf("-- Building readout tile\n");
-  fReadoutTile->BuildReadoutTile(); 
-  fReadoutTile->BuildLogicalSkinSurface(); 
+  for (auto &rt : fReadoutTile) {
+    printf("---- Building readout tile %s\n", rt.first.c_str()); 
+    rt.second->BuildMaterial(fMaterialDBFile); 
+    rt.second->BuildReadoutTile(); 
+    rt.second->BuildLogicalSkinSurface(); 
+  }
 
-  printf("-- Building readout tile assemblies\n");
   for (auto &mt : fReadoutMegaTile) {
-    mt.second->BuildReadoutPlane(fReadoutTile); 
+    printf("-- Building readout tile assembly %s\n", mt.first.data());
+    if (mt.second->GetBaseTileModel().empty()) {
+      printf("SLArDetectorConstruction::BuildAndPlaceAnode: "
+          "No base tile model defined for megatile %s\n", mt.first.c_str());
+      exit( EXIT_FAILURE ); 
+    }
+
+    if (fReadoutTile.find(mt.second->GetBaseTileModel()) == fReadoutTile.end()) {
+      printf("SLArDetectorConstruction::BuildAndPlaceAnode: "
+          "ERROR building megatile %s: ", 
+          mt.second->GetBaseTileModel().c_str());
+      printf("Base tile model %s not found in readout tiles\n",
+          mt.second->GetBaseTileModel().c_str());
+      exit( EXIT_FAILURE ); 
+    }
+    mt.second->BuildReadoutPlane(fReadoutTile.at(mt.second->GetBaseTileModel())); 
   }
 
   printf("-- Building anode assemblies\n");
@@ -826,7 +881,9 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
 }
 
 void SLArDetectorConstruction::SetAnodeVisAttributes(const int depth) {
-  fReadoutTile->SetVisAttributes(depth); 
+  for (auto& rt_itr : fReadoutTile) {
+    rt_itr.second->SetVisAttributes(depth); 
+  }
   for (auto& mt : fReadoutMegaTile) {
     mt.second->SetVisAttributes(depth);
   }
@@ -838,8 +895,17 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
   printf("SLArDetectorConstruction::ConstructAnodeMap()\n");
   auto ana_mgr = SLArAnalysisManager::Instance(); 
 
+  for (const auto& anode_itr : fAnodes) {
+    printf("Anode key %i: id: %i [%p]\n", 
+        anode_itr.first, anode_itr.second->GetID(), anode_itr.second);
+  }
+
   for (auto &anodeCfg_ : ana_mgr->GetAnodeCfg()) {
-    auto& anodeCfg = anodeCfg_.second; 
+    auto& anodeCfg = anodeCfg_.second;
+    const auto& anodeDet = fAnodes.find(anodeCfg.GetIdx())->second;
+    const auto& mtDet = fReadoutMegaTile.at(anodeDet->GetTileAssemblyModel());
+    const G4String& tile_model = mtDet->GetBaseTileModel();
+
     // access the first megatile to extract the map of the tiles 
     // (which is replicated for all the megatiles in the anode). 
     int megatile_nr = anodeCfg.GetMap().size(); 
@@ -872,7 +938,7 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
     G4RotationMatrix* mtile_rot_inv = new G4RotationMatrix(*mtile_rot); 
     mtile_rot_inv->invert(); // FIXME: Why do I need to use the inverse rotation????? 
 
-    auto hMapPixel = fReadoutTile->BuildTileChgPixelMap(
+    auto hMapPixel = fReadoutTile.at(tile_model)->BuildTileChgPixelMap(
         G4ThreeVector(anodeCfg.GetAxis0().x(), anodeCfg.GetAxis0().y(), anodeCfg.GetAxis0().z()), 
         G4ThreeVector(anodeCfg.GetAxis1().x(), anodeCfg.GetAxis1().y(), anodeCfg.GetAxis1().z()), 
         nullptr, mtile_rot_inv);

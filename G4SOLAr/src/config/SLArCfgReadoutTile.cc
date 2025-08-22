@@ -28,7 +28,8 @@ SLArCfgReadoutTile::SLArCfgReadoutTile(int id, float xc, float yc, float zc,
 {}
 
 SLArCfgReadoutTile::SLArCfgReadoutTile(const SLArCfgReadoutTile& ref)
-  : SLArCfgBaseModule(ref)
+  : SLArCfgBaseModule(ref), f2DSize_X(ref.f2DSize_X), f2DSize_Y(ref.f2DSize_Y), 
+  fNCellRows(ref.fNCellRows), fNCellCols(ref.fNCellCols)
 {
   //fH2Pixels = nullptr; 
   //if (ref.fH2Pixels) {

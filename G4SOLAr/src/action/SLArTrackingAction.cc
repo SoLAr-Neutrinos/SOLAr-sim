@@ -181,9 +181,9 @@ void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
     }
   }
 
-  if (debug) {
-    getchar();
-  }
+  //if (debug) {
+    //getchar();
+  //}
 }
 
 void SLArTrackingAction::SetupSecondaries(const G4Track* aTrack, const bool debug) 

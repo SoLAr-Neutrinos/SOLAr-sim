@@ -1,0 +1,105 @@
+"LArTarget" : {
+  "dimensions" : [
+    {"name" : "size_x"  , "val" :  7.20, "unit" :  "m"},
+    {"name" : "size_y"  , "val" :  7.20, "unit" :  "m"},
+    {"name" : "size_z"  , "val" :  7.20, "unit" :  "m"}
+  ]
+},
+"TPC" : [
+  {"copyID" : 10, 
+    "position": {"xyz" : [0, 175.05, 0], "unit" : "cm"},
+    "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, -1, 0]},
+    "dimensions" : [
+      {"name" : "tpc_x"  , "val" :  3.25, "unit" :  "m"},
+      {"name" : "tpc_y"  , "val" :  3.50, "unit" :  "m"},
+      {"name" : "tpc_z"  , "val" :  3.24, "unit" :  "m"}
+    ] 
+  },
+  {"copyID" : 11, 
+    "position": {"xyz" : [0, -175.05, 0], "unit" : "cm"},
+    "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, 1, 0]},
+    "dimensions" : [
+      {"name" : "tpc_x"  , "val" : 3.25, "unit" :  "m"},
+      {"name" : "tpc_y"  , "val" : 3.50, "unit" :  "m"},
+      {"name" : "tpc_z"  , "val" : 2.88, "unit" :  "m"}
+    ] 
+  }, 
+  {"copyID" : 12, 
+    "position": {"xyz" : [0.0, -175.05, -153.0], "unit" : "cm"},
+    "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, 1, 0]},
+    "dimensions" : [
+      {"name" : "tpc_x"  , "val" : 3.25, "unit" :  "m"},
+      {"name" : "tpc_y"  , "val" : 3.50, "unit" :  "m"},
+      {"name" : "tpc_z"  , "val" : 0.18, "unit" :  "m"}
+    ] 
+  }, 
+  {"copyID" : 13, 
+    "position": {"xyz" : [0.0, -175.05, 153.0], "unit" : "cm"},
+    "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, 1, 0]},
+    "dimensions" : [
+      {"name" : "tpc_x"  , "val" : 3.25, "unit" :  "m"},
+      {"name" : "tpc_y"  , "val" : 3.50, "unit" :  "m"},
+      {"name" : "tpc_z"  , "val" : 0.18, "unit" :  "m"}
+    ] 
+  }
+],
+"Cathode" : [
+  {"copyID": 99, 
+    "position" : {"xyz": [0, 0, 0], "unit" : "cm"}, 
+    "dimensions" : [
+      {"name" : "dim_x", "val" :  3.00, "unit" : "m"},
+      {"name" : "dim_y", "val" :  1.00, "unit" : "mm" },
+      {"name" : "dim_z", "val" :  3.24, "unit" : "m" }
+    ]
+  }
+],
+"Anode" : [
+  {"copyID" : 50, 
+    "tpcID" : 10,
+    "position" : {"xyz" : [0, 170.00, 0], "unit" : "cm"}, 
+    "normal" : [0, -1, 0],
+    "rot" : {"val" : [0, 0, 180], "unit" : "degree"}, 
+    "tile_assembly" : "CRU", 
+    "dimensions" : [
+      {"name" : "dim_y", "val" :  1.00, "unit" : "cm"},
+      {"name" : "dim_x", "val" :  3.20, "unit" :  "m"},
+      {"name" : "dim_z", "val" :  3.24, "unit" :  "m"}
+    ]
+  }, 
+  {"copyID" : 51, 
+    "tpcID" : 11,
+    "position" : {"xyz" : [0, -170.00, 0], "unit" : "cm"}, 
+    "rot" : {"val" : [0, 0, 0], "unit" : "deg"}, 
+    "normal" : [0, 1, 0],
+    "tile_assembly" : "CRU", 
+    "dimensions" : [
+      {"name" : "dim_y", "val" : 1.00, "unit" : "cm"},
+      {"name" : "dim_x", "val" : 3.00, "unit" :  "m"},
+      {"name" : "dim_z", "val" : 2.88, "unit" :  "m"}
+    ]
+  },
+  {"copyID" : 61, 
+    "tpcID" : 12,
+    "position" : {"xyz" : [0, -170.00, 0], "unit" : "cm"}, 
+    "rot" : {"val" : [0, 0, 0], "unit" : "deg"}, 
+    "normal" : [0, 1, 0],
+    "tile_assembly" : "CRUEdge", 
+    "dimensions" : [
+      {"name" : "dim_y", "val" : 1.00, "unit" : "cm"},
+      {"name" : "dim_x", "val" : 3.00, "unit" :  "m"},
+      {"name" : "dim_z", "val" : 0.18, "unit" :  "m"}
+    ]
+  },
+  {"copyID" : 71, 
+    "tpcID" : 13,
+    "position" : {"xyz" : [0.0, -170.00, 0.0], "unit" : "cm"}, 
+    "rot" : {"val" : [0, 0, 0], "unit" : "deg"}, 
+    "normal" : [0, 1, 0],
+    "tile_assembly" : "CRUEdge", 
+    "dimensions" : [
+      {"name" : "dim_y", "val" : 1.00, "unit" : "cm"},
+      {"name" : "dim_x", "val" : 3.00, "unit" :  "m"},
+      {"name" : "dim_z", "val" : 0.18, "unit" :  "m"}
+    ]
+  }
+]

@@ -19,13 +19,13 @@
 #include "G4MaterialPropertyVector.hh"
 
 SLArDetReadoutTileAssembly::SLArDetReadoutTileAssembly() 
-  : SLArBaseDetModule(), fMatReadoutPlane(nullptr), fTileRow(nullptr)
+  : SLArBaseDetModule(), fMatReadoutPlane(nullptr), fTileRow(nullptr), fTileModel("")
 {
   fGeoInfo = new SLArGeoInfo();  
 }
 
 SLArDetReadoutTileAssembly::SLArDetReadoutTileAssembly(const SLArDetReadoutTileAssembly& detReadoutPlane) 
-  : SLArBaseDetModule(detReadoutPlane), fMatReadoutPlane(nullptr), fTileRow(nullptr) 
+  : SLArBaseDetModule(detReadoutPlane), fMatReadoutPlane(nullptr), fTileRow(nullptr), fTileModel(detReadoutPlane.fTileModel)
 {
   fMatReadoutPlane = new SLArMaterial(*detReadoutPlane.fMatReadoutPlane);
 }

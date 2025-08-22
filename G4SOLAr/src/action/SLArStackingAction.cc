@@ -166,6 +166,9 @@ SLArStackingAction::ClassifyNewGeneralTrack(const G4Track* aTrack) const
 G4ClassificationOfNewTrack
 SLArStackingAction::ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const
 {
+  // check if the track already owns a user info
+  G4ClassificationOfNewTrack kClassification = fUrgent;
+
   auto physicsList = 
     dynamic_cast<const SLArPhysicsList*>(G4RunManager::GetRunManager()->GetUserPhysicsList());  
   if (!physicsList) {
@@ -174,11 +177,7 @@ SLArStackingAction::ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const
         "SLArStackingAction: invalid cast to SLArPhysicsList");
   }
   const auto opticalPhysics = physicsList->GetOpticalPhysics();
-
-  G4ClassificationOfNewTrack kClassification = fUrgent; 
-
   SLArAnalysisManager* anaMngr = SLArAnalysisManager::Instance(); 
-
   SLArUserPhotonTrackInformation* photonInfo = nullptr; 
   if (aTrack->GetUserInformation()) {
     photonInfo = dynamic_cast<SLArUserPhotonTrackInformation*>(aTrack->GetUserInformation());
@@ -194,21 +193,24 @@ SLArStackingAction::ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const
     //fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetTrackID()); 
     photonInfo->SetAncestorID(aTrack->GetTrackID());
     UpdatePrimaryTrackID(aTrack, anaMngr);
+    aTrack->SetUserInformation(photonInfo);
     return kClassification;
-  }
-
-  int ancestor_id = photonInfo->GetAncestorID();
-  if (ancestor_id == -1) {
-    ancestor_id = fEventAction->FindAncestorID(aTrack->GetParentID()); 
-    photonInfo->SetAncestorID(ancestor_id);
   }
 
   const auto creator = aTrack->GetCreatorProcess();
   const G4String creator_process_name = (creator) ? creator->GetProcessName() : "null";
 
+  int ancestor_id = photonInfo->GetAncestorID();
+  if (ancestor_id == -1) {
+    printf("SLArStackingAction::ClassifyNewTrackOpticalPhoton() WARNING: photon with track ID %i has no ancestor ID assigned, looking for it\n", 
+        aTrack->GetTrackID());
+    printf("Creator process: %s, parent ID %i\n", creator_process_name.data(), aTrack->GetParentID());
+  }
+
+
   if (creator != opticalPhysics->GetWLSProcess()) {
 #ifdef SLAR_DEBUG
-    printf("Creator process: %s, Primary parent ID %i\n", creator_process_name.data(), ancestor_id);
+    printf("Creator process: %s, ancestor ID %i\n", creator_process_name.data(), ancestor_id);
 #endif
     for (auto &p : primaries) {
       if (p.GetTrackID() == ancestor_id) {

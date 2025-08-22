@@ -621,7 +621,7 @@ TH2Poly* SLArDetReadoutTile::BuildTileChgPixelMap(
   } else {
     printf("SLArDetReadoutTile::BuildTileChgPixelMap WARNING\n");
     printf("Selected physical volume (%s) is not parameterised!\n", tilesens_pv->GetName().c_str());
-    getchar();
+    exit(EXIT_FAILURE);
   }
 
   return h2;
