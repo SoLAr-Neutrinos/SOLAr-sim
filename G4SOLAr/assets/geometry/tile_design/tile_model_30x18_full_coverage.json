@@ -1,0 +1,28 @@
+{
+  "name" : "EdgeTile30x18",
+  "dimensions" : [
+    {"name" : "tile_x", "val" :300.0, "unit" : "mm" },
+    {"name" : "tile_y", "val" :  2.5, "unit" : "mm" },
+    {"name" : "tile_z", "val" :180.0, "unit" : "mm" }
+  ], 
+  "components" : [
+    {
+      "name" : "pixel", 
+      "dimensions" : [
+        {"name" : "pix_x" , "val" : 2.3, "unit" : "mm" },
+        {"name" : "pix_y" , "val" : 0.5, "unit" : "mm" },
+        {"name" : "pix_z" , "val" : 2.3, "unit" : "mm" }
+      ]
+    }, 
+    {
+      "name" : "sipm", 
+      "dimensions" : [
+        {"name" : "sipm_fill_factor",    "val"  : 0.85 }, 
+        {"name" : "sipm_x", "val" : 6.8, "unit" : "mm" },
+        {"name" : "sipm_y", "val" : 1.2, "unit" : "mm" },
+        {"name" : "sipm_z", "val" : 6.8, "unit" : "mm" }
+      ]
+    }
+  ],
+  #include "unitcell_z30.0_x30.0_pix3.8.json"
+}
