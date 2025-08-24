@@ -88,6 +88,7 @@ private:
     G4double      fTime;
     G4int         fPhType;
     G4int         fPhProducerID;
+    G4int         fPhOriginVolumeID;
     G4ThreeVector fLocalPos;
     G4ThreeVector fWorldPos;
 };

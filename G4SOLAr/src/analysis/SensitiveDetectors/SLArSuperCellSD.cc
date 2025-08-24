@@ -30,6 +30,7 @@
 
 #include "SensitiveDetectors/SLArSuperCellSD.hh"
 #include "SensitiveDetectors/SLArSuperCellHit.hh"
+#include "SLArUserPhotonTrackInformation.hh"
 
 #include "G4HCofThisEvent.hh"
 #include "G4TouchableHistory.hh"
@@ -147,12 +148,18 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
   if (track->GetParticleDefinition() == 
       G4OpticalPhoton::OpticalPhotonDefinition())
   {
+    SLArUserPhotonTrackInformation* photonInfo = 
+      dynamic_cast<SLArUserPhotonTrackInformation*>
+      (track->GetUserInformation());
     // Get the creation process of optical photon
-    G4String procName = "";
-    if (track->GetCreatorProcess()) // make sure consider only secondaries
-    {
-      procName = track->GetCreatorProcess()->GetProcessName();
-    }
+
+    //G4String procName = "";
+    //if (track->GetCreatorProcess()) // make sure consider only secondaries
+    //{
+      //procName = track->GetCreatorProcess()->GetProcessName();
+    //}
+    G4int procID = (photonInfo) ? photonInfo->GetCreator() : optical::kUnknown;
+    G4int origin_vol_id = (photonInfo) ? photonInfo->GetOriginVolumID() : -1;
     phEne = track->GetTotalEnergy();
 
     hit = new SLArSuperCellHit(); //so create new hit
@@ -173,8 +180,8 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
     hit->SetSuperCellNo( touchable->GetCopyNumber(1) ); 
     hit->SetSuperCellRowNo( touchable->GetCopyNumber(2) ); 
     hit->SetSuperCellArrayNo( touchable->GetCopyNumber(3) ); 
-
-    hit->SetPhotonProcess(procName);
+    hit->SetPhotonProcess( procID );
+    hit->SetOriginVolumeID( origin_vol_id );
     hit->SetProducerID( track->GetParentID() );
     
     fHitsCollection->insert(hit);

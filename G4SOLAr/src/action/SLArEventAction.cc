@@ -285,6 +285,8 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       dstHit.SetRowCellNr(hit->GetRowCellNr()); 
       dstHit.SetCellNr(hit->GetCellNr()); 
       dstHit.SetProducerTrkID( hit->GetProducerID() ); 
+      // Set the unique identified of the origin volume of the photon   
+      dstHit.SetPhotonOriginVolumeID( hit->GetOriginVolumeID() );
 
       const auto& anodeCfg = SLArAnaMgr->GetAnodeCfgByID( hit->GetAnodeIdx() ); 
       const auto& mtCfg = anodeCfg.GetBaseElementByID( dstHit.GetMegaTileID() ); 
@@ -392,6 +394,9 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
       dstHit.SetTileInfo(0, array_nr, cellrow_nr, cell_nr); 
       dstHit.SetProducerTrkID( hit->GetProducerID() ); 
 
+      // Set the unique identified of the origin volume of the photon
+      dstHit.SetPhotonOriginVolumeID( hit->GetOriginVolumeID() );
+
       const auto& cfgArray = SLArAnaMgr->GetPDSCfg().GetBaseElement(array_nr);
       const int cell_idx = cfgArray.GetBaseElementByID( dstHit.GetTileID() ).GetIdx(); 
 
@@ -410,7 +415,6 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
       }
       
       n_hits++;
-      //delete dstHit;
     }
     
 

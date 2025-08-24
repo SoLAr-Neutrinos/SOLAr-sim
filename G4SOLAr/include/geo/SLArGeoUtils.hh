@@ -88,6 +88,25 @@ namespace geo {
     return transform_frame_world_to_det(pos);
   }
 
+  inline static const std::vector<int> navigate_vol_hierarchy(const G4StepPoint* step)
+  {
+    std::vector<int> copyNumbers;
+    if (!step) return copyNumbers;
+
+    const G4TouchableHistory* touchable = 
+        dynamic_cast<const G4TouchableHistory*>(step->GetTouchable());
+    if (!touchable) return copyNumbers;
+
+    int depth = touchable->GetHistoryDepth();
+
+    // Loop over all levels: depth = 0 is the current volume, 
+    // depth = last is the World volume
+    for (int i = 0; i <= depth; i++) {
+        int copyNo = touchable->GetCopyNumber(i);
+        copyNumbers.push_back(copyNo);
+    }
+    return copyNumbers;
+  }
 
 }
 

@@ -721,6 +721,7 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
         SLArUserPhotonTrackInformation* photonInfo = new SLArUserPhotonTrackInformation(); 
         photonInfo->SetAncestorID( ancestor_id );
         photonInfo->SetCreator( optical::kScintillation ); 
+        photonInfo->SetOriginVolume( aTrack.GetVolume()->GetCopyNo() );
         secTrack->SetUserInformation( photonInfo ); 
       }
       aParticleChange.AddSecondary(secTrack);

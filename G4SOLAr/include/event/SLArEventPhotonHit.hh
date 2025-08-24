@@ -34,6 +34,7 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     void  SetCellNr(int n) {fCellNr = n;}
     void  SetRowCellNr(int n) {fRowCellNr = n; }
     void  SetTileInfo(int mtrow, int mg, int row, int tile); 
+    void  SetPhotonOriginVolumeID(int id) {fPhOriginVolumeID = id;}
 
     int   GetMegaTileNr() const {return fMegaTileNr;}
     int   GetRowTileNr() const {return fRowTileNr;}
@@ -45,6 +46,7 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     float GetWavelength() const {return fWavelength;}
     int   GetProcess() const {return fProcess;}
     float* GetLocalPos() {return fLocPos ;}
+    int   GetPhotonOriginVolumeID() const {return fPhOriginVolumeID;}
 
     void DumpInfo() const;
 
@@ -58,8 +60,9 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     float        fWavelength;
     float        fLocPos[3];
     EPhProcess   fProcess;
+    int          fPhOriginVolumeID;
 
-    ClassDef(SLArEventPhotonHit, 3);
+    ClassDef(SLArEventPhotonHit, 4);
 };
 
 #endif /* end of include guard SLAREVENTPHOTONHIT_HH */

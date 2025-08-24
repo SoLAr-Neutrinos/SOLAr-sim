@@ -58,9 +58,11 @@ class SLArUserPhotonTrackInformation : public G4VUserTrackInformation
     void SetCreator(optical::EPhotonCreator o){fCreator=o;}
     optical::EPhotonCreator GetCreator() const {return fCreator;}
 
+    void SetOriginVolume(G4int v){fOriginVolume.clear(); fOriginVolume.push_back(v);}
     void SetOriginVolume(const std::vector<G4int>& v){fOriginVolume = v;}
     const std::vector<G4int>& GetOriginVolume() const {return fOriginVolume;}
     std::vector<G4int>& GetOriginVolume() {return fOriginVolume;}
+    int GetOriginVolumID() const;
 
     inline virtual void Print() const{};
 

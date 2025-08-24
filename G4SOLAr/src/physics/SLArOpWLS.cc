@@ -51,7 +51,7 @@
 #include "G4WLSTimeGeneratorProfileExponential.hh"
 
 #include "SLArUserPhotonTrackInformation.hh"
-#include "SLArEventAction.hh"
+#include "SLArGeoUtils.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 SLArOpWLS::SLArOpWLS(const G4String& processName, G4ProcessType type)
@@ -90,7 +90,7 @@ void SLArOpWLS::Initialise()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 G4VParticleChange* SLArOpWLS::PostStepDoIt(const G4Track& aTrack,
-                                         const G4Step& aStep)
+                                           const G4Step& aStep)
 {
   std::vector<G4Track*> proposedSecondaries;
   aParticleChange.Initialize(aTrack);
@@ -222,6 +222,7 @@ G4VParticleChange* SLArOpWLS::PostStepDoIt(const G4Track& aTrack,
     }
 
     wlsphotonInfo->SetCreator( optical::kWLS ); 
+    const auto vol_hierarchy = geo::navigate_vol_hierarchy( pPostStepPoint );
     secTrack->SetUserInformation(wlsphotonInfo);
 
     proposedSecondaries.push_back(secTrack);
