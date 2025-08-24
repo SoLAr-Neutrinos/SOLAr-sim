@@ -10,6 +10,7 @@
 
 #define SLArUSERPHOTONTRACKINFORMATION_HH
 
+#include <vector>
 #include "G4VUserTrackInformation.hh"
 #include "globals.hh"
 
