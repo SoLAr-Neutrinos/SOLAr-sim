@@ -297,7 +297,7 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       const int n_cell_col = tCfg.GetNCellCols();
 
       // Compute unique identifier of SiPM replacing cell nr
-      const int sipm_nr = n_cell_row * dstHit.GetRowCellNr() + dstHit.GetCellNr();
+      const int sipm_nr = n_cell_col * dstHit.GetRowCellNr() + dstHit.GetCellNr();
       dstHit.SetCellNr( sipm_nr );
 
       auto& ev_anode = SLArAnaMgr->GetEventAnode().GetEventAnodeByID(anode_idx);
@@ -312,6 +312,7 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       G4cout << "x    = " << G4BestUnit(worldPos.x(), "Length") << "; "
              << "y    = " << G4BestUnit(worldPos.y(), "Length") << "; "
              << "time = " << G4BestUnit(time, "Time") << G4endl;
+      printf("SiPM nr: %i\n", sipm_nr);
 #endif
 
       if (bktManager) {

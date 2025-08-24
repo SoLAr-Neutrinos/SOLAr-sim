@@ -155,6 +155,9 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
   
   auto mt_parameterised  = (G4PVParameterised*)megatile_lv->GetDaughter(0); 
   auto trow_parameterised  = (G4PVParameterised*)trow_lv->GetDaughter(0); 
+  auto tile_sens_row_parameterised = (G4PVParameterised*)tile_lv->GetDaughter(2)->GetLogicalVolume()->GetDaughter(0);
+  auto tile_sens_col_parameterised = (G4PVParameterised*)tile_sens_row_parameterised->GetLogicalVolume()->GetDaughter(0);
+
 
   if (anode_parameterised->IsParameterised() == false) {
     printf("SLArDetAnodeAssembly::BuildAnodeConfig() "); 
@@ -177,6 +180,8 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
   auto rpl_mt_clm = get_replication_data(mtrow_parameterised); 
   auto rpl_t_row  = get_replication_data(mt_parameterised); 
   auto rpl_t_clm  = get_replication_data(trow_parameterised); 
+  auto rpl_c_row  = get_replication_data(tile_sens_row_parameterised);
+  auto rpl_c_clm  = get_replication_data(tile_sens_col_parameterised);
 
   auto rot_inv = new G4RotationMatrix(*fRotation); 
   rot_inv->invert(); 
@@ -237,8 +242,8 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
           tileCfg.SetName( tileName.data() ); 
           //printf("tile name: %s\n", tileCfg->GetName()); 
 
-          tileCfg.SetNCellRows(rpl_t_row.fNreplica);
-          tileCfg.SetNCellCols(rpl_t_clm.fNreplica);
+          tileCfg.SetNCellRows(rpl_c_row.fNreplica);
+          tileCfg.SetNCellCols(rpl_c_clm.fNreplica);
 
           tileCfg.SetPhi( anodeCfg.GetPhi() ); 
           tileCfg.SetTheta( anodeCfg.GetTheta() ); 
