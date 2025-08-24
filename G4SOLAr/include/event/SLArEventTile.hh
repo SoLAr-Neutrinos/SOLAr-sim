@@ -8,15 +8,11 @@
 
 #define SLAREVENTTILE_HH
 
-#include <iostream>
-#include <vector>
 #include <map>
-#include <memory>
-#include "event/SLArEventHitsCollection.hh"
+#include "event/SLArEventSiPM.hh"
 #include "event/SLArEventChargePixel.hh"
-#include "event/SLArEventPhotonHit.hh"
 
-class SLArEventTile :  public SLArEventHitsCollection<SLArEventPhotonHit> 
+class SLArEventTile :  public TNamed 
 {
   public: 
     SLArEventTile(); 
@@ -25,27 +21,39 @@ class SLArEventTile :  public SLArEventHitsCollection<SLArEventPhotonHit>
     ~SLArEventTile(); 
 
     double GetTime() const;
-    double GetTime(EPhProcess proc) const;
     inline std::map<int, SLArEventChargePixel>& GetPixelEvents() {return fPixelHits;}
     inline const std::map<int, SLArEventChargePixel>& GetConstPixelEvents() const {return fPixelHits;}
     inline double GetNPixelHits() const {return fPixelHits.size();}
+    inline std::map<int, SLArEventSiPM>& GetSiPMEvents() {return fSiPMHits;}
+    inline const std::map<int, SLArEventSiPM>& GetConstSiPMEvents() const {return fSiPMHits;}
+    inline double GetNSiPMHits() const {return fSiPMHits.size();}
     double GetPixelHits() const; 
+    int GetSiPMHits() const;
     inline void SetChargeBacktrackerRecordSize(const UShort_t size) {fChargeBacktrackerRecordSize = size;}
     inline UShort_t GetChargeBacktrackerRecordSize() const {return fChargeBacktrackerRecordSize;}
+    inline void SetSiPMBacktrackerRecordSize(const UShort_t size) {fSiPMBacktrackerRecordSize = size;}
+    inline UShort_t GetSiPMBacktrackerRecordSize() const {return fSiPMBacktrackerRecordSize;}   
     void PrintHits() const; 
     SLArEventChargePixel& RegisterChargeHit(const int&, const SLArEventChargeHit& ); 
+    SLArEventSiPM& RegisterSiPMHit(const int&, const SLArEventPhotonHit& );
+    SLArEventSiPM& RegisterSiPMHit(const SLArEventPhotonHit& );
     int ResetHits(); 
-    int SoftResetHits();
+    inline void SetActive(bool is_active) {fIsActive = is_active;}
+    //int SoftResetHits();
 
     //bool SortHits(); 
     //bool SortPixelHits();
 
   protected:
+    int fIdx;
+    bool fIsActive;
     UShort_t fChargeBacktrackerRecordSize;
+    UShort_t fSiPMBacktrackerRecordSize;
     std::map<int, SLArEventChargePixel> fPixelHits; 
+    std::map<int, SLArEventSiPM> fSiPMHits;
 
   public:
-     ClassDef(SLArEventTile, 2)
+     ClassDef(SLArEventTile, 3)
 };
 
 #endif /* end of include guard SLAREVENTTILE_HH */
