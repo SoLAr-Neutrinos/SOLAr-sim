@@ -11,40 +11,50 @@ ClassImp(SLArEventTile)
 
 
 SLArEventTile::SLArEventTile() 
-  : SLArEventHitsCollection<SLArEventPhotonHit>(), fChargeBacktrackerRecordSize(0)
+  : TNamed(), fChargeBacktrackerRecordSize(0), fSiPMBacktrackerRecordSize(0)
 {}
 
 
 SLArEventTile::SLArEventTile(const int idx) 
-  : SLArEventHitsCollection<SLArEventPhotonHit>(idx), fChargeBacktrackerRecordSize(0) 
+  : TNamed(), fChargeBacktrackerRecordSize(0), fSiPMBacktrackerRecordSize(0)
 {
   fName = Form("EvTile%i", fIdx); 
 }
 
 SLArEventTile::SLArEventTile(const SLArEventTile& ev) 
-  : SLArEventHitsCollection<SLArEventPhotonHit>(ev), fChargeBacktrackerRecordSize(0)
+  : TNamed(ev), fPixelHits(), fSiPMHits()
 {
   fChargeBacktrackerRecordSize = ev.fChargeBacktrackerRecordSize;
+  fSiPMBacktrackerRecordSize = ev.fSiPMBacktrackerRecordSize;
   if (!ev.fPixelHits.empty()) {
     for (const auto &qhit : ev.fPixelHits) {
       fPixelHits[qhit.first] = qhit.second;
     }
   }
+
+  if (!ev.fSiPMHits.empty()) {
+    for (const auto &phit : ev.fSiPMHits) {
+      fSiPMHits[phit.first] = phit.second;
+    }
+  }
+  return;
 }
 
 
 
 int SLArEventTile::ResetHits()
 {
-  SLArEventHitsCollection::ResetHits();
+  for (auto &sipm : fSiPMHits) {
+      sipm.second.ResetHits(); 
+  }
 
   for (auto &pix : fPixelHits) {
       pix.second.ResetHits(); 
-      //delete pix.second;
   }
   fPixelHits.clear(); 
+  fSiPMHits.clear();
 
-  return fHits.size();
+  return 0;
 }
 
 
@@ -53,29 +63,21 @@ SLArEventTile::~SLArEventTile() {
 }
 
 double SLArEventTile::GetTime() const {
-  double t = -1;
-  if (fNhits > 0) t = fHits.begin()->first * fClockUnit;
+  if (fSiPMHits.empty()) return -1.;
 
-  return t;
+  int t = std::numeric_limits<int>::max();
+  const auto clock_unit = fSiPMHits.begin()->second.GetClockUnit();
+
+  for (const auto& sipm_itr : fSiPMHits) {
+    double sipm_time = sipm_itr.second.GetTime();
+    if (sipm_time < t) {
+      t = sipm_time;
+    }
+  }
+
+  return t*clock_unit;
 }
 
-double SLArEventTile::GetTime(EPhProcess proc) const {
-  double t = -1;
-  printf("TO BE FIXED\n");
-  //if (proc == kCher)
-  //{
-    //for (auto &hit : fHits)
-      //{if (hit->GetProcess()==kCher) t = hit->GetTime(); break;}
-  //}
-  //else if (proc == kScnt){
-    //for (auto &hit : fHits) 
-      //{if (hit->GetProcess()==kScnt) t = hit->GetTime(); break;}
-  //}
-  //else if (proc == kAll && fHits.size() > 0)
-    //t = fHits.at(0)->GetTime();
-
-  return t;
-}
 
 //bool SLArEventTile::SortPixelHits()
 //{
@@ -96,8 +98,8 @@ void SLArEventTile::PrintHits() const
   printf("*********************************************\n");
   printf("Hit container ID: %i [%s]\n", fIdx, fName.Data());
   printf("*********************************************\n");
-  for (auto &hit : fHits) {
-    SLArEventHitsCollection::Dump();
+  for (auto &sipm : fSiPMHits) {
+    sipm.second.Dump();
   }
   if (!fPixelHits.empty()) {
     printf("Pixel readout hits:\n");
@@ -127,6 +129,31 @@ SLArEventChargePixel& SLArEventTile::RegisterChargeHit(const int& pixID, const S
 
 }
 
+SLArEventSiPM& SLArEventTile::RegisterSiPMHit(const int& sipmID, const SLArEventPhotonHit& hit) {
+  
+  auto it = fSiPMHits.find(sipmID);
+
+  if (it != fSiPMHits.end()) {
+    //printf("SLArEventTile::RegisterSiPMHit(%i): sipm %i already hit.\n", sipmID, sipmID);
+    it->second.RegisterHit(hit); 
+    return it->second;
+  }
+  else {
+    //printf("SLArEventTile::RegisterSiPMHit(%i): creating new sipm hit collection.\n", sipmID);
+    fSiPMHits.insert(std::make_pair(sipmID, SLArEventSiPM(sipmID, hit)));
+    auto& sipmEv = fSiPMHits[sipmID];
+    sipmEv.SetBacktrackerRecordSize( fSiPMBacktrackerRecordSize ); 
+    return sipmEv;  
+  }
+
+}
+
+SLArEventSiPM& SLArEventTile::RegisterSiPMHit(const SLArEventPhotonHit& hit) {
+  const int sipmID = hit.GetCellNr();
+  return RegisterSiPMHit(sipmID, hit);
+}
+
+
 double SLArEventTile::GetPixelHits() const {
   double nhits = 0.;
   for (const auto &pixel : fPixelHits) {
@@ -134,4 +161,12 @@ double SLArEventTile::GetPixelHits() const {
   }
 
   return nhits; 
+}
+
+int SLArEventTile::GetSiPMHits() const {
+  int nhits; 
+  for (const auto &sipm : fSiPMHits) {
+    nhits += sipm.second.GetNhits(); 
+  }
+  return nhits;
 }

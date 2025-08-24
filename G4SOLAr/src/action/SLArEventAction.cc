@@ -301,7 +301,7 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       dstHit.SetCellNr( sipm_nr );
 
       auto& ev_anode = SLArAnaMgr->GetEventAnode().GetEventAnodeByID(anode_idx);
-      auto& ev_tile = ev_anode.RegisterHit(dstHit, mtIdx, tIdx);
+      auto& ev_sipm = ev_anode.RegisterHit(dstHit, mtIdx, tIdx);
       
 #ifdef SLAR_DEBUG
       G4cout << "SLArEventAction::RecordEventReadoutTile() hit nr " << i << G4endl;
@@ -317,7 +317,7 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       if (bktManager) {
         if (bktManager->IsNull() == false) {
           auto& records = 
-            ev_tile.GetBacktrackerVector( ev_tile.ConvertToClock(dstHit.GetTime()) );
+            ev_sipm.GetBacktrackerVector( ev_sipm.ConvertToClock(dstHit.GetTime()) );
 
           for (size_t ib = 0; ib < bktManager->GetBacktrackers().size(); ib++) {
             bktManager->GetBacktrackers().at(ib)->Eval(&dstHit, 

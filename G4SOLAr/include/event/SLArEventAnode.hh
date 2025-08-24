@@ -27,7 +27,7 @@ class SLArEventAnode : public TNamed {
     inline int GetNhits() const {return fNhits;}
     inline bool IsActive() const {return fIsActive;}
 
-    SLArEventTile& RegisterHit(const SLArEventPhotonHit& hit, int mt_idx = -999, int t_idx = -999); 
+    SLArEventSiPM& RegisterHit(const SLArEventPhotonHit& hit, int mt_idx = -999, int t_idx = -999); 
     SLArEventChargePixel& RegisterChargeHit(const SLArCfgAnode::SLArPixIdx& pixId, const SLArEventChargeHit& hit); 
     int ResetHits(); 
     int SoftResetHits();
@@ -57,7 +57,7 @@ class SLArEventAnode : public TNamed {
     std::map<int, SLArEventMegatile> fMegaTilesMap;
 
   public:
-    ClassDef(SLArEventAnode, 2)
+    ClassDef(SLArEventAnode, 3)
 };
 
 class SLArListEventAnode: public TObject {

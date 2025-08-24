@@ -100,7 +100,7 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
   const auto photonInfo = 
     dynamic_cast<const SLArUserPhotonTrackInformation*>
     (track->GetUserInformation());
-  G4int procID = (photonInfo) ? photonInfo->GetCreator() : optical::kUnknown;
+  G4int procID = (photonInfo) ? photonInfo->GetCreator() : optical::kOther;
   G4int origin_vol_id = (photonInfo) ? photonInfo->GetOriginVolumID() : -1;
  
   SLArReadoutTileHit* hit = nullptr;

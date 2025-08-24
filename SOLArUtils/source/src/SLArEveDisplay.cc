@@ -411,11 +411,11 @@ namespace display {
         const auto& idx_t = ev_t_itr.first;
         const auto& ev_t = ev_t_itr.second;
 
-        if (ev_t.GetNhits() == 0) continue;
+        if (ev_t.GetNSiPMHits() == 0) continue;
 
         auto& cfg_t = cfg_mt.GetBaseElement(idx_t); 
 
-        int nhit = ev_t.GetNhits();
+        int nhit = ev_t.GetNSiPMHits();
         if (nhit > nhit_max) nhit_max = nhit;
 
         const ROOT::Math::XYZVectorD t_pos = {cfg_t.GetPhysX(), cfg_t.GetPhysY(), cfg_t.GetPhysZ() }; 
