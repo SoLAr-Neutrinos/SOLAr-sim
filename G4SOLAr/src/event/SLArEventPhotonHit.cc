@@ -34,7 +34,8 @@ SLArEventPhotonHit::SLArEventPhotonHit(float time, int proc, float wvl)
   if      (proc == 1) fProcess = kCher;
   else if (proc == 2) fProcess = kScnt;
   else if (proc == 3) fProcess = kWLS ; 
-  else                fProcess = kAll ;
+  else if (proc == 4) fProcess = kPrimaryGen; 
+  else                fProcess = kOther;
 }
 
 SLArEventPhotonHit::SLArEventPhotonHit(const SLArEventPhotonHit &pmtHit) 

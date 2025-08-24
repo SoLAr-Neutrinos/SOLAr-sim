@@ -28,8 +28,8 @@ enum SLArTrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
 */
 
 namespace optical {
-  enum EPhotonCreator {kUnknown = 0, kCherenkov = 1, kScintillation = 2, kWLS= 3, kOther = 4};
-  inline G4String EPhProcName[5] = {"Unknown", "Cherenkov", "Scintillation", "WLS", "Other"};
+  enum EPhotonCreator {kUnknown = 0, kCherenkov = 1, kScintillation = 2, kWLS= 3, kPrimaryGen = 4, kOther = 4};
+  inline G4String EPhProcName[6] = {"Unknown", "Cherenkov", "Scintillation", "WLS", "PriamryGen", "Other"};
 }
 
 class SLArUserPhotonTrackInformation : public G4VUserTrackInformation

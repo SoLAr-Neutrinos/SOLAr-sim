@@ -10,10 +10,10 @@
 
 #include "event/SLArEventGenericHit.hh"
 
-enum  EPhProcess {kAll = 0, kCher = 1, kScnt = 2, kWLS = 3, kOther = 4};
+enum  EPhProcess {kAll = 0, kCher = 1, kScnt = 2, kWLS = 3, kPrimaryGen = 4, kOther = 5};
 
-inline TString EPhProcName[5] = {"All", "Cher"     , "Scint"        , "WLS", "Other"};
-inline TString EPhProcTitle[5]= {"All", "Cherenkov", "Scintillation", "WLS", "Other"};
+inline TString EPhProcName[6] = {"All", "Cher"     , "Scint"        , "WLS", "PrimaryGen", "Other"};
+inline TString EPhProcTitle[6]= {"All", "Cherenkov", "Scintillation", "WLS", "PrimaryGen", "Other"};
 
 class SLArEventPhotonHit : public SLArEventGenericHit  
 {

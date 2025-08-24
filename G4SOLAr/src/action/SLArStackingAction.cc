@@ -192,6 +192,7 @@ SLArStackingAction::ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const
   if (aTrack->GetParentID() == 0) {
     //fEventAction->RegisterNewTrackPID(aTrack->GetTrackID(), aTrack->GetTrackID()); 
     photonInfo->SetAncestorID(aTrack->GetTrackID());
+    photonInfo->SetCreator( optical::kPrimaryGen );
     UpdatePrimaryTrackID(aTrack, anaMngr);
     aTrack->SetUserInformation(photonInfo);
     return kClassification;
