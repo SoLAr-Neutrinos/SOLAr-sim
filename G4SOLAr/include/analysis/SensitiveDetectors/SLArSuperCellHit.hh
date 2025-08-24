@@ -64,8 +64,12 @@ public:
     G4ThreeVector GetWorldPos() const { return fWorldPos; }
 
     void      SetPhotonProcess(G4String prname);
+    void      SetPhotonProcess(const int prid) { fPhType = prid; }
     G4int     GetPhotonProcessId() const;
     G4String  GetPhotonProcessName() const;
+
+    inline void SetOriginVolumeID(const int vol_id) {fPhOriginVolumeID = vol_id;}
+    inline G4int GetOriginVolumeID() const {return fPhOriginVolumeID;}
 
     inline void SetSuperCellNo(G4int idx) { fSuperCellNo= idx; }
     inline G4int GetSuperCellNo() const { return fSuperCellNo; }
