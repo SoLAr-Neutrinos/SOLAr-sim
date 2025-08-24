@@ -51,6 +51,9 @@ EBacktracker GetBacktrackerEnum(const G4String bkt) {
   else if (bkt == "sipm_nr") {
     id = kSiPMNr;
   }
+  else if (bkt == "originVolID") {
+    id = kOriginVolID;
+  }
   else {
     printf("backtraker::GetBacktrackerEnum() WARNING no backtracker called \"%s\"\n", 
         bkt.data());
