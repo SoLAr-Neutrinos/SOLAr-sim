@@ -400,8 +400,8 @@
         "polished" :  0.9,
         "PropertiesTable" : [
           {"property" : "EFFICIENCY", "value" : [
-            {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
-            {"var": "EFFICIENCY", "val" : [0.15, 0.15]}
+            {"var": "Energy", "unit" : "eV", "val": [1.46009, 1.65174, 1.90596, 2.17646, 2.63735, 2.95459, 3.21821, 3.91613, 4.60223, 9.769, 14.4751]}, 
+            {"var": "EFFICIENCY", "val" : [0.0430142, 0.0909234, 0.151438, 0.196321, 0.278013, 0.209947, 0.158015, 0.114658, 0.0869295, 0.126775, 0.127282]}
           ]}, 
           {"property" : "REFLECTIVITY", "value" : [
             {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
