@@ -101,37 +101,22 @@ void SLArPGunGeneratorAction::SourceConfiguration(const rapidjson::Value& config
 
   CopyConfigurationToString(config);
 
-  if (config.HasMember("n_particles")) {
-    fConfig.n_particles = config["n_particles"].GetInt();
-  }
-
-  if (config.HasMember("energy")) {
-    SourceEnergyConfig( config["energy"], fConfig.ene_config );
-  }
-
   if (config.HasMember("particle")) {
     fConfig.particle_name = config["particle"].GetString();
     SetParticle( fConfig.particle_name ); 
   }
 
-  if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
+  SourceCommonConfig(config, fConfig);
+
+  if (config.HasMember("specific_activity")) {
+    fConfig.spec_activity = unit::ParseJsonVal(config["specific_activity"]);
   }
-  else {
+
+  if (fVtxGen == nullptr) {
     fVtxGen = std::make_unique<vertex::SLArPointVertexGenerator>();
   }
   
-  if (config.HasMember("direction")) {
-    try {
-      SetupDirectionGenerator( config["direction"] );
-    }
-    catch (const std::exception& e) {
-      std::cerr << "ERROR setting up direction generator" << std::endl;
-      std::cerr << e.what() << std::endl;
-      exit( EXIT_FAILURE );
-    }
-  }
-  else{
+  if (fDirGen == nullptr) {
     fDirGen = std::make_unique<direction::SLArFixedDirectionGenerator>();
   }
 

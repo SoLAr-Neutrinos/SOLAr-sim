@@ -43,7 +43,7 @@ class SLArRadSrcGeneratorAction : public SLArBaseGenerator
 
     void SourceConfiguration(const rapidjson::Value& config) override; 
     void Configure() override;
-    G4String WriteConfig() const override;
+    //G4String WriteConfig() const override;
 
     G4String GetGeneratorType() const override {return "radsrc";}
     EGenerator GetGeneratorEnum() const override {return EGenerator::kRadSrc;}
