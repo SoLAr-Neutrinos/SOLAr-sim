@@ -48,14 +48,16 @@ public:
   SLArBulkVertexGenerator();
 
   SLArBulkVertexGenerator(const SLArBulkVertexGenerator&);
-
+  
   ~SLArBulkVertexGenerator() override;
 
   G4String GetType() const override {return "bulk_vertex_generator";}
+
+  inline G4double GetBulkVolumeMass() const {return fMass;} ///< Get the mass of the bulk volume
   
   const G4LogicalVolume * GetBulkLogicalVolume() const;
   
-  void SetBulkLogicalVolume(G4LogicalVolume *);
+  void SetBulkLogicalVolume(G4LogicalVolume *, int counter);
    
   const G4VSolid * GetSolid() const;
  
@@ -85,17 +87,15 @@ public:
     
   void Config(const rapidjson::Value& cfg) override;
 
-  void Config(const G4String& volumeName); 
+  void Config(const G4String& target_volume_name); 
+
+  void Config(const G4String& target_volume_name, const G4String& mother_volume_name);
 
   inline G4double GetCubicVolumeGenerator() const {
     return fSolid->GetCubicVolume();
   }
 
-  G4double GetMassVolumeGenerator() const {
-    return fLogVol->GetMass();
-  }
-
-  inline void Print() const override {
+    inline void Print() const override {
     printf("SLArBulkVertexGenerator info dump:\n"); 
     printf("logical (solid) volume name: %s (%s)\n",
         fLogVol->GetName().data(), fSolid->GetName().data()); 
@@ -109,21 +109,25 @@ public:
 private:
   // Configuration:
   G4LogicalVolume * fLogVol = nullptr; ///< Reference to the logical volume
+  G4String fMotherVolumeName;
+  G4String fTargetVolumeName;
   G4ThreeVector fBulkTranslation; ///< The box position in world coordinate frame
   G4RotationMatrix fBulkRotation; ///< The box rotation in world coordinate frame
-  G4Transform3D fBulkTransform; ///< The box transformation in world coordinate frame
+  std::vector<G4Transform3D> fBulkTransformVec; ///< The vectors box transformation in world coordinate frame
   double fTolerance{1.0 * CLHEP::um}; ///< Geometrical tolerance (length)
   unsigned int fRandomSeed{0}; ///< Seed for the random number generator
   bool fNoDaughters = false; ///< Flag to reject vertexes generated from daughter volumes
   double fFVFraction{1.0}; //!< Volume fraction 
   G4bool fRequireMaterialMatch = false;
   G4String fMaterial = {};
-  G4double fMass; //Parameter that sets up the volume mass
+  G4double fMass; //!< Parameter that sets up the volume mass
   
   // Working internals:
   G4VSolid * fSolid = nullptr; ///< Reference to the solid volume from which are generated vertexes
   G4RotationMatrix fBulkInverseRotation; ///< The inverse box rotation
   unsigned int fCounter = 0.0; // Internal vertex counter
+
+  inline G4double GetMassVolumeGenerator() const {return fLogVol->GetMass();}
 
   double ComputeDeltaX(const G4ThreeVector& lo, const G4ThreeVector& hi) const;
   double ComputeDeltaX(const G4ThreeVector& lo, const G4ThreeVector& hi, const G4double fv) const;

@@ -10,6 +10,7 @@
 #include "SLArPrimaryGeneratorAction.hh"
 #include "SLArRunAction.hh"
 #include "SLArRun.hh"
+#include "geo/SLArGeoUtils.hh"
 
 #include "G4Run.hh"
 #include "G4RunManager.hh"
@@ -71,9 +72,35 @@ void SLArRunAction::BeginOfRunAction(const G4Run* aRun)
   for (const auto& xsec : SLArAnaMgr->GetXSecDumpVector()) {
     SLArAnaMgr->WriteCrossSection(xsec); 
   }
-  
+  /*
+  auto volumeStore = G4PhysicalVolumeStore::GetInstance();
+  for (auto vol : *volumeStore) {
+    G4cout << "Nome: " << vol->GetName()
+           << ", Copia: " << vol->GetCopyNo()
+           << ", Madre: " << (vol->GetMotherLogical() ? vol->GetMotherLogical()->GetName() : "NULL")
+           << G4endl;
+}
+  G4String vol_name = "LightGuideLV";
+  G4cout << "Searching for volume " << vol_name << G4endl;
+  G4cout << "Calling the function" << G4endl;
+  auto volume_found = geo::SearchLogicalVolumeInParametrisedVolume(vol_name, "pds_30");
+  if (volume_found) {
+    G4cout << "FOUND volume " << volume_found->logical_volume->GetName() << " !!!" << G4endl;
+  }
+  G4cout << "Volume dimension: "
+         << "X: " << volume_found->dimension->x() 
+         << ", Y: " << volume_found->dimension->y() 
+         << ", Z: " << volume_found->dimension->z() 
+         << G4endl;
+  /*G4cout << "Volume position: "
+         << "X: " << volume_found->position->x() 
+         << ", Y: " << volume_found->position->y() 
+         << ", Z: " << volume_found->position->z() 
+         << G4endl;*/
+
   G4cout << "### Run " << aRun->GetRunID() << " start." << G4endl;
 }
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

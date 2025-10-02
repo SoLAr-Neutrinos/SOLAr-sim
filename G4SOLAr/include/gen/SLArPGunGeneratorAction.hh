@@ -19,7 +19,8 @@ class SLArPGunGeneratorAction : public SLArBaseGenerator
 {
   public: 
     struct PGunConfig_t : public GenConfig_t {
-      G4String particle_name = "e-"; 
+      G4String particle_name = "e-"; //<!< Name of the particle to be generated
+      G4double spec_activity = 0; //!< Specific activity of the source
     };
 
     SLArPGunGeneratorAction(const G4String label=""); 
@@ -45,9 +46,6 @@ class SLArPGunGeneratorAction : public SLArBaseGenerator
       SLArBaseGenerator::SetGenRecord(record, fConfig);
     } 
     void GeneratePrimaries(G4Event*) override; 
-
-    //G4String WriteConfig() const override; 
-
 
   protected: 
     PGunConfig_t fConfig; 
