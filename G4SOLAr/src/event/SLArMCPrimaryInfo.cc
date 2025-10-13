@@ -48,6 +48,8 @@ SLArMCPrimaryInfo& SLArMCPrimaryInfo::operator=(const SLArMCPrimaryInfo& p)
     fTotalCerenkovPhotons = p.fTotalCerenkovPhotons;
     fVertex = p.fVertex;
     fMomentum = p.fMomentum;
+
+    ClearTrajectories();
     for (const auto& t : p.fTrajectories) {
       fTrajectories.emplace_back( new SLArEventTrajectory(*t) ); 
     }

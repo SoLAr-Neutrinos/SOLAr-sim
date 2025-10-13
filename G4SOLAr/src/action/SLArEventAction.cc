@@ -189,10 +189,6 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     }
     #else
     G4int ext_scorer_hits = RecordEventExtScorer( event, verbose ); 
-
-    for (auto &primary : primaries) {
-      if (ext_scorer_hits == 0) primary.GetTrajectories().clear(); 
-    }
 #endif 
     
     SLArAnaMgr->FillTree();
