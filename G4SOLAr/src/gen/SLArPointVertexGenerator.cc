@@ -37,6 +37,13 @@ namespace gen {
       }
       G4double vunit = unit::GetJSONunit(jxyz);
 
+      if (jxyz_val.HasMember("n_events")) {
+        if (jxyz_val["n_events"].IsInt() == false) {
+          throw std::invalid_argument("field \"n_events\" must be an integer\n");
+        }
+        fNrOfEvPerVertex = jxyz_val["n_events"].GetInt();
+      }
+
       if (jxyz_val[0].IsArray()) {
         for (const auto& jjxyz : jxyz_val.GetArray()) {
           if (jjxyz.IsArray() == false) {
@@ -112,7 +119,7 @@ namespace gen {
         const SLArPrimaryGeneratorAction* primary_gen_action = 
           dynamic_cast<const SLArPrimaryGeneratorAction*>(run_manager->GetUserPrimaryGeneratorAction());
         const int event_nr = primary_gen_action->GetEventID();
-        idx = (event_nr) % fVertexList.size();
+        idx = (event_nr / fNrOfEvPerVertex) % (int)fVertexList.size();
 
         vtx.set(fVertexList[idx].x(),
             fVertexList[idx].y(),
