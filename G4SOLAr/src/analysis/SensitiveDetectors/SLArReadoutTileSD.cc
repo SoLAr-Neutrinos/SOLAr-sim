@@ -125,6 +125,7 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
 
 #ifdef SLAR_DEBUG
   printf("SLArReadoutTileSD::ProcessHits_constStep\n");
+  G4String procName = optical::EPhProcName[procID];
   printf("%s photon hit at t = %g ns\n", procName.c_str(), hit->GetTime());
   //if (hit->GetTime() < 1*CLHEP::ns) getchar(); 
 #endif
