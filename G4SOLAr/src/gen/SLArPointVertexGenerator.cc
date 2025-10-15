@@ -37,11 +37,11 @@ namespace gen {
       }
       G4double vunit = unit::GetJSONunit(jxyz);
 
-      if (jxyz_val.HasMember("n_events")) {
-        if (jxyz_val["n_events"].IsInt() == false) {
+      if (jxyz.HasMember("n_events")) {
+        if (jxyz["n_events"].IsInt() == false) {
           throw std::invalid_argument("field \"n_events\" must be an integer\n");
         }
-        fNrOfEvPerVertex = jxyz_val["n_events"].GetInt();
+        fNrOfEvPerVertex = jxyz["n_events"].GetInt();
       }
 
       if (jxyz_val[0].IsArray()) {
