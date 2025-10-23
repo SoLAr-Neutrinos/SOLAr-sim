@@ -241,6 +241,7 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
   new G4PVPlacement(0, G4ThreeVector(0, -0.5*(unit_thickness - minor_width), 0), 
       waffle_minor_lv, "waffle_minor_pv", fWaffleUnit->GetModLV(), 0, 1); 
 
+  // FIXME: modify shielding layer here
   if (fAddNeutronBricks) {
     G4VSolid* brick_sv = nullptr; 
     G4double yshift = 0.; 

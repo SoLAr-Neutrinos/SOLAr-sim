@@ -19,6 +19,7 @@
     "steel_major_width" : {"val" : 46, "unit" : "cm"}, 
     "steel_minor_width" : {"val" : 20, "unit" : "cm"}, 
     "main_spacing" : {"val" : 150, "unit" : "cm"},
+    // FIXME: change shielding configuration
     "neutron_brick" : {"material" : "Water", "thickness" : {"val": 40, "unit" : "cm"} }
   }
 }
