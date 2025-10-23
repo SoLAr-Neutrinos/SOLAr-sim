@@ -15,11 +15,6 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-  message(STATUS "DEBUG: Adding '-g' option for gdb debugging")
-endif()
-
 #----------------------------------------------------------------------------
 # Define few SoLAr-sim options
 option(SLAR_PROFILE "Enbale profiling with gprof" OFF)
@@ -29,6 +24,13 @@ option(SLAR_CRY_INTERFACE "Build interface to CRY cosmic shower generator" OFF)
 option(SLAR_RADSRC_INTERFACE "Build interface to RadSrc composite gamma spectrum generator" OFF)
 option(SLAR_USE_G4CASCADE "Use G4CASCADE for hadronic interactions" ON)
 
+# Debugging module setup
+include( ${PROJECT_SOURCE_DIR}/cmake/SOLArDebugConfig.cmake )
+configure_debug_system()
+
+
+#----------------------------------------------------------------------------
+# Enable profiling with gprof
 if (SLAR_PROFILE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
   message(STATUS "Building solar_sim with gprof profiling feature")
@@ -164,6 +166,7 @@ configure_file(${PROJECT_SOURCE_DIR}/rootrc.in ${CMAKE_INSTALL_PREFIX}/.rootrc @
 set(solarsim_sources "")
 set(solarsim_headers "")
 
+add_subdirectory(${SOLARSIM_SRC_DIR})
 add_subdirectory(${SOLARSIM_SRC_DIR}/config)
 add_subdirectory(${SOLARSIM_SRC_DIR}/event)
 add_subdirectory(${SOLARSIM_SRC_DIR}/action)
@@ -253,7 +256,6 @@ endif()
 # Add definitions
 target_compile_definitions(solar_sim 
   PUBLIC 
-  $<$<CONFIG:Debug>:SLAR_DEBUG>
   $<$<STREQUAL:${Geant4_gdml_FOUND},ON>:SLAR_GDML>
   $<$<STREQUAL:${SLAR_EXTERNAL},ON>:SLAR_EXTERNAL>
   $<$<STREQUAL:${SLAR_CRY_INTERFACE},ON>:SLAR_CRY>

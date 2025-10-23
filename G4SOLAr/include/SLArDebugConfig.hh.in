@@ -1,0 +1,19 @@
+/**
+ * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @file        : SLArDebugConfig.hh
+ * @created     : Thursday Oct 23, 2025 16:36:36 CEST
+ */
+
+#ifndef SLARDEBUGCONFIG_HH
+
+#define SLARDEBUGCONFIG_HH
+
+// CMake will substitute these values
+#cmakedefine SLAR_DEBUG
+#cmakedefine DEBUG_PRIMARY_EVENT_AVAILABLE
+#cmakedefine DEBUG_TRACKING_AVAILABLE
+#cmakedefine DEBUG_OPTICAL_AVAILABLE
+#cmakedefine DEBUG_DETECTOR_AVAILABLE
+
+#endif /* end of include guard SLARDEBUGCONFIG_HH */
+

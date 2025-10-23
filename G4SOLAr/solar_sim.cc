@@ -19,6 +19,7 @@
 
 #include "SLArVersion.hh"
 #include "SLArUserPath.hh"
+#include "SLArDebugManager.hh"
 #include "SLArRootUtilities.hh"
 #include "SLArPrimaryGeneratorAction.hh"
 #include "SLArAnalysisManager.hh"
@@ -222,6 +223,9 @@ int main(int argc,char** argv)
 #endif
     }
   }
+
+  SLArDebugManager::Instance().LoadFromEnvironment();
+  SLArDebugManager::Instance().PrintStatus();
 
   // Instantiate G4UIExecutive if interactive mode
   G4UIExecutive* ui = nullptr;
