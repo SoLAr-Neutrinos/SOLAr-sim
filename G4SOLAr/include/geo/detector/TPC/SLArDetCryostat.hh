@@ -65,6 +65,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     std::map<G4String, SLArMaterial*> fMaterials;
     std::map<geo::EBoxFace, SLArBaseDetModule*> fSupportStructure;
     std::vector<G4VPhysicalVolume*> fSupportStructureEdges;
+    std::vector<std::pair<G4String, G4double>> fBrickLayers;
 
     SLArCryostatStructure fCryostatStructure; 
     SLArBaseDetModule* BuildCryostatLayer(

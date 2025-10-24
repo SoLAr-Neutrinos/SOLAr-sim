@@ -72,6 +72,7 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
   }
 
   G4double cryostat_waffle_tk = cryostat_tk; 
+  G4double neutron_brick_tk = 0.;
 
   if (jcryo.HasMember("Cryostat_support")) {
     fBuildSupport = true; 
@@ -88,10 +89,30 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
     fGeoInfo->RegisterGeoPar("waffle_spacing", 
         unit::ParseJsonVal(jsupport["main_spacing"])); 
 
-    if (jsupport.HasMember("neutron_brick")) {
+    if (jsupport.HasMember("neutron_brick")) { //Fixed in order to correctly register the total thickness 
       const auto jbrick = jsupport["neutron_brick"].GetObj(); 
-      fGeoInfo->RegisterGeoPar("brick_thickness", 
-          unit::ParseJsonVal(jbrick["thickness"])); 
+      fBrickLayers.clear();
+
+      if (jbrick.HasMember("layers") && jbrick["layers"].IsArray()) {
+        const auto jlayers = jbrick["layers"].GetArray();
+        for (const auto &layer : jlayers) {
+          assert(layer.HasMember("material"));
+          assert(layer.HasMember("thickness"));
+          G4String mat_name = layer["material"].GetString();
+          G4double tk = unit::ParseJsonVal(layer["thickness"]);
+          fBrickLayers.push_back( std::make_pair(mat_name, tk) );
+          neutron_brick_tk += tk;
+        }
+      } else {
+        // single layer brick
+        assert(jbrick.HasMember("material"));
+        assert(jbrick.HasMember("thickness"));
+        G4String mat_name = jbrick["material"].GetString();
+        G4double tk = unit::ParseJsonVal(jbrick["thickness"]);
+        fBrickLayers.push_back( std::make_pair(mat_name, tk) );
+        neutron_brick_tk += tk;
+      }
+      fGeoInfo->RegisterGeoPar("brick_thickness", neutron_brick_tk);
       fMatBrick = new SLArMaterial(); 
       fMatBrick->SetMaterialID(jbrick["material"].GetString()); 
       fAddNeutronBricks = true; 
