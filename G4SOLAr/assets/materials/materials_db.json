@@ -372,6 +372,10 @@
     }, 
     {"name" : "CopperPassive", 
       "NIST" : "G4_Cu"
+    },
+    {"name" : "Lead", 
+      "NIST" : "G4_Pb", 
+      "density" : {"val" : 11.35, "unit" : "g/cm3"}
     }
   ]
 }
