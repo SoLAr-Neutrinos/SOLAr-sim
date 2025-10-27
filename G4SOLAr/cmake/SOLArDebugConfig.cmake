@@ -9,10 +9,12 @@
 # Define available debug modules with descriptions
 macro(define_debug_modules)
   set(DEBUG_MODULES
+    "ANALYSIS:Debug analysis module"
     "PRIMARY_EVENT:Debug primary event generation"
     "TRACKING:Debug stepping action"
+    "LARPHYSICS:Debug Liquid Argon physics"
     "OPTICALPHYSICS:Debug optical physics"
-    "DETECTOR:Debug detector construction"
+    "GEOMETRY:Debug detector geometry"
     "MATERIALS:Debug material properties"
   )
 endmacro()

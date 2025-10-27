@@ -8,6 +8,7 @@
 #include "rapidjson/filereadstream.h"
 
 #include "action/SLArRunAction.hh"
+#include "SLArDebugManager.hh"
 #include "SLArAnalysisManager.hh"
 #include "physics/SLArCrossSectionBiasing.hh"
 
@@ -75,10 +76,10 @@ SLArDetectorConstruction::SLArDetectorConstruction(
 { 
   fGeometryCfgFile = geometry_cfg_file; 
   fMaterialDBFile  = material_db_file; 
-#ifdef SLAR_DEBUG
-  printf("SLArDetectorConstruction Build with\ngeometry %s\nmaterials %s\n",
-      fGeometryCfgFile.c_str(), fMaterialDBFile.c_str());
-#endif
+
+  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+      TString::Format("SLArDetectorConstruction Build with\ngeometry %s\nmaterials %s\n",
+        fGeometryCfgFile.c_str(), fMaterialDBFile.c_str()).Data());
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -104,10 +105,13 @@ SLArDetectorConstruction::~SLArDetectorConstruction(){
  * and InitPDS functions. 
  */
 void SLArDetectorConstruction::Init() {
+  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+      TString::Format("SLArDetectorConstruction::Init\ngeometry: %s\nmaterials: %s\n", 
+        fGeometryCfgFile.c_str(), fMaterialDBFile.c_str()).Data());
 #ifdef SLAR_DEBUG
-  printf("SLArDetectorConstruction::Init\ngeometry: %s\nmaterials: %s\n", 
-      fGeometryCfgFile.c_str(), fMaterialDBFile.c_str());
+  getchar();
 #endif
+
   SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
   SLArAnaMgr->fAnaMsgr->AssignDetectorConstruction(this);
 
@@ -450,10 +454,11 @@ void SLArDetectorConstruction::ConstructCathode() {
  */
 G4VPhysicalVolume* SLArDetectorConstruction::Construct()
 {
-#ifdef SLAR_DEBUG
-  printf("SLArDetectorConstruction::Construct\ngeometry: %s\nmaterials: %s\n", 
-      fGeometryCfgFile.c_str(), fMaterialDBFile.c_str());
-#endif
+
+  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+      TString::Format("SLArDetectorConstruction::Construct\ngeometry: %s\nmaterials: %s\n", 
+        fGeometryCfgFile.c_str(), fMaterialDBFile.c_str()).Data());
+
   Init();
 
   // ------------- Volumes --------------
@@ -799,7 +804,9 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
     int megatile_nr = anodeCfg.GetMap().size(); 
     printf("%s has %i elements registered\n", anodeCfg.GetName(), megatile_nr); 
 #ifdef SLAR_DEBUG
-    anodeCfg.DumpMap(); 
+    if (SLArDebugManager::Instance().IsEnabled(SLArDebugManager::GEOMETRY)){
+      anodeCfg.DumpMap(); 
+    }
 #endif
 
     const size_t n_megatiles = anodeCfg.GetMap().size(); 
@@ -809,16 +816,16 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
       return;
     }
     
-    printf("getting front megatile\n"); 
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, "getting front megatile\n"); 
     SLArCfgMegaTile& mtileCfg = anodeCfg.GetMap().front(); 
 
-    printf("creating TH2Poly for a megatile...\n"); 
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, "creating TH2Poly for a megatile...\n"); 
     auto hMapMegaTile = anodeCfg.BuildPolyBinHist(SLArCfgAnode::kWorld, true);
-    printf("mapMegaTile\n");
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, "mapMegaTile\n");
     auto hMapTile     = mtileCfg.BuildPolyBinHist(
         SLArCfgAssembly<SLArCfgReadoutTile>::ESubModuleReferenceFrame::kRelative, 
         true); 
-    printf("mapTile\n");
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, "mapTile\n");
     G4RotationMatrix* mtile_rot = new G4RotationMatrix(
         mtileCfg.GetPhi(), 
         mtileCfg.GetTheta(), 
@@ -830,7 +837,7 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
         G4ThreeVector(anodeCfg.GetAxis0().x(), anodeCfg.GetAxis0().y(), anodeCfg.GetAxis0().z()), 
         G4ThreeVector(anodeCfg.GetAxis1().x(), anodeCfg.GetAxis1().y(), anodeCfg.GetAxis1().z()), 
         nullptr, mtile_rot_inv);
-    printf("mapPixel\n");
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, "mapPixel\n");
 
     anodeCfg.RegisterMap(0, hMapMegaTile); 
     anodeCfg.RegisterMap(1, hMapTile); 
@@ -854,7 +861,8 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   istore->AddImportanceGeometryCell(1, *fWorldPhys);
   printf("\nCavern ----------------------------------------\n");
   auto cavern_pv = fExpHall->GetModPV();
-  printf("fCavern PV ptr: %p\n", static_cast<void*>(cavern_pv));
+  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, TString::Format(
+        "fCavern PV ptr: %p\n", static_cast<void*>(cavern_pv)).Data());
   istore->AddImportanceGeometryCell(
       1, *cavern_pv, cavern_pv->GetCopyNo()); 
   size_t n_cavern_layers = cavern_pv->GetLogicalVolume()->GetNoDaughters(); 
@@ -862,15 +870,21 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     auto vol = cavern_pv->GetLogicalVolume()->GetDaughter(i);
     auto cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("Adding %s to istore with importance %g (rep nr. %i, %p)\n", 
-          cell.GetPhysicalVolume().GetName().data(), 
-          imp, cell.GetReplicaNumber(), static_cast<void*>(vol) );
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+          TString::Format(
+            "Adding %s to istore with importance %g (rep nr. %i, %p)\n", 
+            cell.GetPhysicalVolume().GetName().data(), 
+            imp, cell.GetReplicaNumber(), static_cast<void*>(vol) ).Data()
+          );
       istore->AddImportanceGeometryCell(imp, cell); 
     }
   }
 
   printf("\nCryostat ----------------------------------------\n");
-  printf("fCryostat PV ptr: %p\n", static_cast<void*>(fCryostat->GetModPV())); 
+  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+      TString::Format("fCryostat PV ptr: %p\n", 
+        static_cast<void*>(fCryostat->GetModPV())).Data()
+      ); 
   istore->AddImportanceGeometryCell(
       1, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
 
@@ -879,9 +893,12 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     auto face = face_.second;
     G4GeometryCell cell(*face->GetModPV(), face->GetModPV()->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("SUPPORT FACE: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(),
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+          TString::Format(
+            "SUPPORT FACE: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(),
+            cell.GetReplicaNumber(), imp).Data()
+          );              
       istore->AddImportanceGeometryCell(imp, cell); 
     }
     
@@ -889,9 +906,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     const auto lv = pv->GetLogicalVolume();
 
     auto vol_row = (G4PVParameterised*)lv->GetDaughter(0);
-    printf("vol_row: %s[%s]\n", 
-        vol_row->GetName().data(), 
-        vol_row->GetLogicalVolume()->GetName().data()); ;
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+        TString::Format("vol_row: %s[%s]\n", 
+          vol_row->GetName().data(), 
+          vol_row->GetLogicalVolume()->GetName().data()).Data()
+        );
 
     auto repl = get_plane_replication_data(static_cast<G4PVParameterised*>(vol_row)); 
     for (int i=0; i<repl.fNreplica; i++) {
@@ -899,10 +918,12 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       cell = G4GeometryCell(*vol_row, i); 
 
       if (istore->IsKnown(cell) == false) {
-        printf("Adding %s to istore with importance %g (rep nr. %i, %p)\n", 
-            vol_row->GetName().data(), imp, vol_row->GetCopyNo(), 
-            static_cast<void*>(vol_row) );
-
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+            TString::Format(
+              "Adding %s to istore with importance %g (rep nr. %i, %p)\n", 
+              vol_row->GetName().data(), imp, vol_row->GetCopyNo(), 
+              static_cast<void*>(vol_row)).Data()
+            );
         istore->AddImportanceGeometryCell(imp, cell); 
       }
     }
@@ -914,10 +935,12 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     for (int iunit = 0; iunit<row_repl.fNreplica; iunit++) {
       cell = G4GeometryCell(*vol_unit, iunit); 
       if ( istore->IsKnown( cell ) == false) {
-        printf("Adding %s [%s] to istore with importance %g (rep nr. %i, %p)\n", 
-            vol_unit->GetName().data(), 
-            vol_unit->GetLogicalVolume()->GetName().data(), 
-            imp, iunit, static_cast<void*>(vol_unit));
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+            TString::Format(
+              "Adding %s [%s] to istore with importance %g (rep nr. %i, %p)\n", 
+              vol_unit->GetName().data(), 
+              vol_unit->GetLogicalVolume()->GetName().data(), 
+              imp, iunit, static_cast<void*>(vol_unit)).Data());
         istore->AddImportanceGeometryCell(imp, cell); 
       }
 
@@ -929,9 +952,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       
       G4GeometryCell cell(*pv_patch, pv_patch->GetCopyNo()); 
       if (istore->IsKnown(cell) == false) {
-        printf("PATCH MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-            cell.GetPhysicalVolume().GetName().data(), 
-            cell.GetReplicaNumber(), imp);              
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+            TString::Format(
+              "PATCH MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp).Data());    
         istore->AddImportanceGeometryCell(imp, cell);  
 
         const auto ppv_patch = (G4PVParameterised*)lv_patch->GetDaughter(0); 
@@ -943,9 +968,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
           for (int k=0; k<rpl.fNreplica; k++) {
             cell = G4GeometryCell(*ppv_patch, k); 
             if (istore->IsKnown(cell) == false) {
-              printf("PATCH MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-                  cell.GetPhysicalVolume().GetName().data(),
-                  cell.GetReplicaNumber(), imp);              
+              DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+                  TString::Format(
+                    "PATCH MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+                    cell.GetPhysicalVolume().GetName().data(),
+                    cell.GetReplicaNumber(), imp).Data());
 
               istore->AddImportanceGeometryCell(imp, cell);  
 
@@ -953,9 +980,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
                 const auto component_pv = unit_lv->GetDaughter(k); 
                 cell = G4GeometryCell(*component_pv, component_pv->GetCopyNo()); 
                 if (istore->IsKnown(cell) == false) {
-                  printf("PATCH UNIT: Adding %s (rp nr %i) to istore with importance %g\n",
-                      cell.GetPhysicalVolume().GetName().data(),
-                      cell.GetReplicaNumber(), imp);              
+                  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+                      TString::Format(
+                        "PATCH UNIT: Adding %s (rp nr %i) to istore with importance %g\n",
+                        cell.GetPhysicalVolume().GetName().data(),
+                        cell.GetReplicaNumber(), imp).Data());              
 
                   istore->AddImportanceGeometryCell(imp, cell);  
                 }
@@ -974,18 +1003,22 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
 
     auto cell = G4GeometryCell(*edge, edge->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("EDGE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(),
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+          TString::Format(
+            "EDGE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(),
+            cell.GetReplicaNumber(), imp).Data());              
       istore->AddImportanceGeometryCell(imp, cell); 
 
       const auto repl = get_plane_replication_data(static_cast<G4PVParameterised*>(edge_ppv)); 
       for (int k=0; k<repl.fNreplica; k++) {
         cell = G4GeometryCell(*edge_ppv, k); 
         if (istore->IsKnown(cell) == false) {
-          printf("EDGE UNIT: Adding %s (rp nr %i) to istore with importance %g\n",
-              cell.GetPhysicalVolume().GetName().data(),
-              cell.GetReplicaNumber(), imp);              
+          DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+              TString::Format(
+                "EDGE UNIT: Adding %s (rp nr %i) to istore with importance %g\n",
+                cell.GetPhysicalVolume().GetName().data(),
+                cell.GetReplicaNumber(), imp).Data());              
           istore->AddImportanceGeometryCell(imp, cell); 
         }
       }
@@ -1061,8 +1094,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
 
       auto cell = G4GeometryCell(*field_cage->GetModPV(), field_cage->GetModPV()->GetCopyNo()); 
       if (istore->IsKnown(cell) == false) {
-        printf("Adding %s (replica nr %i) to istore with importance %g\n", 
-            cell.GetPhysicalVolume().GetName().data(), cell.GetReplicaNumber(), imp);
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+            TString::Format(
+              "Adding %s (replica nr %i) to istore with importance %g\n", 
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp).Data());
         istore->AddImportanceGeometryCell(imp, cell); 
       }
 
@@ -1070,8 +1106,9 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       for (int i=0; i<fc_repl.fNreplica; i++) {
         cell = G4GeometryCell(*field_cage_vol, i); 
         if (istore->IsKnown(cell) == false) {
-          printf("Adding %s with Replica nr %i\n", 
-              cell.GetPhysicalVolume().GetName().data(), i);
+          DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+              TString::Format("Adding %s with Replica nr %i\n", 
+                cell.GetPhysicalVolume().GetName().data(), i).Data());
 
           istore->AddImportanceGeometryCell(imp, cell); 
         }
@@ -1081,8 +1118,9 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         auto vol = field_cage_vol->GetLogicalVolume()->GetDaughter(i); 
         auto cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
         if (istore->IsKnown(cell) == false) {
-          printf("Adding %s (rp nr %i) to istore with importance %g\n", 
-              vol->GetName().data(), vol->GetCopyNo(), imp);
+          DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+              TString::Format("Adding %s (rp nr %i) to istore with importance %g\n", 
+                vol->GetName().data(), vol->GetCopyNo(), imp).Data());
           istore->AddImportanceGeometryCell(imp, cell); 
         }
       }
@@ -1105,8 +1143,9 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       for (int j=0; j<plane_repl.fNreplica; j++) {
         auto cell = G4GeometryCell(*vol, j); 
         if (istore->IsKnown(cell) == false) {
-          printf("Adding %s (rp nr %i) to istore with importance %g\n",
-              vol->GetName().data(), j, imp);
+          DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+              TString::Format("Adding %s (rp nr %i) to istore with importance %g\n",
+                vol->GetName().data(), j, imp).Data());
           istore->AddImportanceGeometryCell(imp, cell);
         }
 
@@ -1115,9 +1154,12 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         for (int k=0; k<mt_repl.fNreplica; k++) {
           cell = G4GeometryCell(*vol_mt, k); 
           if (istore->IsKnown(cell) == false) {
-            printf("MT MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-                cell.GetPhysicalVolume().GetName().data(), 
-                cell.GetReplicaNumber(), imp);              
+            DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+                TString::Format(
+                  "MT MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+                  cell.GetPhysicalVolume().GetName().data(), 
+                  cell.GetReplicaNumber(), imp).Data()
+                );              
             istore->AddImportanceGeometryCell(imp, cell); 
           }
         }
@@ -1140,9 +1182,10 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   for (int i=0; i<tile_row_repl.fNreplica; i++) {
     auto cell = G4GeometryCell(*tile_row_vol, i); 
     if (istore->IsKnown(cell) == false) {
-      printf("TILE ROW: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(), 
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+          TString::Format("TILE ROW: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(), 
+            cell.GetReplicaNumber(), imp).Data());              
       istore->AddImportanceGeometryCell(imp, cell); 
     }
   }
@@ -1150,23 +1193,28 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   for (int i=0; i<tile_repl.fNreplica; i++) {
     auto cell = G4GeometryCell(*pcb_vol, pcb_vol->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("TILE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(), 
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+          TString::Format("TILE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(), 
+            cell.GetReplicaNumber(), imp).Data());              
       istore->AddImportanceGeometryCell(imp, cell); 
     }
     cell = G4GeometryCell(*base_vol, base_vol->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("TILE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(), 
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+          TString::Format(
+            "TILE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(), 
+            cell.GetReplicaNumber(), imp).Data());
       istore->AddImportanceGeometryCell(imp, cell); 
     }
     cell = G4GeometryCell(*sensor_vol, sensor_vol->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("TILE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(), 
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+          TString::Format(
+            "TILE MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(), 
+            cell.GetReplicaNumber(), imp).Data());
       istore->AddImportanceGeometryCell(imp, cell); 
     }
   }
@@ -1177,9 +1225,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   for (int i=0; i<cell_row_repl.fNreplica; i++) {
     auto cell = G4GeometryCell(*cell_row_vol, i); 
     if (istore->IsKnown(cell) == false) {
-      printf("CELL ROW: Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(), 
-          cell.GetReplicaNumber(), imp);              
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+          TString::Format(
+            "CELL ROW: Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(), 
+            cell.GetReplicaNumber(), imp).Data());   
       istore->AddImportanceGeometryCell(imp, cell); 
     }
   }
@@ -1191,9 +1241,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       const auto vol = cell_row_vol->GetLogicalVolume()->GetDaughter(j); 
       auto cell = G4GeometryCell(*vol, i); 
       if (istore->IsKnown(cell) == false) {
-        printf("CELL MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-            cell.GetPhysicalVolume().GetName().data(), 
-            cell.GetReplicaNumber(), imp);              
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+            TString::Format(
+              "CELL MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp).Data()); 
         istore->AddImportanceGeometryCell(imp, cell); 
       }
 
@@ -1202,9 +1254,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
           const auto sub_vol = vol->GetLogicalVolume()->GetDaughter(n); 
           cell = G4GeometryCell(*sub_vol, sub_vol->GetCopyNo());
           if (istore->IsKnown(cell) == false) {
-            printf("CELL SUBVOLUME: Adding %s (rp nr %i) to istore with importance %g\n",
-                cell.GetPhysicalVolume().GetName().data(), 
-                cell.GetReplicaNumber(), imp);              
+            DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+                TString::Format(
+                  "CELL SUBVOLUME: Adding %s (rp nr %i) to istore with importance %g\n",
+                  cell.GetPhysicalVolume().GetName().data(), 
+                  cell.GetReplicaNumber(), imp).Data()); 
             istore->AddImportanceGeometryCell(imp, cell); 
           }
         }
@@ -1222,33 +1276,40 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         pdsplane->GetModPV()->IsParameterised());
     auto cell = G4GeometryCell(*pdsplane->GetModPV(), pdsplane->GetModPV()->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
-      printf("Adding %s (rp nr %i) to istore with importance %g\n",
-          cell.GetPhysicalVolume().GetName().data(), cell.GetReplicaNumber(), imp);
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+          TString::Format("Adding %s (rp nr %i) to istore with importance %g\n",
+            cell.GetPhysicalVolume().GetName().data(), cell.GetReplicaNumber(), imp).Data());
       istore->AddImportanceGeometryCell(imp, cell); 
     }
 
     auto row_vol = (G4PVParameterised*)pdsplane->GetModLV()->GetDaughter(0); 
-    printf("SC ROW: %s - replicated: %i\n", row_vol->GetName().data(), row_vol->IsParameterised());
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+        TString::Format("SC ROW: %s - replicated: %i\n", 
+          row_vol->GetName().data(), row_vol->IsParameterised()).Data());
     auto row_repl = get_plane_replication_data(row_vol); 
     for (int i=0; i<row_repl.fNreplica; i++) {
       cell = G4GeometryCell(*row_vol, i); 
       if (istore->IsKnown(cell) == false) {
-        printf("SC ROW: Adding %s (rp nr %i) to istore with importance %g\n",
-            cell.GetPhysicalVolume().GetName().data(), cell.GetReplicaNumber(), imp);
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+            TString::Format("SC ROW: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), cell.GetReplicaNumber(), imp).Data());
         istore->AddImportanceGeometryCell(imp, cell); 
       }
 
       auto sc_vol = row_vol->GetLogicalVolume()->GetDaughter(0); 
-      printf("SC MODULE: %s - replicated: %i\n", 
-          sc_vol->GetName().data(), sc_vol->IsReplicated());
+      DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+          TString::Format("SC MODULE: %s - replicated: %i\n", 
+            sc_vol->GetName().data(), sc_vol->IsReplicated()).Data());
       const auto sc_repl = get_plane_replication_data((G4PVParameterised*)sc_vol); 
 
       for (int j=0; j<sc_repl.fNreplica; j++) {
         cell = G4GeometryCell(*sc_vol, j); 
         if (istore->IsKnown(cell) == false) {
-          printf("SC MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
-              cell.GetPhysicalVolume().GetName().data(), 
-              cell.GetReplicaNumber(), imp); 
+          DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+              TString::Format(
+                "SC MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
+                cell.GetPhysicalVolume().GetName().data(), 
+                cell.GetReplicaNumber(), imp).Data());
           istore->AddImportanceGeometryCell(imp, cell); 
         }
       }
@@ -1258,9 +1319,11 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       auto vol = fSuperCell->GetModLV()->GetDaughter(k); 
       cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
       if (istore->IsKnown(cell) == false) {
-        printf("SC OBJECT: Adding %s (rp nr %i) to istore with importance %g\n",
-            cell.GetPhysicalVolume().GetName().data(), 
-            cell.GetReplicaNumber(), imp); 
+        DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY,
+            TString::Format(
+              "SC OBJECT: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp).Data());
         istore->AddImportanceGeometryCell(imp, cell); 
       }
     }

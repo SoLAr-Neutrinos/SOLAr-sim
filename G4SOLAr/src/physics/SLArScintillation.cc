@@ -86,6 +86,7 @@
 #include "Randomize.hh"
 #include "G4PhysicsModelCatalog.hh"
 #include "G4RunManager.hh"
+#include "SLArDebugManager.hh"
 #include "SLArScintillation.hh"
 #include "detector/SLArDetectorConstruction.hh"
 #include "LiquidArgon/SLArLArProperties.hh"
@@ -437,7 +438,7 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
       SLArIonAndScintLArQL* ion_and_scint  = 
         (SLArIonAndScintLArQL*)IonAndScint[SLArIonAndScintModel::kLArQL]; 
 #ifdef SLAR_DEBUG
-      if (verboseLevel > 1) {
+      if (verboseLevel > 1 && SLArDebugManager::Instance().IsEnabled(SLArDebugManager::OPTICALPHYSICS)) {
         printf("SLArScintillation: %s - getting nr of photons from SLArIonAndScint\n", 
             aTrack.GetParticleDefinition()->GetParticleName().data());
         printf("dE/dx = %g MeV/cm\n", (TotalEnergyDeposit/CLHEP::MeV) / (StepWidth/CLHEP::cm) ); 
@@ -458,10 +459,10 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
     }
     else{
       // Use the normal Scintillation By Particle Type if the particle is not a MIP - currently not used
-#ifdef SLAR_DEBUG
-      printf("SLArScintillation: %s - getting nr of photons for particle type\n", 
-          aTrack.GetParticleDefinition()->GetParticleName().data());
-#endif
+
+      DEBUG_MSG_FUNC(OPTICALPHYSICS, TString::Format("SLArScintillation: %s - getting nr of photons for particle type\n", 
+          aTrack.GetParticleDefinition()->GetParticleName().data()));
+
       SLArIonAndScintSeparate* ion_and_scint = 
         (SLArIonAndScintSeparate*)IonAndScint[SLArIonAndScintModel::kSeparate]; 
       ion_and_scint->SetLightYield(
@@ -475,7 +476,10 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
       MeanNumberOfIonElectrons = IonAndScintYield.ion * (TotalEnergyDeposit/CLHEP::MeV); 
     }
 #ifdef SLAR_DEBUG
-    if (verboseLevel > 11) {
+    if (verboseLevel > 11 && (
+          SLArDebugManager::Instance().IsEnabled(SLArDebugManager::OPTICALPHYSICS) ||
+          SLArDebugManager::Instance().IsEnabled(SLArDebugManager::LARPHYSICS))) 
+    {
       G4double PartX= aStep.GetPreStepPoint()->GetPosition().x()/CLHEP::cm;
       G4double PartY= aStep.GetPreStepPoint()->GetPosition().y()/CLHEP::cm;
       G4double PartZ= aStep.GetPreStepPoint()->GetPosition().z()/CLHEP::cm;
@@ -648,11 +652,7 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
       G4double CIIvalue      = G4UniformRand() * CIImax;
       G4double sampledEnergy = scintIntegral->GetEnergy(CIIvalue);
 
-      if(verboseLevel > 1)
-      {
-        G4cout << "sampledEnergy = " << sampledEnergy << G4endl;
-        G4cout << "CIIvalue =        " << CIIvalue << G4endl;
-      }
+      DEBUG_MSG(OPTICALPHYSICS, TString::Format("sampledEnergy = %g\nCIIvalue = %g\n", sampledEnergy, CIIvalue).Data());
 
       // Generate random photon direction
       G4double cost = 1. - 2. * G4UniformRand();
@@ -714,11 +714,9 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
     }
   }
 
-  if(verboseLevel > 1)
-  {
-    G4cout << "\n Exiting from SLArScintillation::DoIt -- NumberOfSecondaries = "
-           << aParticleChange.GetNumberOfSecondaries() << G4endl;
-  }
+  DEBUG_MSG_FUNC(OPTICALPHYSICS, 
+      TString::Format("\nExiting from SLArScintillation::DoIt -- NumberOfSecondaries = %i", 
+        aParticleChange.GetNumberOfSecondaries()).Data());
 
   return G4VRestDiscreteProcess::PostStepDoIt(aTrack, aStep);
 }
@@ -928,7 +926,7 @@ G4double SLArScintillation::GetScintillationYieldByParticleType(
   ScintTrackYield += ScintillationYield;
   ScintTrackEDep += StepEnergyDeposit;
 
-  if (verboseLevel > 1) {
+  if (verboseLevel > 1 && SLArDebugManager::Instance().IsEnabled(SLArDebugManager::OPTICALPHYSICS)) {
   G4cout << "\n--- SLArScintillation::GetScintillationYieldByParticleType() ---\n"
          << "--\n"
          << "--  Name         =  "

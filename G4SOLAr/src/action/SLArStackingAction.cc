@@ -31,6 +31,7 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #include "SLArStackingAction.hh"
+#include "SLArDebugManager.hh"
 #include "SLArEventAction.hh"
 #include "SLArAnalysisManager.hh"
 #include "physics/SLArPhysicsList.hh"
@@ -138,9 +139,6 @@ SLArStackingAction::ClassifyNewTrack(const G4Track * aTrack)
         }
       }
       if (!ancestor) printf("Unable to find corresponding primary particle\n");
-#ifdef SLAR_DEBUG
-      if (!ancestor) printf("Unable to find corresponding primary particle\n");
-#endif
 
       ancestor->RegisterTrajectory( std::move(trajectory) ); 
 
@@ -195,9 +193,11 @@ SLArStackingAction::ClassifyNewTrack(const G4Track * aTrack)
         fEventAction->IncPhotonCount_WLS();
       }
 #ifdef SLAR_DEBUG
+#ifdef DEBUG_TRACKING_AVAILABLE
       else 
         printf("SLArStackingAction::ClassifyNewTrack unknown photon creation process %s\n", 
             aTrack->GetCreatorProcess()->GetProcessName().c_str());
+#endif
 #endif
 
 
@@ -236,14 +236,21 @@ bool SLArStackingAction::PositivePrimaryIdentification(const G4Track* aTrack, SL
     const G4ThreeVector diffMom = track_mom - pMomentum;
 
 #ifdef SLAR_DEBUG
-    printf("Comparing primary candidate track ID %i and PDG ID %i with primary info\n",
+#ifdef DEBUG_PRIMARY_EVENT_AVAILABLE
+    TString msg = TString::Format(
+        "Comparing primary candidate track ID %i and PDG ID %i with primary info\n",
         aTrack->GetTrackID(), aPrimary.GetCode());
-    printf("  Track momentum: [%g, %g, %g]\n",
-        track_mom.x(), track_mom.y(), track_mom.z());
-    printf("  Position diff: [%g, %g, %g] - mag %g\n",
+    msg += TString::Format("  Primary vertex: [%g, %g, %g]\n",
+        pVertex.x(), pVertex.y(), pVertex.z());
+    msg += TString::Format("  Primary momentum: [%g, %g, %g]\n",
+        pMomentum.x(), pMomentum.y(), pMomentum.z());
+    msg += TString::Format("  delta position: [%g, %g, %g] - mag %g\n",
         diffPos.x(), diffPos.y(), diffPos.z(), diffPos.mag());
-    printf("  Momentum diff: [%g, %g, %g] - mag %g\n",
+    msg += TString::Format("  delta momentum: [%g, %g, %g] - mag %g\n",
         diffMom.x(), diffMom.y(), diffMom.z(), diffMom.mag());
+
+    DEBUG_MSG_FUNC(SLArDebugManager::PRIMARY_EVENT, msg.Data());
+#endif
 #endif
 
     G4double tolerance = 1e-3;

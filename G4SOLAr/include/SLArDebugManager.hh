@@ -13,10 +13,12 @@
 class SLArDebugManager {
   public:
     enum Category {
+      ANALYSIS,
+      LARPHYSICS,
       PRIMARY_EVENT,
       TRACKING,
       OPTICALPHYSICS,
-      DETECTOR,
+      GEOMETRY,
       MATERIALS,
       NUM_CATEGORIES
     };

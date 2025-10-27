@@ -5,8 +5,10 @@
  */
 
 #include "SLArUserPath.hh"
+#include "SLArDebugManager.hh"
 #include "SLArUnit.hpp"
 #include "material/SLArMaterial.hh"
+#include "TString.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/encodings.h"
@@ -61,8 +63,10 @@ G4Material* SLArMaterial::FindInMaterialTable(const char* mname) {
   
   for (const auto &m : *mtable) {
     if (std::strcmp(mname, m->GetName()) == 0) {
-      printf("SLArMaterial::BuildMaterialFromDB(%s) Material already defined. Using stored object.\n", 
-          mname); 
+      DEBUG_MSG_FUNC(SLArDebugManager::MATERIALS,
+          TString::Format(
+            "SLArMaterial::BuildMaterialFromDB(%s) Material already defined. Using stored object.\n", 
+          mname).Data()); 
       mm = m; 
       return mm; 
     }
@@ -213,13 +217,19 @@ G4Material* SLArMaterial::BuildFromMixture(const rapidjson::Value& jmaterial) {
     material->AddMaterial(mat, mass_fraction); 
   }
 
-  printf("SLArMaterial::BuildFromMixture(%s)\n", jmaterial["name"].GetString());
-  printf("Material elements mass fraction breakdown\n");
+  DEBUG_MSG_FUNC(SLArDebugManager::MATERIALS,
+      TString::Format(
+        "SLArMaterial::BuildFromMixture(%s)\nMaterial elements mass fraction breakdown\n", 
+        jmaterial["name"].GetString()));
+#ifdef SLAR_DEBUG
+#ifdef DEBUG_MATERIALS_AVAILABLE
   for (size_t i = 0; i < material->GetNumberOfElements(); i++) {
     auto elm = material->GetElement(i); 
     double frac = material->GetFractionVector()[i]; 
     printf("[%lu]: %s : %.2f%%\n", i, elm->GetSymbol().c_str(), frac*100);
   }
+#endif
+#endif
 
   return material; 
 }
@@ -267,7 +277,8 @@ void SLArMaterial::ParseMPT(const rapidjson::Value& jptable, G4MaterialPropertie
     assert(p.HasMember("value")); 
 
     G4String pname = p["property"].GetString(); 
-    printf("Parsing %s\n", pname.c_str());
+    DEBUG_MSG_FUNC(SLArDebugManager::MATERIALS, 
+        TString::Format("Parsing %s\n", pname.c_str()).Data());
 
     if (p["value"].IsArray()) {
       assert(p["value"].GetArray().Size() == 2); 

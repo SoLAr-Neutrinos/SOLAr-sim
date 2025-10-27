@@ -1,10 +1,12 @@
 /**
  * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        SLArIonAndScintSeparate
+ * @file        SLArIonAndScintSeparate.cc
  * @created     mercoledì mar 01, 2023 10:55:35 CET
  */
 
 #include <math.h>
+#include "TString.h"
+#include "SLArDebugManager.hh"
 #include "G4MaterialPropertiesTable.hh"
 
 #include "LiquidArgon/SLArIonAndScintSeparate.h"
@@ -40,9 +42,11 @@ Ion_and_Scint_t SLArIonAndScintSeparate::ComputeIonAndScintYield(double& dEdx, c
   // 1.e-3 converts fEnergyDeposit to GeV
   auto const numIonElectrons =  recomb / fWion;
 
-#ifdef SLAR_DEBUG
-  printf("SLArIonAndScintSeparate: Electrons produced for %g MeV/mm deposited with %g recombination: %g\n", dEdx, recomb, numIonElectrons); 
-#endif
+  DEBUG_MSG_FUNC(SLArDebugManager::LARPHYSICS, 
+      TString::Format(
+        "SLArIonAndScintSeparate: Electrons produced for %g MeV/mm deposited with %g recombination: %g\n",
+        dEdx, recomb, numIonElectrons));
+
   return Ion_and_Scint_t(numIonElectrons, fLightYield);
 }
 
@@ -73,9 +77,11 @@ Ion_and_Scint_t SLArIonAndScintSeparate::ComputeIonAndScintYield(const double& e
   // 1.e-3 converts fEnergyDeposit to GeV
   auto const numIonElectrons =  recomb / fWion;
 
-#ifdef SLAR_DEBUG
-  printf("SLArIonAndScintSeparate: Electrons produced for %g MeV deposited with %g recombination: %g\n", energy_deposit, recomb, numIonElectrons); 
-#endif
+  DEBUG_MSG_FUNC(SLArDebugManager::LARPHYSICS, 
+      TString::Format(
+        "SLArIonAndScintSeparate: Electrons produced for %g MeV deposited with %g recombination: %g\n",
+        energy_deposit, recomb, numIonElectrons)); 
+
   return Ion_and_Scint_t(numIonElectrons, fLightYield);
 }
 

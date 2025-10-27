@@ -53,13 +53,23 @@ void SLArElectronDrift::Drift(const int& n,
   G4double f_surv      = exp (-driftTime/fLArProperties.fElectronLifetime); 
 
 #ifdef SLAR_DEBUG
-  printf("%i electrons at [%.0f, %0.f, %0.f] mm, t = %g ns\n", 
-      n, pos.x(), pos.y(), pos.z(), time);
-  printf("local_coordinates: [%.0f, %.0f, %.0f] mm\n", pos_local.x(), pos_local.y(), pos_local.z());
-  printf("axis projection: [%.0f, %.0f]\n", pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
-  printf("Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
-  driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
+#ifdef DEBUG_LARPHYSICS_AVAILABLE
+  TString msg = TString::Format(
+      "SLArElectronDrift::Drift() n_elec: %i, trkId: %i, ancestorId: %i\n",
+      n, trkId, ancestorId);
+  msg += TString::Format(
+      "  pos: [%.0f, %.0f, %.0f] mm, time: %g ns\n",
+      pos.x(), pos.y(), pos.z(), time);
+  msg += TString::Format("local_coordinates: [%.0f, %.0f, %.0f] mm\n", 
+      pos_local.x(), pos_local.y(), pos_local.z());
+  msg += TString::Format("axis projection: [%.0f, %.0f]\n", 
+      pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
+  msg += TString::Format(
+      "Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
+      driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
+  DEBUG_MSG_FUNC(SLArDebugManager::LARPHYSICS, msg.Data());
   getchar(); 
+#endif
 #endif
 
   G4int n_elec_anode = G4Poisson(n*f_surv); 

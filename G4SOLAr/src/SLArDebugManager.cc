@@ -54,6 +54,13 @@ bool SLArDebugManager::IsEnabled(Category cat) const {
 
   // Check both compile-time availability and runtime flag
   switch(cat) {
+    case ANALYSIS:
+#ifdef DEBUG_ANALYSIS_AVAILABLE
+      return runtime_enabled_[cat];
+#else
+      return false;
+#endif
+
     case PRIMARY_EVENT:
 #ifdef DEBUG_PRIMARY_EVENT_AVAILABLE
       return runtime_enabled_[cat];
@@ -67,6 +74,14 @@ bool SLArDebugManager::IsEnabled(Category cat) const {
 #else
       return false;
 #endif
+      
+
+    case LARPHYSICS:
+#ifdef DEBUG_LARPHYSICS_AVAILABLE
+      return runtime_enabled_[cat];
+#else
+      return false;
+#endif
 
     case OPTICALPHYSICS:
 #ifdef DEBUG_OPTICALPHYSICS_AVAILABLE
@@ -75,7 +90,7 @@ bool SLArDebugManager::IsEnabled(Category cat) const {
       return false;
 #endif
 
-    case DETECTOR:
+    case GEOMETRY:
 #ifdef DEBUG_DETECTOR_AVAILABLE
       return runtime_enabled_[cat];
 #else
@@ -92,10 +107,12 @@ bool SLArDebugManager::IsEnabled(Category cat) const {
 
 const char* SLArDebugManager::GetCategoryName(Category cat) {
   switch(cat) {
+    case ANALYSIS:        return "ANALYSIS";
     case PRIMARY_EVENT:   return "PRIMARY_EVENT";
     case TRACKING:        return "TRACKING";
+    case LARPHYSICS:      return "LARPHYSICS";
     case OPTICALPHYSICS:  return "OPTICALPHYSICS";
-    case DETECTOR:        return "DETECTOR";
+    case GEOMETRY:        return "DETECTOR";
     default:              return "UNKNOWN";
   }
 }
@@ -120,14 +137,18 @@ void SLArDebugManager::LoadFromEnvironment() {
 
     if(token == "ALL") {
       EnableAll();
+    } else if(token == "ANALYSIS") {
+      Enable(ANALYSIS);
     } else if(token == "PRIMARY_EVENT") {
       Enable(PRIMARY_EVENT);
     } else if(token == "TRACKING") {
       Enable(TRACKING);
+    } else if(token == "LARPHYSICS") {
+      Enable(LARPHYSICS);
     } else if(token == "OPTICALPHYSICS") {
       Enable(OPTICALPHYSICS);
     } else if(token == "DETECTOR") {
-      Enable(DETECTOR);
+      Enable(GEOMETRY);
     }
   }
 #endif
@@ -151,14 +172,18 @@ void SLArDebugManager::LoadFromString(const std::string& config_str) {
 
     if(token == "ALL") {
       EnableAll();
+    } else if(token == "ANALYSIS") {
+      Enable(ANALYSIS);
     } else if(token == "PRIMARY_EVENT") {
       Enable(PRIMARY_EVENT);
     } else if(token == "TRACKING") {
       Enable(TRACKING);
+    } else if(token == "LARPHYSICS") {
+      Enable(LARPHYSICS);
     } else if(token == "OPTICALPHYSICS") {
       Enable(OPTICALPHYSICS);
     } else if(token == "DETECTOR") {
-      Enable(DETECTOR);
+      Enable(GEOMETRY);
     }
   }
 #endif
@@ -186,14 +211,18 @@ void SLArDebugManager::LoadFromFile(const std::string& filename) {
 
     bool enable = (state == "on" || state == "1" || state == "true");
 
-    if(cat_name == "PRIMARY_EVENT") {
+    if(cat_name == "ANALYSIS") {
+      (enable) ? Enable(ANALYSIS) : Disable(ANALYSIS);
+    } else if(cat_name == "PRIMARY_EVENT") {
       (enable) ? Enable(PRIMARY_EVENT) : Disable(PRIMARY_EVENT);
     } else if(cat_name == "TRACKING") {
       (enable) ? Enable(TRACKING) : Disable(TRACKING);
+    } else if(cat_name == "LARPHYSICS") {
+      (enable) ? Enable(LARPHYSICS) : Disable(LARPHYSICS);
     } else if(cat_name == "OPTICALPHYSICS") {
       (enable) ? Enable(OPTICALPHYSICS) : Disable(OPTICALPHYSICS);
     } else if(cat_name == "DETECTOR") {
-      (enable) ? Enable(DETECTOR) : Disable(DETECTOR);
+      (enable) ? Enable(GEOMETRY) : Disable(GEOMETRY);
     }
   }
 #endif

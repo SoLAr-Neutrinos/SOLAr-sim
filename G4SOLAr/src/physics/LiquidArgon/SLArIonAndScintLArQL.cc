@@ -1,3 +1,14 @@
+/**
+ * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @file        : SLArIonAndScintLArQL.cc
+ * @created     : Monday Oct 27, 2025 15:51:34 CET
+ */
+
+#ifndef SLARIONANDSCINTLARQL_CC
+
+#define SLARIONANDSCINTLARQL_CC
+
+
 #include "LiquidArgon/SLArIonAndScintLArQL.h"
 #include "G4MaterialPropertiesTable.hh"
 #include <iostream>
@@ -93,3 +104,5 @@ double SLArIonAndScintLArQL::ComputeIonYield(double& dEdx, const double& electri
 double SLArIonAndScintLArQL::Flat() const {
     return FlatLightYieldPerMeV;
 }
+
+#endif /* end of include guard SLARIONANDSCINTLARQL_CC */

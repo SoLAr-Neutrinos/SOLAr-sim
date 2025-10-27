@@ -5,6 +5,7 @@
  */
 
 #include "SLArAnalysisManager.hh"
+#include "SLArDebugManager.hh"
 #include "SLArBacktrackerManager.hh"
 #include "SLArEventAction.hh"
 #include "SLArRunAction.hh"
@@ -61,9 +62,7 @@ SLArEventAction::~SLArEventAction()
 void SLArEventAction::BeginOfEventAction(const G4Event*)
 {
 
-#ifdef SLAR_DEBUG
-  printf("SLArEventAction::BeginOfEventAction()\n");
-#endif
+  DEBUG_MSG_FUNC(SLArDebugManager::TRACKING, "SLArEventAction::BeginOfEventAction()\n");
 
   G4SDManager* sdManager = G4SDManager::GetSDMpointer();
   auto detConstruction = (SLArDetectorConstruction*)
@@ -98,6 +97,7 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
   #endif // DEBUG
 
 #ifdef SLAR_DEBUG
+  if (SLArDebugManager::Instance().IsEnabled(SLArDebugManager::ANALYSIS)) {
     G4cout << "SLArEventAction::BeginOfEventAction():" << G4endl;
     G4cout << "ReadoutTile ID = " << fTileHCollID   << G4endl;
     G4cout << "SuperCell ID   = " << fSuperCellHCollID << G4endl;
@@ -107,6 +107,7 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
     G4cout << "Ext background scorer volume ID  = "; 
     for (const auto &id : fExtScorerHCollID) G4cout << id << " ";
     G4cout << G4endl;
+  }
 #endif
 
     // reset counters
@@ -128,9 +129,9 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
 void SLArEventAction::EndOfEventAction(const G4Event* event)
 {
   G4int verbose = G4EventManager::GetEventManager()->GetVerboseLevel(); 
-#ifdef SLAR_DEBUG
-  printf("SLArEventAction::EndOfEventAction()\n"); 
-#endif
+
+  DEBUG_MSG_FUNC(SLArDebugManager::ANALYSIS, "SLArEventAction::EndOfEventAction()\n"); 
+
 
     G4HCofThisEvent* hce = event->GetHCofThisEvent();
     if (!hce) 
