@@ -153,8 +153,8 @@ add_definitions(${ROOT_CXX_FLAGS})
 
 #----------------------------------------------------------------------------
 # Configure version and local paths
-configure_file(SLArVersion.hh.in ${SOLARSIM_INCLUDE_DIR}/SLArVersion.hh @ONLY)
-configure_file(SLArUserPath.hh.in ${SOLARSIM_INCLUDE_DIR}/SLArUserPath.hh @ONLY)
+configure_file(SLArVersion.hh.in ${CMAKE_BINARY_DIR}/include/SLArVersion.hh @ONLY)
+configure_file(SLArUserPath.hh.in ${CMAKE_BINARY_DIR}/include/SLArUserPath.hh @ONLY)
 
 #----------------------------------------------------------------------------
 # Configure rootlogon
@@ -281,8 +281,21 @@ install(TARGETS solar_sim
   )
 
 #----------------------------------------------------------------------------
-# Install the headers
-install(DIRECTORY ${SOLARSIM_INCLUDE_DIR} DESTINATION ${CMAKE_INSTALL_PREFIX})
+# Install the headers excluding the .in files
+install(
+  DIRECTORY ${SOLARSIM_INCLUDE_DIR} 
+  DESTINATION ${CMAKE_INSTALL_PREFIX}
+  PATTERN "*.in" EXCLUDE)
+message(STATUS "Installing headers from ${CMAKE_BINARY_DIR} to ${CMAKE_INSTALL_PREFIX}/include")
+
+# install configured headers
+install(
+  FILES 
+    ${CMAKE_BINARY_DIR}/include/SLArDebugConfig.hh
+    ${CMAKE_BINARY_DIR}/include/SLArVersion.hh
+    ${CMAKE_BINARY_DIR}/include/SLArUserPath.hh
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+)
 
 #----------------------------------------------------------------------------
 # Copy all assets (geometry, materials, cfg) to the install directory.
