@@ -7,15 +7,15 @@
 
 
 # Define available debug modules with descriptions
-function(define_debug_modules)
+macro(define_debug_modules)
   set(DEBUG_MODULES
     "PRIMARY_EVENT:Debug primary event generation"
     "TRACKING:Debug stepping action"
-    "OPTICAL:Debug optical physics"
+    "OPTICALPHYSICS:Debug optical physics"
     "DETECTOR:Debug detector construction"
-    PARENT_SCOPE
+    "MATERIALS:Debug material properties"
   )
-endfunction()
+endmacro()
 
 macro(configure_debug_system)
   define_debug_modules()
@@ -35,11 +35,12 @@ macro(configure_debug_system)
     return()
   endif()
 
+  set(SLAR_DEBUG ${ENABLE_DEBUG})
   message(STATUS "Debug infrastructure enabled - Available modules:")
-  set(SLAR_DEBUG ON)
 
   # Parse and create options for each module
   foreach(module_desc ${DEBUG_MODULES})
+    message(STATUS "Processing module: ${module_desc}")
     string(REPLACE ":" ";" module_parts ${module_desc})
     list(GET module_parts 0 module_name)
     list(GET module_parts 1 module_help)
@@ -48,7 +49,7 @@ macro(configure_debug_system)
 
     if(DEBUG_${module_name})
       set(DEBUG_${module_name}_AVAILABLE ON)
-      add_compile_definitions(DEBUG_${module_name}_AVAILABLE)
+      #add_compile_definitions(DEBUG_${module_name}_AVAILABLE)
       message(STATUS "  ✓ ${module_name}: ${module_help}")
     else()
       unset(DEBUG_${module_name}_AVAILABLE)
@@ -56,14 +57,12 @@ macro(configure_debug_system)
     endif()
   endforeach()
 
-  # Configure header
   configure_file(
-    ${PROJECT_SOURCE_DIR}/include/SLArDebugConfig.hh.in
-    ${PROJECT_SOURCE_DIR}/include/SLArDebugConfig.hh
+    ${SOLARSIM_INCLUDE_DIR}/SLArDebugConfig.hh.in
+    ${CMAKE_BINARY_DIR}/include/SLArDebugConfig.hh
     @ONLY
   )
 
-  add_compile_definitions(SLAR_DEBUG)
 endmacro()
 
 # Convenience function to print debug configuration
