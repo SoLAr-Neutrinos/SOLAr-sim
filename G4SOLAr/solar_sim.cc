@@ -37,17 +37,21 @@
 namespace {
   void PrintUsage() {
     G4cerr << " Usage: " << G4endl;
-    fprintf(stderr, " solar_sim\t[-m/--macro macro_file]]\n");
-    fprintf(stderr, " \t\t[-x/--generator generator configuration file]\n");
-    fprintf(stderr, " \t\t[-l/--physics_list set basic physics list (default is FTFP_BERT_HP)]\n");
-    fprintf(stderr, " \t\t[-o/--output output_file_name]\n");
-    fprintf(stderr, " \t\t[-d/--output_dir output_dir]\n");
-    fprintf(stderr, " \t\t[-u/--session session]\n");
-    fprintf(stderr, " \t\t[-r/--seed user_seed]\n");
-    fprintf(stderr, " \t\t[-g/--geometry geometry_cfg_file]\n");
-    fprintf(stderr, " \t\t[-p/--materials material_db_file]\n");
-    fprintf(stderr, " \t\t[-b/--bias particle <process_list> bias_factor]\n");
-    fprintf(stderr, " \t\t[-h/--help print usage]\n");
+    fprintf(stdout, " solar_sim\t[-m/--macro macro_file]]\n");
+    fprintf(stdout, " \t\t[-x/--generator generator configuration file]\n");
+    fprintf(stdout, " \t\t[-l/--physics_list set basic physics list (default is FTFP_BERT_HP)]\n");
+    fprintf(stdout, " \t\t[-o/--output output_file_name]\n");
+    fprintf(stdout, " \t\t[-d/--output_dir output_dir]\n");
+    fprintf(stdout, " \t\t[-u/--session session]\n");
+    fprintf(stdout, " \t\t[-r/--seed user_seed]\n");
+    fprintf(stdout, " \t\t[-g/--geometry geometry_cfg_file]\n");
+    fprintf(stdout, " \t\t[-p/--materials material_db_file]\n");
+    fprintf(stdout, " \t\t[-b/--bias particle <process_list> bias_factor]\n");
+    fprintf(stdout, " \t\t[-c/--cerenkov 0/1 enable/disable Cerenkov process]\n");
+    fprintf(stdout, " \t\t[-D/--debug comma separated list of debug modules\n");
+    fprintf(stdout, " \t\t            available modules: PRIMARY_EVENT, TRACKING,\n");
+    fprintf(stdout, " \t\t            OPTICALPHYSICS, DETECTOR, MATERIALS, ALL]\n");
+    fprintf(stdout, " \t\t[-h/--help print usage]\n");
     exit(0);
   }
   //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -89,6 +93,7 @@ int main(int argc,char** argv)
   G4String generator_file = ""; 
   G4String geometry_file = G4String(SLAR_ASSETS_DIR) + "/geometry/geometry.json"; 
   G4String material_file = G4String(SLAR_ASSETS_DIR) + "/materials/materials_db.json"; 
+  G4String debug_modules = "";
   G4bool   do_cerenkov = false; 
   G4bool   do_bias = false; 
   G4String bias_particle = ""; 
@@ -102,8 +107,8 @@ int main(int argc,char** argv)
   G4int nThreads = 0;
 #endif
 
-  const char* short_opts = "m:o:d:l:x:u:t:r:g:p:b:c:h";
-  static struct option long_opts[14] = 
+  const char* short_opts = "m:o:d:l:x:u:t:r:g:p:b:c:D:h";
+  static struct option long_opts[15] = 
   {
     {"macro", required_argument, 0, 'm'}, 
     {"output", required_argument, 0, 'o'}, 
@@ -118,6 +123,7 @@ int main(int argc,char** argv)
     {"bias", required_argument, 0, 'b'},
     {"cerenkov", required_argument, 0, 'c'},
     {"help", no_argument, 0, 'h'}, 
+    {"debug", required_argument, 0, 'D'},
     {nullptr, no_argument, nullptr, 0}
   };
 
@@ -198,8 +204,12 @@ int main(int argc,char** argv)
       {
         do_cerenkov = std::atoi( optarg ); 
         break;
-      }
-
+      };
+      case 'D' : 
+      {
+        debug_modules = optarg; 
+        break;
+      };
       case 'h' : 
       {
         PrintUsage(); 
@@ -225,6 +235,7 @@ int main(int argc,char** argv)
   }
 
   SLArDebugManager::Instance().LoadFromEnvironment();
+  SLArDebugManager::Instance().LoadFromString( debug_modules );
   SLArDebugManager::Instance().PrintStatus();
 
   // Instantiate G4UIExecutive if interactive mode
