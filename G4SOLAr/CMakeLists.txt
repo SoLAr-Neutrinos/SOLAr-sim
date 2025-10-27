@@ -24,6 +24,20 @@ option(SLAR_CRY_INTERFACE "Build interface to CRY cosmic shower generator" OFF)
 option(SLAR_RADSRC_INTERFACE "Build interface to RadSrc composite gamma spectrum generator" OFF)
 option(SLAR_USE_G4CASCADE "Use G4CASCADE for hadronic interactions" ON)
 
+#----------------------------------------------------------------------------
+# Setup Projects PATHS
+set(SOLARSIM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
+set(SOLARSIM_SRC_DIR     "${PROJECT_SOURCE_DIR}/src"    )
+if (NOT SOLARSIM_EXT_DIR)
+  set(SOLARSIM_EXT_DIR   "${PROJECT_SOURCE_DIR}/extern/install" )
+endif()
+set(SOLARSIM_LIB_DIR     "${CMAKE_INSTALL_PREFIX}/lib")
+set(SOLARSIM_BIN_DIR     "${CMAKE_INSTALL_PREFIX}/bin")
+set(SOLARSIM_INC_DEST    "${CMAKE_INSTALL_PREFIX}/include")
+set(SOLARSIM_ASSETS_DIR "${CMAKE_INSTALL_PREFIX}/assets")
+set(SOLARSIM_ANALSYS_DIR "${PROJECT_SOURCE_DIR}/../SOLArAnalysis")
+set(SOLARSIM_INSTALL_CMAKE_DIR "${SOLARSIM_LIB_DIR}/cmake/${PROJECT_NAME}")
+
 # Debugging module setup
 include( ${PROJECT_SOURCE_DIR}/cmake/SOLArDebugConfig.cmake )
 configure_debug_system()
@@ -69,20 +83,6 @@ include(${Geant4_USE_FILE})
 include(${ROOT_USE_FILE})
 
 message(STATUS "Geant4 GDML SUPPORT: ${Geant4_gdml_FOUND}")
-
-#----------------------------------------------------------------------------
-# Setup Projects PATHS
-set(SOLARSIM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
-set(SOLARSIM_SRC_DIR     "${PROJECT_SOURCE_DIR}/src"    )
-if (NOT SOLARSIM_EXT_DIR)
-  set(SOLARSIM_EXT_DIR   "${PROJECT_SOURCE_DIR}/extern/install" )
-endif()
-set(SOLARSIM_LIB_DIR     "${CMAKE_INSTALL_PREFIX}/lib")
-set(SOLARSIM_BIN_DIR     "${CMAKE_INSTALL_PREFIX}/bin")
-set(SOLARSIM_INC_DEST    "${CMAKE_INSTALL_PREFIX}/include")
-set(SOLARSIM_ASSETS_DIR "${CMAKE_INSTALL_PREFIX}/assets")
-set(SOLARSIM_ANALSYS_DIR "${PROJECT_SOURCE_DIR}/../SOLArAnalysis")
-set(SOLARSIM_INSTALL_CMAKE_DIR "${SOLARSIM_LIB_DIR}/cmake/${PROJECT_NAME}")
 
 #----------------------------------------------------------------------------
 # Find external dependencies of G4SOLAr.
