@@ -113,8 +113,11 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
         neutron_brick_tk += tk;
       }
       fGeoInfo->RegisterGeoPar("brick_thickness", neutron_brick_tk);
-      fMatBrick = new SLArMaterial(); 
-      fMatBrick->SetMaterialID(jbrick["material"].GetString()); 
+      for (const auto& bl : fBrickLayers) {
+        SLArMaterial* mat = new SLArMaterial(); 
+        mat->SetMaterialID(bl.first);
+        fBrickMaterials.push_back(mat);
+      } 
       fAddNeutronBricks = true; 
     }
   }
