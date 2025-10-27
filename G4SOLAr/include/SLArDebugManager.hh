@@ -15,8 +15,9 @@ class SLArDebugManager {
     enum Category {
       PRIMARY_EVENT,
       TRACKING,
-      OPTICAL,
+      OPTICALPHYSICS,
       DETECTOR,
+      MATERIALS,
       NUM_CATEGORIES
     };
 
@@ -36,6 +37,7 @@ class SLArDebugManager {
     static const char* GetCategoryName(Category cat);
 
     // Load settings from environment variable or file
+    void LoadFromString(const std::string& config_str);
     void LoadFromEnvironment();
     void LoadFromFile(const std::string& filename);
 

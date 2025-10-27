@@ -10,9 +10,10 @@
 
 // CMake will substitute these values
 #cmakedefine SLAR_DEBUG
+#cmakedefine DEBUG_MATERIALS_AVAILABLE
 #cmakedefine DEBUG_PRIMARY_EVENT_AVAILABLE
 #cmakedefine DEBUG_TRACKING_AVAILABLE
-#cmakedefine DEBUG_OPTICAL_AVAILABLE
+#cmakedefine DEBUG_OPTICALPHYSICS_AVAILABLE
 #cmakedefine DEBUG_DETECTOR_AVAILABLE
 
 #endif /* end of include guard SLARDEBUGCONFIG_HH */

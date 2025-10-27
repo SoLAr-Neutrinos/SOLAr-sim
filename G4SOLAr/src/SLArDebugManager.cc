@@ -5,6 +5,7 @@
  */
 
 #include "SLArDebugManager.hh"
+#include "SLArDebugConfig.hh"
 #include "G4ios.hh"
 #include <cstdlib>
 #include <fstream>
@@ -67,8 +68,8 @@ bool SLArDebugManager::IsEnabled(Category cat) const {
       return false;
 #endif
 
-    case OPTICAL:
-#ifdef DEBUG_OPTICAL_AVAILABLE
+    case OPTICALPHYSICS:
+#ifdef DEBUG_OPTICALPHYSICS_AVAILABLE
       return runtime_enabled_[cat];
 #else
       return false;
@@ -93,7 +94,7 @@ const char* SLArDebugManager::GetCategoryName(Category cat) {
   switch(cat) {
     case PRIMARY_EVENT:   return "PRIMARY_EVENT";
     case TRACKING:        return "TRACKING";
-    case OPTICAL:         return "OPTICAL";
+    case OPTICALPHYSICS:  return "OPTICALPHYSICS";
     case DETECTOR:        return "DETECTOR";
     default:              return "UNKNOWN";
   }
@@ -101,14 +102,14 @@ const char* SLArDebugManager::GetCategoryName(Category cat) {
 
 void SLArDebugManager::LoadFromEnvironment() {
 #ifdef SLAR_DEBUG
-  const char* env = std::getenv("SLAR_DEBUG_CATEGORIES");
+  const char* env = std::getenv("SLAR_DEBUG_MODULES");
   if(!env) return;
 
   std::string str(env);
   std::istringstream iss(str);
   std::string token;
 
-  // Parse comma-separated list: "SCINTILLATION,OPTICAL"
+  // Parse comma-separated list: "SCINTILLATION,OPTICALPHYSICS"
   while(std::getline(iss, token, ',')) {
     // Trim whitespace
     size_t start = token.find_first_not_of(" \t");
@@ -123,14 +124,47 @@ void SLArDebugManager::LoadFromEnvironment() {
       Enable(PRIMARY_EVENT);
     } else if(token == "TRACKING") {
       Enable(TRACKING);
-    } else if(token == "OPTICAL") {
-      Enable(OPTICAL);
+    } else if(token == "OPTICALPHYSICS") {
+      Enable(OPTICALPHYSICS);
     } else if(token == "DETECTOR") {
       Enable(DETECTOR);
     }
   }
 #endif
 }
+
+void SLArDebugManager::LoadFromString(const std::string& config_str) {
+#ifdef SLAR_DEBUG
+  if (config_str.empty()) return;
+
+  std::istringstream iss(config_str);
+  std::string token;
+
+  // Parse comma-separated list: "SCINTILLATION,OPTICALPHYSICS,.." or "ALL"
+  while(std::getline(iss, token, ',')) {
+    // Trim whitespace
+    size_t start = token.find_first_not_of(" \t");
+    size_t end = token.find_last_not_of(" \t");
+    if(start != std::string::npos) {
+      token = token.substr(start, end - start + 1);
+    }
+
+    if(token == "ALL") {
+      EnableAll();
+    } else if(token == "PRIMARY_EVENT") {
+      Enable(PRIMARY_EVENT);
+    } else if(token == "TRACKING") {
+      Enable(TRACKING);
+    } else if(token == "OPTICALPHYSICS") {
+      Enable(OPTICALPHYSICS);
+    } else if(token == "DETECTOR") {
+      Enable(DETECTOR);
+    }
+  }
+#endif
+}
+
+
 
 void SLArDebugManager::LoadFromFile(const std::string& filename) {
 #ifdef SLAR_DEBUG
@@ -156,8 +190,8 @@ void SLArDebugManager::LoadFromFile(const std::string& filename) {
       (enable) ? Enable(PRIMARY_EVENT) : Disable(PRIMARY_EVENT);
     } else if(cat_name == "TRACKING") {
       (enable) ? Enable(TRACKING) : Disable(TRACKING);
-    } else if(cat_name == "OPTICAL") {
-      (enable) ? Enable(OPTICAL) : Disable(OPTICAL);
+    } else if(cat_name == "OPTICALPHYSICS") {
+      (enable) ? Enable(OPTICALPHYSICS) : Disable(OPTICALPHYSICS);
     } else if(cat_name == "DETECTOR") {
       (enable) ? Enable(DETECTOR) : Disable(DETECTOR);
     }
