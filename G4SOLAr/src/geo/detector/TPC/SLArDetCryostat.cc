@@ -267,28 +267,57 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
 
   // FIXME: modify shielding layer here
   if (fAddNeutronBricks) {
-    G4VSolid* brick_sv = nullptr; 
-    G4double yshift = 0.; 
-    if (n_brick_tk <= major_width - minor_width) {
-      brick_sv = new G4Box("brick_sv", 
-          0.5*(spacing-2*majorT_width-tk), 0.5*n_brick_tk, 0.5*(spacing-2*majorT_width-tk)); 
-      //yshift = 0.5*(unit_thickness - n_brick_tk);
-      yshift = -0.5*(unit_thickness - 2*minor_width - n_brick_tk);
-    } else {
-      G4double main_tk = n_brick_tk - (major_width - minor_width); 
-      G4double fit_tk = major_width-minor_width;
-      G4Box* brick_main = new G4Box("brick_main_sv", 
-          0.5*spacing, 0.5*main_tk, 0.5*spacing); 
-      G4Box* brick_fit  = new G4Box("brick_fit_sv", 
-          0.5*(spacing-2*majorT_width-tk), 0.5*fit_tk, 0.5*(spacing-2*majorT_width-tk)); 
-      brick_sv = new G4UnionSolid("brick_sv", brick_fit, brick_main, 
-          G4TranslateY3D(0.5*(fit_tk + main_tk)) ); 
-      yshift = -0.5*(unit_thickness - 2*minor_width - fit_tk);
+    const G4double half_x = 0.5 * (spacing - tk); //Non sono sicuro di questa dimensione
+    const G4double half_z = 0.5 * (spacing - tk);
+    const G4double total_tk = n_brick_tk;
+    G4double yshift = 0;
+
+    G4Box* brick_sv = new G4Box("neutron_brick_sv", half_x, 0.5 * total_tk, half_z); //Costruisco il solid volume che replico
+
+    if (fBrickLayers.size() ==1) {
+      // single layer brick
+      G4Material* mat =  nullptr;
+      if (!fBrickMaterials.empty() && fBrickMaterials.front() && fBrickMaterials.front()->GetMaterial()) {
+        mat = fBrickMaterials.front()->GetMaterial();
+      } 
+      else if (!mat) mat = fMatWorld->GetMaterial();
+
+      auto brick_lv = new G4LogicalVolume(brick_sv, mat, "neutron_brick_lv");
+      brick_lv->SetVisAttributes(new G4VisAttributes(G4Colour(0, 1, 0))); 
+      new G4PVPlacement(G4Translate3D(0, yshift, 0), brick_lv, "neutron_brick_pv", fWaffleUnit->GetModLV(), 0, 1);
     }
-    auto brick_lv = new G4LogicalVolume(brick_sv, fMatBrick->GetMaterial(), "brick_lv"); 
-    brick_lv->SetVisAttributes( G4VisAttributes( G4Colour(0, 0, 1) )); 
-    new G4PVPlacement(G4TranslateY3D( yshift ), 
-        brick_lv, "brick_pv", fWaffleUnit->GetModLV(), 0, 2); 
+    else {
+      // multi-layer brick
+      G4double curr_y = -0.5 * total_tk;
+      for (size_t i = 0; i < fBrickLayers.size(); i++) {
+        G4double layer_tk = fBrickLayers[i].second;
+        G4double halfLayer_tk = 0.5 * layer_tk;
+
+        G4Box* layer_sv = new G4Box(("neutron_brick_layer_" + std::to_string(i) + "_sv").c_str(),
+            half_x, halfLayer_tk, half_z);
+
+        G4Material* mat = nullptr;
+        if (i < fBrickMaterials.size() && fBrickMaterials[i] && fBrickMaterials[i]->GetMaterial()) {
+          mat = fBrickMaterials[i]->GetMaterial();
+        } 
+        else if (!mat) mat = fMatWorld->GetMaterial();
+
+        auto layer_lv = new G4LogicalVolume(layer_sv, mat,
+            ("neutron_brick_layer_" + std::to_string(i) + "_lv").c_str());
+        if (fBrickLayers[i].first == "HDPE") {
+          layer_lv->SetVisAttributes(new G4VisAttributes(G4Colour(0, 1, 0))); 
+        } else {
+          layer_lv->SetVisAttributes(new G4VisAttributes(G4Colour(1, 1, 0)));
+        }
+       
+
+        curr_y += halfLayer_tk;
+        new G4PVPlacement(G4Translate3D(0, curr_y + yshift, 0), layer_lv,
+            ("neutron_brick_layer_" + std::to_string(i) + "_pv").c_str(),
+            fWaffleUnit->GetModLV(), 0, 1);
+        curr_y += halfLayer_tk;
+      }
+    }
   }
 }
 
