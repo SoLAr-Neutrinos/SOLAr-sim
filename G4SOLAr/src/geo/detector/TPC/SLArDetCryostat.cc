@@ -288,7 +288,10 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
     }
     else {
       // multi-layer brick
+      auto parent_lv = new G4LogicalVolume(brick_sv, fMatWorld->GetMaterial(), "neutron_brick_parent_lv");
+      parent_lv->SetVisAttributes( G4VisAttributes(false) );
       G4double curr_y = -0.5 * total_tk;
+
       for (size_t i = 0; i < fBrickLayers.size(); i++) {
         G4double layer_tk = fBrickLayers[i].second;
         G4double halfLayer_tk = 0.5 * layer_tk;
@@ -317,6 +320,7 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
             fWaffleUnit->GetModLV(), 0, 1);
         curr_y += halfLayer_tk;
       }
+      new G4PVPlacement(G4Translate3D(0, yshift, 0), parent_lv, "neutron_brick_pv", fWaffleUnit->GetModLV(), 0, 1);
     }
   }
 }
