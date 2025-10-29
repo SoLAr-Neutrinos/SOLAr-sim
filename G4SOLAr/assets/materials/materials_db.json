@@ -203,7 +203,7 @@
       "name" : "HDPE", 
       "density" : {"val" : 0.961, "unit" : "g/cm3"}, 
       "atomic_components" : [
-        {"name" : "Carbon", "symb" : "C", "Z" : 6, "nmass" : 2},
+        {"name" : "Carbon", "symb" : "C", "Z" : 6, "nAtom" : 2},
         {"name" : "Hydrogen", "symb" : "H" , "Z" :  1, "nAtom" : 4}
       ]
     },
