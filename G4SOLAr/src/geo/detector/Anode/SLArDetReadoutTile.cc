@@ -5,6 +5,7 @@
  */
 
 
+#include "SLArDebugManager.hh"
 #include "geo/detector/Anode/SLArDetReadoutTile.hh"
 #include "geo/detector/SLArPlaneParameterisation.hpp"
 #include "geo/SLArGeoUtils.hh"
@@ -77,7 +78,7 @@ SLArDetReadoutTile::~SLArDetReadoutTile() {
 
 void SLArDetReadoutTile::BuildPCB()
 {
-  G4cerr << "Building ReadoutTile PCB base" << G4endl;
+  G4cout << "Building ReadoutTile PCB base" << G4endl;
 
   fBasePCB = new SLArBaseDetModule();
   fBasePCB->SetGeoPar(fGeoInfo->GetGeoPair("tile_z"));
@@ -511,11 +512,16 @@ TH2Poly* SLArDetReadoutTile::BuildTileChgPixelMap(
     const G4ThreeVector& xAxis, const G4ThreeVector& yAxis, 
     const G4ThreeVector* _shift, const G4RotationMatrix* _rot) {
 
-#ifdef SLAR_DEBUG
-  printf("SLArDetReadoutTile::BuildTileChgPixelMap():\n");
-  if (_shift) G4cout<< "shift: " << *_shift << G4endl;
-  if (_rot) G4cout << "rot: " << *_rot << G4endl; 
-#endif
+  DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, "Building Tile Charge Pixel Map");
+  if (_shift) {
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+        TString::Format("shift: %g, %g, %g\n", _shift->x(), _shift->y(), _shift->z()));
+  }
+  if (_rot) {
+    DEBUG_MSG_FUNC(SLArDebugManager::GEOMETRY, 
+        TString::Format("rot: phi = %g, theta = %g, psi = %g\n",
+          _rot->phi(), _rot->theta(), _rot->psi()));
+  }
 
   TH2Poly* h2 = new TH2Poly("h2TileChgPixMap", 
       "Tile charge pixel map", 
@@ -563,7 +569,7 @@ TH2Poly* SLArDetReadoutTile::BuildTileChgPixelMap(
         //printf("cell_pos:[%.2f, %.2f, %.2f]\n",cell_pos.x(),cell_pos.y(),cell_pos.z());
         //printf("----------------------------------------------------------------\n");
         for (const auto &cc : fCellPixelMap) {
-          std::vector<SLArCfgReadoutTile::xypoint> xypoints; 
+          //std::vector<SLArCfgReadoutTile::xypoint> xypoints; 
           //G4ThreeVector pix_pos = cc.fPos + cell_pos + pos_tile; 
           //G4ThreeVector pix_pos_= pix_pos; pix_pos_.transform(*mtile_rot_inv); 
           //printf("pix_pos  : (%.2f, %.2f, %.2f)\n", pix_pos .x(), pix_pos .y(), pix_pos .z());
@@ -621,7 +627,7 @@ TH2Poly* SLArDetReadoutTile::BuildTileChgPixelMap(
   } else {
     printf("SLArDetReadoutTile::BuildTileChgPixelMap WARNING\n");
     printf("Selected physical volume (%s) is not parameterised!\n", tilesens_pv->GetName().c_str());
-    getchar();
+    //getchar();
   }
 
   return h2;
