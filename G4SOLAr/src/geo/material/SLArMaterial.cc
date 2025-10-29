@@ -174,8 +174,11 @@ G4Material* SLArMaterial::BuildFromAtoms(const rapidjson::Value& jmaterial) {
     } else if (comp.HasMember("nAtom")) {
       material->AddElement(el, comp["nAtom"].GetInt()); 
     } else {
-      printf("SLArMaterial::BuildMaterial() %s weight is not specified\n", 
-          comp["name"].GetString());
+      const G4String comp_name = comp["name"].GetString();
+      G4String msg = "SLArMaterial::BuildMaterial() " + comp_name 
+        + " weight is not specified\n"; 
+      G4Exception("SLArMaterial::BuildFromAtoms", "InvalidMaterialDefinition", 
+          FatalException, msg.c_str());
     }
   }
 
