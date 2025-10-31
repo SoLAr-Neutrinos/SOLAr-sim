@@ -8,6 +8,7 @@
 #include "rapidjson/filereadstream.h"
 
 #include "action/SLArRunAction.hh"
+#include "SLArDebugUtils.hh"
 #include "SLArAnalysisManager.hh"
 #include "physics/SLArCrossSectionBiasing.hh"
 
@@ -390,44 +391,54 @@ void SLArDetectorConstruction::ConstructTarget(const rapidjson::Value& d) {
   G4ThreeVector target_max   (0, 0, 0); 
 
   G4double eps = 1*CLHEP::mm;
+  G4ThreeVector lar_target_dim(0., 0., 0.);
+  G4ThreeVector lar_target_pos(0., 0., 0.); 
 
   if (d.HasMember("LArTarget")) {
-    assert(d["LArTarget"].IsObject());
+    debug::require_json_type(d["LArTarget"], rapidjson::kObjectType);
     const rapidjson::Value& jlar_target = d["LArTarget"].GetObject();
-    G4ThreeVector lar_target_dim(0., 0., 0.);
-    G4ThreeVector lar_target_center(0., 0., 0.); 
 
-    if (!jlar_target.HasMember("dimensions")) {
-      fprintf(stderr, "LAr target dimensions not specified\n"); 
-      exit( EXIT_FAILURE ); 
+    if (jlar_target.HasMember("position")) {
+      const auto& jlar_target_pos = jlar_target["position"];
+      debug::require_json_type(jlar_target_pos, rapidjson::kObjectType);
+      debug::require_json_member(jlar_target_pos, "xyz");
+      const auto& jlar_target_pos_xyz = jlar_target_pos["xyz"].GetArray();
+      G4double unit_val = unit::GetJSONunit(jlar_target_pos);
+      assert(jlar_target_pos_xyz.Size() == 3);
+      lar_target_pos.setX( jlar_target_pos_xyz[0].GetDouble() * unit_val );
+      lar_target_pos.setY( jlar_target_pos_xyz[1].GetDouble() * unit_val );
+      lar_target_pos.setZ( jlar_target_pos_xyz[2].GetDouble() * unit_val );
     }
 
-    const auto& jlar_target_dim = jlar_target["dimensions"];
-    assert(jlar_target_dim.IsArray());
-    assert(jlar_target_dim.Size() == 3);
-    for (const auto &dim : jlar_target_dim.GetArray()) {
-      assert(dim.IsObject());
-      assert(dim.HasMember("name")); 
-      TString dim_name = dim["name"].GetString();
-      int idx = -1;
-      if (dim_name == "size_x") {
-        idx = 0; 
-      } else if (dim_name == "size_y") {
-        idx = 1; 
-      } else if (dim_name == "size_z") {
-        idx = 2; 
-      } else {
-        fprintf(stderr, "LAr target dimension %s not recognized\n", dim_name.Data());
-        exit( EXIT_FAILURE ); 
+    if ( jlar_target.HasMember("dimensions") ) {
+      const auto& jlar_target_dim = jlar_target["dimensions"];
+      assert(jlar_target_dim.IsArray());
+      assert(jlar_target_dim.Size() == 3);
+      for (const auto &dim : jlar_target_dim.GetArray()) {
+        assert(dim.IsObject());
+        assert(dim.HasMember("name")); 
+        TString dim_name = dim["name"].GetString();
+        int idx = -1;
+        if (dim_name == "size_x") {
+          idx = 0; 
+        } else if (dim_name == "size_y") {
+          idx = 1; 
+        } else if (dim_name == "size_z") {
+          idx = 2; 
+        } else {
+          fprintf(stderr, "LAr target dimension %s not recognized\n", dim_name.Data());
+          exit( EXIT_FAILURE ); 
+        }
+
+        lar_target_dim[idx] = unit::ParseJsonVal(dim);
       }
 
-      lar_target_dim[idx] = unit::ParseJsonVal(dim);
+      target_min = lar_target_pos - 0.5*lar_target_dim;
+      target_max = lar_target_pos + 0.5*lar_target_dim;
     }
-    
-    target_min = lar_target_center - 0.5*lar_target_dim;
-    target_max = lar_target_center + 0.5*lar_target_dim;
   }
-  else {
+  
+  if (lar_target_dim.mag2() == 0.0) {
     for (const auto &tpc_ : fTPC) {
       auto& tpc = tpc_.second; 
       G4ThreeVector local_center; 
@@ -453,7 +464,7 @@ void SLArDetectorConstruction::ConstructTarget(const rapidjson::Value& d) {
     }
   }
 
-  G4ThreeVector target_center = 0.5*(target_min + target_max); 
+  G4ThreeVector target_center = 0.5*(target_min + target_max) + lar_target_pos; 
   G4double target_dim[3] = {0.}; 
   for (int idim = 0; idim < 3; idim++) {
     target_dim[idim] = target_max[idim] - target_min[idim] + 2*eps; 
