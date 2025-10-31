@@ -28,6 +28,36 @@ class G4VSolid;
 
 namespace geo {
   enum EBoxFace {kXplus=0, kXminus=1, kYplus=2, kYminus=3, kZplus=4, kZminus=5}; 
+
+  static EBoxFace get_face_from_name(const G4String& side_name) {
+    if (side_name == "Xplus"  || side_name == "south" ) return kXplus;
+    if (side_name == "Xminus" || side_name == "north" ) return kXminus;
+    if (side_name == "Yplus"  || side_name == "top"   ) return kYplus;
+    if (side_name == "Yminus" || side_name == "bottom") return kYminus;
+    if (side_name == "Zplus"  || side_name == "west"  ) return kZplus;
+    if (side_name == "Zminus" || side_name == "east"  ) return kZminus;
+
+    G4Exception("geo::get_side_from_name", "GeoUtils001", FatalException,
+        ("Invalid box face name: " + side_name).data());
+
+    return kXplus;
+  }
+
+  static G4String get_face_name(EBoxFace face) {
+    switch (face) {
+      case kXplus:  return "Xplus";
+      case kXminus: return "Xminus";
+      case kYplus:  return "Yplus";
+      case kYminus: return "Yminus";
+      case kZplus:  return "Zplus";
+      case kZminus: return "Zminus";
+      default:
+        G4Exception("geo::get_face_name", "GeoUtils002", FatalException,
+            "Invalid box face enum value");
+        return "";
+    }
+  }
+
   static std::map<EBoxFace, G4ThreeVector> BoxFaceNormal  = {
     {kXplus, G4ThreeVector(-1, 0, 0)},
     {kXminus, G4ThreeVector(+1, 0, 0)},
