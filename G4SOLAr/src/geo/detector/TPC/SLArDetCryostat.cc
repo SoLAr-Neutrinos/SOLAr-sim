@@ -23,6 +23,21 @@ SLArCryostatLayer::SLArCryostatLayer() :
 
 SLArCryostatLayer::SLArCryostatLayer(
     G4String   model_name, 
+    G4double   thickness,
+    G4String   material_name, 
+    G4int      importance)
+  : fHalfSizeX(1.0), fHalfSizeY(1.0), fHalfSizeZ(1.0), fMaterial(nullptr), fModule(nullptr)
+{
+
+  fName      = model_name;
+  fThickness =  thickness;
+  fImportance=  importance;
+
+  fMaterialName = material_name;
+}
+
+SLArCryostatLayer::SLArCryostatLayer(
+    G4String   model_name, 
     G4double*  halfSize,  
     G4double   thickness,
     G4String   material_name, 
@@ -91,32 +106,42 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
 
     if (jsupport.HasMember("neutron_brick")) { //Fixed in order to correctly register the total thickness 
       const auto jbrick = jsupport["neutron_brick"].GetObj(); 
-      fBrickLayers.clear();
 
+      G4int ilayer = 0;
       if (jbrick.HasMember("layers") && jbrick["layers"].IsArray()) {
         const auto jlayers = jbrick["layers"].GetArray();
         for (const auto &layer : jlayers) {
+          assert(layer.IsObject());
+          assert(layer.HasMember("name"));
           assert(layer.HasMember("material"));
           assert(layer.HasMember("thickness"));
           G4String mat_name = layer["material"].GetString();
           G4double tk = unit::ParseJsonVal(layer["thickness"]);
-          fBrickLayers.push_back( std::make_pair(mat_name, tk) );
+          G4double importance = 
+            (layer.HasMember("importance")) ? layer["importance"].GetInt() : 1;
+          fShieldingStructure.emplace(ilayer, 
+              SLArCryostatLayer(layer["name"].GetString(), tk, mat_name, importance));
           neutron_brick_tk += tk;
+          ilayer++;
         }
       } else {
         // single layer brick
+        assert(jbrick.HasMember("name"));
         assert(jbrick.HasMember("material"));
         assert(jbrick.HasMember("thickness"));
         G4String mat_name = jbrick["material"].GetString();
         G4double tk = unit::ParseJsonVal(jbrick["thickness"]);
-        fBrickLayers.push_back( std::make_pair(mat_name, tk) );
+        G4double importance = 
+          (jbrick.HasMember("importance")) ? jbrick["importance"].GetInt() : 1;
+        fShieldingStructure.insert( std::make_pair(ilayer, 
+              SLArCryostatLayer(jbrick["name"].GetString(), tk, mat_name, importance) ) );
         neutron_brick_tk += tk;
       }
+
       fGeoInfo->RegisterGeoPar("brick_thickness", neutron_brick_tk);
-      for (const auto& bl : fBrickLayers) {
+      for (const auto& bl : fShieldingStructure) {
         SLArMaterial* mat = new SLArMaterial(); 
-        mat->SetMaterialID(bl.first);
-        fBrickMaterials.push_back(mat);
+        mat->SetMaterialID(bl.second.fMaterialName);
       } 
       fAddNeutronBricks = true; 
     }
@@ -142,20 +167,24 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
         importance = layer["importance"].GetInt(); 
       }
       
-      SLArCryostatLayer* ll = new SLArCryostatLayer(
-          layer["name"].GetString(), halfSize, 
-          unit::ParseJsonVal(layer["thickness"]), 
-          layer["material"].GetString(),importance);
+      //SLArCryostatLayer* ll = new SLArCryostatLayer(
+          //layer["name"].GetString(), halfSize, 
+          //unit::ParseJsonVal(layer["thickness"]), 
+          //layer["material"].GetString(),importance);
 
-      fCryostatStructure.insert(std::make_pair(layer["id"].GetInt(), ll)); 
+      fCryostatStructure.emplace(layer["id"].GetInt(), 
+            SLArCryostatLayer(
+              layer["name"].GetString(), halfSize, 
+              unit::ParseJsonVal(layer["thickness"]), 
+              layer["material"].GetString(),importance)); 
     }
   }
 
   printf("SLArDetCryostat::BuildCryostatStructure: Cryostat layered structure built\n");
   for (const auto& l : fCryostatStructure) {
     printf("%i: %s %g mm %s\n", 
-        l.first, l.second->fName.c_str(), l.second->fThickness, 
-        l.second->fMaterialName.c_str());
+        l.first, l.second.fName.c_str(), l.second.fThickness, 
+        l.second.fMaterialName.c_str());
   }
 
   if (fBuildSupport) {
@@ -165,7 +194,7 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
     if (fGeoInfo->Contains("brick_thickness") && fAddNeutronBricks) {
       n_brick_tk = fGeoInfo->GetGeoPar("brick_thickness"); 
     }
-    const G4double unit_thickness = std::max(major_width, minor_width + n_brick_tk); 
+    const G4double unit_thickness = major_width + n_brick_tk; 
     fGeoInfo->RegisterGeoPar("waffle_total_width", unit_thickness); 
   }
   return; 
@@ -265,62 +294,30 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
   new G4PVPlacement(0, G4ThreeVector(0, -0.5*(unit_thickness - minor_width), 0), 
       waffle_minor_lv, "waffle_minor_pv", fWaffleUnit->GetModLV(), 0, 1); 
 
-  // FIXME: modify shielding layer here
+  
   if (fAddNeutronBricks) {
-    const G4double half_x = 0.5 * (spacing - tk); //Non sono sicuro di questa dimensione
-    const G4double half_z = 0.5 * (spacing - tk);
+    const G4double half_x = 0.5 * (spacing);
+    const G4double half_z = 0.5 * (spacing);
     const G4double total_tk = n_brick_tk;
     G4double yshift = 0;
 
-    G4Box* brick_sv = new G4Box("neutron_brick_sv", half_x, 0.5 * total_tk, half_z); //Costruisco il solid volume che replico
+    // multi-layer brick
+    G4double curr_y = 0.5 * unit_thickness;
+    for (auto& layer_itr : fShieldingStructure) {
+      const int id = layer_itr.first;
+      auto& brick_layer = layer_itr.second;
+      G4double layer_tk = brick_layer.fThickness;
+      
+      brick_layer.fModule = BuildShieldingLayer(brick_layer.fName, 
+          half_x, half_z, layer_tk, brick_layer.fMaterial);
 
-    if (fBrickLayers.size() ==1) {
-      // single layer brick
-      G4Material* mat =  nullptr;
-      if (!fBrickMaterials.empty() && fBrickMaterials.front() && fBrickMaterials.front()->GetMaterial()) {
-        mat = fBrickMaterials.front()->GetMaterial();
-      } 
-      else if (!mat) mat = fMatWorld->GetMaterial();
+      G4double halfLayer_tk = 0.5 * layer_tk;
 
-      auto brick_lv = new G4LogicalVolume(brick_sv, mat, "neutron_brick_lv");
-      brick_lv->SetVisAttributes(new G4VisAttributes(G4Colour(0, 1, 0))); 
-      new G4PVPlacement(G4Translate3D(0, yshift, 0), brick_lv, "neutron_brick_pv", fWaffleUnit->GetModLV(), 0, 1);
-    }
-    else {
-      // multi-layer brick
-      auto parent_lv = new G4LogicalVolume(brick_sv, fMatWorld->GetMaterial(), "neutron_brick_parent_lv");
-      parent_lv->SetVisAttributes( G4VisAttributes(false) );
-      G4double curr_y = -0.5 * total_tk;
-
-      for (size_t i = 0; i < fBrickLayers.size(); i++) {
-        G4double layer_tk = fBrickLayers[i].second;
-        G4double halfLayer_tk = 0.5 * layer_tk;
-
-        G4Box* layer_sv = new G4Box(("neutron_brick_layer_" + std::to_string(i) + "_sv").c_str(),
-            half_x, halfLayer_tk, half_z);
-
-        G4Material* mat = nullptr;
-        if (i < fBrickMaterials.size() && fBrickMaterials[i] && fBrickMaterials[i]->GetMaterial()) {
-          mat = fBrickMaterials[i]->GetMaterial();
-        } 
-        else if (!mat) mat = fMatWorld->GetMaterial();
-
-        auto layer_lv = new G4LogicalVolume(layer_sv, mat,
-            ("neutron_brick_layer_" + std::to_string(i) + "_lv").c_str());
-        if (fBrickLayers[i].first == "HDPE") {
-          layer_lv->SetVisAttributes(new G4VisAttributes(G4Colour(0, 1, 0))); 
-        } else {
-          layer_lv->SetVisAttributes(new G4VisAttributes(G4Colour(1, 1, 0)));
-        }
-       
-
-        curr_y += halfLayer_tk;
-        new G4PVPlacement(G4Translate3D(0, curr_y + yshift, 0), layer_lv,
-            ("neutron_brick_layer_" + std::to_string(i) + "_pv").c_str(),
-            fWaffleUnit->GetModLV(), 0, 1);
-        curr_y += halfLayer_tk;
-      }
-      new G4PVPlacement(G4Translate3D(0, yshift, 0), parent_lv, "neutron_brick_pv", fWaffleUnit->GetModLV(), 0, 1);
+      curr_y -= halfLayer_tk;
+      new G4PVPlacement(G4Translate3D(0, curr_y + yshift, 0), brick_layer.fModule->GetModLV(),
+          ("shielding_brick_layer_" + std::to_string(id) + "_pv").c_str(),
+          fWaffleUnit->GetModLV(), 0, 1);
+      curr_y -= halfLayer_tk;
     }
   }
 }
@@ -715,26 +712,24 @@ void SLArDetCryostat::BuildCryostat()
   // -------------------------------------------------------------------------
   // create cryostat layers
 
-  G4cerr << "create cryostat layers" << G4endl; 
-  for (const auto& ll : fCryostatStructure) {
-    auto layer = ll.second;
+  G4cout << "create cryostat layers" << G4endl; 
+  for (auto& ll : fCryostatStructure) {
+    auto& layer = ll.second;
     printf("layer: %i\n", ll.first); 
-    layer->fMaterial = SLArMaterial::FindInMaterialTable(layer->fMaterialName); 
+    layer.fMaterial = SLArMaterial::FindInMaterialTable(layer.fMaterialName); 
     printf("size: %.0f, %.0f, %.0f - tk: %.0f\n", 
-        2*layer->fHalfSizeX, 2*layer->fHalfSizeY, 2*layer->fHalfSizeZ, 
-        layer->fThickness);
-    layer->fModule = BuildCryostatLayer(layer->fName, 
-        layer->fHalfSizeX, layer->fHalfSizeY, layer->fHalfSizeZ, 
-        layer->fThickness, layer->fMaterial); 
+        2*layer.fHalfSizeX, 2*layer.fHalfSizeY, 2*layer.fHalfSizeZ, 
+        layer.fThickness);
+    layer.fModule = BuildCryostatLayer(layer.fName, 
+        layer.fHalfSizeX, layer.fHalfSizeY, layer.fHalfSizeZ, 
+        layer.fThickness, layer.fMaterial); 
     printf("placing layer in LV %p\n", static_cast<void*>(fModLV)); 
-    layer->fModule->GetModPV(
-        layer->fName, 0, G4ThreeVector(0, 0, 0), fModLV, 
+    layer.fModule->GetModPV(
+        layer.fName, 0, G4ThreeVector(0, 0, 0), fModLV, 
         false, ll.first);
   }
 
   if (fBuildSupport) {
-
-
     for (int i=0; i<6; i++) {
       auto kFace = (geo::EBoxFace)i; 
       auto waffle_face = BuildSupportStructure(kFace);
@@ -856,8 +851,11 @@ void SLArDetCryostat::BuildCryostat()
           edge_xz->GetModLV(), "edge_x-z+_pv", fModLV, false, 17, true) ); 
   }
 
+  new G4PVPlacement(nullptr, G4ThreeVector(0, 0, 0), fWaffleUnit->GetModLV(), "waffle_unit_pv", fModLV, false, 1239430234) ;
+
   return; 
 }
+
 
 SLArBaseDetModule* SLArDetCryostat::BuildCryostatLayer(
     G4String name, 
@@ -879,6 +877,23 @@ SLArBaseDetModule* SLArDetCryostat::BuildCryostatLayer(
   return mod; 
 }
 
+
+SLArBaseDetModule* SLArDetCryostat::BuildShieldingLayer(
+    G4String name, 
+    G4double x_, G4double z_, G4double tk_, 
+    G4Material* mat) 
+{
+  G4Box* sv = new G4Box("b_shielding_" +name, x_ , 0.5*tk_ , z_ ); 
+
+  SLArBaseDetModule* mod = new SLArBaseDetModule(); 
+  mod->SetMaterial(mat); 
+  mod->SetSolidVolume(sv); 
+  mod->SetLogicVolume(new G4LogicalVolume(
+        mod->GetModSV(), mod->GetMaterial(), name+"LV", 0, 0, 0)); 
+
+  return mod; 
+}
+
 void SLArDetCryostat::SetVisAttributes() {
   std::map<G4String, G4Colour> col_map; 
   col_map.insert( std::make_pair("Steel", G4Colour(0.231, 0.231, 0.227))); 
@@ -886,9 +901,26 @@ void SLArDetCryostat::SetVisAttributes() {
   col_map.insert( std::make_pair("Water", G4Colour(0.561, 0.863, 0.91))); 
   col_map.insert( std::make_pair("BoratedPolyethilene", G4Colour(0.267, 0.671, 0.22))); 
   col_map.insert( std::make_pair("Polyurethane", G4Colour(0.867, 0.871, 0.769))); 
+  col_map.insert( std::make_pair("Air", G4Colour(0.53, 0.80, 0.98)));
+  col_map.insert( std::make_pair("HDPE", G4Colour(0.82, 0.41, 0.12)));
+  col_map.insert( std::make_pair("Lead", G4Colour(0.43, 0.50, 0.56)));
   G4Colour stdCol(0.611, 0.847, 0.988);
+
   for (auto &ll : fCryostatStructure) {
-    auto lv = ll.second->fModule->GetModLV();
+    printf("setting vis for layer %s\n", ll.second.fName.c_str());
+    auto lv = ll.second.fModule->GetModLV();
+    printf("%s\n", lv->GetName().c_str());
+    G4Colour col = stdCol; 
+    if (col_map.count(lv->GetMaterial()->GetName()))
+    {
+      col = col_map[lv->GetMaterial()->GetName()]; 
+    }
+    lv->SetVisAttributes( G4VisAttributes( col ) ); 
+  }
+
+  for (auto &ll : fShieldingStructure) {
+    printf("setting vis for shielding layer %s\n", ll.second.fName.c_str());
+    auto lv = ll.second.fModule->GetModLV();
     printf("%s\n", lv->GetName().c_str());
     G4Colour col = stdCol; 
     if (col_map.count(lv->GetMaterial()->GetName()))
@@ -902,11 +934,22 @@ void SLArDetCryostat::SetVisAttributes() {
 }
 
 void SLArDetCryostat::BuildMaterials(G4String material_db) {
+  
+  printf("Building materials for Cryostat...\n");
   for (auto &layer : fCryostatStructure) {
     SLArMaterial* mat = new SLArMaterial; 
-    mat->SetMaterialID( layer.second->fMaterialName ); 
+    mat->SetMaterialID( layer.second.fMaterialName ); 
     mat->BuildMaterialFromDB(material_db); 
-    layer.second->fMaterial = mat->GetMaterial(); 
+    layer.second.fMaterial = mat->GetMaterial(); 
+  }
+
+  printf("Building shielding materials...\n");
+  for (auto &layer : fShieldingStructure) {
+    printf("shielding layer: %s\n", layer.second.fName.c_str());
+    SLArMaterial* mat = new SLArMaterial; 
+    mat->SetMaterialID( layer.second.fMaterialName ); 
+    mat->BuildMaterialFromDB(material_db); 
+    layer.second.fMaterial = mat->GetMaterial(); 
   }
 
   fMatWaffle = new SLArMaterial(); 

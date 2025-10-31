@@ -20,7 +20,13 @@ struct SLArCryostatLayer{
         G4double   thickness,
         G4String   material_name,
         G4int      importance = 1);
-    ~SLArCryostatLayer() {} 
+    SLArCryostatLayer(
+        G4String   model_name, 
+        G4double   thickness,
+        G4String   material_name, 
+        G4int      importance);
+
+    ~SLArCryostatLayer() {}
 
     G4String  fName;
     G4double  fHalfSizeX;
@@ -34,7 +40,7 @@ struct SLArCryostatLayer{
     SLArBaseDetModule* fModule = nullptr; 
 };
 
-typedef std::map<int, SLArCryostatLayer*> SLArCryostatStructure; 
+typedef std::map<int, SLArCryostatLayer> SLArCryostatStructure; 
 
 class SLArDetCryostat : public SLArBaseDetModule {
   public:
@@ -45,6 +51,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     void BuildMaterials(G4String); 
     void BuildCryostatStructure(const rapidjson::Value& jcryo);
     SLArCryostatStructure& GetCryostatStructure() {return fCryostatStructure;}
+    SLArCryostatStructure& GetShieldingStructure() {return fShieldingStructure;}
     inline std::map<geo::EBoxFace, SLArBaseDetModule*>& GetCryostatSupportStructure() {return fSupportStructure;}
     inline std::vector<G4VPhysicalVolume*>& GetCryostatSupportStructureEdges() {return fSupportStructureEdges;}
     inline SLArBaseDetModule* GetWaffleUnit() {return fWaffleUnit;}
@@ -65,14 +72,20 @@ class SLArDetCryostat : public SLArBaseDetModule {
     std::map<G4String, SLArMaterial*> fMaterials;
     std::map<geo::EBoxFace, SLArBaseDetModule*> fSupportStructure;
     std::vector<G4VPhysicalVolume*> fSupportStructureEdges;
-    std::vector<std::pair<G4String, G4double>> fBrickLayers;
-    std::vector<SLArMaterial*> fBrickMaterials;
 
     SLArCryostatStructure fCryostatStructure; 
+    SLArCryostatStructure fShieldingStructure;
+
     SLArBaseDetModule* BuildCryostatLayer(
         G4String name, 
         G4double x_, G4double y_, G4double z_, G4double tk_, 
         G4Material* mat);
+
+    SLArBaseDetModule* BuildShieldingLayer(
+        G4String name, 
+        G4double x_, G4double z_, G4double tk_, 
+        G4Material* mat);
+
     void BuildSupportStructureUnit(); 
     void BuildSupportStructureEdgeUnit(); 
     SLArBaseDetModule* BuildSupportStructure(geo::EBoxFace kFace); 
