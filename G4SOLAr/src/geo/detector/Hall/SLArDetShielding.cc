@@ -91,11 +91,12 @@ void SLArDetShielding::BuildShielding()
       fBaseMaterial.GetMaterial(),
       (fName + "_lv").c_str() ); 
 
-  unsigned int layer_id = 0; 
+  unsigned int layer_id = 1; 
   G4double curr_y = -0.5*fGeoInfo->GetGeoPar("shielding_thickness");
   for (const auto &layer_itr : fShieldingLayers) {
     const auto &layer = layer_itr.second;
     G4double layer_tk = layer.fThickness;
+    const G4String layer_name = layer.fName;
 
     curr_y += 0.5*layer_tk;
 
@@ -106,13 +107,15 @@ void SLArDetShielding::BuildShielding()
     G4LogicalVolume* layer_lv = new G4LogicalVolume(
         layer_sv,
         layer.fMaterial,
-        (fName + "_layer_" + std::to_string(layer_id) + "_lv").c_str() );
+        (fName + "_" + layer_name + "_" + std::to_string(layer_id) + "_lv").c_str() );
     new G4PVPlacement(
         0, G4ThreeVector(0, curr_y, 0),
         layer_lv,
-        (fName + "_layer_" + std::to_string(layer_id) + "_pv").c_str(),
+        (fName + "_" + layer_name + "_" + std::to_string(layer_id) + "_pv").c_str(),
         fModLV, 0, layer_id, true );
     curr_y += 0.5*layer_tk;
+
+    layer_id++;
   }
 
   return;

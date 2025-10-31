@@ -962,10 +962,33 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     }
   }
 
+  printf("\nShielding --------------------------------------\n");
+  for (const auto &shield : fShielding) {
+    auto shield_pv = shield->GetModPV(); 
+    printf("fShielding PV ptr: %p\n", static_cast<void*>(shield_pv)); 
+    istore->AddImportanceGeometryCell(
+        imp, *shield_pv, shield_pv->GetCopyNo()); 
+    G4LogicalVolume* shield_lv = shield_pv->GetLogicalVolume();
+    for (const auto &layer : shield->GetShieldingLayers()) {
+      printf("[%i]: %s - imp: %i\n", layer.first, 
+          layer.second.fName.data(), layer.second.fImportance);
+    }
+
+    for (int i=0; i<shield_lv->GetNoDaughters(); i++) {
+      auto vol = shield_lv->GetDaughter(i);
+      auto cell = G4GeometryCell(*vol, vol->GetCopyNo());
+      imp = shield->GetShieldingLayers()[vol->GetCopyNo()].fImportance;
+      printf("Adding %s (copyNo %i) to istore with importance %g (rep nr. %i, %p)\n", 
+          cell.GetPhysicalVolume().GetName().data(), vol->GetCopyNo(),
+          imp, cell.GetReplicaNumber(), static_cast<void*>(vol) );
+      getchar();
+    }
+  }
+
   printf("\nCryostat ----------------------------------------\n");
   printf("fCryostat PV ptr: %p\n", static_cast<void*>(fCryostat->GetModPV())); 
   istore->AddImportanceGeometryCell(
-      1, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
+      imp, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
 
   printf("Support structure\n");
   for (const auto &face_ : fCryostat->GetCryostatSupportStructure() ) {
@@ -999,7 +1022,6 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         istore->AddImportanceGeometryCell(imp, cell); 
       }
     }
-
 
 
     auto vol_unit = vol_row->GetLogicalVolume()->GetDaughter(0); 
@@ -1100,7 +1122,6 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
           imp, cell.GetReplicaNumber(), static_cast<void*>(vol) );
       istore->AddImportanceGeometryCell(imp, cell); 
     }
-    getchar();
   }
 
   printf("\nWaffle edge unit\n");
@@ -1425,7 +1446,9 @@ void SLArDetectorConstruction::ConstructExperimentalHall() {
 }
 
 void SLArDetectorConstruction::ConstructShielding() {
+
   if (fShielding.empty())  return;
+
   G4cout << "\nSLArDetectorConstruction: Building the Shielding" << G4endl;
   const G4ThreeVector hall_center = fExpHall->GetBoxCenter();
   const G4ThreeVector hall_halfsize = fExpHall->GetBoxHalfSize();
@@ -1520,8 +1543,9 @@ void SLArDetectorConstruction::ConstructShielding() {
     }
 
     if (gap > 0.0) {
-      shield->AddLayer("airgap", gap, "Air", 
-          shield->GetShieldingLayers().end()->second.fImportance);
+      // get importance of the last layer in the map
+      G4double imp_last = shield->GetShieldingLayers().rbegin()->second.fImportance;
+      shield->AddLayer("airgap", gap, "Air", imp_last);
     }
     shield->SetMaterial( fWorldLog->GetMaterial() );
     shield->BuildMaterials(fMaterialDBFile);
