@@ -8,6 +8,7 @@
 #define SLArDetectorConstruction_h 
 
 #include "detector/Hall/SLArDetExpHall.hh"
+#include "detector/Hall/SLArDetShielding.hh"
 #include "detector/TPC/SLArDetTPC.hh"
 #include "detector/TPC/SLArDetCryostat.hh"
 #include "detector/TPC/SLArDetCathode.hh"
@@ -79,9 +80,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Build the ReadoutTile object and the place the MegaTiles according to the given configuration
     void BuildAndPlaceAnode();
     //! Get the World's logical volume
-    G4LogicalVolume*                GetLogicWorld();
+    G4LogicalVolume* GetLogicWorld();
     //! Get the World's physical volume
-    inline G4VPhysicalVolume*              GetPhysicalWorld() {return fWorldPhys;} 
+    inline G4VPhysicalVolume* GetPhysicalWorld() {return fWorldPhys;} 
     //! Get the vector containing the SuperCell Physical Volumes
     inline std::vector<G4VPhysicalVolume*>&GetVecSuperCellPV() {return fSuperCellsPV;}
     //! Get the vector containing the Physical Volumes of volumes set as ExtScorer
@@ -124,6 +125,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     SLArGeoInfo fWorldGeoPars;//!< World volume geometry parameters
     SLArGeoInfo fCavernGeoPars; //!< Cavern volume geometry attributes
     SLArDetExpHall* fExpHall; //!< Experimental Hall detector object
+    std::vector<SLArDetShielding*> fShielding; //!< Shielding detector objects
     SLArDetSuperCell* fSuperCell; //!< SuperCell detector object
     std::map<int, SLArDetSuperCellArray*> fSCArray;
     SLArDetReadoutTile* fReadoutTile; //!< ReadoutTile detector object
@@ -138,8 +140,12 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     
     //! Construct Experimental Hall
     void ConstructExperimentalHall();
+    //! Construct Shielding
+    void ConstructShielding();
     //! Parse the description of the experimental hall
     void InitExpHall(const rapidjson::Value&);
+    //! Parse the description of the shielding 
+    void InitShielding(const rapidjson::Value&);
     //! Parse the description of the supercell detector system
     void InitSuperCell(const rapidjson::Value&); 
     //! Parse the description of the SC PDS
