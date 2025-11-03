@@ -376,6 +376,10 @@
     {"name" : "Lead", 
       "NIST" : "G4_Pb", 
       "density" : {"val" : 11.35, "unit" : "g/cm3"}
+    },
+    {
+      "name" : "Iron", 
+      "NIST" : "G4_Fe"
     }
   ]
 }
