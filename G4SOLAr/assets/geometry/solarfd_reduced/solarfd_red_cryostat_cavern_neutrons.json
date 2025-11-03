@@ -18,7 +18,22 @@
     "steel_thickness" : {"val" : 20, "unit" : "mm"},
     "steel_major_width" : {"val" : 46, "unit" : "cm"}, 
     "steel_minor_width" : {"val" : 20, "unit" : "cm"}, 
-    "main_spacing" : {"val" : 150, "unit" : "cm"},
-    "neutron_brick" : {"material" : "Water", "thickness" : {"val": 40, "unit" : "cm"} }
-  }
+    "main_spacing" : {"val" : 150, "unit" : "cm"}
+  },
 }
+"Shielding" : [
+  {
+    "name": "floor_shielding", 
+    "side" : "bottom",
+    "dimensions" : [
+      {"name" : "dim_x", "val" :  18.946 , "unit" : "m" },
+      {"name" : "dim_y", "val" :   6.0   , "unit" : "cm"},
+      {"name" : "dim_z", "val" :  72.0   , "unit" : "m" }
+    ],
+    "layers" : [
+      {"name" : "gammastopper"  , "material" : "Lead"               , "thickness" : {"val":  2.5 , "unit" : "cm"} , "importance" :  1 },
+      {"name" : "neutronstopper", "material" : "BoratedPolyethilene", "thickness" : {"val": 20.0 , "unit" : "cm"} , "importance" :  2 },
+      {"name" : "airflow"       , "material" : "Air"                , "thickness" : {"val": 30.0 , "unit" : "cm"} , "importance" :  4 }
+    ]
+  }
+]
