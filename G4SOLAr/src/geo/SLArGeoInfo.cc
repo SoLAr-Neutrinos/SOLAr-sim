@@ -6,6 +6,7 @@
 
 #include "SLArGeoInfo.hh"
 #include "SLArUnit.hpp"
+#include "SLArDebugUtils.hh"
 #include <utility>
 #include <regex>
 
@@ -30,7 +31,7 @@ void SLArGeoInfo::RegisterGeoPar( G4String str, G4double val)
   return;
 }
 
-void SLArGeoInfo::RegisterGeoPar(std::pair<G4String, G4double> p)
+void SLArGeoInfo::RegisterGeoPar(std::pair<G4String, ParInfo> p)
 {
   fGeoPar.insert( p );
   return;
@@ -46,13 +47,13 @@ void SLArGeoInfo::SetGeoPar(G4String str, G4double val)
   return;
 }
 
-void SLArGeoInfo::SetGeoPar(std::pair<G4String, G4double> p)
+void SLArGeoInfo::SetGeoPar(std::pair<G4String, ParInfo> p)
 {
   if ( Contains(p.first) )
     fGeoPar.find(p.first)->second = p.second;
   else 
   {
-    std::pair<G4String, G4double> p_copy = 
+    std::pair<G4String, ParInfo> p_copy = 
       std::make_pair(p.first, p.second);
     RegisterGeoPar( p_copy );
   }
@@ -81,15 +82,15 @@ G4double SLArGeoInfo::GetGeoPar(G4String str)
     exit(EXIT_FAILURE);
   }
   else {
-    out = fGeoPar.find(str)->second;
+    out = fGeoPar.find(str)->second.value;
   }
 
   return out;
 }
 
-std::pair<G4String, G4double> SLArGeoInfo::GetGeoPair(G4String str)
+std::pair<G4String, SLArGeoInfo::ParInfo> SLArGeoInfo::GetGeoPair(G4String str)
 {
-  std::pair<G4String,G4double> out;
+  std::pair<G4String,ParInfo> out;
   if (!Contains(str))
   {
     G4cerr << "SLArGeoInfo::GetGeoPar() Par " 
@@ -118,8 +119,24 @@ bool SLArGeoInfo::ReadFromJSON(const rapidjson::Value::ConstArray& dim) {
   for (const auto &xx : dim) {
     const auto entry = xx.GetObj(); 
     const char* name = entry["name"].GetString();
-    G4double val = unit::ParseJsonVal(entry); 
-    RegisterGeoPar(name, val); 
+    if (entry.HasMember("relative") == false) {
+      G4double val = unit::ParseJsonVal(entry); 
+      RegisterGeoPar(name, val); 
+      return true;
+    }
+    else {
+      debug::require_json_member(entry["relative"], "volume");
+      debug::require_json_member(entry["relative"], "anchor");
+      G4String ref_vol    = entry["relative"]["volume"].GetString(); 
+      G4String ref_anchor = entry["relative"]["anchor"].GetString(); 
+      G4String local_anchor = entry["anchor"].GetString(); 
+      G4double val = 0.0; 
+      if (entry.HasMember("val")) {
+        val = unit::ParseJsonVal(entry); 
+      }
+      ParInfo pinfo(ref_vol, ref_anchor, local_anchor, val); 
+      RegisterGeoPar( std::make_pair(G4String(name), pinfo) );
+    }
   }
   return true;
 }
