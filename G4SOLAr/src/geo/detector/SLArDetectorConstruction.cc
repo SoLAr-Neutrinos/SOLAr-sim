@@ -1492,13 +1492,21 @@ void SLArDetectorConstruction::ConstructShielding() {
             hall_center.z());
         break;
       case geo::EBoxFace::kYplus:
-        shield_rot = new G4RotationMatrix();
-        shield_rot->rotateZ(CLHEP::pi);
-        gap = fabs( gap_shield_cryostat.y() ); 
-        shield_pos.set(0.0, 
-            hall_center.y() + hall_halfsize.y() - shield_thickness*0.5,
-            hall_center.z());
-        break;
+        {
+          shield_rot = new G4RotationMatrix();
+          shield_rot->rotateZ(CLHEP::pi);
+          G4double floor_sh = 0.0; 
+          for (const auto& sshield : fShielding) {
+            if (sshield->GetFace() == geo::EBoxFace::kYminus) {
+              floor_sh += sshield->GetGeoPar("shielding_thickness");
+            }
+          }
+          shield_pos.set(0.0, 
+              hall_center.y() - hall_halfsize.y() + floor_sh + shield_thickness*0.5 + 
+              target_dim_y + 2*cryostat_tk,
+              hall_center.z());
+          break;
+        }
       case geo::EBoxFace::kXminus:
         shield_rot = new G4RotationMatrix();
         shield_rot->rotateZ(-CLHEP::halfpi);
