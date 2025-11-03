@@ -83,6 +83,7 @@ SLArStackingAction::ClassifyNewTrack(const G4Track * aTrack)
         // fix track ID in primary output object
         auto& primaries = SLArAnaMgr->GetMCTruth().GetPrimaries();
         for (auto &primaryInfo : primaries) {
+          if (primaryInfo.GetTrackID() != -1) continue; // already assigned
           G4double match = PositivePrimaryIdentification(aTrack, primaryInfo);
           if (match) break;
         }
@@ -234,17 +235,28 @@ bool SLArStackingAction::PositivePrimaryIdentification(const G4Track* aTrack, SL
     const G4ThreeVector diffPos = track_pos - pVertex;
     const G4ThreeVector diffMom = track_mom - pMomentum;
 
+#ifdef SLAR_DEBUG
+    printf("Comparing primary candidate track ID %i and PDG ID %i with primary info\n",
+        aTrack->GetTrackID(), aPrimary.GetCode());
+    printf("  Track momentum: [%g, %g, %g]\n",
+        track_mom.x(), track_mom.y(), track_mom.z());
+    printf("  Position diff: [%g, %g, %g] - mag %g\n",
+        diffPos.x(), diffPos.y(), diffPos.z(), diffPos.mag());
+    printf("  Momentum diff: [%g, %g, %g] - mag %g\n",
+        diffMom.x(), diffMom.y(), diffMom.z(), diffMom.mag());
+#endif
+
     G4double tolerance = 1e-3;
     if (aPrimary.GetCode() > 10000) {
       //printf("possible canidate %i - [%g, %g, %g] vs [%g, %g, %g]\n", 
-      //primaryInfo.GetCode(), 
+      //aPrimary.GetCode(), 
       //aTrack->GetMomentum().x(), aTrack->GetMomentum().y(), aTrack->GetMomentum().z(), 
-      //primaryInfo.GetMomentum()[0], primaryInfo.GetMomentum()[1], primaryInfo.GetMomentum()[2]); 
+      //aPrimary.GetMomentum()[0], aPrimary.GetMomentum()[1], aPrimary.GetMomentum()[2]); 
       tolerance = 5e-2;
     }
 
     if ( diffPos.mag() < tolerance && diffMom.mag() < tolerance ) {
-      //printf("This is a primary: Corrsponding primary info found (%i)\n", primaryInfo.GetTrackID());
+      //printf("This is a primary: Corrsponding primary info found\n");
       aPrimary.SetTrackID(aTrack->GetTrackID()); 
       return true;
     }
