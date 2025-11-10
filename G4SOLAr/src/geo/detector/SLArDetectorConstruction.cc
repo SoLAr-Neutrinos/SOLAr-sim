@@ -981,7 +981,6 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       printf("Adding %s (copyNo %i) to istore with importance %g (rep nr. %i, %p)\n", 
           cell.GetPhysicalVolume().GetName().data(), vol->GetCopyNo(),
           imp, cell.GetReplicaNumber(), static_cast<void*>(vol) );
-      getchar();
     }
   }
 
@@ -1470,6 +1469,14 @@ void SLArDetectorConstruction::ConstructShielding() {
 
   const G4ThreeVector gap_cavern_cryostat = hall_halfsize - (cryostat_halfsize + target_pos);
 
+  // get thickness of the floor shielding (in case there is one)
+  G4double floor_shield_thickness = 0.0;
+  for (const auto& shield : fShielding) {
+    if (shield->GetFace() == geo::EBoxFace::kYminus) {
+      floor_shield_thickness += shield->GetGeoPar("shielding_thickness");
+    }
+  }
+
   for (auto& shield : fShielding) {
     const geo::EBoxFace face = shield->GetFace();
     const G4String face_name = geo::get_face_name( face ); 
@@ -1495,14 +1502,8 @@ void SLArDetectorConstruction::ConstructShielding() {
         {
           shield_rot = new G4RotationMatrix();
           shield_rot->rotateZ(CLHEP::pi);
-          G4double floor_sh = 0.0; 
-          for (const auto& sshield : fShielding) {
-            if (sshield->GetFace() == geo::EBoxFace::kYminus) {
-              floor_sh += sshield->GetGeoPar("shielding_thickness");
-            }
-          }
           shield_pos.set(0.0, 
-              hall_center.y() - hall_halfsize.y() + floor_sh + shield_thickness*0.5 + 
+              hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_thickness*0.5 + 
               target_dim_y + 2*cryostat_tk,
               hall_center.z());
           break;
@@ -1513,7 +1514,7 @@ void SLArDetectorConstruction::ConstructShielding() {
         gap = fabs( gap_shield_cryostat.x() );
         shield_pos.set(
             hall_center.x() - hall_halfsize.x() + (shield_thickness+gap)*0.5,
-            hall_center.y() - hall_halfsize.y() + shield_halfsize.x(),
+            hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.x(),
             hall_center.z());
         break;
       case geo::EBoxFace::kXplus:
@@ -1522,7 +1523,7 @@ void SLArDetectorConstruction::ConstructShielding() {
         gap = fabs( gap_shield_cryostat.x() );
         shield_pos.set(
             hall_center.x() + hall_halfsize.x() - (shield_thickness+gap)*0.5,
-            hall_center.y() - hall_halfsize.y() + shield_halfsize.x(),
+            hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.x(),
             hall_center.z());
         break;
       case geo::EBoxFace::kZminus:
@@ -1531,7 +1532,7 @@ void SLArDetectorConstruction::ConstructShielding() {
         gap = fabs( gap_shield_cryostat.z() );
         shield_pos.set(
             hall_center.x(),
-             hall_center.y() - hall_halfsize.y() + shield_halfsize.z(),
+             hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.z(),
             hall_center.z() - hall_halfsize.z() + (shield_thickness+gap)*0.5);
         break;
       case geo::EBoxFace::kZplus:
@@ -1540,7 +1541,7 @@ void SLArDetectorConstruction::ConstructShielding() {
         gap = fabs( gap_shield_cryostat.z() );
         shield_pos.set(
             hall_center.x(),
-            hall_center.y() - hall_halfsize.y() + shield_halfsize.z(),
+            hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.z(),
             hall_center.z() + hall_halfsize.z() - (shield_thickness+gap)*0.5);
         break;
       default:

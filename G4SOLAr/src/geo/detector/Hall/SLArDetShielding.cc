@@ -57,9 +57,9 @@ void SLArDetShielding::Init(const rapidjson::Value& config)
     G4double tk = unit::ParseJsonVal(jlayer["thickness"]);
     G4double importance = 
       (jlayer.HasMember("importance")) ? jlayer["importance"].GetInt() : 1;
+    
     AddLayer(jlayer["name"].GetString(), tk, mat_name, importance);
-    //fShieldingLayers.emplace(layer_id, 
-        //SLArShieldingLayer(jlayer["name"].GetString(), tk, mat_name, importance));
+
     layer_id++;
   }
 }
