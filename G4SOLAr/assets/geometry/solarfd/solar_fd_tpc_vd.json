@@ -1,3 +1,6 @@
+"LArTarget" : {
+  "position" : {"xyz" : [0, 0, 0], "unit" : "m"}
+},
 "TPC" : [
     {"copyID" : 10, 
       "position": {"xyz" : [0, 326.05, 0], "unit" : "cm"},

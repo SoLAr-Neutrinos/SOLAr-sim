@@ -2,8 +2,8 @@
   "copyID" : 0,
   "dimensions" : [
     {"name" : "size_x" , "val" : 40.0, "unit": "m"},
-    {"name" : "size_y" , "val" : 40.0, "unit": "m"},
-    {"name" : "size_z" , "val" :100.0, "unit": "m"}
+    {"name" : "size_y" , "val" : 50.0, "unit": "m"},
+    {"name" : "size_z" , "val" : 80.0, "unit": "m"}
   ]
 },
 "Cavern" : {
@@ -18,7 +18,6 @@
     {"name" : "inner_size_x", "val" : 18946, "unit" : "mm"},
     {"name" : "inner_size_y", "val" : 23537, "unit" : "mm"},
     {"name" : "height_vault", "val" : 27830, "unit" : "mm"},
-    {"name" : "inner_size_z", "val" : 72.0, "unit" : "m"}
-
+    {"name" : "inner_size_z", "val" : 69400, "unit" : "mm"}
   ]
 }
