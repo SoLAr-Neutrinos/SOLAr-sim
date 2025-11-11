@@ -5,7 +5,9 @@
  */
 
 #include "SLArDebugUtils.hh"
-#include <G4Exception.hh>
+#include "G4Exception.hh"
+#include "G4VisAttributes.hh"
+#include "detector/SLArBaseDetModule.hh"
 #include "detector/Hall/SLArDetShielding.hh"
 
 SLArDetShielding::SLArDetShielding()
@@ -119,5 +121,32 @@ void SLArDetShielding::BuildShielding()
   }
 
   return;
+}
+
+void SLArDetShielding::SetVisAttributes() {
+  std::map<G4String, G4Colour> col_map; 
+  col_map.insert( std::make_pair("Steel", G4Colour(0.231, 0.231, 0.227))); 
+  col_map.insert( std::make_pair("Plywood", G4Colour(0.671, 0.553, 0.196))); 
+  col_map.insert( std::make_pair("Water", G4Colour(0.561, 0.863, 0.91))); 
+  col_map.insert( std::make_pair("BoratedPolyethilene", G4Colour(0.267, 0.671, 0.22))); 
+  col_map.insert( std::make_pair("Polyurethane", G4Colour(0.867, 0.871, 0.769))); 
+  col_map.insert( std::make_pair("Air", G4Colour(0.53, 0.80, 0.98)));
+  col_map.insert( std::make_pair("HDPE", G4Colour(0.82, 0.41, 0.12)));
+  col_map.insert( std::make_pair("Lead", G4Colour(0.43, 0.50, 0.56)));
+  G4Colour stdCol(0.611, 0.847, 0.988);
+
+  for (auto &ll : fShieldingLayers) {
+    printf("setting vis for shielding layer %s\n", ll.second.fName.c_str());
+    auto lv = ll.second.fModule->GetModLV();
+    printf("%s\n", lv->GetName().c_str());
+    G4Colour col = stdCol; 
+    if (col_map.count(lv->GetMaterial()->GetName()))
+    {
+      col = col_map[lv->GetMaterial()->GetName()]; 
+    }
+    lv->SetVisAttributes( G4VisAttributes( col ) ); 
+  }
+
+  fModLV->SetVisAttributes( G4VisAttributes(false) );
 }
 

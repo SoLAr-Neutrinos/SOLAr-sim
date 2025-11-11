@@ -48,6 +48,7 @@ class SLArDetShielding : public SLArBaseDetModule {
     geo::EBoxFace GetFace() const { return fFace; };
     std::map<unsigned int, SLArShieldingLayer>& GetShieldingLayers() { return fShieldingLayers; };
     const std::map<unsigned int, SLArShieldingLayer>& GetShieldingLayers() const { return fShieldingLayers; };
+    void SetVisAttributes(); 
 
 
   private: 
