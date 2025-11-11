@@ -19,5 +19,9 @@
     "steel_major_width" : {"val" : 50, "unit" : "cm"}, 
     "steel_minor_width" : {"val" : 20, "unit" : "cm"}, 
     "main_spacing" : {"val" : 150, "unit" : "cm"}
+  }, 
+  "floor_airflow" : {
+    "material" : "Air",
+    "thickness" : {"val" : 30.0 , "unit" : "cm"}
   }
 }

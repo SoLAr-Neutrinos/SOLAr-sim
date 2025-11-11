@@ -497,6 +497,21 @@ void SLArDetectorConstruction::ConstructCryostat() {
   fCryostat->BuildMaterials(fMaterialDBFile); 
   fCryostat->BuildCryostat(); 
 
+  if (fCryostat->HasAirFlow()) {
+    G4double target_size_y = fDetector->GetGeoPar("det_size_y");
+    G4double cryostat_tk = fCryostat->GetGeoPar("cryostat_tk");
+    G4double waffle_tk = (fCryostat->HasSupportStructure()) ? 
+      fCryostat->GetGeoPar("waffle_total_width") : 0.0;
+    G4double airflow_tk = fCryostat->GetAirflowUnit()->GetGeoPar("thickness");
+
+    G4ThreeVector airflow_pos = 
+      fDetector->GetModPV()->GetTranslation() 
+      - G4ThreeVector(0, 0.5*target_size_y + cryostat_tk + waffle_tk + 0.5*airflow_tk, 0);
+
+    fCryostat->GetAirflowUnit()->GetModPV("airflow_pv", 0, 
+        airflow_pos, fWorldLog, 0) ;
+  }
+
   fCryostat->GetModPV("cryostat_pv", 0, 
       fDetector->GetModPV()->GetTranslation(), 
       fWorldLog, 0) ; 
@@ -567,6 +582,8 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
       shielding_tk = shield->GetGeoPar("shielding_thickness");
     }
   }
+  G4double airflow_tk = (fCryostat->HasAirFlow()) ? 
+    fCryostat->GetGeoPar("floor_airflow_thickness") : 0.0;
 
   if (fCryostat->HasSupportStructure()) cryostat_tk += fCryostat->GetGeoPar("waffle_total_width");
 
@@ -581,13 +598,15 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   G4ThreeVector hall_halfsize = fExpHall->GetBoxHalfSize();
 
   G4double detector_floor_spacing = 0*CLHEP::cm;
-  G4ThreeVector target_y_shift = G4ThreeVector(0, cryostat_tk + shielding_tk + 0.5*target_size_y - hall_halfsize.y() + detector_floor_spacing, 0);
+  G4ThreeVector target_y_shift = G4ThreeVector(0, airflow_tk + cryostat_tk + shielding_tk 
+      + 0.5*target_size_y - hall_halfsize.y() + detector_floor_spacing, 0);
   G4ThreeVector target_pos = hall_center + target_center + target_y_shift; 
   G4cout << "target_center: " << target_center << G4endl;
   G4cout << "target_halfsize: " << 0.5*target_size_y << G4endl;
   G4cout << "hall_center: " << hall_center << G4endl;
   G4cout << "cryostat thickness: " << cryostat_tk << G4endl; 
   G4cout << "shielding thickness: " << shielding_tk << G4endl;
+  G4cout << "airflow thickness: " << airflow_tk << G4endl;
   G4cout << "target_y: " << target_pos << G4endl;
 
   fDetector->SetModPV( new G4PVPlacement(
@@ -985,6 +1004,13 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   }
 
   printf("\nCryostat ----------------------------------------\n");
+  if (fCryostat->HasAirFlow()) {
+    auto airflow_pv = fCryostat->GetAirflowUnit()->GetModPV(); 
+    printf("Cryostat floor airflow PV ptr: %p\n", static_cast<void*>(airflow_pv)); 
+    istore->AddImportanceGeometryCell(
+        imp, *airflow_pv, airflow_pv->GetCopyNo());
+  }
+
   printf("fCryostat PV ptr: %p\n", static_cast<void*>(fCryostat->GetModPV())); 
   istore->AddImportanceGeometryCell(
       imp, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
@@ -1559,6 +1585,7 @@ void SLArDetectorConstruction::ConstructShielding() {
     shield->SetMaterial( fWorldLog->GetMaterial() );
     shield->BuildMaterials(fMaterialDBFile);
     shield->BuildShielding();
+    shield->SetVisAttributes();
 
     shield->GetModPV(face_name+"_shielding_pv", shield_rot, shield_pos, 
         fWorldLog, false, static_cast<int>(face) );

@@ -50,6 +50,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     void BuildCryostat(); 
     void BuildMaterials(G4String); 
     void BuildCryostatStructure(const rapidjson::Value& jcryo);
+    SLArBaseDetModule* GetAirflowUnit() {return fAirFlowUnit;}
     SLArCryostatStructure& GetCryostatStructure() {return fCryostatStructure;}
     SLArCryostatStructure& GetShieldingStructure() {return fShieldingStructure;}
     inline std::map<geo::EBoxFace, SLArBaseDetModule*>& GetCryostatSupportStructure() {return fSupportStructure;}
@@ -60,6 +61,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     bool HasSupportStructure() const {return fBuildSupport;}
     void SetWorldMaterial(SLArMaterial* mat) {fMatWorld = mat;}
     void SetVisAttributes();
+    G4bool HasAirFlow() const {return fAddFloorAirflow;}
 
   private: 
     SLArMaterial* fMatWorld; 
@@ -67,8 +69,10 @@ class SLArDetCryostat : public SLArBaseDetModule {
     SLArMaterial* fMatBrick; 
     SLArBaseDetModule* fWaffleUnit;
     SLArBaseDetModule* fWaffleEdgeUnit;
+    SLArBaseDetModule* fAirFlowUnit; 
     G4bool fBuildSupport; 
     G4bool fAddNeutronBricks; 
+    G4bool fAddFloorAirflow; 
     std::map<G4String, SLArMaterial*> fMaterials;
     std::map<geo::EBoxFace, SLArBaseDetModule*> fSupportStructure;
     std::vector<G4VPhysicalVolume*> fSupportStructureEdges;
@@ -88,6 +92,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
 
     void BuildSupportStructureUnit(); 
     void BuildSupportStructureEdgeUnit(); 
+    void BuildAirFlowUnit();
     SLArBaseDetModule* BuildSupportStructure(geo::EBoxFace kFace); 
     SLArBaseDetModule* BuildSupportStructurePatch(G4double width, G4double len, G4String name); 
     SLArBaseDetModule* BuildSupportStructureEdge(G4double len, G4String name); 

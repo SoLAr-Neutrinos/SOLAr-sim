@@ -57,8 +57,8 @@ SLArCryostatLayer::SLArCryostatLayer(
 
 SLArDetCryostat::SLArDetCryostat() : 
   fMatWorld(nullptr), fMatWaffle(nullptr), fMatBrick(nullptr), 
-  fWaffleUnit(nullptr), fWaffleEdgeUnit(nullptr), 
-  fBuildSupport(false), fAddNeutronBricks(false)
+  fWaffleUnit(nullptr), fWaffleEdgeUnit(nullptr), fAirFlowUnit(nullptr),
+  fBuildSupport(false), fAddNeutronBricks(false), fAddFloorAirflow(false)
 {
     
 }
@@ -197,7 +197,33 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
     const G4double unit_thickness = major_width + n_brick_tk; 
     fGeoInfo->RegisterGeoPar("waffle_total_width", unit_thickness); 
   }
+
+  if (jcryo.HasMember("floor_airflow")) {
+    G4double airflow_tk = 
+      unit::ParseJsonVal(jcryo["floor_airflow"]["thickness"]);
+    fGeoInfo->RegisterGeoPar("floor_airflow_thickness", airflow_tk);
+    fAddFloorAirflow = true;
+  }
+
   return; 
+}
+
+void SLArDetCryostat::BuildAirFlowUnit() {
+  fAirFlowUnit = new SLArBaseDetModule();
+  const G4double airflow_tk = fGeoInfo->GetGeoPar("floor_airflow_thickness");
+  const G4double tgtX = fGeoInfo->GetGeoPar("target_size_x");
+  const G4double tgtZ = fGeoInfo->GetGeoPar("target_size_z");
+  const G4double cryostat_tk = fGeoInfo->GetGeoPar("cryostat_tk");
+  const G4double cryostat_waffle_tk = 
+    (fBuildSupport) ? fGeoInfo->GetGeoPar("waffle_total_width") : 0.;
+  const G4double total_cryostat_tk = cryostat_tk + cryostat_waffle_tk;
+
+  fAirFlowUnit->SetSolidVolume( new G4Box("airflow_unit_sv", 
+      0.5*(tgtX + 2*total_cryostat_tk), 0.5*airflow_tk, 0.5*(tgtZ + 2*total_cryostat_tk) ) );
+  fAirFlowUnit->SetLogicVolume( new G4LogicalVolume( 
+        fAirFlowUnit->GetModSV(), fMatWorld->GetMaterial(), "airflow_unit_lv"));
+  fAirFlowUnit->GetGeoInfo()->RegisterGeoPar("thickness", airflow_tk);
+  return;
 }
 
 void SLArDetCryostat::BuildSupportStructureUnit() {
@@ -852,6 +878,12 @@ void SLArDetCryostat::BuildCryostat()
   }
 
   new G4PVPlacement(nullptr, G4ThreeVector(0, 0, 0), fWaffleUnit->GetModLV(), "waffle_unit_pv", fModLV, false, 1239430234) ;
+
+  // -------------------------------------------------------------------------
+  // crate airflow volume (in case) 
+  if (fAddFloorAirflow) {
+    BuildAirFlowUnit();
+  }
 
   return; 
 }
