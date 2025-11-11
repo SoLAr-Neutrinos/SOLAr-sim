@@ -5,6 +5,7 @@
  */
 
 #include "SLArUserPath.hh"
+#include "SLArDebugUtils.hh"
 #include "SLArUnit.hpp"
 #include "material/SLArMaterial.hh"
 
@@ -161,13 +162,27 @@ G4Material* SLArMaterial::BuildFromAtoms(const rapidjson::Value& jmaterial) {
 
   for (const auto& comp : components) {
     G4Element* el = nullptr;
-    if ( (el = nistManager->FindOrBuildElement(comp["Z"].GetInt())) ) {}
+    if (comp.HasMember("symb") && comp.HasMember("A") == false) {
+      //printf("Building element %s from NIST database\n", comp["symb"].GetString());
+      el = nistManager->FindOrBuildElement( comp["symb"].GetString() ); 
+    }
+    else if (comp.HasMember("Z") && comp.HasMember("A") == false) {
+      //printf("Building element %s (Z=%i) from NIST database\n", 
+          //comp["name"].GetString(), comp["Z"].GetInt());
+      el = nistManager->FindOrBuildElement( comp["Z"].GetInt() );
+    }
     else {
+      //printf("Building element %s from scratch\n", comp["name"].GetString());
+      debug::require_json_member(comp, "name");
+      debug::require_json_member(comp, "symb");
+      debug::require_json_member(comp, "Z");
+      debug::require_json_member(comp, "A");
+      
       el = new G4Element(
           comp["name"].GetString(), 
-          comp["symb"].GetString(),
-          comp["Z"].GetDouble(), 
-          comp["A"].GetDouble()); 
+          comp["symb"].GetString(), 
+          comp["Z"].GetInt(), 
+          comp["A"].GetDouble() * CLHEP::g/CLHEP::mole);
     } 
     if (comp.HasMember("fraction")) {
       material->AddElement(el, comp["fraction"].GetDouble()); 
