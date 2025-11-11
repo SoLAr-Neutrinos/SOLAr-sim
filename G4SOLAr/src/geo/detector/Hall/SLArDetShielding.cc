@@ -95,26 +95,29 @@ void SLArDetShielding::BuildShielding()
 
   unsigned int layer_id = 1; 
   G4double curr_y = -0.5*fGeoInfo->GetGeoPar("shielding_thickness");
-  for (const auto &layer_itr : fShieldingLayers) {
-    const auto &layer = layer_itr.second;
+  for (auto &layer_itr : fShieldingLayers) {
+    auto &layer = layer_itr.second;
     G4double layer_tk = layer.fThickness;
     const G4String layer_name = layer.fName;
 
+    layer.fModule = new SLArBaseDetModule();
+
     curr_y += 0.5*layer_tk;
 
-    G4Box* layer_sv = new G4Box( (fName + "_layer_" + std::to_string(layer_id) + "_sv").c_str(),
+    layer.fModule->SetSolidVolume( new G4Box( (fName + "_layer_" + std::to_string(layer_id) + "_sv").c_str(),
         0.5*fGeoInfo->GetGeoPar("dim_x"),
         0.5*layer_tk,
-        0.5*fGeoInfo->GetGeoPar("dim_z") );
-    G4LogicalVolume* layer_lv = new G4LogicalVolume(
-        layer_sv,
+        0.5*fGeoInfo->GetGeoPar("dim_z") ) );
+    layer.fModule->SetLogicVolume( new G4LogicalVolume(
+        layer.fModule->GetModSV(),
         layer.fMaterial,
-        (fName + "_" + layer_name + "_" + std::to_string(layer_id) + "_lv").c_str() );
-    new G4PVPlacement(
+        (fName + "_" + layer_name + "_" + std::to_string(layer_id) + "_lv").c_str() ) );
+    auto layer_pv = new G4PVPlacement(
         0, G4ThreeVector(0, curr_y, 0),
-        layer_lv,
+        layer.fModule->GetModLV(),
         (fName + "_" + layer_name + "_" + std::to_string(layer_id) + "_pv").c_str(),
         fModLV, 0, layer_id, true );
+    layer.fModule->SetModPV( layer_pv );
     curr_y += 0.5*layer_tk;
 
     layer_id++;
