@@ -84,6 +84,7 @@ class SLArPhysicsListMessenger : public G4UImessenger
     G4UIcmdWithADoubleAndUnit* fPosCutCMD;
     G4UIcmdWithADoubleAndUnit* fAllCutCMD;
     G4UIcmdWithADoubleAndUnit* fStepMaxCMD;
+    G4UIcmdWithABool*          fEnforceEMCutsCMD;
 
     G4UIcmdWithAString*        fRemovePhysicsCMD;
     G4UIcmdWithoutParameter*   fClearPhysicsCMD;

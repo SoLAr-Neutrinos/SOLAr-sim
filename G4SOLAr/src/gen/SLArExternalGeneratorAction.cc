@@ -187,14 +187,6 @@ void SLArExternalGeneratorAction::SourceConfiguration(const rapidjson::Value& co
 
   CopyConfigurationToString(config); 
 
-  if (config.HasMember("energy")) {
-    SourceEnergyConfig(config["energy"], fConfig.ene_config);
-  }
-
-  if (config.HasMember("n_particles")) {
-    fConfig.n_particles = config["n_particles"].GetInt();
-  }
-
   if (config.HasMember("flux")) {
     fConfig.flux = unit::ParseJsonVal(config["flux"]);
   }
@@ -205,19 +197,16 @@ void SLArExternalGeneratorAction::SourceConfiguration(const rapidjson::Value& co
     throw std::invalid_argument("ext gen missing mandatory \"particle\" field.\n"); 
   }
 
-  if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
-  }
-  else {
+  SourceCommonConfig(config, fConfig);
+
+  if (fVtxGen == nullptr) {
     fVtxGen = std::make_unique<vertex::SLArPointVertexGenerator>();
   }
 
-  if (config.HasMember("direction")) {
-    SetupDirectionGenerator( config["direction"] );
-  }
-  else {
+  if (fDirGen == nullptr) {
     fDirGen = std::make_unique<direction::SLArIsotropicDirectionGenerator>();
   }
+
   return;
 }
 

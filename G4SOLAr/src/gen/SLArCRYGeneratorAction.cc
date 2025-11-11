@@ -230,6 +230,7 @@ void SLArCRYGeneratorAction::CRYConfig_t::to_input() {
 
 void SLArCRYGeneratorAction::SourceConfiguration(const rapidjson::Value& config) {
   CopyConfigurationToString(config);
+  SourceCommonConfig(config, fConfig);
 
   if ( !config.HasMember("particles")) {
     throw std::invalid_argument("cry configuration missing mandatory \"particles\" field\n");
@@ -290,10 +291,7 @@ void SLArCRYGeneratorAction::SourceConfiguration(const rapidjson::Value& config)
     fConfig.volume_crossing = config["force_volume_crossing"].GetString(); 
   }
 
-  if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
-  }
-  else {
+  if (fVtxGen == nullptr) {
     fVtxGen = std::make_unique<vertex::SLArPointVertexGenerator>();
   }
 
@@ -307,38 +305,40 @@ void SLArCRYGeneratorAction::Configure() {
   UpdateCRY(); 
 }
 
-G4String SLArCRYGeneratorAction::WriteConfig() const {
-  G4String config_str = "";
-
-  rapidjson::Document d; 
-  d.SetObject(); 
-  rapidjson::StringBuffer buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-
-  G4String gen_type = GetGeneratorType(); 
-
-  d.AddMember("type" , rapidjson::StringRef(gen_type.data()), d.GetAllocator()); 
-  d.AddMember("label", rapidjson::StringRef(fLabel.data()), d.GetAllocator()); 
-  rapidjson::Value jparticles(rapidjson::kArrayType); 
-  for (const auto& p : fConfig.activeParticles) {
-    if (p.second) {
-      jparticles.PushBack( rapidjson::StringRef(p.first.data()), d.GetAllocator()); 
-    }
-  }
-  d.AddMember("particles", jparticles, d.GetAllocator()); 
-  d.AddMember("latitude", fConfig.latitude, d.GetAllocator()); 
-  d.AddMember("n_particles_min", fConfig.n_particles_min, d.GetAllocator()); 
-  d.AddMember("n_particles_max", fConfig.n_particles_max, d.GetAllocator()); 
-  d.AddMember("box_size", fConfig.box_lenght, d.GetAllocator()); 
-  d.AddMember("date", rapidjson::StringRef( fConfig.date.data()), d.GetAllocator()); 
-  d.AddMember("altitude", fConfig.altitude, d.GetAllocator()); 
-  d.AddMember("vertex_generator_y", fConfig.cry_gen_y, d.GetAllocator()); 
-  d.AddMember("force_volume_crossing", rapidjson::StringRef(fConfig.volume_crossing.data()), d.GetAllocator());
-
-  d.Accept(writer);
-  config_str = buffer.GetString();
-  return config_str;
-}
-
+/*
+ *G4String SLArCRYGeneratorAction::WriteConfig() const {
+ *  G4String config_str = "";
+ *
+ *  rapidjson::Document d; 
+ *  d.SetObject(); 
+ *  rapidjson::StringBuffer buffer;
+ *  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+ *
+ *  G4String gen_type = GetGeneratorType(); 
+ *
+ *  d.AddMember("type" , rapidjson::StringRef(gen_type.data()), d.GetAllocator()); 
+ *  d.AddMember("label", rapidjson::StringRef(fLabel.data()), d.GetAllocator()); 
+ *  rapidjson::Value jparticles(rapidjson::kArrayType); 
+ *  for (const auto& p : fConfig.activeParticles) {
+ *    if (p.second) {
+ *      jparticles.PushBack( rapidjson::StringRef(p.first.data()), d.GetAllocator()); 
+ *    }
+ *  }
+ *  d.AddMember("particles", jparticles, d.GetAllocator()); 
+ *  d.AddMember("latitude", fConfig.latitude, d.GetAllocator()); 
+ *  d.AddMember("n_particles_min", fConfig.n_particles_min, d.GetAllocator()); 
+ *  d.AddMember("n_particles_max", fConfig.n_particles_max, d.GetAllocator()); 
+ *  d.AddMember("box_size", fConfig.box_lenght, d.GetAllocator()); 
+ *  d.AddMember("date", rapidjson::StringRef( fConfig.date.data()), d.GetAllocator()); 
+ *  d.AddMember("altitude", fConfig.altitude, d.GetAllocator()); 
+ *  d.AddMember("vertex_generator_y", fConfig.cry_gen_y, d.GetAllocator()); 
+ *  d.AddMember("force_volume_crossing", rapidjson::StringRef(fConfig.volume_crossing.data()), d.GetAllocator());
+ *
+ *  d.Accept(writer);
+ *  config_str = buffer.GetString();
+ *  return config_str;
+ *}
+ *
+ */
 }  
 }

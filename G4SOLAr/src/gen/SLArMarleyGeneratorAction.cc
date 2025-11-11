@@ -327,13 +327,7 @@ void SLArMarleyGeneratorAction::SourceConfiguration(const rapidjson::Value& conf
 
   CopyConfigurationToString(config);
 
-  if (config.HasMember("energy")) {
-    SourceEnergyConfig( config["energy"], fConfig.ene_config );
-  }
-
-  if (config.HasMember("n_particles")) {
-    fConfig.n_particles = config["n_particles"].GetInt();
-  }
+  SourceCommonConfig(config, fConfig);
 
   if (config.HasMember("neutrino")) {
     fConfig.neutrino_label = config["neutrino"].GetString();
@@ -373,17 +367,11 @@ void SLArMarleyGeneratorAction::SourceConfiguration(const rapidjson::Value& conf
     fConfig.oscillogram_info.Configure( config["oscillogram"] ); 
   }
 
-  if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
-  }
-  else {
+  if (fVtxGen == nullptr) {
     fVtxGen = std::make_unique<vertex::SLArPointVertexGenerator>();
   }
 
-  if (config.HasMember("direction")) {
-    SetupDirectionGenerator( config["direction"] );
-  }
-  else {
+  if (fDirGen == nullptr) {
     fDirGen = std::make_unique<direction::SLArFixedDirectionGenerator>();
   }
 

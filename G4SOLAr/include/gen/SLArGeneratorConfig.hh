@@ -142,6 +142,7 @@ namespace gen {
 
   struct GenConfig_t {
     int n_particles = 1; 
+    double specific_activity = 0.0;
     EnergyConfig_t ene_config = {}; 
   };
 

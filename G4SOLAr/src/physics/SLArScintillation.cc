@@ -106,6 +106,7 @@ SLArScintillation::SLArScintillation(const G4String& processName,
   , fIntegralTable2(nullptr)
   , fIntegralTable3(nullptr)
   , fEmSaturation(nullptr)
+  , fScintScale(1.0)
   , fNumPhotons(0)
   , fNumIonElectrons(0)
   , fDoGeneratePhotons(true)
@@ -122,6 +123,7 @@ SLArScintillation::SLArScintillation(const G4String& processName,
   scint_mesg_ = new G4GenericMessenger(this, "/SLAr/scint/", "Control Scinitllation Process");
   scint_mesg_->DeclareProperty("electricField", electricField_,"Electric Field for LArQL [kV/cm]");
   scint_mesg_->DeclareProperty("enablePhGeneration", fDoGeneratePhotons, "enable/disable optical ph generation");
+  scint_mesg_->DeclareProperty("setScintScaling", fScintScale, "Scale the scintillation yield by this factor");
 
   if(verboseLevel > 1)
   {
@@ -172,6 +174,7 @@ void SLArScintillation::ProcessDescription(std::ostream& out) const
   out << "Track secondaries first: " << params->GetScintTrackSecondariesFirst();
   out << "Finite rise time: " << params->GetScintFiniteRiseTime();
   out << "Scintillation by particle type: " << params->GetScintByParticleType();
+  out << "Scintillation scaling factor: " << fScintScale;
   out << "Save track information: " << params->GetScintTrackInfo();
   out << "Stack photons: " << params->GetScintStackPhotons();
   out << "Verbose level: " << params->GetScintVerboseLevel();
@@ -531,6 +534,9 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
 
 
   sum_yields = yield1 + yield2 + yield3;
+
+  // Apply scintillation yield scaling factor
+  MeanNumberOfPhotons *= fScintScale;
 
   if(MeanNumberOfPhotons > 10.)
   {

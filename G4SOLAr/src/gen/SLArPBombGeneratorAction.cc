@@ -127,31 +127,18 @@ void SLArPBombGeneratorAction::SourceConfiguration(const rapidjson::Value& confi
 
   CopyConfigurationToString(config);
 
-  if (config.HasMember("n_particles")) {
-    fConfig.n_particles = config["n_particles"].GetInt();
-  }
-
-  if (config.HasMember("energy")) {
-    SourceEnergyConfig( config["energy"], fConfig.ene_config );
-  }
-
-
   if (config.HasMember("particle")) {
     fConfig.particle_name = config["particle"].GetString();
     SetParticle( fConfig.particle_name ); 
   }
 
-  if (config.HasMember("vertex_gen")) {
-    SetupVertexGenerator( config["vertex_gen"] ); 
-  }
-  else {
+  SourceCommonConfig(config, fConfig);
+
+  if (fVtxGen == nullptr) {
     fVtxGen = std::make_unique<vertex::SLArPointVertexGenerator>();
   }
 
-  if (config.HasMember("direction")) {
-    SetupDirectionGenerator( config["direction"] );
-  }
-  else{
+  if (fDirGen == nullptr) {
     fDirGen = std::make_unique<direction::SLArIsotropicDirectionGenerator>();
   }
 

@@ -60,6 +60,7 @@ class SLArPhysicsList: public G4VModularPhysicsList
     void SetCutForGamma(G4double);
     void SetCutForElectron(G4double);
     void SetCutForPositron(G4double);
+    void EnforceEMCuts(G4bool);
 
     void SetStepMax(G4double);
     SLArStepMax* GetStepMaxProcess();

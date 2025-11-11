@@ -30,7 +30,7 @@ class SLArPlaneParameterisation : public G4VPVParameterisation {
 
     SLArPlaneParameterisation(EAxis, G4ThreeVector, G4double);
     SLArPlaneParameterisation(const rapidjson::Value&); 
-
+    G4ThreeVector ComputeTranslation(const int& copyNo) const;
     void ComputeTransformation(G4int copyNo, G4VPhysicalVolume* physVol) const; 
 
     EAxis GetReplicationAxis() {return fReplicaAxis;}
@@ -82,12 +82,18 @@ inline void SLArPlaneParameterisation::SetReplicationAxis(EAxis ax) {
   else                             {fAxisVector = G4ThreeVector(0, 0, 1);} 
 }
 
+inline G4ThreeVector SLArPlaneParameterisation::ComputeTranslation(const int& copyNo) const
+{
+  G4ThreeVector origin = fStartPos; 
+  origin += fAxisVector*(copyNo)*fSpacing;
+  return origin;
+}
+
 inline void SLArPlaneParameterisation::ComputeTransformation(
     G4int copyNo, G4VPhysicalVolume* physVol) const {
-  G4ThreeVector origin = fStartPos; 
-  origin += fAxisVector*(copyNo)*fSpacing; 
+  G4ThreeVector translation = ComputeTranslation(copyNo);
 
-  physVol->SetTranslation(origin); 
+  physVol->SetTranslation(translation); 
   physVol->SetRotation(0); 
   return; 
 }

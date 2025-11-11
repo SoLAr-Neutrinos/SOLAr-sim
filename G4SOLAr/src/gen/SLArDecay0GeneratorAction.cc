@@ -742,12 +742,12 @@ namespace bxdecay0_g4{
 
     else if  (fConfig.spec_activity) {
       if (auto ptr = dynamic_cast<const vertex::SLArBulkVertexGenerator*>(fVtxGen.get())) {
-        vol_mass = ptr->GetMassVolumeGenerator();
-        //G4cout << "Total volume mass: " << vol_mass/CLHEP::kg << G4endl;
+        vol_mass = ptr->GetBulkVolumeMass();
+        G4cout << "Total volume mass [kg]: " << vol_mass/CLHEP::kg << G4endl;
         exp_num_decays = fConfig.spec_activity * vol_mass * total_time;
-        //G4cout << "Expected number of decays: " << exp_num_decays << G4endl;
+        G4cout << "Expected number of decays: " << exp_num_decays << G4endl;
         num_decays = CLHEP::RandPoisson::shoot(exp_num_decays);
-        //G4cout << "Number of decays: " << num_decays << G4endl;
+        G4cout << "Number of decays: " << num_decays << G4endl;
       }
       else {
         std::cerr << "ERROR: Activity set but no bulk generator employed!" << '\n';
