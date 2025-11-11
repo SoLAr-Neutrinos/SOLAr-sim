@@ -5,7 +5,7 @@
     "dimensions" : [
       {"name" : "dim_x", "val" :  18.946 , "unit" : "m" },
       {"name" : "dim_y", "val" :   6.0   , "unit" : "cm"},
-      {"name" : "dim_z", "val" :  72.0   , "unit" : "m" }
+      {"name" : "dim_z", "val" :  69.4   , "unit" : "m" }
     ],
     "layers" : [
       {"name" : "gammastopper"  , "material" : "Lead"               , "thickness" : {"val":  2.5 , "unit" : "cm"} , "importance" :  1 },
@@ -19,7 +19,7 @@
     "dimensions" : [
       {"name" : "dim_x", "val" : 18.421 , "unit" : "m" },
       {"name" : "dim_y", "val" : 6.0 , "unit" : "cm"},
-      {"name" : "dim_z", "val" : 72.0 , "unit" : "m" }
+      {"name" : "dim_z", "val" : 69.4, "unit" : "m" }
     ],
     "layers" : [
       {"name" : "gammastopper" , "material" : "Lead" , "thickness" : {"val": 2.5 , "unit" : "cm"} , "importance" : 1 },
@@ -33,7 +33,7 @@
     "dimensions" : [
       {"name" : "dim_x", "val" : 18.421 , "unit" : "m" },
       {"name" : "dim_y", "val" : 6.0 , "unit" : "cm"},
-      {"name" : "dim_z", "val" : 72.0 , "unit" : "m" }
+      {"name" : "dim_z", "val" : 69.4 , "unit" : "m" }
     ],
     "layers" : [
       {"name" : "gammastopper" , "material" : "Lead" , "thickness" : {"val": 2.5 , "unit" : "cm"} , "importance" : 1 },
