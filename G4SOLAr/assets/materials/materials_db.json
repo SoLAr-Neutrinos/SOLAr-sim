@@ -61,8 +61,31 @@
     {"name" : "Steel", 
       "NIST" : "G4_STAINLESS-STEEL"
     },
+    {
+      "name" : "DuneSteel", 
+      "density" : {"val" : 7.93, "unit" : "g/cm3"},
+      "mixture_components" : [
+        {"name" : "Iron"     , "NIST" : "G4_Fe", "massFraction" : 0.958},
+        {"name" : "Manganese", "NIST" : "G4_Mn", "massFraction" : 0.018},
+        {"name" : "Nickel"   , "NIST" : "G4_Ni", "massFraction" : 0.008},
+        {"name" : "Silicon"  , "NIST" : "G4_Si", "massFraction" : 0.006},
+        {"name" : "Copper"   , "NIST" : "G4_Cu", "massFraction" : 0.005},
+        {"name" : "Chromium" , "NIST" : "G4_Cr", "massFraction" : 0.003},
+        {"name" : "Carbon"   , "NIST" : "G4_C" , "massFraction" : 0.002}
+      ]
+    },
     {"name" : "Aluminum", 
       "NIST" : "G4_ALUMINUM_OXIDE"
+    },
+    {
+      "name" : "DuneFoam", 
+      "density" : {"val" : 90, "unit" : "kg/m3"},
+      "atomic_components" : [
+        {"name" : "Carbon"  , "symb" : "C", "nAtom" : 54},
+        {"name" : "Hydrogen", "symb" : "H", "nAtom" : 60},
+        {"name" : "Nitrogen", "symb" : "N", "nAtom" :  4},
+        {"name" : "Oxygen"  , "symb" : "O", "nAtom" : 15}
+      ]
     },
     {"name" : "Polyurethane", 
       "density" : {"val" : 90, "unit" : "kg/m3"}, 

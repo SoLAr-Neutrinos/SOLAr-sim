@@ -929,6 +929,7 @@ SLArBaseDetModule* SLArDetCryostat::BuildShieldingLayer(
 void SLArDetCryostat::SetVisAttributes() {
   std::map<G4String, G4Colour> col_map; 
   col_map.insert( std::make_pair("Steel", G4Colour(0.231, 0.231, 0.227))); 
+  col_map.insert( std::make_pair("DuneSteel", G4Colour(0.231, 0.231, 0.227))); 
   col_map.insert( std::make_pair("Plywood", G4Colour(0.671, 0.553, 0.196))); 
   col_map.insert( std::make_pair("Water", G4Colour(0.561, 0.863, 0.91))); 
   col_map.insert( std::make_pair("BoratedPolyethilene", G4Colour(0.267, 0.671, 0.22))); 
@@ -985,7 +986,7 @@ void SLArDetCryostat::BuildMaterials(G4String material_db) {
   }
 
   fMatWaffle = new SLArMaterial(); 
-  fMatWaffle->SetMaterialID("Steel"); 
+  fMatWaffle->SetMaterialID("DuneSteel"); 
   fMatWaffle->BuildMaterialFromDB(material_db); 
 
   if (fMatBrick) {
