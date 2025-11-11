@@ -162,6 +162,10 @@ class SLArScintillation : public G4VRestDiscreteProcess
   // Called by the user to set the scintillation yield as a function
   // of energy deposited by particle type
 
+  inline void SetScintScaling(const G4double scale) { fScintScale = scale; }
+
+  inline G4double GetScintScaling() const { return fScintScale; }
+
   G4bool GetScintillationByParticleType() const;
   // Return the boolean that determines the method of scintillation
   // production
@@ -207,6 +211,8 @@ class SLArScintillation : public G4VRestDiscreteProcess
   G4EmSaturation* fEmSaturation;
   const G4ParticleDefinition* opticalphoton =
     G4OpticalPhoton::OpticalPhotonDefinition();
+
+  G4double fScintScale; 
 
   G4int fNumPhotons;
   G4int fNumIonElectrons; 
