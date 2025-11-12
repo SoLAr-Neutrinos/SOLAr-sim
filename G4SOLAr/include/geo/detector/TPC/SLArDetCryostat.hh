@@ -53,8 +53,9 @@ class SLArDetCryostat : public SLArBaseDetModule {
     SLArBaseDetModule* GetAirflowUnit() {return fAirFlowUnit;}
     SLArCryostatStructure& GetCryostatStructure() {return fCryostatStructure;}
     SLArCryostatStructure& GetShieldingStructure() {return fShieldingStructure;}
-    inline std::map<geo::EBoxFace, SLArBaseDetModule*>& GetCryostatSupportStructure() {return fSupportStructure;}
+    inline std::map<geo::EBoxFace, SLArBaseDetModule*>& GetCryostatSupportStructureFaces() {return fSupportStructureFaces;}
     inline std::vector<G4VPhysicalVolume*>& GetCryostatSupportStructureEdges() {return fSupportStructureEdges;}
+    inline SLArBaseDetModule* GetSupportStructure() {return fSupportStructure;}
     inline SLArBaseDetModule* GetWaffleUnit() {return fWaffleUnit;}
     inline SLArBaseDetModule* GetWaffleCornerUnit() {return fWaffleEdgeUnit;}
     virtual void Init(const rapidjson::Value&) override {}
@@ -64,17 +65,18 @@ class SLArDetCryostat : public SLArBaseDetModule {
     G4bool HasAirFlow() const {return fAddFloorAirflow;}
 
   private: 
-    SLArMaterial* fMatWorld; 
-    SLArMaterial* fMatWaffle; 
-    SLArMaterial* fMatBrick; 
-    SLArBaseDetModule* fWaffleUnit;
-    SLArBaseDetModule* fWaffleEdgeUnit;
-    SLArBaseDetModule* fAirFlowUnit; 
+    SLArMaterial* fMatWorld = {}; 
+    SLArMaterial* fMatWaffle = {}; 
+    SLArMaterial* fMatBrick = {}; 
+    SLArBaseDetModule* fWaffleUnit = {};
+    SLArBaseDetModule* fWaffleEdgeUnit = {};
+    SLArBaseDetModule* fAirFlowUnit = {}; 
+    SLArBaseDetModule* fSupportStructure = {};
     G4bool fBuildSupport; 
     G4bool fAddNeutronBricks; 
     G4bool fAddFloorAirflow; 
     std::map<G4String, SLArMaterial*> fMaterials;
-    std::map<geo::EBoxFace, SLArBaseDetModule*> fSupportStructure;
+    std::map<geo::EBoxFace, SLArBaseDetModule*> fSupportStructureFaces;
     std::vector<G4VPhysicalVolume*> fSupportStructureEdges;
 
     SLArCryostatStructure fCryostatStructure; 
@@ -93,7 +95,8 @@ class SLArDetCryostat : public SLArBaseDetModule {
     void BuildSupportStructureUnit(); 
     void BuildSupportStructureEdgeUnit(); 
     void BuildAirFlowUnit();
-    SLArBaseDetModule* BuildSupportStructure(geo::EBoxFace kFace); 
+    SLArBaseDetModule* BuildSupportStructure();
+    SLArBaseDetModule* BuildSupportStructureFace(geo::EBoxFace kFace); 
     SLArBaseDetModule* BuildSupportStructurePatch(G4double width, G4double len, G4String name); 
     SLArBaseDetModule* BuildSupportStructureEdge(G4double len, G4String name); 
 };

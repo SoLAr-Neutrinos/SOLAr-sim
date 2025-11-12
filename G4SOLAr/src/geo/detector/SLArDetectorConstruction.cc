@@ -1016,7 +1016,7 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       imp, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
 
   printf("Support structure\n");
-  for (const auto &face_ : fCryostat->GetCryostatSupportStructure() ) {
+  for (const auto &face_ : fCryostat->GetCryostatSupportStructureFaces() ) {
     auto face = face_.second;
     G4GeometryCell cell(*face->GetModPV(), face->GetModPV()->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
