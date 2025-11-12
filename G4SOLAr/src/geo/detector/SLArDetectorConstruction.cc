@@ -73,6 +73,8 @@ SLArDetectorConstruction::SLArDetectorConstruction(
    fWorldLog(nullptr), 
    fWorldPhys(nullptr) 
 { 
+  fDetectorMsgr = new SLArDetectorConstructionMsgr(this);
+
   fGeometryCfgFile = geometry_cfg_file; 
   fMaterialDBFile  = material_db_file; 
 #ifdef SLAR_DEBUG
@@ -535,11 +537,32 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   visAttributes->SetColor(0.25,0.54,0.79, 0.0);
   fWorldLog->SetVisAttributes(visAttributes);
 
-  
   SLArAnalysisManager::Instance()->CreateEventStructure();
 
   //always return the physical World
   return fWorldPhys;
+}
+
+bool SLArDetectorConstruction::CheckOverlaps(bool fatal) const {
+  G4cout << "=== Checking for geometry overlaps ===" << G4endl;
+
+  G4bool overlapFound = false;
+
+  for (auto pv : *G4PhysicalVolumeStore::GetInstance()) {
+    if (pv->CheckOverlaps(1000, 0.0, true)) {
+      overlapFound = true;
+      G4String msg = "Overlap detected in volume " + pv->GetName();
+      G4Exception("MyDetectorConstruction::CheckOverlaps()",
+          "GeomOverlap001",
+          fatal ? FatalException : JustWarning,
+          msg);
+    }
+  }
+
+  if (!overlapFound)
+    G4cout << "No overlaps detected" << G4endl;
+
+  return overlapFound;
 }
 
 /**

@@ -7,6 +7,7 @@
 #ifndef SLArDetectorConstruction_h
 #define SLArDetectorConstruction_h 
 
+#include "detector/SLArDetectorConstructionMsgr.hh"
 #include "detector/Hall/SLArDetExpHall.hh"
 #include "detector/TPC/SLArDetTPC.hh"
 #include "detector/TPC/SLArDetCryostat.hh"
@@ -53,6 +54,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
 
   public:
     
+    bool CheckOverlaps(bool fatal = true) const;
     //! Construct world and place detectors
     virtual G4VPhysicalVolume* Construct();
     //! Construct Target
@@ -107,6 +109,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void                            AddExternalScorer(const G4String phys_volume_name, const G4String alias);
 
   private:
+    //! Messenger class for detector construction commands
+    SLArDetectorConstructionMsgr* fDetectorMsgr;
+
     //! Detector description initilization
     void Init();
     G4String fGeometryCfgFile; //!< Geometry configuration file
