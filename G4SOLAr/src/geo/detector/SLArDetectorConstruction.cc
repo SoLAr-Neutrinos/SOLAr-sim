@@ -1559,7 +1559,7 @@ void SLArDetectorConstruction::ConstructShielding() {
         }
       case geo::EBoxFace::kXminus:
         shield_rot = new G4RotationMatrix();
-        shield_rot->rotateZ(-CLHEP::halfpi);
+        shield_rot->rotateZ(CLHEP::halfpi);
         gap = fabs( gap_shield_cryostat.x() );
         shield_pos.set(
             hall_center.x() - hall_halfsize.x() + (shield_thickness+gap)*0.5,
@@ -1568,7 +1568,7 @@ void SLArDetectorConstruction::ConstructShielding() {
         break;
       case geo::EBoxFace::kXplus:
         shield_rot = new G4RotationMatrix();
-        shield_rot->rotateZ(CLHEP::halfpi);
+        shield_rot->rotateZ(-CLHEP::halfpi);
         gap = fabs( gap_shield_cryostat.x() );
         shield_pos.set(
             hall_center.x() + hall_halfsize.x() - (shield_thickness+gap)*0.5,

@@ -19,12 +19,12 @@
     "dimensions" : [
       {"name" : "dim_x", "val" : 18.421 , "unit" : "m" },
       {"name" : "dim_y", "val" : 6.0 , "unit" : "cm"},
-      {"name" : "dim_z", "val" : 69.4, "unit" : "m" }
+      {"name" : "dim_z", "val" : 69.122, "unit" : "m" }
     ],
     "layers" : [
       {"name" : "gammastopper" , "material" : "Lead" , "thickness" : {"val": 2.5 , "unit" : "cm"} , "importance" : 1 },
       {"name" : "neutronstopper", "material" : "BoratedPolyethilene", "thickness" : {"val": 20.0 , "unit" : "cm"} , "importance" : 2 },
-      {"name" : "airflow" , "material" : "Air" , "thickness" : {"val": 24.5 , "unit" : "cm"} , "importance" : 4 }
+      {"name" : "airflow" , "material" : "Air" , "thickness" : {"val": 10.2 , "unit" : "cm"} , "importance" : 4 }
     ]
   },
   {
@@ -38,7 +38,7 @@
     "layers" : [
       {"name" : "gammastopper" , "material" : "Lead" , "thickness" : {"val": 2.5 , "unit" : "cm"} , "importance" : 1 },
       {"name" : "neutronstopper", "material" : "BoratedPolyethilene", "thickness" : {"val": 20.0 , "unit" : "cm"} , "importance" : 2 },
-      {"name" : "airflow" , "material" : "Air" , "thickness" : {"val": 24.5 , "unit" : "cm"} , "importance" : 4 }
+      {"name" : "airflow" , "material" : "Air" , "thickness" : {"val": 10.2 , "unit" : "cm"} , "importance" : 4 },
     ]
   }, 
   {
