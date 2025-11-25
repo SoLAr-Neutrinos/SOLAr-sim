@@ -10,6 +10,7 @@
 #include "SLArRootUtilities.hh"
 #include "SLArExternalGeneratorAction.hh"
 #include "SLArPointVertexGenerator.hh"  
+#include "SLArGPSVertexGenerator.hh"
 #include "SLArBoxSurfaceVertexGenerator.hh"
 #include "SLArIsotropicDirectionGenerator.hh"
 #include "SLArBulkVertexGenerator.hh"
@@ -115,6 +116,10 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
   if (auto ptr = dynamic_cast<const vertex::SLArBoxSurfaceVertexGenerator*>(fVtxGen.get())) {
     face_area = ptr->GetSurfaceGenerator();
     //G4cout << "Face Area: " << face_area << G4endl;
+  } 
+  else if (auto ptr = dynamic_cast<const vertex::SLArGPSVertexGenerator*>(fVtxGen.get())) {
+    face_area = ptr->GetSurfaceGenerator();
+    //G4cout << "GPS vtx gen Face Area: " << face_area << G4endl;
   }
   //G4cout << "Flux: " << fConfig.flux << G4endl;
 
@@ -162,9 +167,9 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
     fParticleGun->SetParticleMomentumDirection( dir ); 
 
     fParticleGun->GeneratePrimaryVertex(ev); 
-
-    auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
   }
+
+  auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
 
   return;
 }
