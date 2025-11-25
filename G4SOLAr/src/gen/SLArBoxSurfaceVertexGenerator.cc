@@ -229,8 +229,18 @@ if ( config.HasMember("time") ) {
 
   if (config.HasMember("origin_face")) {
       FixVertexFace(true); 
+      if (config["origin_face"].IsNumber()) {
       SetVertexFace(
           (geo::EBoxFace)config["origin_face"].GetInt()); 
+      }
+      else if (config["origin_face"].IsString()) {
+        G4String faceName = config["origin_face"].GetString(); 
+        SetVertexFace( geo::get_face_from_name(faceName) );
+      }
+      else {
+        G4Exception("SLArBoxSurfaceVertexGenerator::Config",
+            "SLArCode001", FatalException, "origin_face must be int or string");
+      }
   }
 
   return;
