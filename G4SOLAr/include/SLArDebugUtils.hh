@@ -49,6 +49,29 @@ namespace debug {
       G4Exception("debug::require_json_type", "JsonDebug002", FatalException, err_msg);
     }
   }
+
+  inline bool check_json_value_field(const rapidjson::Value& j, const G4String& field) {
+    if (j.HasMember("val") == false) {
+      G4String msg = "SLArGPSDirectionGenerator::Config ERROR: ";
+      msg += "Field \"" + field + "\" must have a \"val\" field\n";
+      fprintf(stderr, "%s", msg.data());
+      exit(EXIT_FAILURE);
+    }
+
+    const auto& jval = j["val"];
+    if (jval.IsNumber() == false && jval.IsArray() == false) {
+      G4String msg = "SLArGPSDirectionGenerator::CheckJSONFieldIsSValue ERROR: ";
+      msg += "Field \"val\" must be a number or an array\n";
+      fprintf(stderr, "%s", msg.data());
+      exit(EXIT_FAILURE);
+    }
+
+    if (j.HasMember("unit")) {
+      debug::require_json_type(j["unit"], rapidjson::kStringType);
+    }
+    return true;
+  }
+
 }
 
 #endif /* end of include guard SLARDEBUGUTILS_HH */
