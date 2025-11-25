@@ -14,9 +14,82 @@ SLArGPSVertexGenerator::SLArGPSVertexGenerator()
 {
   fPSPosGen = std::make_unique<G4SPSPosDistribution>();
   fPSRandGen = std::make_unique<G4SPSRandomGenerator>();
+  fPSPosGen->SetBiasRndm( fPSRandGen.get() );
 }
 
 SLArGPSVertexGenerator::~SLArGPSVertexGenerator() {}
+
+double SLArGPSVertexGenerator::GetSurfaceGenerator() const 
+{
+  if ( fPSPosGen->GetPosDisType() != "Surface"  && 
+       fPSPosGen->GetPosDisType() != "Plane" ) {
+    G4Exception("SLArGPSVertexGenerator::GetSurfaceArea", "VtxGen001", FatalException,
+        "Surface area is only defined for 'Surface' or 'Plane' position distribution types.");
+  }
+
+  G4double surface = 0.0;
+
+  if (fPSPosGen->GetPosDisShape() == "Circle") {
+    surface = 2.0 * CLHEP::pi * 
+      (fPSPosGen->GetRadius()*fPSPosGen->GetRadius());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Annulus") {
+    surface = 2.0 * CLHEP::pi * 
+      (fPSPosGen->GetRadius()*fPSPosGen->GetRadius() - 
+       fPSPosGen->GetRadius0()*fPSPosGen->GetRadius0());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Ellipse") {
+    surface = 2.0 * CLHEP::pi * 
+      (fPSPosGen->GetHalfX() * fPSPosGen->GetHalfY());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Square") {
+    surface = 4.0 * (fPSPosGen->GetHalfX() * fPSPosGen->GetHalfY());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Rectangle") {
+    surface = 4.0 * (fPSPosGen->GetHalfX() * fPSPosGen->GetHalfY());
+  }
+  else {
+    G4Exception("SLArGPSVertexGenerator::GetSurfaceArea", "VtxGen002", FatalException,
+        ("Surface area calculation not implemented for shape: " + fPSPosGen->GetPosDisShape()).data());
+  }
+
+  return surface;
+}
+
+G4double SLArGPSVertexGenerator::GetVolumeGenerator() const 
+{
+  if ( fPSPosGen->GetPosDisType() != "Volume" ) {
+    G4Exception("SLArGPSVertexGenerator::GetVolumeGenerator", "VtxGen003", FatalException,
+        "Volume is only defined for 'Volume' position distribution type.");
+  }
+
+  G4double volume = 0.0;
+
+  if (fPSPosGen->GetPosDisShape() == "Sphere") {
+    volume = (4.0/3.0) * CLHEP::pi * 
+      (fPSPosGen->GetRadius()*fPSPosGen->GetRadius()*fPSPosGen->GetRadius() - 
+       fPSPosGen->GetRadius0()*fPSPosGen->GetRadius0()*fPSPosGen->GetRadius0());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Ellipsoid") {
+    volume = (4.0/3.0) * CLHEP::pi * 
+      (fPSPosGen->GetHalfX() * fPSPosGen->GetHalfY() * fPSPosGen->GetHalfZ());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Cylinder") {
+    volume = CLHEP::pi * 
+      (fPSPosGen->GetRadius()*fPSPosGen->GetRadius() - 
+       fPSPosGen->GetRadius0()*fPSPosGen->GetRadius0()) * 
+      (2.0 * fPSPosGen->GetHalfZ());
+  }
+  else if (fPSPosGen->GetPosDisShape() == "Para") {
+    volume = 8.0 * fPSPosGen->GetHalfX() * fPSPosGen->GetHalfY() * fPSPosGen->GetHalfZ();
+  }
+  else {
+    G4Exception("SLArGPSVertexGenerator::GetVolumeGenerator", "VtxGen004", FatalException,
+        ("Volume calculation not implemented for shape: " + fPSPosGen->GetPosDisShape()).data());
+  }
+
+  return volume;
+}
 
 void SLArGPSVertexGenerator::Config(const rapidjson::Value& config) 
 {
@@ -146,7 +219,6 @@ void SLArGPSVertexGenerator::Config(const rapidjson::Value& config)
   if (config.HasMember("confine_to_volume"))
     fPSPosGen->ConfineSourceToVolume( config["confine_to_volume"].GetString() );
 
-  fPSPosGen->SetBiasRndm( fPSRandGen.get() );
   return;
 }
 
