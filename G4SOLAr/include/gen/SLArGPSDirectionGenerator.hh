@@ -69,6 +69,8 @@ namespace direction{
       inline SLArGPSDirectionGenerator() : SLArDirectionGenerator() {
         fAngDist = std::make_unique<G4SPSAngDistribution>();
         fRandGen = std::make_unique<G4SPSRandomGenerator>();
+        fAngDist->SetBiasRndm( fRandGen.get() );
+        fAngDist->SetPosDistribution( new G4SPSPosDistribution() );
       }
 
       inline ~SLArGPSDirectionGenerator() {}
