@@ -38,7 +38,7 @@
     "layers" : [
       {"name" : "gammastopper" , "material" : "Lead" , "thickness" : {"val": 2.5 , "unit" : "cm"} , "importance" : 1 },
       {"name" : "neutronstopper", "material" : "BoratedPolyethilene", "thickness" : {"val": 20.0 , "unit" : "cm"} , "importance" : 2 },
-      {"name" : "airflow" , "material" : "Air" , "thickness" : {"val": 10.2 , "unit" : "cm"} , "importance" : 4 },
+      {"name" : "airflow" , "material" : "Air" , "thickness" : {"val": 10.2 , "unit" : "cm"} , "importance" : 4 }
     ]
   }, 
   {
