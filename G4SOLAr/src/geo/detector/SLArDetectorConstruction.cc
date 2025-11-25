@@ -1612,6 +1612,9 @@ void SLArDetectorConstruction::ConstructShielding() {
 
     shield->GetModPV(face_name+"_shielding_pv", shield_rot, shield_pos, 
         fWorldLog, false, static_cast<int>(face) );
+
+    printf("Shielding face %s constructed with effective thickness %g cm (airgap included) \n", 
+        face_name.data(), shield->GetGeoInfo()->GetGeoPar("shielding_thickness")/CLHEP::cm);
   }
 }
 
