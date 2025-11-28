@@ -1,0 +1,111 @@
+{
+  "generator" : [
+    {
+      "type" : "external", 
+      "label" : "north_wall_gen", 
+      "config" : {
+        "particle" : "neutron", 
+        "n_particles" : 1, 
+        "mode" : "ext_spectrum", 
+        "energy_distribution" : {
+          "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
+          "objname" : "rock/rock_n_cryostat"
+        },
+        "direction" : {
+          "type" : "gps_dir",
+          "config" : { 
+            "type" : "iso",
+            "mintheta" : {"val" :  0.0, "unit" : "deg"},
+            "maxtheta" : {"val" : 90.0, "unit" : "deg"},
+            "rot1" : [0,0,-1]
+          }
+        },
+        "vertex_gen" : {
+          "type" : "gps_pos", 
+          "config" : {
+            "volume" : "Xplus_shielding_pv",
+            "type" : "Plane",
+            "shape" : "Rectangle",
+            "halfx" : {"val" : 34700.0, "unit" : "mm"},
+            "halfy" : {"val" :  9473.0, "unit" : "mm"},
+            "center" : {"val" : [0,-19.965,0], "unit" : "cm"},
+            "rot1" : [0,0,1],
+            "rot2" : [1,0,0],
+            "time" : {
+              "mode" : "fixed",
+              "value" : {"val" : 0.0, "unit" : "ns"}
+            }
+          }
+        }, 
+        "vertex_gen" : {
+          "type" : "gps_pos", 
+          "config" : {
+            "volume" : "Xminus_shielding_pv",
+            "type" : "Plane",
+            "shape" : "Rectangle",
+            "halfx" : {"val" : 34700.0, "unit" : "mm"},
+            "halfy" : {"val" :  9473.0, "unit" : "mm"},
+            "center" : {"val" : [0,-19.965,0], "unit" : "cm"},
+            "rot1" : [0,0,1],
+            "rot2" : [1,0,0],
+            "time" : {
+              "mode" : "fixed",
+              "value" : {"val" : 0.0, "unit" : "ns"}
+            }
+          }
+        },
+        "vertex_gen" : {
+          "type" : "gps_pos", 
+          "config" : {
+            "volume" : "Zminus_shielding_pv",
+            "type" : "Plane",
+            "shape" : "Rectangle",
+            "halfx" : {"val" : 11768.5, "unit" : "mm"},
+            "halfy" : {"val" :  9473.0, "unit" : "mm"},
+            "center" : {"val" : [0,-143.815,0], "unit" : "cm"},
+            "rot1" : [1,0,0],
+            "rot2" : [0,0,1],
+            "time" : {
+              "mode" : "fixed",
+              "value" : {"val" : 0.0, "unit" : "ns"}
+            }
+          }
+        },
+        "vertex_gen" : {
+          "type" : "gps_pos", 
+          "config" : {
+            "volume" : "Zplus_shielding_pv",
+            "type" : "Plane",
+            "shape" : "Rectangle",
+            "halfx" : {"val" : 11768.5, "unit" : "mm"},
+            "halfy" : {"val" :  9473.0, "unit" : "mm"},
+            "center" : {"val" : [0,-143.815,0], "unit" : "cm"},
+            "rot1" : [1,0,0],
+            "rot2" : [0,0,1],
+            "time" : {
+              "mode" : "fixed",
+              "value" : {"val" : 0.0, "unit" : "ns"}
+            }
+          }
+        },
+        "vertex_gen" : {
+          "type" : "gps_pos", 
+          "config" : {
+            "volume" : "Yminus_shielding_pv",
+            "type" : "Plane",
+            "shape" : "Rectangle",
+            "halfx" : {"val" : 34700, "unit" : "mm"},
+            "halfy" : {"val" :  11768.5, "unit" : "mm"},
+            "center" : {"val" : [0,-26.25,0], "unit" : "cm"},
+            "rot1" : [1,0,0],
+            "rot2" : [0,0,-1],
+            "time" : {
+              "mode" : "fixed",
+              "value" : {"val" : 0.0, "unit" : "ns"}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
