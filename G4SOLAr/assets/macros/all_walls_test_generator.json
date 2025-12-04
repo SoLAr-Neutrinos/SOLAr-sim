@@ -6,10 +6,12 @@
       "config" : {
         "particle" : "neutron", 
         "n_particles" : 1, 
-        "mode" : "ext_spectrum", 
-        "energy_distribution" : {
-          "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
-          "objname" : "rock/rock_n_cryostat"
+        "energy" : {
+          "mode" : "ext_spectrum", 
+          "energy_distribution" : {
+            "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
+            "objname" : "rock/rock_n_cryostat"
+          }
         },
         "direction" : {
           "type" : "gps_dir",
@@ -36,7 +38,31 @@
               "value" : {"val" : 0.0, "unit" : "ns"}
             }
           }
-        }, 
+        }
+      }
+    },
+    {
+      "type" : "external", 
+      "label" : "south_wall_gen", 
+      "config" : {
+        "particle" : "neutron", 
+        "n_particles" : 1, 
+        "energy" : {
+          "mode" : "ext_spectrum", 
+          "energy_distribution" : {
+            "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
+            "objname" : "rock/rock_n_cryostat"
+          }
+        },
+        "direction" : {
+          "type" : "gps_dir",
+          "config" : { 
+            "type" : "iso",
+            "mintheta" : {"val" :  0.0, "unit" : "deg"},
+            "maxtheta" : {"val" : 90.0, "unit" : "deg"},
+            "rot1" : [0,0,-1]
+          }
+        },
         "vertex_gen" : {
           "type" : "gps_pos", 
           "config" : {
@@ -52,6 +78,30 @@
               "mode" : "fixed",
               "value" : {"val" : 0.0, "unit" : "ns"}
             }
+          }
+        }
+      }
+    },
+    {
+      "type" : "external", 
+      "label" : "east_wall_gen", 
+      "config" : {
+        "particle" : "neutron", 
+        "n_particles" : 1, 
+        "energy" : {
+          "mode" : "ext_spectrum", 
+          "energy_distribution" : {
+            "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
+            "objname" : "rock/rock_n_cryostat"
+          }
+        },
+        "direction" : {
+          "type" : "gps_dir",
+          "config" : { 
+            "type" : "iso",
+            "mintheta" : {"val" :  0.0, "unit" : "deg"},
+            "maxtheta" : {"val" : 90.0, "unit" : "deg"},
+            "rot1" : [0,0,-1]
           }
         },
         "vertex_gen" : {
@@ -70,6 +120,30 @@
               "value" : {"val" : 0.0, "unit" : "ns"}
             }
           }
+        }
+      }
+    },
+    {
+      "type" : "external", 
+      "label" : "west_wall_gen", 
+      "config" : {
+        "particle" : "neutron", 
+        "n_particles" : 1, 
+        "energy" : {
+          "mode" : "ext_spectrum", 
+          "energy_distribution" : {
+            "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
+            "objname" : "rock/rock_n_cryostat"
+          }
+        },
+        "direction" : {
+          "type" : "gps_dir",
+          "config" : { 
+            "type" : "iso",
+            "mintheta" : {"val" :  0.0, "unit" : "deg"},
+            "maxtheta" : {"val" : 90.0, "unit" : "deg"},
+            "rot1" : [0,0,-1]
+          }
         },
         "vertex_gen" : {
           "type" : "gps_pos", 
@@ -86,6 +160,30 @@
               "mode" : "fixed",
               "value" : {"val" : 0.0, "unit" : "ns"}
             }
+          }
+        }
+      }
+    },
+    {
+      "type" : "external", 
+      "label" : "floor_wall_gen", 
+      "config" : {
+        "particle" : "neutron", 
+        "n_particles" : 1, 
+        "energy" : {
+          "mode" : "ext_spectrum", 
+          "energy_distribution" : {
+            "filename" : "../LocalAnalysis/externals_cryostat_nlog_20250117.root",
+            "objname" : "rock/rock_n_cryostat"
+          }
+        },
+        "direction" : {
+          "type" : "gps_dir",
+          "config" : { 
+            "type" : "iso",
+            "mintheta" : {"val" :  0.0, "unit" : "deg"},
+            "maxtheta" : {"val" : 90.0, "unit" : "deg"},
+            "rot1" : [0,0,-1]
           }
         },
         "vertex_gen" : {
