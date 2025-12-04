@@ -735,9 +735,14 @@ void SLArDetCryostat::BuildCryostat()
       "CryostatLV", 0, 0, 0)
     );
 
+  if (fBuildSupport) {
+    BuildSupportStructure();
+    fSupportStructure->GetModPV("cryostat_support_structure_pv", 
+        0, G4ThreeVector(0,0,0), fModLV, false, 996 );
+  }
+
   // -------------------------------------------------------------------------
   // create cryostat layers
-
   G4cout << "create cryostat layers" << G4endl; 
   for (auto& ll : fCryostatStructure) {
     auto& layer = ll.second;
@@ -752,12 +757,6 @@ void SLArDetCryostat::BuildCryostat()
     layer.fModule->GetModPV(
         layer.fName, 0, G4ThreeVector(0, 0, 0), fModLV, 
         false, ll.first);
-  }
-
-  if (fBuildSupport) {
-    BuildSupportStructure();
-    fSupportStructure->GetModPV("cryostat_support_structure_pv", 
-        0, G4ThreeVector(0,0,0), fModLV, false, 996 );
   }
 
   // -------------------------------------------------------------------------

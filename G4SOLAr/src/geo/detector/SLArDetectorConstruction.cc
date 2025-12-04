@@ -1023,6 +1023,9 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       printf("Adding %s (copyNo %i) to istore with importance %g (rep nr. %i, %p)\n", 
           cell.GetPhysicalVolume().GetName().data(), vol->GetCopyNo(),
           imp, cell.GetReplicaNumber(), static_cast<void*>(vol) );
+      if (istore->IsKnown(cell) == false) {
+        istore->AddImportanceGeometryCell(imp, cell); 
+      }
     }
   }
 
@@ -1034,11 +1037,16 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         imp, *airflow_pv, airflow_pv->GetCopyNo());
   }
 
-  printf("fCryostat PV ptr: %p\n", static_cast<void*>(fCryostat->GetModPV())); 
+  printf("fCryostat PV ptr: %p (%s)\n", static_cast<void*>(fCryostat->GetModPV()), 
+      fCryostat->GetModPV()->GetName().data()); 
   istore->AddImportanceGeometryCell(
       imp, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
 
   printf("Support structure\n");
+  const auto support_structure_pv = fCryostat->GetSupportStructure()->GetModPV();
+  istore->AddImportanceGeometryCell(
+      imp, *support_structure_pv, support_structure_pv->GetCopyNo());
+
   for (const auto &face_ : fCryostat->GetCryostatSupportStructureFaces() ) {
     auto face = face_.second;
     G4GeometryCell cell(*face->GetModPV(), face->GetModPV()->GetCopyNo()); 
