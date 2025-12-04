@@ -286,6 +286,10 @@ G4double SLArBaseGenerator::SampleEnergy(EnergyConfig_t& ene_config) {
     ene_config.energy_tmp = ene_config.energy_value; 
   }
   else if (ene_config.mode == EEnergyMode::kExtSpectrum) {
+    if (fEnergySpectrum == nullptr) {
+      G4Exception("SLArBaseGenerator::SampleEnergy", "NoEnergySpectrum", FatalException, 
+          "Attempting to sample from an external energy spectrum but no spectrum has been configured.");
+    }
     ene_config.energy_tmp = fEnergySpectrum->GetRandom( slar_random->GetEngine().get() ); 
   }
 
