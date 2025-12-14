@@ -1,0 +1,75 @@
+/**
+ * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @file        : SLArFLSPhotonLibrary
+ * @created     : Sunday Dec 14, 2025 15:10:57 CET
+ */
+
+#ifndef SLARFLSPHOTONLIBRARY_HH
+
+#define SLARFLSPHOTONLIBRARY_HH
+
+#include "SLArFastLightSim.hh"
+
+#include "TFile.h"
+#include "TTree.h"
+
+class SLArFLSPhotonLibrary : public SLArFastLightSim {
+  public:
+    struct PhotonLibraryEntry {
+      float x_ = {};
+      float y_ = {};
+      float z_ = {};
+      float vis_tot_ = {}; 
+      float vis_dir_ = {};
+      float vis_wls_ = {};
+
+      std::map<std::string, std::vector<float>> tilearrayBuffers_;
+      std::map<std::string, std::vector<float>> sipmBuffers_;
+
+      inline void Clear() {
+        x_ = {};
+        y_ = {};
+        z_ = {};
+        vis_tot_ = {}; 
+        vis_dir_ = {};
+        vis_wls_ = {};
+
+        for (auto& [key, vec] : tilearrayBuffers_) {
+          vec.resize( vec.size(), 0.0f ); 
+        }
+
+        for (auto& [key, vec] : sipmBuffers_) {
+          vec.resize( vec.size(), 0.0f ); 
+        }
+      }
+    };
+
+    SLArFLSPhotonLibrary() = default;
+    inline SLArFLSPhotonLibrary(const G4String config_path)
+        : fPhotonLibConfigPath(config_path) {}
+    inline ~SLArFLSPhotonLibrary() override {
+      if (fPhotonLibraryFile) {
+        fEntry.Clear();
+        fPhotonLibraryFile->Close();
+      }
+    }
+
+    void Initialize(const G4String config_path);
+
+    void PropagatePhotons(
+        const G4ThreeVector& emissionPoint,
+        const int numPhotons,
+        const double emissionTime) override;
+
+  private:
+    G4String fPhotonLibConfigPath = {};
+    TFile* fPhotonLibraryFile = nullptr;
+    TTree* fPhotonLibraryTree = nullptr;
+
+    PhotonLibraryEntry fEntry = {};
+};
+
+
+
+#endif /* end of include guard SLARFLSPHOTONLIBRARY_HH */
+
