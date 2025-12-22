@@ -37,6 +37,7 @@
 
 #include "globals.hh"
 
+#include "SLArOpWLS.hh"
 #include "G4Cerenkov.hh"
 
 #include "G4OpMieHG.hh"
@@ -57,26 +58,26 @@ class SLArOpticalPhysics : public G4VPhysicsConstructor
     virtual void ConstructParticle();
     virtual void ConstructProcess();
 
-    //G4OpWLS*         GetWLSProcess()
-                                           //{return fWLSProcess;}
-    G4Cerenkov*      GetCerenkovProcess()
-                                           {return fCerenkovProcess;}
-    SLArScintillation* GetScintillationProcess()
-                                           {return fScintProcess;}
-    G4OpAbsorption*  GetAbsorptionProcess()
-                                           {return fAbsorptionProcess;}
-    G4OpRayleigh*    GetRayleighScatteringProcess()
-                                           {return fRayleighScattering;}
-    G4OpMieHG* GetMieHGScatteringProcess()
-                                           {return fMieHGScatteringProcess;}
-    G4OpBoundaryProcess* GetBoundaryProcess()
-                                           {return fBoundaryProcess;}
+    SLArOpWLS* GetWLSProcess() {return fWLSProcess;}
+    const SLArOpWLS* GetWLSProcess() const {return fWLSProcess;}
+    G4Cerenkov*      GetCerenkovProcess() {return fCerenkovProcess;}
+    const G4Cerenkov* GetCerenkovProcess() const {return fCerenkovProcess;}
+    SLArScintillation* GetScintillationProcess() {return fScintProcess;}
+    const SLArScintillation* GetScintillationProcess() const {return fScintProcess;}
+    G4OpAbsorption*  GetAbsorptionProcess() {return fAbsorptionProcess;}
+    const G4OpAbsorption* GetAbsorptionProcess() const {return fAbsorptionProcess;}
+    G4OpRayleigh*    GetRayleighScatteringProcess() {return fRayleighScattering;}
+    const G4OpRayleigh* GetRayleighScatteringProcess() const {return fRayleighScattering;}
+    G4OpMieHG* GetMieHGScatteringProcess() {return fMieHGScatteringProcess;}
+    const G4OpMieHG* GetMieHGScatteringProcess() const {return fMieHGScatteringProcess;}
+    G4OpBoundaryProcess* GetBoundaryProcess() {return fBoundaryProcess;}
+    const G4OpBoundaryProcess* GetBoundaryProcess() const {return fBoundaryProcess;}
 
     void SetNbOfPhotonsCerenkov(G4int);
 
   private:
 
-    //G4OpWLS*             fWLSProcess;
+    SLArOpWLS*           fWLSProcess;
     G4Cerenkov*          fCerenkovProcess;
     SLArScintillation*   fScintProcess;
     G4OpAbsorption*      fAbsorptionProcess;

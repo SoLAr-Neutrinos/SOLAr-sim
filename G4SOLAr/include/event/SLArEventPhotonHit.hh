@@ -10,10 +10,10 @@
 
 #include "event/SLArEventGenericHit.hh"
 
-enum  EPhProcess {kAll = 0, kCher = 1, kScnt = 2, kWLS = 3};
+enum  EPhProcess {kAll = 0, kCher = 1, kScnt = 2, kWLS = 3, kPrimaryGen = 4, kOther = 5};
 
-inline TString EPhProcName[4] = {"All", "Cher"     , "Scint"        , "WLS"};
-inline TString EPhProcTitle[4]= {"All", "Cherenkov", "Scintillation", "WLS"};
+inline TString EPhProcName[6] = {"All", "Cher"     , "Scint"        , "WLS", "PrimaryGen", "Other"};
+inline TString EPhProcTitle[6]= {"All", "Cherenkov", "Scintillation", "WLS", "PrimaryGen", "Other"};
 
 class SLArEventPhotonHit : public SLArEventGenericHit  
 {
@@ -34,6 +34,7 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     void  SetCellNr(int n) {fCellNr = n;}
     void  SetRowCellNr(int n) {fRowCellNr = n; }
     void  SetTileInfo(int mtrow, int mg, int row, int tile); 
+    void  SetPhotonOriginVolumeID(int id) {fPhOriginVolumeID = id;}
 
     int   GetMegaTileNr() const {return fMegaTileNr;}
     int   GetRowTileNr() const {return fRowTileNr;}
@@ -45,6 +46,7 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     float GetWavelength() const {return fWavelength;}
     int   GetProcess() const {return fProcess;}
     float* GetLocalPos() {return fLocPos ;}
+    int   GetPhotonOriginVolumeID() const {return fPhOriginVolumeID;}
 
     void DumpInfo() const;
 
@@ -58,8 +60,9 @@ class SLArEventPhotonHit : public SLArEventGenericHit
     float        fWavelength;
     float        fLocPos[3];
     EPhProcess   fProcess;
+    int          fPhOriginVolumeID;
 
-    ClassDef(SLArEventPhotonHit, 3);
+    ClassDef(SLArEventPhotonHit, 4);
 };
 
 #endif /* end of include guard SLAREVENTPHOTONHIT_HH */

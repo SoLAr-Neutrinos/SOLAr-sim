@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
+ * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
  * @file        : SLArUserPhotonTrackInformation
- * @created     : lunedì ago 31, 2020 18:39:16 CEST
+ * @created     : Monday Aug 31, 2020 18:39:16 CEST
  *
  * Reimplemented from optical/LXe/include/LXeUserTrackInformation.hh
  */
@@ -10,6 +10,7 @@
 
 #define SLArUSERPHOTONTRACKINFORMATION_HH
 
+#include <vector>
 #include "G4VUserTrackInformation.hh"
 #include "globals.hh"
 
@@ -27,10 +28,14 @@ enum SLArTrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
  
 */
 
+namespace optical {
+  enum EPhotonCreator {kUnknown = 0, kCherenkov = 1, kScintillation = 2, kWLS= 3, kPrimaryGen = 4, kOther = 4};
+  inline G4String EPhProcName[6] = {"Unknown", "Cherenkov", "Scintillation", "WLS", "PriamryGen", "Other"};
+}
+
 class SLArUserPhotonTrackInformation : public G4VUserTrackInformation
 {
   public:
-
     SLArUserPhotonTrackInformation();
     virtual ~SLArUserPhotonTrackInformation();
 
@@ -48,12 +53,26 @@ class SLArUserPhotonTrackInformation : public G4VUserTrackInformation
     void SetForceDrawTrajectory(G4bool b){fForcedraw=b;}
     G4bool GetForceDrawTrajectory(){return fForcedraw;}
 
+    inline void SetAncestorID(const G4int& ancestorID) {fAncestorID = ancestorID;}
+    inline G4int GetAncestorID() const {return fAncestorID;}
+
+    void SetCreator(optical::EPhotonCreator o){fCreator=o;}
+    optical::EPhotonCreator GetCreator() const {return fCreator;}
+
+    void SetOriginVolume(G4int v){fOriginVolume.clear(); fOriginVolume.push_back(v);}
+    void SetOriginVolume(const std::vector<G4int>& v){fOriginVolume = v;}
+    const std::vector<G4int>& GetOriginVolume() const {return fOriginVolume;}
+    std::vector<G4int>& GetOriginVolume() {return fOriginVolume;}
+    int GetOriginVolumID() const;
+
     inline virtual void Print() const{};
 
   private:
-
-    int fStatus;
+    G4int fStatus;
     G4int fReflections;
+    G4int fAncestorID; // ID of the ancestor track, if any
+    optical::EPhotonCreator fCreator;
+    std::vector<G4int> fOriginVolume;
     G4bool fForcedraw;
 };
 

@@ -35,7 +35,7 @@ EBkTrkReadoutSystem GetBacktrackerReadoutSystem(const G4String sys) {
 }
 
 
-const G4String BacktrackerLabel[4] = {"trkID", "ancestorID", "opticalProc", "sipm_nr"};
+const G4String BacktrackerLabel[5] = {"trkID", "ancestorID", "opticalProc", "sipm_nr", "originVolID"};
 
 EBacktracker GetBacktrackerEnum(const G4String bkt) {
   EBacktracker id = kNoBacktracker;
@@ -50,6 +50,9 @@ EBacktracker GetBacktrackerEnum(const G4String bkt) {
   }
   else if (bkt == "sipm_nr") {
     id = kSiPMNr;
+  }
+  else if (bkt == "originVolID") {
+    id = kOriginVolID;
   }
   else {
     printf("backtraker::GetBacktrackerEnum() WARNING no backtracker called \"%s\"\n", 
@@ -87,6 +90,14 @@ void SLArBacktrackerSiPMNr::Eval(SLArEventGenericHit* hit, SLArEventBacktrackerR
   if (dynamic_cast<SLArEventPhotonHit*>(hit)) {
     auto ph_hit = dynamic_cast<SLArEventPhotonHit*>(hit);
     rec->UpdateCounter(ph_hit->GetCellNr()); 
+  }
+  return;
+}
+
+void SLArBacktrackerOriginVolID::Eval(SLArEventGenericHit* hit, SLArEventBacktrackerRecord* rec) {
+  if (dynamic_cast<SLArEventPhotonHit*>(hit)) {
+    auto ph_hit = dynamic_cast<SLArEventPhotonHit*>(hit);
+    rec->UpdateCounter(ph_hit->GetPhotonOriginVolumeID()); 
   }
   return;
 }

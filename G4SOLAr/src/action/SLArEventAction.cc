@@ -248,12 +248,6 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
     SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
     auto bktManager = SLArAnaMgr->GetBacktrackerManager( backtracker::kVUVSiPM ); 
 
-    const auto detector = 
-      static_cast<const SLArDetectorConstruction*>(G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-    const auto tile = detector->GetReadoutTile(); 
-    const int n_cell_row = tile->GetNumberOfCellRows();
-    const int n_cell_col = tile->GetNumberOfCellCols();
-
     // Fill histograms
     G4int n_hit = hHC1->entries();
 
@@ -287,19 +281,23 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       dstHit.SetRowCellNr(hit->GetRowCellNr()); 
       dstHit.SetCellNr(hit->GetCellNr()); 
       dstHit.SetProducerTrkID( hit->GetProducerID() ); 
+      // Set the unique identified of the origin volume of the photon   
+      dstHit.SetPhotonOriginVolumeID( hit->GetOriginVolumeID() );
 
       const auto& anodeCfg = SLArAnaMgr->GetAnodeCfgByID( hit->GetAnodeIdx() ); 
       const auto& mtCfg = anodeCfg.GetBaseElementByID( dstHit.GetMegaTileID() ); 
       const auto& tCfg = mtCfg.GetBaseElementByID( dstHit.GetTileID() ); 
       const int mtIdx = mtCfg.GetIdx();
       const int tIdx = tCfg.GetIdx();
+      const int n_cell_row = tCfg.GetNCellRows();
+      const int n_cell_col = tCfg.GetNCellCols();
 
       // Compute unique identifier of SiPM replacing cell nr
-      const int sipm_nr = n_cell_row * dstHit.GetRowCellNr() + dstHit.GetCellNr();
+      const int sipm_nr = n_cell_col * dstHit.GetRowCellNr() + dstHit.GetCellNr();
       dstHit.SetCellNr( sipm_nr );
 
       auto& ev_anode = SLArAnaMgr->GetEventAnode().GetEventAnodeByID(anode_idx);
-      auto& ev_tile = ev_anode.RegisterHit(dstHit, mtIdx, tIdx);
+      auto& ev_sipm = ev_anode.RegisterHit(dstHit, mtIdx, tIdx);
       
 #ifdef SLAR_DEBUG
       G4cout << "SLArEventAction::RecordEventReadoutTile() hit nr " << i << G4endl;
@@ -310,12 +308,13 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
       G4cout << "x    = " << G4BestUnit(worldPos.x(), "Length") << "; "
              << "y    = " << G4BestUnit(worldPos.y(), "Length") << "; "
              << "time = " << G4BestUnit(time, "Time") << G4endl;
+      printf("SiPM nr: %i\n", sipm_nr);
 #endif
 
       if (bktManager) {
         if (bktManager->IsNull() == false) {
           auto& records = 
-            ev_tile.GetBacktrackerVector( ev_tile.ConvertToClock(dstHit.GetTime()) );
+            ev_sipm.GetBacktrackerVector( ev_sipm.ConvertToClock(dstHit.GetTime()) );
 
           for (size_t ib = 0; ib < bktManager->GetBacktrackers().size(); ib++) {
             bktManager->GetBacktrackers().at(ib)->Eval(&dstHit, 
@@ -392,6 +391,9 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
       dstHit.SetTileInfo(0, array_nr, cellrow_nr, cell_nr); 
       dstHit.SetProducerTrkID( hit->GetProducerID() ); 
 
+      // Set the unique identified of the origin volume of the photon
+      dstHit.SetPhotonOriginVolumeID( hit->GetOriginVolumeID() );
+
       const auto& cfgArray = SLArAnaMgr->GetPDSCfg().GetBaseElement(array_nr);
       const int cell_idx = cfgArray.GetBaseElementByID( dstHit.GetTileID() ).GetIdx(); 
 
@@ -410,7 +412,6 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
       }
       
       n_hits++;
-      //delete dstHit;
     }
     
 

@@ -1,0 +1,13 @@
+{
+  #include "ProtoDUNE_hall.json"
+  ,
+  #include "ProtoDUNE3_tpc_vd.json"
+  ,
+  #include "ProtoDUNE_cryostat.json"
+  ,
+  #include "../tile_design/CRU_and_edges_tile_design.json"
+  ,
+  #include "ProtoDUNE3_APEX.json"
+}
+
+

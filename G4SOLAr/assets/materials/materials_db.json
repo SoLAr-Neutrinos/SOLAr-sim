@@ -232,26 +232,69 @@
     {"name" : "Plastic", 
       "NIST" : "G4_PLASTIC_SC_VINYLTOLUENE"
     },
-
-    {"name" : "PTP", 
-      "NIST" : "G4_POLYVINYLIDENE_FLUORIDE",
-      "SurfaceProperties" : {
-        "name" : "PTP_Surf", 
-        "model" : "glisur", 
-        "type" : "dielectric_metal",
-        "finished" : "polished", 
-        "polished" :  0.8,
-        "PropertiesTable" : [
-          {"property" : "EFFICIENCY", "value" : [
-            {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
-            {"var": "EFFICIENCY", "val" : [0.03, 0.03]}
-          ]}, 
-          {"property" : "REFLECTIVITY", "value" : [
-            {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
-            {"var": "REFLECTIVITY", "val" : [0.00, 0.00]}
-          ]}
-        ]
-      }
+    {"name" : "PTP_wls", 
+      "density" : {"val" : 1.23, "unit" : "g/cm3"}, 
+      "atomic_components" : [
+        {"name" : "Carbon", "symb" : "C", "Z" : 6, "nAtom" : 18},
+        {"name" : "Hydrogen", "symb" : "H" , "Z" :  1, "nAtom" : 14}
+     ],
+     "PropertiesTable" : [
+       {
+         "property" : "RINDEX", 
+         "value" : [
+            {"var":"Energy", "unit" : "eV", "val" : [1, 3.0, 3.8, 6.20, 8.27, 12.40, 24.80, 123.99, 200]}, 
+            {"var":"RINDEX", "val" : [1.35, 1.35, 1.35, 1.35, 1.35, 1.35, 1.35, 1.35, 1.35]}
+          ]
+       },
+       {
+         "property" : "WLSABSLENGTH", 
+         "value" : 
+         [
+            {"var": "Energy", "unit": "eV", "val": [2.0, 3.0, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.27, 12.40, 24.80]},
+            {"var": "WLSABSLENGTH", "unit": "mm", "val" : [300, 300, 300, 300, 300, 300, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003, 0.0003]}
+         ]
+       }, 
+       {
+         "property" : "WLSCOMPONENT", 
+         "value" : [
+           {"var" : "Energy", "unit": "eV", "val" : [3.06434, 3.1098,3.14086, 3.18325, 3.24903, 3.31176, 3.33517, 3.37092,3.4198, 3.45108, 3.47012, 3.48937, 3.51537, 3.53513, 3.55512, 3.59577, 3.62339, 3.63736, 3.65144, 3.66562, 3.67992, 3.7235]}, 
+           {"var" : "WLSCOMPONENT", "val" : [0.016285, 0.0520565, 0.0788851, 0.132542, 0.275628, 0.409771, 0.543914, 0.678057, 0.722772, 0.821143, 0.955286, 1, 0.946343, 0.8122, 0.740657, 0.8122, 0.678057, 0.534971, 0.400828, 0.266685, 0.132542, 0.00734215]}
+         ]
+       },
+       {"property" : "WLSTIMECONSTANT", "unit" : "ns", "value": 5}
+     ],
+     "SurfaceProperties" : {
+       "name" : "PTP_WLS_Surf", 
+       "model" : "unified", 
+       "type" : "dielectric_dielectric",
+       "finished" : "polished", 
+       "polished" :  0.9
+     }
+    },
+    {
+      "name": "PTP_sensitive", 
+      "density" : {"val" : 1.23, "unit" : "g/cm3"}, 
+      "atomic_components" : [
+        {"name" : "Carbon", "symb" : "C", "Z" : 6, "nAtom" : 18},
+        {"name" : "Hydrogen", "symb" : "H" , "Z" :  1, "nAtom" : 14}
+     ],
+     "SurfaceProperties" : {
+       "name" : "PTP_Surf", 
+       "model" : "glisur", 
+       "type" : "dielectric_metal",
+       "finished" : "polished", 
+       "polished" :  0.8,
+       "PropertiesTable" : [
+         {"property" : "EFFICIENCY", "value" : [
+           {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
+           {"var": "EFFICIENCY", "val" : [0.06, 0.06]}
+         ]}, 
+         {"property" : "REFLECTIVITY", "value" : [
+           {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
+           {"var": "REFLECTIVITY", "val" : [0.00, 0.00]}
+         ]}
+       ]
+     }
     },
     {"name" : "LAr", 
       "density" : {"val" : 1.390, "unit" : "g/cm3"},
@@ -268,8 +311,8 @@
           }
         ]}, 
         {"property" : "ABSLENGTH", "value" : [
-          {"var" : "Energy", "unit" : "eV", "val" : [ 4, 5, 6, 7, 8, 9, 10, 11, 13]},
-          {"var" : "ABSLENGTH", "unit" : "m", "val" : [ 20, 20, 20, 20, 20, 20, 20, 20, 20]}
+          {"var" : "Energy", "unit" : "eV", "val" : [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13]},
+          {"var" : "ABSLENGTH", "unit" : "m", "val" : [ 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20]}
         ]}, 
         {"property" : "RAYLEIGH", "value" : [
           {"var" : "Energy", "unit" : "eV", "val" : [ 1.18626, 1.68626, 2.18626, 2.68626, 3.18626, 3.68626, 4.18626, 4.68626, 5.18626, 5.68626, 6.18626, 6.68626, 7.18626, 7.68626, 8.18626, 8.68626, 9.18626, 9.68626, 10.1863, 10.6863, 11.1863 ]
@@ -357,8 +400,8 @@
         "polished" :  0.9,
         "PropertiesTable" : [
           {"property" : "EFFICIENCY", "value" : [
-            {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
-            {"var": "EFFICIENCY", "val" : [0.15, 0.15]}
+            {"var": "Energy", "unit" : "eV", "val": [1.46009, 1.65174, 1.90596, 2.17646, 2.63735, 2.95459, 3.21821, 3.91613, 4.60223, 9.769, 14.4751]}, 
+            {"var": "EFFICIENCY", "val" : [0.0430142, 0.0909234, 0.151438, 0.196321, 0.278013, 0.209947, 0.158015, 0.114658, 0.0869295, 0.126775, 0.127282]}
           ]}, 
           {"property" : "REFLECTIVITY", "value" : [
             {"var": "Energy", "unit" : "eV", "val": [2.0, 13.0]}, 
