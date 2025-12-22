@@ -1,11 +1,13 @@
 set(SLAR_GEO_DETECTOR_HEADERS 
   "${SLAR_GEO_INCLUDE_DIR}/detector/SLArDetectorConstruction.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/detector/SLArDetectorConstructionMsgr.hh"
   "${SLAR_GEO_INCLUDE_DIR}/detector/SLArBaseDetModule.hh"
   "${SLAR_GEO_INCLUDE_DIR}/detector/SLArPlaneParameterisation.hpp"
 )
 
 set(SLAR_GEO_DETECTOR_SRC 
   "${SLAR_GEO_SRC_DIR}/detector/SLArDetectorConstruction.cc"
+  "${SLAR_GEO_SRC_DIR}/detector/SLArDetectorConstructionMsgr.cc"
   "${SLAR_GEO_SRC_DIR}/detector/SLArBaseDetModule.cc"
 )
 
