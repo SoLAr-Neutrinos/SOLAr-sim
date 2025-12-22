@@ -8,7 +8,9 @@
 #define SLArRunAction_h 1
 
 #include "physics/SLArElectronDrift.hh"
-#include <SLArRandomExtra.hh>
+#include "physics/SLArFastLightSim.hh"
+#include "physics/SLArFastLightSimMessenger.hh"
+#include "SLArRandomExtra.hh"
 
 #include "G4UserRunAction.hh"
 #include "G4Transform3D.hh"
@@ -36,6 +38,12 @@ class SLArRunAction : public G4UserRunAction
     inline void RegisterExtScorerLV(G4LogicalVolume* lv) {fExtScorerLV.push_back(lv);}
     inline SLArRandom* GetTRandomInterface() {return fTRandomInterface;}
     inline const G4Transform3D& GetTransformWorld2Det() const {return fTransformWorld2Det;}
+    void SetFastLightSimConfig(const G4String& configPath);
+    void SetFastLightSimulatorType(const G4String& type);
+    void EnableFastLightSim(G4bool enable);
+    G4String GetFastLightSimulatorType() const { return fFastLightSimType; }
+    G4String GetFastLightSimConfigPath() const { return fFLSConfigPath; }
+    G4bool IsFastLightSimEnabled() const { return fFastLightSimEnabled; }
 
   private:
     G4String fG4MacroFile; 
@@ -46,6 +54,14 @@ class SLArRunAction : public G4UserRunAction
 
     std::vector<G4String> fSDName;  
     std::vector<G4LogicalVolume*> fExtScorerLV; 
+
+    std::unique_ptr<SLArFastLightSimDispatcher> fFastLightSimDispatcher;
+    std::unique_ptr<SLArFastLightSimMessenger> fFastLightSimMessenger;
+    
+    G4String fFLSConfigPath;
+    G4String fFastLightSimType;
+    G4bool fFastLightSimEnabled;
+
 };
 
 

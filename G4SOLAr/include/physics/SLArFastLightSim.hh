@@ -26,11 +26,9 @@ class SLArFastLightSim {
 };
 
 class SLArFastLightSimDispatcher : public SLArFastLightSim {
-  private:
-    std::map<G4String, std::unique_ptr<SLArFastLightSim>> fSimulators;
-    G4String fDefaultVolume;
-
   public:
+    SLArFastLightSimDispatcher() = default;
+
     void RegisterSimulator(const G4String& volumeName, 
         std::unique_ptr<SLArFastLightSim> sim) {
       fSimulators[volumeName] = std::move(sim);
@@ -53,8 +51,7 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
             emissionPoint, numPhotons, emissionTime);
       }
 
-      return fSimulators[fDefaultVolume]->PropagatePhotons(
-          emissionPoint, numPhotons, emissionTime);
+      return;
     }
 
     void Initialize() override {
@@ -64,6 +61,9 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
     }
 
   private:
+    std::map<G4String, std::unique_ptr<SLArFastLightSim>> fSimulators;
+    G4String fDefaultVolume = {};
+
     G4String GetVolumeNameAt(const G4ThreeVector& point) {
       G4Navigator* navigator = 
         G4TransportationManager::GetTransportationManager()

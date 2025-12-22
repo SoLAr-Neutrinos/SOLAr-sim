@@ -16,17 +16,26 @@
 #include "G4RunManager.hh"
 #include "G4ProductionCutsTable.hh"
 
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SLArRunAction::SLArRunAction()
- : G4UserRunAction(), fG4MacroFile(""), fEventAction(nullptr), fElectronDrift(nullptr)
+ :  G4UserRunAction(), 
+    fG4MacroFile(""), 
+    fEventAction(nullptr), 
+    fElectronDrift(nullptr), 
+    fFastLightSimDispatcher(nullptr),
+    fFastLightSimMessenger(nullptr)
 { 
   SLArAnalysisManager* anamgr = SLArAnalysisManager::Instance();
   fTRandomInterface = new SLArRandom(); 
 
   const auto detector = (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction();
   fElectronDrift = new SLArElectronDrift(detector->GetLArProperties()); 
+
+  fFastLightSimMessenger = std::make_unique<SLArFastLightSimMessenger>(this);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -70,35 +79,47 @@ void SLArRunAction::BeginOfRunAction(const G4Run* aRun)
   fTransformWorld2Det = transform.inverse();
   stepping->SetPointTransformation(fTransformWorld2Det);
 
+  // Initialize fast light simulator if enabled and configured
+  if (fFastLightSimEnabled && !fFLSConfigPath.empty()) {
+    G4cout << "SLArRunAction: Initializing fast light simulator..." << G4endl;
+
+    try {
+      // Create dispatcher
+      fFastLightSimDispatcher = std::make_unique<SLArFastLightSimDispatcher>();
+
+      // Load JSON configuration
+      std::ifstream configFile(fFLSConfigPath);
+      if (!configFile.good()) {
+        throw std::runtime_error("Cannot open config file: " + fFLSConfigPath);
+      }
+
+      rapidjson::IStreamWrapper isw(configFile);
+      rapidjson::Document doc;
+      doc.ParseStream(isw);
+      if (doc.HasParseError()) {
+        throw std::runtime_error("Error parsing JSON config file: " + fFLSConfigPath);
+      }
+
+      // Loop over volumes and create fast light sim engines
+
+    }
+    catch (const std::exception& e) {
+      G4Exception("SLArRunAction::BeginOfRunAction()",
+          "FastLightSimInitFailed",
+          FatalException,
+          ("Failed to initialize fast light simulator: " + 
+           std::string(e.what())).c_str());
+    }
+    
+  }
+  else if (!fFastLightSimEnabled) {
+    G4cout << "SLArRunAction: Fast light simulation disabled, using full optical tracking" << G4endl;
+  }
+
   // dump cross sections
   for (const auto& xsec : SLArAnaMgr->GetXSecDumpVector()) {
     SLArAnaMgr->WriteCrossSection(xsec); 
   }
-  /*
-  auto volumeStore = G4PhysicalVolumeStore::GetInstance();
-  for (auto vol : *volumeStore) {
-    G4cout << "Nome: " << vol->GetName()
-           << ", Copia: " << vol->GetCopyNo()
-           << ", Madre: " << (vol->GetMotherLogical() ? vol->GetMotherLogical()->GetName() : "NULL")
-           << G4endl;
-}
-  G4String vol_name = "LightGuideLV";
-  G4cout << "Searching for volume " << vol_name << G4endl;
-  G4cout << "Calling the function" << G4endl;
-  auto volume_found = geo::SearchLogicalVolumeInParametrisedVolume(vol_name, "pds_30");
-  if (volume_found) {
-    G4cout << "FOUND volume " << volume_found->logical_volume->GetName() << " !!!" << G4endl;
-  }
-  G4cout << "Volume dimension: "
-         << "X: " << volume_found->dimension->x() 
-         << ", Y: " << volume_found->dimension->y() 
-         << ", Z: " << volume_found->dimension->z() 
-         << G4endl;
-  /*G4cout << "Volume position: "
-         << "X: " << volume_found->position->x() 
-         << ", Y: " << volume_found->position->y() 
-         << ", Z: " << volume_found->position->z() 
-         << G4endl;*/
 
   G4cout << "### Run " << aRun->GetRunID() << " start." << G4endl;
 }
@@ -201,5 +222,42 @@ void SLArRunAction::EndOfRunAction(const G4Run* aRun)
 
   delete fElectronDrift;  fElectronDrift = nullptr;
 }
+
+void SLArRunAction::SetFastLightSimConfig(const G4String& configPath) {
+    // Verify file exists
+    std::ifstream file(configPath);
+    if (!file.good()) {
+        G4Exception("SLArRunAction::LoadFastLightSimConfig()",
+                   "ConfigFileNotFound",
+                   FatalException,
+                   ("Configuration file not found: " + configPath).c_str());
+        return;
+    }
+    
+    fFLSConfigPath = configPath;
+    G4cout << "SLArRunAction: Fast light sim config will be loaded from: " 
+           << fFLSConfigPath << G4endl;
+}
+
+void SLArRunAction::SetFastLightSimulatorType(const G4String& type) {
+    if (type != "LookupTable" && type != "SemiAnalytical") {
+        G4Exception("SLArRunAction::SetFastLightSimulatorType()",
+                   "InvalidSimulatorType",
+                   JustWarning,
+                   ("Invalid simulator type: " + type).c_str());
+        return;
+    }
+    
+    fFastLightSimType = type;
+    G4cout << "SLArRunAction: Fast light simulator type set to: " 
+           << fFastLightSimType << G4endl;
+}
+
+void SLArRunAction::EnableFastLightSim(G4bool enable) {
+    fFastLightSimEnabled = enable;
+    G4cout << "SLArRunAction: Fast light simulation " 
+           << (enable ? "enabled" : "disabled") << G4endl;
+}
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

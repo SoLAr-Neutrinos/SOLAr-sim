@@ -37,9 +37,7 @@
 
 #include "globals.hh"
 
-#include "G4OpWLS.hh"
 #include "G4Cerenkov.hh"
-#include "G4Scintillation.hh"
 
 #include "G4OpMieHG.hh"
 #include "G4OpRayleigh.hh"

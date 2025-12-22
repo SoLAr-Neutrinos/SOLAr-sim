@@ -9,11 +9,14 @@
 #define SLARFLSPHOTONLIBRARY_HH
 
 #include "SLArFastLightSim.hh"
+#include "SLArEventAnode.hh"
+#include "SLArEventSuperCellArray.hh"
 
 #include "TFile.h"
 #include "TTree.h"
 
 class SLArFLSPhotonLibrary : public SLArFastLightSim {
+  typedef std::vector<int> NComponentBase_t;
   public:
     struct PhotonLibraryEntry {
       float x_ = {};
@@ -65,8 +68,17 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
     G4String fPhotonLibConfigPath = {};
     TFile* fPhotonLibraryFile = nullptr;
     TTree* fPhotonLibraryTree = nullptr;
-
     PhotonLibraryEntry fEntry = {};
+    double fVoxelSize[3] = {100.0, 100.0, 100.0}; // in mm
+    Long64_t fNumVoxelsX = 0;
+    Long64_t fNumVoxelsY = 0;
+    Long64_t fNumVoxelsZ = 0;
+
+    std::map<std::string, SLArEventAnode*> fBranchTargetAnodeMap = {};
+    std::map<std::string, SLArEventSuperCellArray*> fBranchTargetSCArrayMap = {};
+    std::map<std::string, NComponentBase_t> fAnodeNComponentMap = {};
+    std::map<std::string, NComponentBase_t> fSCArrayNComponentMap = {};
+
 };
 
 
