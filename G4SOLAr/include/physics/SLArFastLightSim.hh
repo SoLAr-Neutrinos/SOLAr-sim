@@ -11,27 +11,66 @@
 #include "G4TransportationManager.hh"
 #include "G4ThreeVector.hh"
 
+#include "rapidjson/document.h"
+
 class SLArFastLightSim {
   public:
+    enum EFLSType {kUndefined = 0, kLUT = 1};
+    const std::map<EFLSType, G4String> EFLSTypeNames = {
+      {kUndefined, "Undefined"},
+      {kLUT, "LUT"}
+    };
+    inline const EFLSType GetType() const {return fType;}
+    inline const EFLSType GetType(const G4String& type_name) const {
+      for (const auto& type_itr : EFLSTypeNames) {
+        if (type_itr.second == type_name) {
+          return type_itr.first;
+        }
+      }
+      char msg[256];
+      sprintf(msg, "SLArFastLightSim::GetType: Unknown fast light simulation type name '%s'. Returning 'Undefined'.\n",
+          type_name.data());
+      G4Exception("SLArFastLightSim::GetType", "UnknownFLSimType", JustWarning, msg);
+      return kUndefined;
+    };
+    inline const G4String& GetTypeName() const {
+      if (EFLSTypeNames.find(fType) != EFLSTypeNames.end()) {
+        return EFLSTypeNames.at(fType);
+      }
+      static G4String undefined_str = "Undefined";
+      return undefined_str;
+    }
+
     virtual ~SLArFastLightSim() = default;
 
+    void SetName(const G4String& name) {fName = name;}
+    const G4String& GetName() const {return fName;}
+
     virtual void PropagatePhotons(
+        const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         const int numPhotons,
         const double emissionTime) = 0;
 
-    virtual void Initialize() {}
+    virtual void Initialize(const rapidjson::Value& config) {}
+
+    virtual void Print() const {}
 
     virtual void Reset() {}
+
+  protected:
+    G4String fName = {};
+    EFLSType fType = kUndefined;
+
 };
 
 class SLArFastLightSimDispatcher : public SLArFastLightSim {
   public:
     SLArFastLightSimDispatcher() = default;
 
-    void RegisterSimulator(const G4String& volumeName, 
+    void RegisterSimulator(const G4String& moduleName, 
         std::unique_ptr<SLArFastLightSim> sim) {
-      fSimulators[volumeName] = std::move(sim);
+      fSimulators[moduleName] = std::move(sim);
     }
 
     void SetDefaultVolume(const G4String& volumeName) {
