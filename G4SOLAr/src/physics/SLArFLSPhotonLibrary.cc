@@ -105,8 +105,8 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
 
   SLArAnalysisManager* ana_mgr = SLArAnalysisManager::Instance();
   
-  if ( doc.HasMember("array_buffers") ) {
-    const auto& tile_array_buffers = doc["array_buffers"];
+  if ( doc.HasMember("tile_array_branches") ) {
+    const auto& tile_array_buffers = doc["tile_array_branches"];
     debug::require_json_type(tile_array_buffers, rapidjson::kArrayType);
     for (const auto& buffer_obj : tile_array_buffers.GetArray()) {
       debug::require_json_member(buffer_obj, "name");
@@ -126,8 +126,8 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
           if ( rgx_anode.MatchB(pds_module) ) {
             TObjArray* matches = rgx_anode.MatchS(pds_module);
             TObjString* match_str = static_cast<TObjString*>( matches->At(1) );
-            G4int anode_id = std::stoi( match_str->GetString().Data() );
-            fBranchTargetAnodeMap[name] = &(ana_mgr->GetEventAnode().GetEventAnodeByID(anode_id));
+            G4int tpc_id = std::stoi( match_str->GetString().Data() );
+            fBranchTargetAnodeTileMap[name] = &(ana_mgr->GetEventAnode().GetEventAnodeByTPCID(tpc_id));
             
             debug::require_json_member(buffer_obj, "n_elements"); 
             const auto& jn_elements = buffer_obj["n_elements"];
@@ -157,8 +157,8 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
     }
   }
 
-  if ( doc.HasMember("sipm_buffers") ) {
-    const auto& sipm_buffers = doc["sipm_buffers"];
+  if ( doc.HasMember("sipm_array_branches") ) {
+    const auto& sipm_buffers = doc["sipm_array_branches"];
     debug::require_json_type(sipm_buffers, rapidjson::kArrayType);
     for (const auto& buffer_obj : sipm_buffers.GetArray()) {
       debug::require_json_member(buffer_obj, "name");
@@ -173,31 +173,125 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
         auto& vis_buffer = fEntry.sipmBuffers_[name];
         vis_buffer.resize(size, 0.0f);
         fPhotonLibraryTree->SetBranchAddress(name.c_str(), vis_buffer.data());
+        if ( buffer_obj.HasMember("pds_module") ) {
+          TString pds_module = buffer_obj["pds_module"].GetString();
+          if ( rgx_anode.MatchB(pds_module) ) {
+            TObjArray* matches = rgx_anode.MatchS(pds_module);
+            TObjString* match_str = static_cast<TObjString*>( matches->At(1) );
+            G4int tpc_id = std::stoi( match_str->GetString().Data() );
+            if ( fBranchTargetAnodeSiPMMap.find(name) != fBranchTargetAnodeSiPMMap.end() ) {
+              delete matches; 
+              continue;
+            }
+            fBranchTargetAnodeSiPMMap[name] = &(ana_mgr->GetEventAnode().GetEventAnodeByTPCID(tpc_id));
+            
+            debug::require_json_member(buffer_obj, "n_elements"); 
+            const auto& jn_elements = buffer_obj["n_elements"];
+            debug::require_json_type(jn_elements, rapidjson::kArrayType);
+            auto& base_map = fAnodeNComponentMap[name];
+            for ( rapidjson::SizeType i=0; i<jn_elements.Size(); ++i ) {
+              base_map.push_back( jn_elements[i].GetUint() );
+            }
+            delete matches;
+          }  
+          else {
+            G4Exception(
+                "SLArFLSPhotonLibrary::Initialize",
+                "ConfigError",
+                JustWarning,
+                Form("Unknown pds_module format '%s' for tile array buffer '%s'.",
+                  pds_module.Data(), name.c_str())
+                );
+          }
+        }
       }
     }
   }
 
-  fclose(fp);
 };
 
+void SLArFLSPhotonLibrary::Print() const {
+  printf("%s SLArFLSPhotonLibrary configuration:\n", fName.c_str());
+  printf("Photon library file: %s\n", fPhotonLibraryFile->GetName());
+  printf("Voxel size [mm]: (%.2f, %.2f, %.2f)\n", fVoxelSize[0], fVoxelSize[1], fVoxelSize[2]);
+  printf("Number of voxels: (%lld, %lld, %lld)\n", fNumVoxelsX, fNumVoxelsY, fNumVoxelsZ);
+  printf("Shift [mm]: (%.2f, %.2f, %.2f) mm\n", fShift.x(), fShift.y(), fShift.z());
+  if (fAnodeNComponentMap.size() > 0) {
+    printf("Anode components map:\n");
+    for (const auto& anode_itr : fAnodeNComponentMap) {
+      printf("\tAnode: %s - NComponents: ", anode_itr.first.c_str());
+      for (const auto& ncomp : anode_itr.second) {
+        printf("%d ", ncomp);
+      }
+      printf("\n");
+    }
+  }
+
+  if (fSCArrayNComponentMap.size() > 0) {
+    printf("SuperCellArray components map:\n");
+    for (const auto& scarray_itr : fSCArrayNComponentMap) {
+      printf("\tSuperCellArray: %s - NComponents: ", scarray_itr.first.c_str());
+      for (const auto& ncomp : scarray_itr.second) {
+        printf("%d ", ncomp);
+      }
+      printf("\n");
+    }
+  }
+
+  if (fBranchTargetAnodeSiPMMap.size() > 0) {
+    printf("\nAnode SiPM branch targets:\n");
+    for (const auto& anode_itr : fBranchTargetAnodeSiPMMap) {
+      printf("\tBranch: %s -> Anode TPC ID: %d\n",
+          anode_itr.first.c_str(),
+          anode_itr.second->GetID());
+    }
+  }
+  if (fBranchTargetAnodeTileMap.size() > 0) {
+    printf("\nAnode Tile branch targets:\n");
+    for (const auto& anode_itr : fBranchTargetAnodeTileMap) {
+      printf("\tBranch: %s -> Anode TPC ID: %d\n",
+          anode_itr.first.c_str(),
+          anode_itr.second->GetID());
+    }
+  }
+
+  return;
+
+}
 
 void SLArFLSPhotonLibrary::PropagatePhotons(
+    const G4String& volumeName,
     const G4ThreeVector& emissionPoint,
     const int numPhotons,
     const double emissionTime) 
 {
   // Find the voxel corresponding to the emission point
-  const Long64_t iX = static_cast<Long64_t>(std::round(fVoxelSize[0] > 0 ? emissionPoint.x() / fVoxelSize[0] : 0));
-  const Long64_t iY = static_cast<Long64_t>(std::round(fVoxelSize[1] > 0 ? emissionPoint.y() / fVoxelSize[1] : 0));
-  const Long64_t iZ = static_cast<Long64_t>(std::round(fVoxelSize[2] > 0 ? emissionPoint.z() / fVoxelSize[2] : 0));
+  //printf("SLArFLSPhotonLibrary::PropagatePhotons: volume %s, emissionPoint (%.2f, %.2f, %.2f) cm, numPhotons %d, emissionTime %.2f ns\n",
+      //volumeName.c_str(),
+      //emissionPoint.x(), emissionPoint.y(), emissionPoint.z(),
+      //numPhotons,
+      //emissionTime);
+  //printf("num voxels: (%lld, %lld, %lld), voxel size (%.2f, %.2f, %.2f) mm, shift (%.2f, %.2f, %.2f) mm\n",
+      //fNumVoxelsX, fNumVoxelsY, fNumVoxelsZ,
+      //fVoxelSize[0], fVoxelSize[1], fVoxelSize[2],
+      //fShift.x(), fShift.y(), fShift.z());
+
+  G4ThreeVector shiftedPoint = emissionPoint + fShift;
+  const Long64_t iX = static_cast<Long64_t>(std::round(fVoxelSize[0] > 0 ? shiftedPoint.x() / fVoxelSize[0] : 0));
+  const Long64_t iY = static_cast<Long64_t>(std::round(fVoxelSize[1] > 0 ? shiftedPoint.y() / fVoxelSize[1] : 0));
+  const Long64_t iZ = static_cast<Long64_t>(std::round(fVoxelSize[2] > 0 ? shiftedPoint.z() / fVoxelSize[2] : 0));
 
   // Compute the entry index
   const Long64_t entryIndex = iX * (fNumVoxelsY * fNumVoxelsZ) + iY * fNumVoxelsZ + iZ;
+  //printf("SLArFLSPhotonLibrary::PropagatePhotons: emissionPoint (%.2f, %.2f, %.2f) cm -> voxel indices (%lld, %lld, %lld) -> entryIndex %lld\n",
+      //shiftedPoint.x(), shiftedPoint.y(), shiftedPoint.z(),
+      //iX, iY, iZ,
+      //entryIndex);
 
   // Retrieve the photon library entry
   fPhotonLibraryTree->GetEntry(entryIndex);
 
-  for (auto& anode_ev_itr : fBranchTargetAnodeMap) {
+  for (auto& anode_ev_itr : fBranchTargetAnodeSiPMMap) {
     const std::string& branch_name = anode_ev_itr.first;
     SLArEventAnode* anode_ev = anode_ev_itr.second;
 
@@ -206,6 +300,8 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     for (size_t idx = 0; idx < vis_sipm.size(); idx++) {
       const float& visibility = vis_sipm[idx];
       const int detected_photons = G4Poisson(numPhotons * visibility * 0.127);
+      //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
+          //branch_name.c_str(), idx, visibility, detected_photons);
 
       const auto& base_ = fAnodeNComponentMap[branch_name];
 
@@ -215,6 +311,8 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
 
       if (detected_photons > 0) {
         for (int p = 0; p < detected_photons; p++) {
+          //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
+              //branch_name.c_str(), mt_idx, t_idx);
           SLArEventPhotonHit hit( emissionTime, 0 ); 
           anode_ev->RegisterHit(hit, mt_idx, t_idx);
         }

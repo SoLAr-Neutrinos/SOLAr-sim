@@ -47,7 +47,9 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
       }
     };
 
-    SLArFLSPhotonLibrary() = default;
+    inline SLArFLSPhotonLibrary() : SLArFastLightSim() {
+      fType = (SLArFastLightSim::kLUT);
+    }
     inline SLArFLSPhotonLibrary(const G4String config_path)
         : fPhotonLibConfigPath(config_path) {}
     inline ~SLArFLSPhotonLibrary() override {
@@ -57,12 +59,15 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
       }
     }
 
-    void Initialize(const G4String config_path);
+    void Initialize(const rapidjson::Value& config) override;
 
     void PropagatePhotons(
+        const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         const int numPhotons,
         const double emissionTime) override;
+
+    void Print() const override;
 
   private:
     G4String fPhotonLibConfigPath = {};
@@ -70,11 +75,13 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
     TTree* fPhotonLibraryTree = nullptr;
     PhotonLibraryEntry fEntry = {};
     double fVoxelSize[3] = {100.0, 100.0, 100.0}; // in mm
+    G4ThreeVector fShift = {};
     Long64_t fNumVoxelsX = 0;
     Long64_t fNumVoxelsY = 0;
     Long64_t fNumVoxelsZ = 0;
 
-    std::map<std::string, SLArEventAnode*> fBranchTargetAnodeMap = {};
+    std::map<std::string, SLArEventAnode*> fBranchTargetAnodeSiPMMap = {};
+    std::map<std::string, SLArEventAnode*> fBranchTargetAnodeTileMap = {};
     std::map<std::string, SLArEventSuperCellArray*> fBranchTargetSCArrayMap = {};
     std::map<std::string, NComponentBase_t> fAnodeNComponentMap = {};
     std::map<std::string, NComponentBase_t> fSCArrayNComponentMap = {};
