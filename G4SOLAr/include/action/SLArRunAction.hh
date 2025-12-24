@@ -41,12 +41,14 @@ class SLArRunAction : public G4UserRunAction
     void SetFastLightSimConfig(const G4String& configPath);
     void SetFastLightSimulatorType(const G4String& type);
     void EnableFastLightSim(G4bool enable);
-    G4String GetFastLightSimulatorType() const { return fFastLightSimType; }
     G4String GetFastLightSimConfigPath() const { return fFLSConfigPath; }
     G4bool IsFastLightSimEnabled() const { return fFastLightSimEnabled; }
+    SLArFastLightSimDispatcher* GetFastLightSimDispatcher() const { return fFastLightSimDispatcher.get(); }
 
   private:
-    G4String fG4MacroFile; 
+    void InitializeFastLightSim();
+
+    G4String fG4MacroFile = {}; 
     SLArEventAction* fEventAction = {};
     SLArElectronDrift* fElectronDrift = {}; 
     SLArRandom* fTRandomInterface = {};
@@ -59,7 +61,6 @@ class SLArRunAction : public G4UserRunAction
     std::unique_ptr<SLArFastLightSimMessenger> fFastLightSimMessenger;
     
     G4String fFLSConfigPath;
-    G4String fFastLightSimType;
     G4bool fFastLightSimEnabled;
 
 };

@@ -10,7 +10,10 @@
 #include "SLArPrimaryGeneratorAction.hh"
 #include "SLArRunAction.hh"
 #include "SLArRun.hh"
+#include "SLArDebugUtils.hh"
 #include "geo/SLArGeoUtils.hh"
+
+#include "SLArFLSPhotonLibrary.hh"
 
 #include "G4Run.hh"
 #include "G4RunManager.hh"
@@ -81,36 +84,8 @@ void SLArRunAction::BeginOfRunAction(const G4Run* aRun)
 
   // Initialize fast light simulator if enabled and configured
   if (fFastLightSimEnabled && !fFLSConfigPath.empty()) {
-    G4cout << "SLArRunAction: Initializing fast light simulator..." << G4endl;
-
-    try {
-      // Create dispatcher
-      fFastLightSimDispatcher = std::make_unique<SLArFastLightSimDispatcher>();
-
-      // Load JSON configuration
-      std::ifstream configFile(fFLSConfigPath);
-      if (!configFile.good()) {
-        throw std::runtime_error("Cannot open config file: " + fFLSConfigPath);
-      }
-
-      rapidjson::IStreamWrapper isw(configFile);
-      rapidjson::Document doc;
-      doc.ParseStream(isw);
-      if (doc.HasParseError()) {
-        throw std::runtime_error("Error parsing JSON config file: " + fFLSConfigPath);
-      }
-
-      // Loop over volumes and create fast light sim engines
-
-    }
-    catch (const std::exception& e) {
-      G4Exception("SLArRunAction::BeginOfRunAction()",
-          "FastLightSimInitFailed",
-          FatalException,
-          ("Failed to initialize fast light simulator: " + 
-           std::string(e.what())).c_str());
-    }
-    
+    InitializeFastLightSim();
+    fFastLightSimDispatcher->Print();
   }
   else if (!fFastLightSimEnabled) {
     G4cout << "SLArRunAction: Fast light simulation disabled, using full optical tracking" << G4endl;
@@ -239,25 +214,82 @@ void SLArRunAction::SetFastLightSimConfig(const G4String& configPath) {
            << fFLSConfigPath << G4endl;
 }
 
-void SLArRunAction::SetFastLightSimulatorType(const G4String& type) {
-    if (type != "LookupTable" && type != "SemiAnalytical") {
-        G4Exception("SLArRunAction::SetFastLightSimulatorType()",
-                   "InvalidSimulatorType",
-                   JustWarning,
-                   ("Invalid simulator type: " + type).c_str());
-        return;
-    }
-    
-    fFastLightSimType = type;
-    G4cout << "SLArRunAction: Fast light simulator type set to: " 
-           << fFastLightSimType << G4endl;
-}
-
 void SLArRunAction::EnableFastLightSim(G4bool enable) {
     fFastLightSimEnabled = enable;
     G4cout << "SLArRunAction: Fast light simulation " 
            << (enable ? "enabled" : "disabled") << G4endl;
 }
 
+void SLArRunAction::InitializeFastLightSim() {
+  G4cout << "SLArRunAction: Initializing fast light simulator..." << G4endl;
+
+  try {
+    // Create dispatcher
+    fFastLightSimDispatcher = std::make_unique<SLArFastLightSimDispatcher>();
+
+    // Load JSON configuration
+    std::ifstream configFile(fFLSConfigPath);
+    if (!configFile.good()) {
+      throw std::runtime_error("Cannot open config file: " + fFLSConfigPath);
+    }
+
+    rapidjson::IStreamWrapper isw(configFile);
+    rapidjson::Document doc;
+    doc.ParseStream(isw);
+    if (doc.HasParseError()) {
+      throw std::runtime_error("Error parsing JSON config file: " + fFLSConfigPath);
+    }
+
+    debug::require_json_member(doc, "modules"); 
+    debug::require_json_member(doc, "volume_mapping");
+    debug::require_json_type(doc["modules"], rapidjson::kArrayType);
+    debug::require_json_type(doc["volume_mapping"], rapidjson::kArrayType);
+
+    for (const auto& jmodule : doc["modules"].GetArray()) {
+      debug::require_json_member(jmodule, "type");
+      debug::require_json_member(jmodule, "label");
+
+      G4String type = jmodule["type"].GetString();
+      G4String name = jmodule["label"].GetString();
+
+      std::unique_ptr<SLArFastLightSim> simulator;
+
+      if (type == "SemiAnalytical") {
+        // simulator = std::make_unique<SLArSemiAnalyticalSim>(module);
+        // (future implementation)
+        throw std::runtime_error("SemiAnalytical simulator not yet implemented");
+      }   
+      else if (type == "PhotonLibrary") {
+        simulator = std::make_unique<SLArFLSPhotonLibrary>();
+        simulator->Initialize(jmodule["config"]);
+      }
+      else {
+        G4Exception("SLArRunAction::InitializeFastLightSim", "InvalidType", FatalException,
+            Form("Invalid fast light simulation type %s",type.data()));
+      }
+      simulator->SetName(name);
+      printf("SLArRunAction::InitilizeFastLightSim: registering module %s (%p)", name.data(), simulator.get());
+      fFastLightSimDispatcher->RegisterSimulator(name, std::move(simulator));
+    }
+
+    for (const auto& jmapping : doc["volume_mapping"].GetArray()) {
+      debug::require_json_member(jmapping, "module");
+      debug::require_json_member(jmapping, "volumes");
+      G4String moduleName = jmapping["module"].GetString();
+      for (const auto& jvolume : jmapping["volumes"].GetArray()) {
+        G4String volumeName = jvolume.GetString();
+        fFastLightSimDispatcher->RegisterVolume(volumeName, moduleName);
+      }
+    }
+  }
+  catch (const std::exception& e) {
+    G4Exception("SLArRunAction::BeginOfRunAction()",
+        "FastLightSimInitFailed",
+        FatalException,
+        ("Failed to initialize fast light simulator: " + 
+         std::string(e.what())).c_str());
+  }
+
+}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
