@@ -18,15 +18,9 @@
 #include "TObjString.h"
 
 #include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
 
-void SLArFLSPhotonLibrary::Initialize(const G4String config_path) {
-  FILE* fp = fopen(config_path.c_str(), "r");
-  char readBuffer[65536];
-  rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
-
-  rapidjson::Document doc;
-  doc.ParseStream(is);
+void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
+  const auto& doc = config.GetObject();
 
   debug::require_json_member(doc, "root_file_obj");
   const auto& root_file_obj = doc["root_file_obj"];
@@ -48,6 +42,33 @@ void SLArFLSPhotonLibrary::Initialize(const G4String config_path) {
       for ( rapidjson::SizeType i=0; i<jval.Size(); ++i ) {
         fVoxelSize[i] = jval[i].GetDouble() * vunit;
       }
+    }
+  }
+
+  if ( doc.HasMember("shift") ) {
+    const auto& jshift = doc["shift"];
+    if ( jshift.IsArray() && jshift.Size() == 3 ) {
+      fShift.setX(jshift[0].GetDouble()) ;
+      fShift.setY(jshift[1].GetDouble());
+      fShift.setZ(jshift[2].GetDouble());
+    }
+    else if ( jshift.IsObject() ) {
+      G4double vunit = unit::GetJSONunit(jshift);
+      debug::require_json_member(jshift, "val");
+      const auto& jval = jshift["val"];
+      debug::require_json_type(jval, rapidjson::kArrayType);
+      const auto& jarray = jval.GetArray();
+      fShift.set( jarray[0].GetDouble() * vunit,
+                  jarray[1].GetDouble() * vunit,
+                  jarray[2].GetDouble() * vunit );
+    }
+    else {
+      G4Exception(
+          "SLArFLSPhotonLibrary::Initialize",
+          "ConfigError",
+          JustWarning,
+          "Invalid format for 'shift' parameter in photon library configuration."
+          );
     }
   }
 
