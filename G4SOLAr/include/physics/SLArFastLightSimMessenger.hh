@@ -21,7 +21,6 @@ class SLArFastLightSimMessenger : public G4UImessenger {
 
     G4UIdirectory* fFastSimDir;
     G4UIcmdWithAString* LoadConfigCmd;
-    G4UIcmdWithAString* SetSimulatorTypeCmd;
     G4UIcmdWithABool* EnableFastSimCmd;
 
   public:

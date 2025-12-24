@@ -13,15 +13,15 @@ SLArFastLightSimMessenger::SLArFastLightSimMessenger(
   fRunAction(runAction),
   fFastSimDir(nullptr),
   LoadConfigCmd(nullptr),
-  SetSimulatorTypeCmd(nullptr),
-  EnableFastSimCmd(nullptr) {
+  EnableFastSimCmd(nullptr) 
+{
 
     // Create directory for fast light simulation commands
-    fFastSimDir = new G4UIdirectory("/slar/fastLightSim/");
+    fFastSimDir = new G4UIdirectory("/SLAr/phys/fastLightSim/");
     fFastSimDir->SetGuidance("Fast light simulation configuration commands");
 
     // Command to load JSON configuration file
-    LoadConfigCmd = new G4UIcmdWithAString("/slar/fastLightSim/loadConfig", this);
+    LoadConfigCmd = new G4UIcmdWithAString("/SLAr/phys/fastLightSim/loadConfig", this);
     LoadConfigCmd->SetGuidance("Load JSON configuration file for fast light simulation");
     LoadConfigCmd->SetGuidance("This file should contain photon library settings,");
     LoadConfigCmd->SetGuidance("channel mapping, and simulator parameters");
@@ -29,17 +29,8 @@ SLArFastLightSimMessenger::SLArFastLightSimMessenger(
     LoadConfigCmd->SetDefaultValue("fast_light_config.json");
     LoadConfigCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
-    // Command to set simulator type
-    SetSimulatorTypeCmd = new G4UIcmdWithAString("/slar/fastLightSim/setType", this);
-    SetSimulatorTypeCmd->SetGuidance("Set the type of fast light simulator to use");
-    SetSimulatorTypeCmd->SetGuidance("Options: SemiAnalytical, LookupTable");
-    SetSimulatorTypeCmd->SetParameterName("simulatorType", false);
-    SetSimulatorTypeCmd->SetDefaultValue("LookupTable");
-    SetSimulatorTypeCmd->SetCandidates("SemiAnalytical LookupTable");
-    SetSimulatorTypeCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
-
     // Command to enable/disable fast simulation
-    EnableFastSimCmd = new G4UIcmdWithABool("/slar/fastLightSim/enable", this);
+    EnableFastSimCmd = new G4UIcmdWithABool("/SLAr/phys/fastLightSim/enable", this);
     EnableFastSimCmd->SetGuidance("Enable or disable fast light simulation");
     EnableFastSimCmd->SetGuidance("When disabled, full optical photon tracking is used");
     EnableFastSimCmd->SetParameterName("enable", false);
@@ -49,7 +40,6 @@ SLArFastLightSimMessenger::SLArFastLightSimMessenger(
 
 SLArFastLightSimMessenger::~SLArFastLightSimMessenger() {
   delete LoadConfigCmd;
-  delete SetSimulatorTypeCmd;
   delete EnableFastSimCmd;
   delete fFastSimDir;
 }
@@ -59,9 +49,6 @@ void SLArFastLightSimMessenger::SetNewValue(
 
   if (command == LoadConfigCmd) {
     fRunAction->SetFastLightSimConfig(newValue);
-  }
-  else if (command == SetSimulatorTypeCmd) {
-    fRunAction->SetFastLightSimulatorType(newValue);
   }
   else if (command == EnableFastSimCmd) {
     G4bool enable = EnableFastSimCmd->GetNewBoolValue(newValue);
@@ -74,9 +61,6 @@ G4String SLArFastLightSimMessenger::GetCurrentValue(G4UIcommand* command) {
 
   if (command == LoadConfigCmd) {
     cv = fRunAction->GetFastLightSimConfigPath();
-  }
-  else if (command == SetSimulatorTypeCmd) {
-    cv = fRunAction->GetFastLightSimulatorType();
   }
   else if (command == EnableFastSimCmd) {
     cv = fRunAction->IsFastLightSimEnabled() ? "true" : "false";
