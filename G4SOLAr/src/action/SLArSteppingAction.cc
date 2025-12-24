@@ -160,6 +160,21 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     trajectory->IncrementNion( n_el ); 
     trajectory->IncrementNph ( n_ph ); 
 
+    auto runAction = 
+      (SLArRunAction*)G4RunManager::GetRunManager()->GetUserRunAction();
+
+    if (runAction->IsFastLightSimEnabled() && n_ph > 0) {
+      const HepGeom::Point3D<G4double> pos(
+          thePostPoint->GetPosition().x(),
+          thePostPoint->GetPosition().y(),
+          thePostPoint->GetPosition().z());
+      const HepGeom::Point3D<G4double> pos_det_frame = fTransformWorld2Det * pos;
+
+      runAction->GetFastLightSimDispatcher()->PropagatePhotons(
+          thePostPoint->GetPhysicalVolume()->GetName(),
+          G4ThreeVector(pos_det_frame.x(), pos_det_frame.y(), pos_det_frame.z()), n_ph, thePostPoint->GetGlobalTime() );
+    }
+
     //printf("SLArSteppingAction::UserSteppingAction: adding %i ph and %i e ion. to %s [%i]\n", 
     //n_ph, n_el, 
     //particleDef->GetParticleName().c_str(), track->GetTrackID());
