@@ -78,29 +78,48 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
     }
 
     inline void PropagatePhotons(
+        const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         int numPhotons,
         double emissionTime) override {
 
-      G4String volumeName = GetVolumeNameAt(emissionPoint);
+      auto it = fVolumeToModuleMap.find(volumeName);
+      if (it != fVolumeToModuleMap.end()) {
+        const G4String& moduleName = it->second;
 
-      auto it = fSimulators.find(volumeName);
-      if (it != fSimulators.end()) {
-        return it->second->PropagatePhotons(
-            emissionPoint, numPhotons, emissionTime);
+        auto sim_it = fSimulators.find(moduleName);
+        if (sim_it != fSimulators.end()) {
+          return sim_it->second->PropagatePhotons(
+              volumeName, emissionPoint, numPhotons, emissionTime);
+        }
       }
 
       return;
     }
 
-    void Initialize() override {
-      for (auto& pair : fSimulators) {
-        pair.second->Initialize();
-      }
+  inline void RegisterVolume(
+      const G4String& volumeName,
+      const G4String& moduleName) {
+      fVolumeToModuleMap[volumeName] = moduleName;
+  }
+
+  inline void Print() const override {
+    printf("----------------------------------------------------------------\n");
+    printf("SLArFastLightSimDispatcher configuration:\n");
+    printf("Simulator list:\n"); 
+    for (const auto& sim_itr : fSimulators) {
+      printf("label: %s\ttype: %s\n", sim_itr.first.data(), sim_itr.second->GetTypeName().data());
+      sim_itr.second->Print();
     }
+    printf("\nVolume to module mapping:\n");
+    for (const auto& vol_itr : fVolumeToModuleMap) {
+      printf("volume: %s\tmodule: %s\n", vol_itr.first.data(), vol_itr.second.data());
+    }
+  }
 
   private:
     std::map<G4String, std::unique_ptr<SLArFastLightSim>> fSimulators;
+    std::map<std::string, std::string> fVolumeToModuleMap;
     G4String fDefaultVolume = {};
 
     G4String GetVolumeNameAt(const G4ThreeVector& point) {
