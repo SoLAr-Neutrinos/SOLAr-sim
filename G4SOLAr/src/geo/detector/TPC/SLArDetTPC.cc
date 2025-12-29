@@ -195,7 +195,7 @@ void SLArDetTPC::BuildFieldCage() {
 
   fFieldCage->SetModPV( new G4PVParameterised("fieldCage_ppv", 
       fc_layer_lv, fc_volume_lv, 
-      parameterisation->GetReplicationAxis(), n_replica, parameterisation) 
+      parameterisation->GetReplicationAxis(), n_replica - 1, parameterisation) 
       );
   fFieldCage->GetModPV()->SetCopyNo(20);
 
