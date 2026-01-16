@@ -299,7 +299,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
 
     for (size_t idx = 0; idx < vis_sipm.size(); idx++) {
       const float& visibility = vis_sipm[idx];
-      const int detected_photons = G4Poisson(numPhotons * visibility * 0.127);
+      const int detected_photons = G4Poisson(numPhotons * visibility);
       //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
           //branch_name.c_str(), idx, visibility, detected_photons);
 
@@ -314,6 +314,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
           //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
               //branch_name.c_str(), mt_idx, t_idx);
           SLArEventPhotonHit hit( emissionTime, 0 ); 
+          hit.SetCellNr( sipm_idx );
           anode_ev->RegisterHit(hit, mt_idx, t_idx);
         }
       }
