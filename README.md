@@ -77,7 +77,7 @@ is advised to add the build directory to the executable PATH to be able to run
 the simulation more flexibly on your machine
 ```bash
 $ cd install
-$ export PATH=${PWD}:${PATH}
+$ export PATH=${PWD}:${PATH}/bin
 ```
 
 The `solar_sim` executable can take the following inputs:

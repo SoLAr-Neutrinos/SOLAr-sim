@@ -1,0 +1,811 @@
+{
+    "unit_cell": {
+        "dimensions": [
+            {
+                "name": "cell_size_x",
+                "val": 30.0,
+                "unit": "mm"
+            },
+            {
+                "name": "cell_size_z",
+                "val": 30.0,
+                "unit": "mm"
+            }
+        ],
+        "lineup": [
+            {
+                "component": "sipm",
+                "name": "sipm",
+                "copy": 0,
+                "pos_x": {
+                    "val": 0.0,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 0.0,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 1,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 2,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 3,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 4,
+                "pos_x": {
+                    "val": -1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 5,
+                "pos_x": {
+                    "val": 1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 6,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 7,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 8,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix6",
+                "copy": 9,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 10,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 11,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 12,
+                "pos_x": {
+                    "val": -1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 13,
+                "pos_x": {
+                    "val": 1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 14,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 15,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 16,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 17,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 18,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 19,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 20,
+                "pos_x": {
+                    "val": -1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 21,
+                "pos_x": {
+                    "val": 1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 22,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 23,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 24,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 25,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 26,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 27,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 28,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 29,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 30,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": -1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 31,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 32,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 33,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 34,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 35,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 36,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 1.875,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 37,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 38,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 39,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 40,
+                "pos_x": {
+                    "val": -1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 41,
+                "pos_x": {
+                    "val": 1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 42,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 43,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 44,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 5.625,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 45,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 46,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 47,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 48,
+                "pos_x": {
+                    "val": -1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 49,
+                "pos_x": {
+                    "val": 1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 50,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 51,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 52,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 9.375,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 53,
+                "pos_x": {
+                    "val": -13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 54,
+                "pos_x": {
+                    "val": -9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 55,
+                "pos_x": {
+                    "val": -5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 56,
+                "pos_x": {
+                    "val": -1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 57,
+                "pos_x": {
+                    "val": 1.875,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 58,
+                "pos_x": {
+                    "val": 5.625,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 59,
+                "pos_x": {
+                    "val": 9.375,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            },
+            {
+                "component": "pixel",
+                "name": "pix60",
+                "copy": 60,
+                "pos_x": {
+                    "val": 13.125,
+                    "unit": "mm"
+                },
+                "pos_z": {
+                    "val": 13.125,
+                    "unit": "mm"
+                }
+            }
+        ]
+    }
+}

@@ -19,7 +19,7 @@ bool debug_2 = false;
 namespace slarAna {
   
   TString DetectorFaceName[6] = {"Top", "Bottom", "Downstream", 
-                                 "Upstream", "North", "Southh"}; 
+                                 "Upstream", "North", "South"}; 
 
   // constructor
   SLArLightPropagationModel::SLArLightPropagationModel() {

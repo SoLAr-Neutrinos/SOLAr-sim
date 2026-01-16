@@ -1,0 +1,14 @@
+// Data from R. Álvarez-Garrote et al.
+// "Measurement of the Photon Detection Efficiency of Hamamatsu VUV4 SiPMs at Cryogenic Temperature"
+// NIM A, Volume 1064 (2024)
+85.6537 12.7282
+126.916 12.6775
+269.400 8.69295
+316.599 11.4658
+385.258 15.8015
+419.633 20.9947
+470.109 27.8013
+569.659 19.6321
+650.509 15.1438
+750.627 9.09234
+849.157 4.30142

@@ -1,0 +1,5 @@
+CompileFlags:                     # Tweak the parse settings
+  Add: [-xc++, 
+        -I/home/guff/Dune/SOLAr/SOLAr-sim/G4SOLAr/include, 
+        -I/home/guff/Dune/SOLAr/SOLAr-sim/SOLArUtils/source/include]
+  CompilationDatabase: "/home/guff/Dune/SOLAr/SOLAr-sim/SOLArUtils/build"

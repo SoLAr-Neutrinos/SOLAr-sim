@@ -14,6 +14,8 @@
 
 #include "G4Run.hh"
 #include "G4RunManager.hh"
+#include "G4ProductionCutsTable.hh"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 

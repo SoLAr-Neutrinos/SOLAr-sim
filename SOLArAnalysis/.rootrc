@@ -1,0 +1,10 @@
+######################################################################
+# @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+# @file        : .rootrc
+# @created     : Thursday Apr 10, 2025 16:19:29 CEST
+#
+# @description : ROOT configuration for the SOLAr-sim environment
+######################################################################
+
+Rint.Logon: /home/guff/Dune/SOLAr/SOLAr-sim/install-v0.3/bin/rootlogon.C
+

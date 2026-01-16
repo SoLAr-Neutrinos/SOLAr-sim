@@ -123,6 +123,12 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
   fAllCutCMD->SetDefaultUnit("mm");
   fAllCutCMD->AvailableForStates(G4State_PreInit,G4State_Idle);
 
+  fEnforceEMCutsCMD = new G4UIcmdWithABool(
+      "/SLAr/phys/enforceEMCuts", this);
+  fEnforceEMCutsCMD->SetGuidance("Enforce production cuts for all EM processes");
+  fEnforceEMCutsCMD->SetDefaultValue(true);
+  fEnforceEMCutsCMD->AvailableForStates(G4State_PreInit,G4State_Idle);
+
   fStepMaxCMD = new G4UIcmdWithADoubleAndUnit(
       "/SLAr/phys/stepMax",this);
   fStepMaxCMD->SetGuidance("Set max. step length in the detector");
@@ -175,6 +181,8 @@ SLArPhysicsListMessenger::~SLArPhysicsListMessenger()
   delete fElectCutCMD;
   delete fPosCutCMD;
   delete fAllCutCMD;
+  delete fStepMaxCMD;
+  delete fEnforceEMCutsCMD;
 
   delete fClearPhysicsCMD;
   delete fRemovePhysicsCMD;
@@ -256,6 +264,11 @@ void SLArPhysicsListMessenger::SetNewValue(G4UIcommand* command,
   else if (command == fStepMaxCMD) {
     fPhysicsList->SetStepMax(fStepMaxCMD
         ->GetNewDoubleValue(newValue));
+  }
+  else if (command == fEnforceEMCutsCMD) {
+    fPhysicsList->EnforceEMCuts(
+        fEnforceEMCutsCMD->GetNewBoolValue(newValue)
+        );
   }
   else if (command == fClearPhysicsCMD) {
     fPhysicsList->ClearPhysics();

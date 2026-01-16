@@ -337,6 +337,12 @@ void SLArPhysicsList::AddStepMax()
   }
 }
 
+void SLArPhysicsList::EnforceEMCuts(G4bool to_enforce)
+{
+  G4EmParameters* param = G4EmParameters::Instance();
+  param->SetApplyCuts(to_enforce);
+}
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void SLArPhysicsList::SetNbOfPhotonsCerenkov(G4int maxNumber)

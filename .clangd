@@ -1,0 +1,10 @@
+CompileFlags:
+  Compiler: g++
+  CompilationDatabase: "/home/guff/Dune/SOLAr/SOLAr-sim/build"
+
+
+InlayHints:
+  Designators: Yes
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes
