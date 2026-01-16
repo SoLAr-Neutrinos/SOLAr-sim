@@ -4,12 +4,12 @@
 # @created     : martedì ott 25, 2022 17:23:57 CEST
 ######################################################################
 
-list(APPEND G4S_ANALYSIS_RPATH
-  "${G4SOLAR_LIB_DIR}"
-  "${G4S_ANALYSIS_LIB_DIR}"
+list(APPEND SOLARSIM_ANALYSIS_RPATH
+  "${SOLARSIM_LIB_DIR}"
+  "${SOLARSIM_ANALYSIS_LIB_DIR}"
   )
 #list(APPEND CMAKE_INSTALL_RPATH "${G4S_ANALYSIS_RPATH}")
-set(CMAKE_INSTALL_RPATH "${G4SOLAR_LIB_DIR}")
+set(CMAKE_INSTALL_RPATH "${SOLARSIM_LIB_DIR}")
 message(STATUS "CMAKE_INSTALL_RPATH: ${CMAKE_INSTALL_RPATH}")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH 1)
 
@@ -39,14 +39,14 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH 1)
   #G4SOLAr::SLArMCPrimaryInfo)
 #target_link_libraries(build_vis_map PUBLIC SLArLightPropagation)
 
-add_executable(externals external_strip.cc)
-target_link_libraries(externals PUBLIC ${ROOT_LIBRARIES})
-target_link_libraries(externals PUBLIC 
-  G4SOLAr::SLArReadoutSystemConfig 
-  G4SOLAr::SLArMCEventReadout
-  G4SOLAr::SLArMCPrimaryInfo
-  G4SOLAr::SLArMCEvent
-  )
+#add_executable(externals external_strip.cc)
+#target_link_libraries(externals PUBLIC ${ROOT_LIBRARIES})
+#target_link_libraries(externals PUBLIC 
+  #SOLARSIM::SLArReadoutSystemConfig 
+  #SOLARSIM::SLArMCEventReadout
+  #SOLARSIM::SLArMCPrimaryInfo
+  #SOLARSIM::SLArMCEvent
+  #)
 
 
 #set(analysis_executables 
@@ -72,9 +72,9 @@ target_link_libraries(externals PUBLIC
 #set_target_properties(externals PROPERTIES
   #INSTALL_RPATH "${CMAKE_INSTALL_RPATH}"
   #)
-install(TARGETS externals
-  LIBRARY DESTINATION "${G4S_ANALYSIS_BIN_DIR}"
-  RUNTIME DESTINATION "${G4S_ANALYSIS_BIN_DIR}"
-  )
+#install(TARGETS externals
+  #LIBRARY DESTINATION "${G4S_ANALYSIS_BIN_DIR}"
+  #RUNTIME DESTINATION "${G4S_ANALYSIS_BIN_DIR}"
+  #)
 
 

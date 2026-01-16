@@ -20,22 +20,22 @@ include(${ROOT_USE_FILE})
 find_package(Geant4 REQUIRED)
 include(${Geant4_USE_FILE})
 
-find_package(G4SOLAr)
-if(G4SOLAr_FOUND)
-  message(STATUS "G4SOLAR found: include at ${G4SOLAR_INCLUDE_DIR}")
-  list(APPEND CMAKE_PREFIX_PATH ${G4SOLAR_BIN_DIR})
+find_package(SOLAr-sim)
+if(SOLAr-sim_FOUND)
+  message(STATUS "SOLAr-sim found: header files at ${SOLARSIM_INCLUDE_DIR}")
+  list(APPEND CMAKE_PREFIX_PATH ${SOLARSIM_BIN_DIR})
 endif()
 
 #----------------------------------------------------------------------------
 # Define path variables
 
-list(APPEND CMAKE_LIBRARY_PATH ${G4SOLAR_LIB_DIR})
-set(G4S_ANALYSIS_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-set(G4S_ANALYSIS_BIN_DIR "${CMAKE_INSTALL_PREFIX}")
-set(G4S_ANALYSIS_INC_DIR "${PROJECT_SOURCE_DIR}/source/include")
-set(G4S_ANALYSIS_SRC_DIR "${PROJECT_SOURCE_DIR}/source/src")
-set(G4S_ANALYSIS_SCRIPT_DIR "${PROJECT_SOURCE_DIR}/source/script")
-set(G4S_INSTALL_CMAKE_DIR "${G4S_ANALYSIS_LIB_DIR}/cmake/${PROJECT_NAME}")
+list(APPEND CMAKE_LIBRARY_PATH ${SOLARSIM_LIB_DIR})
+set(SOLARSIM_ANALYSIS_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(SOLARSIM_ANALYSIS_BIN_DIR "${CMAKE_INSTALL_PREFIX}")
+set(SOLARSIM_ANALYSIS_INC_DIR "${PROJECT_SOURCE_DIR}/source/include")
+set(SOLARSIM_ANALYSIS_SRC_DIR "${PROJECT_SOURCE_DIR}/source/src")
+set(SOLARSIM_ANALYSIS_SCRIPT_DIR "${PROJECT_SOURCE_DIR}/source/script")
+set(SOLARSIM_INSTALL_CMAKE_DIR "${SOLARSIM_ANALYSIS_LIB_DIR}/cmake/${PROJECT_NAME}")
 
 include(ExternalProject)
 ExternalProject_Add("progressbar"
@@ -46,15 +46,15 @@ ExternalProject_Add("progressbar"
   GIT_TAG         "main"
   CONFIGURE_COMMAND echo "configuring progressbar"
   BUILD_COMMAND echo "fetching progressbar"
-  INSTALL_COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/progressbar/include/progressbar.hpp ${G4S_ANALYSIS_INC_DIR} )
+  INSTALL_COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/progressbar/include/progressbar.hpp ${SOLARSIM_ANALYSIS_INC_DIR} )
 
 
 include_directories(
-    ${G4S_ANALYSIS_INC_DIR}
-    ${G4SOLAR_INCLUDE_DIR}
-    ${Geant4_INCLUDE_DIR}
-    ${ROOT_INCLUDE_DIRS}
-    )
+  ${SOLARSIM_ANALYSIS_INC_DIR}
+  ${SOLARSIM_INCLUDE_DIR}
+  ${Geant4_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIRS}
+)
 if (CLHEP_EXTERNAL) 
   include_directories(${CLHEP_EXTERNAL})
 endif()
@@ -62,7 +62,7 @@ endif()
 link_directories(${ROOT_LIBRARY_DIR})
 #----------------------------------------------------------------------------
 # Build Analysis libraries
-add_subdirectory(${G4S_ANALYSIS_SRC_DIR})
+add_subdirectory(${SOLARSIM_ANALYSIS_SRC_DIR})
 
 #----------------------------------------------------------------------------
 # configure package config
@@ -78,10 +78,10 @@ include(CMakePackageConfigHelpers)
 configure_file(${PROJECT_SOURCE_DIR}/source/rootlogon.C.in 
                ${PROJECT_SOURCE_DIR}/rootlogon.C @ONLY)
 configure_file(${PROJECT_SOURCE_DIR}/source/SLArAnalysisLibSetup.hpp.in 
-               ${G4S_ANALYSIS_INC_DIR}/SLArAnalysisLibSetup.hpp @ONLY)
+               ${SOLARSIM_ANALYSIS_INC_DIR}/SLArAnalysisLibSetup.hpp @ONLY)
 configure_file(${PROJECT_SOURCE_DIR}/source/setup_g4s_analysis.sh.in 
-               ${G4S_ANALYSIS_BIN_DIR}/setup_g4s_analysis.sh @ONLY)
+               ${SOLARSIM_ANALYSIS_BIN_DIR}/setup_g4s_analysis.sh @ONLY)
 #----------------------------------------------------------------------------
 # Build analysis executables
-add_subdirectory(${G4S_ANALYSIS_SCRIPT_DIR})
+add_subdirectory(${SOLARSIM_ANALYSIS_SCRIPT_DIR})
 

@@ -7,38 +7,38 @@
 ########################################################################
 
 add_library(SLArLightPropagation SHARED
-  ${G4S_ANALYSIS_SRC_DIR}/SLArLightPropagationModel.cpp
-  ${G4S_ANALYSIS_INC_DIR}/SLArLightPropagationModel.hh
-  ${G4S_ANALYSIS_INC_DIR}/SLArLightPropagationPars.hpp
+  ${SOLARSIM_ANALYSIS_SRC_DIR}/SLArLightPropagationModel.cpp
+  ${SOLARSIM_ANALYSIS_INC_DIR}/SLArLightPropagationModel.hh
+  ${SOLARSIM_ANALYSIS_INC_DIR}/SLArLightPropagationPars.hpp
   )
 
 target_link_libraries(SLArLightPropagation PUBLIC ${ROOT_LIBRARIES})
-target_link_libraries(SLArLightPropagation PUBLIC G4SOLAr::SLArReadoutSystemConfig)
+target_link_libraries(SLArLightPropagation PUBLIC SOLARSIM::SLArReadoutSystemConfig)
 
 ROOT_GENERATE_DICTIONARY(G__SLArLightPropagation
-  ${G4S_ANALYSIS_INC_DIR}/SLArLightPropagationModel.hh
+  ${SOLARSIM_ANALYSIS_INC_DIR}/SLArLightPropagationModel.hh
   MODULE SLArLightPropagation
-  LINKDEF ${G4S_ANALYSIS_INC_DIR}/SLArLightPropagationLinkDef.h)
+  LINKDEF ${SOLARSIM_ANALYSIS_INC_DIR}/SLArLightPropagationLinkDef.h)
 
 #----------------------------------------------------------------------
 # Install instructions
 
-set(G4SOLAr_analysis_libs
+set(solarsim_analysis_libs
   SLArLightPropagation
   )
 
-set(G4SOLAr_analysis_resources 
+set(solarsim_analysis_resources 
   ${CMAKE_CURRENT_BINARY_DIR}/G__SLArLightPropagation.cxx
   ${CMAKE_CURRENT_BINARY_DIR}/libSLArLightPropagation.rootmap 
   ${CMAKE_CURRENT_BINARY_DIR}/libSLArLightPropagation_rdict.pcm
   )
 
-foreach(lib IN LISTS G4SOLAr_analysis_libs)
+foreach(lib IN LISTS solarsim_analysis_libs)
   install(TARGETS ${lib}
-    EXPORT                      G4SAnalysisTargets
-    LIBRARY DESTINATION        "${G4S_ANALYSIS_LIB_DIR}" 
-    RUNTIME DESTINATION        "${G4S_ANALYSIS_LIB_DIR}")
+    EXPORT                      SOLArSimAnalysisTargets
+    LIBRARY DESTINATION        "${SOLARSIM_ANALYSIS_LIB_DIR}" 
+    RUNTIME DESTINATION        "${SOLARSIM_ANALYSIS_LIB_DIR}")
 endforeach()
 
-install(FILES ${G4SOLAr_analysis_resources} DESTINATION "${G4S_ANALYSIS_LIB_DIR}")
+install(FILES ${solarsim_analysis_resources} DESTINATION "${SOLARSIM_ANALYSIS_LIB_DIR}")
 
