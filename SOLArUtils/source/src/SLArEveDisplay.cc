@@ -415,20 +415,37 @@ namespace display {
 
         auto& cfg_t = cfg_mt.GetBaseElement(idx_t); 
 
-        int nhit = ev_t.GetNSiPMHits();
-        if (nhit > nhit_max) nhit_max = nhit;
+        const auto& n_sipm_rows = cfg_t.GetNCellRows(); 
+        const auto& n_sipm_cols = cfg_t.GetNCellCols();
 
         const ROOT::Math::XYZVectorD t_pos = {cfg_t.GetPhysX(), cfg_t.GetPhysY(), cfg_t.GetPhysZ() }; 
         const ROOT::Math::XYZVectorD& tpc_pos = fTPCs[tpc_index].fPosition;
         const ROOT::Math::XYZVectorD t_size = {cfg_t.GetSizeX(), cfg_t.GetSizeY(), cfg_t.GetSizeZ()}; 
-        ROOT::Math::XYZVectorD size_rot = rrot*t_size;
-        size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) ); 
-        const ROOT::Math::XYZVectorD world_pos = tpc_pos + t_pos - 0.5*size_rot;
-        //printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", tpc_id,
-            //world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
-        size_rot *= 0.95;
-        hitset->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), size_rot.y(), size_rot.z() );
-        hitset->DigitValue( nhit); 
+        const ROOT::Math::XYZVectorD sipm_size = {20.0, 1.0, 20.0};
+
+        for (const auto& ev_sipm_itr : ev_t.GetConstSiPMEvents()) {
+          const auto& ev_sipm = ev_sipm_itr.second;
+          const auto& idx_sipm = ev_sipm_itr.first;
+
+          const int row = static_cast<int>(idx_sipm / n_sipm_cols);
+          const int col = static_cast<int>(idx_sipm % n_sipm_cols);
+
+          int nhit = ev_sipm.GetNhits();
+          if (nhit > nhit_max) nhit_max = nhit;
+          const ROOT::Math::XYZVectorD sipm_pos = {  // Unit cell size hardcoded to 3 cm 
+            (row + 0.5) * 30.0 - t_size.x()*0.5, 
+            0, 
+            (col + 0.5) * 30.0 - t_size.z()*0.5};
+
+          ROOT::Math::XYZVectorD size_rot = rrot*sipm_size;
+          size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) ); 
+          const ROOT::Math::XYZVectorD world_pos = tpc_pos + t_pos + sipm_pos - 0.5*size_rot;
+          //printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", tpc_id,
+          //world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
+          //size_rot *= 0.95;
+          hitset->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), -nhit*10, size_rot.z() );
+          hitset->DigitValue( nhit); 
+        }
       }
       hitset->RefitPlex(); 
       hitset->SetPickable(1);
