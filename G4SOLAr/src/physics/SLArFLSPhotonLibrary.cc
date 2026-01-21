@@ -81,19 +81,20 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
   fPhotonLibraryTree->SetBranchAddress("z", &fEntry.z_);
   
   // -- Set the number of voxels along each axis
-  std::set<float> xValues;
-  std::set<float> yValues;
-  std::set<float> zValues;
-  Long64_t nEntries = fPhotonLibraryTree->GetEntries();
-  for (Long64_t i=0; i<nEntries; ++i) {
-    fPhotonLibraryTree->GetEntry(i);
-    xValues.insert(fEntry.x_);
-    yValues.insert(fEntry.y_);
-    zValues.insert(fEntry.z_);
-  }
-  fNumVoxelsX = xValues.size();
-  fNumVoxelsY = yValues.size();
-  fNumVoxelsZ = zValues.size();
+  // FIXME: momentarily hardcoded, should be fixed with corrected photon library
+  //std::set<float> xValues;
+  //std::set<float> yValues;
+  //std::set<float> zValues;
+  //Long64_t nEntries = fPhotonLibraryTree->GetEntries();
+  //for (Long64_t i=0; i<nEntries; ++i) {
+    //fPhotonLibraryTree->GetEntry(i);
+    //xValues.insert(fEntry.x_);
+    //yValues.insert(fEntry.y_);
+    //zValues.insert(fEntry.z_);
+  //}
+  fNumVoxelsX = 30; //xValues.size();
+  fNumVoxelsY = 35; //yValues.size();
+  fNumVoxelsZ = 32; //zValues.size();
 
 
   fPhotonLibraryTree->SetBranchAddress("vis_tot", &fEntry.vis_tot_);
@@ -283,13 +284,23 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
 
   // Compute the entry index
   const Long64_t entryIndex = iX * (fNumVoxelsY * fNumVoxelsZ) + iY * fNumVoxelsZ + iZ;
-  //printf("SLArFLSPhotonLibrary::PropagatePhotons: emissionPoint (%.2f, %.2f, %.2f) cm -> voxel indices (%lld, %lld, %lld) -> entryIndex %lld\n",
-      //shiftedPoint.x(), shiftedPoint.y(), shiftedPoint.z(),
-      //iX, iY, iZ,
-      //entryIndex);
-
+  
   // Retrieve the photon library entry
   fPhotonLibraryTree->GetEntry(entryIndex);
+
+  //float dx = 0; float dy = 0; float dz = 0;
+  //dx = emissionPoint.x() - fEntry.x_;
+  //dy = emissionPoint.y() - fEntry.y_;
+  //dz = emissionPoint.z() - fEntry.z_;
+  //printf("SLArFLSPhotonLibrary::PropagatePhotons: emissionPoint (%.2f, %.2f, %.2f) cm -> voxel indices (%lld, %lld, %lld) -> entryIndex %lld\n",
+      //emissionPoint.x(), emissionPoint.y(), emissionPoint.z(),
+      //iX, iY, iZ,
+      //entryIndex);
+  //printf("voxel coords: (%.2f, %.2f, %.2f) mm - delta (%.2f, %.2f, %.2f) mm\n\n",
+      //fEntry.x_, fEntry.y_, fEntry.z_,
+      //dx, dy, dz);
+  //getchar(); 
+
 
   for (auto& anode_ev_itr : fBranchTargetAnodeSiPMMap) {
     const std::string& branch_name = anode_ev_itr.first;
