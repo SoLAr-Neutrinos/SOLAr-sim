@@ -715,7 +715,7 @@ void SLArDetCryostat::BuildCryostat()
 
   // Create outer box 
   G4Box* boxOut = new G4Box("fBoxOut_solid", 
-      x_ + 2*CLHEP::mm, y_ + 2*CLHEP::mm, z_ + 2*CLHEP::mm); 
+      x_, y_, z_); 
   
   // Create inner box 
   G4Box* boxInn = new G4Box("fBoxInn_solid", 
