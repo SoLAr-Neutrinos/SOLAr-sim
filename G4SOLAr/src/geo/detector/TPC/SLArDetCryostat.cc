@@ -248,6 +248,8 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
         fWaffleUnit->GetModSV(), fMatWorld->GetMaterial(), "waffle_unit_lv"));
   fWaffleUnit->GetModLV()->SetVisAttributes( G4VisAttributes(false) ); 
 
+  G4Colour waffle_col(1.0, 0.0, 0.0);
+
   // build waffle unit steel structure
   // Main frame (along the z axis)
   auto waffle_main_bar = new G4Box("waffle_main_sv", 0.25*tk, 0.5*major_width, 0.5*spacing); 
@@ -262,7 +264,7 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
 
   auto waffle_main_lv = new G4LogicalVolume(
       waffle_main_sv, fMatWaffle->GetMaterial(), "waffle_main_lv"); 
-  waffle_main_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  waffle_main_lv->SetVisAttributes( new G4VisAttributes( waffle_col ) ); 
   new G4PVPlacement(0, 
       G4ThreeVector(-0.5*(spacing - 0.5*tk), -0.5*(unit_thickness - major_width), 0), 
       waffle_main_lv, "waffle_main_pv0", fWaffleUnit->GetModLV(), 0, 1); 
@@ -286,7 +288,7 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
       G4ThreeVector(0.0, -0.5*(trnv_width+tk), 0.5*(majorT_width - 0.5*tk) )); 
   auto waffle_trnv_lv = new G4LogicalVolume(
       waffle_trnv_sv, fMatWaffle->GetMaterial(), "waffle_trnv_lv"); 
-  waffle_trnv_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  waffle_trnv_lv->SetVisAttributes( new G4VisAttributes( waffle_col ) ); 
   new G4PVPlacement(0, 
       G4ThreeVector(0, -0.5*(unit_thickness-major_width), -0.5*(spacing - 0.5*tk)), 
       waffle_trnv_lv, "waffle_trnv_pv0", fWaffleUnit->GetModLV(), 0, 1); 
@@ -316,7 +318,7 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
 
   auto waffle_minor_lv = new G4LogicalVolume(waffle_minor_sv, fMatWaffle->GetMaterial(),
       "waffle_minor_lv"); 
-  waffle_minor_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  waffle_minor_lv->SetVisAttributes( new G4VisAttributes( waffle_col ) ); 
   new G4PVPlacement(0, G4ThreeVector(0, -0.5*(unit_thickness - minor_width), 0), 
       waffle_minor_lv, "waffle_minor_pv", fWaffleUnit->GetModLV(), 0, 1); 
 
@@ -350,6 +352,7 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
 
 SLArBaseDetModule* SLArDetCryostat::BuildSupportStructureFace(geo::EBoxFace kFace) {
   SLArBaseDetModule* waffle = new SLArBaseDetModule(); 
+  G4Colour waffle_col(1.0, 0.0, 0.0);
 
   // get cryostat dimensions
   G4ThreeVector dim;
@@ -393,7 +396,7 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructureFace(geo::EBoxFace kFac
         face_name, 0.5*wffl_dim.x()*nx, 0.5*wffl_dim.y(), 0.5*wffl_dim.z()*nz)); 
   face_name = "waffle_face"+std::to_string(kFace)+"_lv"; 
   waffle->SetLogicVolume( new G4LogicalVolume(waffle->GetModSV(), fMatWorld->GetMaterial(), face_name)); 
-  waffle->GetModLV()->SetVisAttributes( G4VisAttributes( false /*G4Colour( 1, 0.9, 0.2) */ )); 
+  waffle->GetModLV()->SetVisAttributes( G4VisAttributes( waffle_col )); 
 
 
   std::vector<SLArPlaneParameterisation*> prmtr = 
@@ -509,6 +512,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructureFace(geo::EBoxFace kFac
 }
 
 SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G4double len, G4String name) {
+  G4Colour waffle_col(1.0, 0.0, 0.0);
+
   const G4double spacing     = fGeoInfo->GetGeoPar("waffle_spacing"); 
   const G4double major_width = fGeoInfo->GetGeoPar("waffle_major_width"); 
   const G4double minor_width = fGeoInfo->GetGeoPar("waffle_minor_width"); 
@@ -531,7 +536,7 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G
       //G4ThreeVector(0.5*majorT_width, 0.5*(h-tk), 0)); 
   auto main_bar_lv = new G4LogicalVolume(main_bar_Z, fMatWaffle->GetMaterial(), 
       "main_bar_lv"); 
-  main_bar_lv->SetVisAttributes( G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  main_bar_lv->SetVisAttributes( G4VisAttributes( waffle_col ) ); 
   new G4PVPlacement(0, G4ThreeVector(0.5*(width-0.5*tk), 0, 0), main_bar_lv, "main_bar_pv", patch_unit->GetModLV(), false, 1); ; 
   auto rot = new G4RotationMatrix(0, 0, 0); 
   rot->rotateY(CLHEP::pi); 
@@ -550,7 +555,7 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G
       G4ThreeVector(0.0, -0.5*(trnv_width+tk), 0.5*(majorT_width - 0.5*tk) )); 
   auto patch_trnv_lv = new G4LogicalVolume(
       patch_trnv_sv, fMatWaffle->GetMaterial(), "waffle_trnv_lv"); 
-  patch_trnv_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  patch_trnv_lv->SetVisAttributes( new G4VisAttributes( waffle_col ) ); 
   new G4PVPlacement(0, 
       G4ThreeVector(0, -0.5*(h-major_width), -0.5*(spacing - 0.5*tk)), 
       patch_trnv_lv, "patch_trnv_pv0", patch_unit->GetModLV(), 0, 1); 
@@ -576,6 +581,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G
 }
 
 void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
+  G4Colour waffle_col(1.0, 0.0, 0.0);
+
   const G4double spacing     = fGeoInfo->GetGeoPar("waffle_spacing"); 
   const G4double major_width = fGeoInfo->GetGeoPar("waffle_major_width"); 
   const G4double minor_width = fGeoInfo->GetGeoPar("waffle_minor_width"); 
@@ -596,7 +603,7 @@ void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
   auto corner_main_sv = new G4Box("corner_main_sv", 0.5*major_width, 0.5*major_width, 0.25*tk); 
   auto corner_main_lv = new G4LogicalVolume(corner_main_sv, fMatWaffle->GetMaterial(), 
       "corner_main_lv"); 
-  corner_main_lv->SetVisAttributes( G4Colour(1, 0, 0) ); 
+  corner_main_lv->SetVisAttributes( waffle_col ); 
   G4Transform3D tt = G4Translate3D(-0.5*(unit_thickness-major_width), -0.5*(unit_thickness-major_width), 0); 
   auto corner_main_pv = new G4PVPlacement(tt * G4Translate3D(0, 0, 0.5*(spacing-0.5*tk)),
       corner_main_lv, "corner_main_pv0", 
@@ -608,7 +615,7 @@ void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
   auto corner_tx_sv = new G4Box("corner_tx_sv", 0.5*(major_width-2*tk), 0.5*tk, 0.5*majorT_width); 
   auto corner_tx_lv = new G4LogicalVolume(corner_tx_sv, fMatWaffle->GetMaterial(), 
       "corner_tx_lv"); 
-  corner_tx_lv->SetVisAttributes( G4Colour(1, 0, 0) ); 
+  corner_tx_lv->SetVisAttributes( waffle_col ); 
   new G4PVPlacement(0, 
       G4ThreeVector(-0.5*(unit_thickness-major_width), -0.5*(unit_thickness-tk), 
         -0.5*(spacing-majorT_width-tk)), 
@@ -631,7 +638,7 @@ void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
   auto corner_ty_sv = new G4Box("corner_ty_sv", 0.5*tk, 0.5*major_width, 0.5*majorT_width); 
   auto corner_ty_lv = new G4LogicalVolume(corner_ty_sv, fMatWaffle->GetMaterial(), 
       "corner_ty_lv"); 
-  corner_ty_lv->SetVisAttributes( G4Colour(1, 0, 0) ); 
+  corner_ty_lv->SetVisAttributes( waffle_col ); 
   new G4PVPlacement(0, 
       G4ThreeVector(-0.5*(unit_thickness-tk), -0.5*(unit_thickness-major_width), 
         -0.5*(spacing-majorT_width-tk)), 
