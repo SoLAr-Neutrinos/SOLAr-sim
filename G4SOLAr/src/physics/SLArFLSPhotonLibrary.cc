@@ -72,6 +72,11 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
     }
   }
 
+  if ( doc.HasMember("pde_scale_factor") ) {
+    debug::require_json_type(doc["pde_scale_factor"], rapidjson::kNumberType);
+    fPDEScaleFactor = doc["pde_scale_factor"].GetFloat();
+  }
+
   // setup the photon librart entry containers
   fPhotonLibraryFile = TFile::Open(root_file_obj["filename"].GetString(), "READ");
   fPhotonLibraryTree = fPhotonLibraryFile->Get<TTree>(root_file_obj["objname"].GetString());
@@ -326,7 +331,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
 
     for (size_t idx = 0; idx < vis_sipm.size(); idx++) {
       const float& visibility = vis_sipm[idx];
-      const int detected_photons = G4Poisson(numPhotons * visibility);
+      const int detected_photons = G4Poisson(numPhotons * visibility * fPDEScaleFactor);
       //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
           //branch_name.c_str(), idx, visibility, detected_photons);
 

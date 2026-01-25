@@ -67,6 +67,9 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
         const int numPhotons,
         const double emissionTime) override;
 
+    inline float GetPDEScaleFactor() const {return fPDEScaleFactor;}
+    inline void SetPDEScaleFactor(const float scale_factor) {fPDEScaleFactor = scale_factor;}
+
     void Print() const override;
 
   private:
@@ -79,6 +82,7 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
     Long64_t fNumVoxelsX = 0;
     Long64_t fNumVoxelsY = 0;
     Long64_t fNumVoxelsZ = 0;
+    float    fPDEScaleFactor = 1.0; 
 
     std::map<std::string, SLArEventAnode*> fBranchTargetAnodeSiPMMap = {};
     std::map<std::string, SLArEventAnode*> fBranchTargetAnodeTileMap = {};
