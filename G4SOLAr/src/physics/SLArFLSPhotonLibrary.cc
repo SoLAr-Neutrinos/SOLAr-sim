@@ -81,21 +81,37 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
   fPhotonLibraryTree->SetBranchAddress("z", &fEntry.z_);
   
   // -- Set the number of voxels along each axis
-  // FIXME: momentarily hardcoded, should be fixed with corrected photon library
-  //std::set<float> xValues;
-  //std::set<float> yValues;
-  //std::set<float> zValues;
-  //Long64_t nEntries = fPhotonLibraryTree->GetEntries();
-  //for (Long64_t i=0; i<nEntries; ++i) {
-    //fPhotonLibraryTree->GetEntry(i);
-    //xValues.insert(fEntry.x_);
-    //yValues.insert(fEntry.y_);
-    //zValues.insert(fEntry.z_);
-  //}
-  fNumVoxelsX = 30; //xValues.size();
-  fNumVoxelsY = 35; //yValues.size();
-  fNumVoxelsZ = 32; //zValues.size();
-
+  if ( doc.HasMember("n_voxels") ) {
+    const auto& jn_voxels = doc["n_voxels"];
+    if ( jn_voxels.IsArray() && jn_voxels.Size() == 3 ) {
+      fNumVoxelsX = jn_voxels[0].GetInt();
+      fNumVoxelsY = jn_voxels[1].GetInt();
+      fNumVoxelsZ = jn_voxels[2].GetInt();
+    }
+    else {
+      G4Exception(
+          "SLArFLSPhotonLibrary::Initialize",
+          "ConfigError",
+          JustWarning,
+          "Invalid format for 'n_voxels' parameter in photon library configuration."
+          );
+    }
+  }
+  else {
+    std::set<float> xValues;
+    std::set<float> yValues;
+    std::set<float> zValues;
+    Long64_t nEntries = fPhotonLibraryTree->GetEntries();
+    for (Long64_t i=0; i<nEntries; ++i) {
+      fPhotonLibraryTree->GetEntry(i);
+      xValues.insert(fEntry.x_);
+      yValues.insert(fEntry.y_);
+      zValues.insert(fEntry.z_);
+    }
+    fNumVoxelsX = xValues.size();
+    fNumVoxelsY = yValues.size();
+    fNumVoxelsZ = zValues.size();
+  }
 
   fPhotonLibraryTree->SetBranchAddress("vis_tot", &fEntry.vis_tot_);
   fPhotonLibraryTree->SetBranchAddress("vis_dir", &fEntry.vis_dir_);
