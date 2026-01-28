@@ -34,8 +34,6 @@
 #include "config/SLArCfgReadoutTile.hh"
 #include "config/SLArCfgSuperCell.hh"
 
-typedef SLArCfgBaseSystem<SLArCfgMegaTile> SLArPixCfg;
-
 namespace slarAna {
   /*! \enum EDetectorFace
    *
@@ -76,13 +74,28 @@ namespace slarAna {
           SLArCfgBaseModule* cfgTile, 
           const TVector3 &ScintPoint);
 
+      double VisibilityOpDetTile(
+          SLArCfgBaseModule* cfgTile, 
+          TVector3 detrframe,
+          const TVector3 &ScintPoint);
+      
       // gaisser-hillas function
       static Double_t GaisserHillas(double x, double *par);
 
       // solid angle of rectangular aperture calculation functions
       double omega(const double &a, const double &b, const double &d) const;
       double solid(SLArCfgReadoutTile* cfgTile, TVector3 &v, EDetectorFace kFace); 
+      inline double solid(SLArCfgReadoutTile* cfgTile, TVector3 &detrframe, TVector3 &v, EDetectorFace kFace)
+      {
+        TVector3 vv = v + detrframe;
+        return solid((SLArCfgReadoutTile*)cfgTile, vv, kFace);
+      }
       double solid(SLArCfgSuperCell* cfgTile, TVector3 &v, EDetectorFace kFace); 
+      inline double solid(SLArCfgSuperCell* cfgTile, TVector3& detrframe, TVector3 &v, EDetectorFace kFace)
+      {
+        TVector3 vv = v + detrframe;
+        return solid((SLArCfgSuperCell*)cfgTile, vv, kFace);
+      }
       double solid_old(SLArCfgReadoutTile* cfgTile, TVector3 &v); 
 
       // solid angle of circular aperture calculation functions

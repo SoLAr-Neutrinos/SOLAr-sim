@@ -224,6 +224,196 @@ namespace slarAna {
     return vis_vuv;
   }
 
+
+  double SLArLightPropagationModel::VisibilityOpDetTile(
+      SLArCfgBaseModule* cfgTile,
+      TVector3 detrframe,
+      const TVector3 &ScintPoint) 
+  {
+
+    TVector3 OpDetRefFrame(
+        detrframe.x() / G4UIcommand::ValueOf("cm"),
+        detrframe.y() / G4UIcommand::ValueOf("cm"),
+        detrframe.z() / G4UIcommand::ValueOf("cm")
+        );
+
+    TVector3 OpDetPoint(
+        cfgTile->GetPhysX()/G4UIcommand::ValueOf("cm"), 
+        cfgTile->GetPhysY()/G4UIcommand::ValueOf("cm"), 
+        cfgTile->GetPhysZ()/G4UIcommand::ValueOf("cm"));
+
+    OpDetPoint += OpDetRefFrame;
+
+    TVector3 ScintPoint_rel = ScintPoint - OpDetPoint; 
+
+
+    double costheta   = 0.; 
+    double theta      = 0.; 
+    double distance   = (ScintPoint_rel).Mag();
+
+    double r_distance = -1; 
+    double solid_angle= -1; 
+
+    TVector3 OpDetNorm(-1, 0, 0);
+    OpDetNorm = cfgTile->GetNormal(); 
+
+    EDetectorFace kFace = kDownstrm; 
+    if (OpDetNorm        == TVector3(+1, 0, 0)) {
+      kFace = kSouth; 
+    } else if (OpDetNorm == TVector3(-1, 0, 0)) {
+      kFace = kNorth; 
+    } else if (OpDetNorm == TVector3(0, +1, 0)) {
+      kFace = kBottom; 
+    } else if (OpDetNorm == TVector3(0, -1, 0)) {
+      kFace = kTop; 
+    } else if (OpDetNorm == TVector3(0, 0, +1)) {
+      kFace = kUpstrm; 
+    } else if (OpDetNorm == TVector3(0, 0, -1)) {
+      kFace = kDownstrm;
+    } else {
+      printf("WARNING: Optical module %s[%i] has normal [%.2f, %.2f, %.2f]\n", 
+          cfgTile->GetName(), cfgTile->GetIdx(), OpDetNorm.x(), OpDetNorm.y(), OpDetNorm.z());
+      printf("which is not among the expected directions.\n\n"); 
+      getchar();
+    }
+
+    EDetectorClass kClass; 
+    if (fFaceClass.count(kFace) == 0) {
+      printf("%s norm [%.1f, %.1f, %.1f], pos [%g, %g, %g] cm\n", 
+          cfgTile->GetName(), OpDetNorm.x(), OpDetNorm.y(), OpDetNorm.z(), 
+          OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z());
+
+      printf("WARNING: Unknown detector type for %s face of the TPC\n", 
+          DetectorFaceName[kFace].Data());
+      return 0.; 
+    }
+
+    kClass = fFaceClass[kFace]; 
+
+    costheta   = (ScintPoint_rel).Unit().Dot(OpDetNorm); 
+    theta = acos(costheta)*TMath::RadToDeg();
+    r_distance = (
+        ScintPoint - 
+        OpDetNorm*(OpDetNorm.Dot(ScintPoint - TVector3(0, 0, 0)))
+        ).Mag();
+
+    printf("----------------------------------------\n");
+    printf("Optical detector: %s - face: %s - class: %s\n", 
+        cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
+        (kClass == kReadoutTile) ? "ReadoutTile" :
+        (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
+    printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
+        ScintPoint.x(), ScintPoint.y(), ScintPoint.z(), 
+        OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
+        distance, costheta, theta);
+
+    if (costheta < 0.001)
+      solid_angle = 0;
+    else {
+      if (kClass == kReadoutTile) { 
+        solid_angle= solid((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel, kFace);
+        //double solid_angle_test = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
+        //double delta_solid = solid_angle - solid_angle_test; 
+        //if (delta_solid > 1e-8) {
+          //printf("Ω = %g - Ω old = %g [δ = %g]\n", solid_angle, solid_angle_test, 
+              //delta_solid);
+        //}
+      }
+      else if (kClass == kSuperCell) 
+        solid_angle = solid((SLArCfgSuperCell*)cfgTile, ScintPoint_rel, kFace);
+    }
+
+    // calculate solid angle
+    if(solid_angle < 0){
+      std::cout << "Error: solid angle is negative" << std::endl;
+      exit(1);
+    }
+    if(r_distance < 0){
+      std::cout << "Error: r_distance is negative" << std::endl;
+      exit(1);
+    }
+    
+
+    double vis_geo = exp(-1.*distance/L_abs) * (solid_angle / (4*pi));
+
+
+    // determine Gaisser-Hillas correction for Rayleigh scattering, 
+    // distance and angular dependence, accounting for border effects
+    // offset angle bin
+    if(theta>89.0){
+      return vis_geo;
+    }
+    int j = (theta/delta_angle);
+
+    // identify GH parameters and border corrections by optical detector type 
+    // and scintillation type
+    double pars_ini[4] = {0,0,0,0};
+    double s1, s2, s3;
+    int scintillation_type = 0;  // TODO: Fix for argon
+    if (scintillation_type == 0) { // argon
+      if (j >= 8){
+        pars_ini[0] = fGHVUVPars_flat_argon[0][j];
+        pars_ini[1] = fGHVUVPars_flat_argon[1][j];
+        pars_ini[2] = fGHVUVPars_flat_argon[2][j];
+        pars_ini[3] = fGHVUVPars_flat_argon[3][j];
+      }
+      else{
+        double temp1 = fGHVUVPars_flat_argon[0][j];
+        double temp2 = fGHVUVPars_flat_argon[0][j+1];
+        pars_ini[0] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+
+        temp1 = fGHVUVPars_flat_argon[1][j];
+        temp2 = fGHVUVPars_flat_argon[1][j+1];
+        pars_ini[1] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+
+        temp1 = fGHVUVPars_flat_argon[2][j];
+        temp2 = fGHVUVPars_flat_argon[2][j+1];
+        pars_ini[2] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+
+        temp1 = fGHVUVPars_flat_argon[3][j];
+        temp2 = fGHVUVPars_flat_argon[3][j+1];
+        pars_ini[3] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+      }
+
+      s1 = interpolate( angulo, slopes1_flat_argon, theta, true);
+      s2 = interpolate( angulo, slopes2_flat_argon, theta, true);
+      s3 = interpolate( angulo, slopes3_flat_argon, theta, true);
+    }
+    else if (scintillation_type == 1) { // xenon
+      pars_ini[0] = fGHVUVPars_flat_xenon[0][j];
+      pars_ini[1] = fGHVUVPars_flat_xenon[1][j];
+      pars_ini[2] = fGHVUVPars_flat_xenon[2][j];
+      pars_ini[3] = fGHVUVPars_flat_xenon[3][j];
+      s1 = interpolate( angulo, slopes1_flat_xenon, theta, true);
+      s2 = interpolate( angulo, slopes2_flat_xenon, theta, true);
+      s3 = interpolate( angulo, slopes3_flat_xenon, theta, true);
+    }
+    else {
+      std::cout << "Error: Invalid scintillation type configuration." << endl;
+      exit(1);
+    }
+    // add border correction
+    pars_ini[0] = pars_ini[0] + s1 * r_distance;
+    pars_ini[1] = pars_ini[1] + s2 * r_distance;
+    pars_ini[2] = pars_ini[2] + s3 * r_distance;
+    pars_ini[3] = pars_ini[3];
+
+    // calculate correction factor
+    double GH_correction = GaisserHillas(distance, pars_ini);
+
+    // apply correction
+    double vis_vuv = 0 ;
+    vis_vuv = GH_correction*vis_geo/costheta;
+
+    //printf("\tGH_correction = %g\n", GH_correction);
+    //printf("\tvis_vuv = %g\n", vis_vuv);
+    //getchar(); 
+
+    return vis_vuv;
+  }
+
+
+
   // gaisser-hillas function definition
   Double_t SLArLightPropagationModel::GaisserHillas(double x,double *par) {
     //This is the Gaisser-Hillas function
