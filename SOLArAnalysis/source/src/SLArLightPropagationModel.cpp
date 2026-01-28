@@ -107,23 +107,28 @@ namespace slarAna {
         OpDetNorm*(OpDetNorm.Dot(ScintPoint - TVector3(0, 0, 0)))
         ).Mag();
 
-    //printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
-        //ScintPoint.x(), ScintPoint.y(), ScintPoint.z(), 
-        //OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
-        //distance, costheta, theta);
-
+/*
+ *    printf("----------------------------------------\n");
+ *    printf("Optical detector: %s - face: %s - class: %s\n", 
+ *        cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
+ *        (kClass == kReadoutTile) ? "ReadoutTile" :
+ *        (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
+ *    printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
+ *        ScintPoint.x(), ScintPoint.y(), ScintPoint.z(), 
+ *        OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
+ *        distance, costheta, theta);
+ */
 
     if (costheta < 0.001)
       solid_angle = 0;
     else {
       if (kClass == kReadoutTile) { 
         solid_angle= solid((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel, kFace);
-        //solid_angle = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
+        //double solid_angle_test = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
         //double delta_solid = solid_angle - solid_angle_test; 
         //if (delta_solid > 1e-8) {
           //printf("Ω = %g - Ω old = %g [δ = %g]\n", solid_angle, solid_angle_test, 
               //delta_solid);
-          //getchar(); 
         //}
       }
       else if (kClass == kSuperCell) 
