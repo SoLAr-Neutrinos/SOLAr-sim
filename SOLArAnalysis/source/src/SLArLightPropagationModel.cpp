@@ -102,10 +102,14 @@ namespace slarAna {
 
     costheta   = (ScintPoint_rel).Unit().Dot(OpDetNorm); 
     theta = acos(costheta)*TMath::RadToDeg();
-    r_distance = (
+    TVector3 r_ =  (
         ScintPoint - 
         OpDetNorm*(OpDetNorm.Dot(ScintPoint - TVector3(0, 0, 0)))
-        ).Mag();
+        );
+    r_distance = r_.Mag();
+    printf("r_ : (%g, %g, %g) - |r_| = %g\n", 
+        r_.x(), r_.y(), r_.z(), r_distance);
+
 
 /*
  *    printf("----------------------------------------\n");
@@ -205,6 +209,8 @@ namespace slarAna {
       exit(1);
     }
     // add border correction
+    // FIXME: set r_distance to zero for testing purposes
+    r_distance = 0;
     pars_ini[0] = pars_ini[0] + s1 * r_distance;
     pars_ini[1] = pars_ini[1] + s2 * r_distance;
     pars_ini[2] = pars_ini[2] + s3 * r_distance;
@@ -227,24 +233,21 @@ namespace slarAna {
 
   double SLArLightPropagationModel::VisibilityOpDetTile(
       SLArCfgBaseModule* cfgTile,
-      TVector3 detrframe,
-      const TVector3 &ScintPoint) 
+      const TVector3 &ScintPoint, 
+      const TVector3 &OpDetTranslation,
+      const TVector3 &scintTranslation) 
   {
-
-    TVector3 OpDetRefFrame(
-        detrframe.x() / G4UIcommand::ValueOf("cm"),
-        detrframe.y() / G4UIcommand::ValueOf("cm"),
-        detrframe.z() / G4UIcommand::ValueOf("cm")
-        );
 
     TVector3 OpDetPoint(
         cfgTile->GetPhysX()/G4UIcommand::ValueOf("cm"), 
         cfgTile->GetPhysY()/G4UIcommand::ValueOf("cm"), 
         cfgTile->GetPhysZ()/G4UIcommand::ValueOf("cm"));
 
-    OpDetPoint += OpDetRefFrame;
+    OpDetPoint = OpDetPoint - OpDetTranslation;
 
-    TVector3 ScintPoint_rel = ScintPoint - OpDetPoint; 
+    TVector3 ScintPoint_tpc = ScintPoint - scintTranslation;
+
+    TVector3 ScintPoint_rel = ScintPoint_tpc - OpDetPoint; 
 
 
     double costheta   = 0.; 
@@ -256,20 +259,27 @@ namespace slarAna {
 
     TVector3 OpDetNorm(-1, 0, 0);
     OpDetNorm = cfgTile->GetNormal(); 
+    TVector3 OpDetPlaneCenter(OpDetPoint); 
 
     EDetectorFace kFace = kDownstrm; 
     if (OpDetNorm        == TVector3(+1, 0, 0)) {
       kFace = kSouth; 
+      OpDetPlaneCenter.SetZ(0.0); OpDetPlaneCenter.SetY(0.0);
     } else if (OpDetNorm == TVector3(-1, 0, 0)) {
       kFace = kNorth; 
+      OpDetPlaneCenter.SetY(0.0); OpDetPlaneCenter.SetZ(0.0);
     } else if (OpDetNorm == TVector3(0, +1, 0)) {
       kFace = kBottom; 
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetZ(0.0);
     } else if (OpDetNorm == TVector3(0, -1, 0)) {
       kFace = kTop; 
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetZ(0.0);
     } else if (OpDetNorm == TVector3(0, 0, +1)) {
       kFace = kUpstrm; 
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetY(0.0);
     } else if (OpDetNorm == TVector3(0, 0, -1)) {
       kFace = kDownstrm;
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetY(0.0);
     } else {
       printf("WARNING: Optical module %s[%i] has normal [%.2f, %.2f, %.2f]\n", 
           cfgTile->GetName(), cfgTile->GetIdx(), OpDetNorm.x(), OpDetNorm.y(), OpDetNorm.z());
@@ -292,20 +302,29 @@ namespace slarAna {
 
     costheta   = (ScintPoint_rel).Unit().Dot(OpDetNorm); 
     theta = acos(costheta)*TMath::RadToDeg();
-    r_distance = (
-        ScintPoint - 
-        OpDetNorm*(OpDetNorm.Dot(ScintPoint - TVector3(0, 0, 0)))
-        ).Mag();
+    TVector3 ScintPoint_rel_plane = ScintPoint_tpc - OpDetPlaneCenter;
+    TVector3 r1 =  (
+        ScintPoint_rel_plane -
+        OpDetNorm*(OpDetNorm.Dot(ScintPoint_rel_plane))
+        ); // Projection of the scint point onto opdet plane
+    r_distance = r1.Mag();
 
-    printf("----------------------------------------\n");
-    printf("Optical detector: %s - face: %s - class: %s\n", 
-        cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
-        (kClass == kReadoutTile) ? "ReadoutTile" :
-        (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
-    printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
-        ScintPoint.x(), ScintPoint.y(), ScintPoint.z(), 
-        OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
-        distance, costheta, theta);
+    /*
+     *printf("----------------------------------------\n");
+     *printf("Optical detector: %s - face: %s - class: %s\n", 
+     *    cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
+     *    (kClass == kReadoutTile) ? "ReadoutTile" :
+     *    (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
+     *printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
+     *    ScintPoint_tpc.x(), ScintPoint_tpc.y(), ScintPoint_tpc.z(), 
+     *    OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
+     *    distance, costheta, theta);
+     *printf("OpDetPlaneCenter : (%g, %g, %g)\n", 
+     *    OpDetPlaneCenter.x(), OpDetPlaneCenter.y(), OpDetPlaneCenter.z());
+     *printf("r1 : (%g, %g, %g) - |r_distance| = %g\n", 
+     *    r1.x(), r1.y(), r1.z(), r_distance);
+     */
+
 
     if (costheta < 0.001)
       solid_angle = 0;
@@ -350,43 +369,64 @@ namespace slarAna {
     double pars_ini[4] = {0,0,0,0};
     double s1, s2, s3;
     int scintillation_type = 0;  // TODO: Fix for argon
+    const double (*GH_VUV_PARS)[9] = nullptr;
+    const auto& slopes1_ = ( kFace == kBottom || kFace == kTop) ? 
+      slopes1_flat_argon : slopes1_flat_lateral_argon;
+    const auto& slopes2_ = ( kFace == kBottom || kFace == kTop) ?
+      slopes2_flat_argon : slopes2_flat_lateral_argon;
+    const auto& slopes3_ = ( kFace == kBottom || kFace == kTop) ?
+      slopes3_flat_argon : slopes3_flat_lateral_argon;
+
+    if ( kFace == kBottom || kFace == kTop) {
+      GH_VUV_PARS = fGHVUVPars_flat_argon;
+      printf("Using top/bottom GH parameters\n");
+      printf("GH_VUV_PARS[0][0] = %g, GH_VUV_PARS[1][0] = %g, GH_VUV_PARS[2][0] = %g, GH_VUV_PARS[3][0] = %g\n", 
+          GH_VUV_PARS[0][0], GH_VUV_PARS[1][0], GH_VUV_PARS[2][0], GH_VUV_PARS[3][0]);
+    }
+    else {
+      GH_VUV_PARS = fGHVUVPars_flat_lateral_argon; 
+      printf("Using lateral GH parameters\n");
+      printf("GH_VUV_PARS[0][0] = %g, GH_VUV_PARS[1][0] = %g, GH_VUV_PARS[2][0] = %g, GH_VUV_PARS[3][0] = %g\n", 
+          GH_VUV_PARS[0][0], GH_VUV_PARS[1][0], GH_VUV_PARS[2][0], GH_VUV_PARS[3][0]);
+    }
+
     if (scintillation_type == 0) { // argon
       if (j >= 8){
-        pars_ini[0] = fGHVUVPars_flat_argon[0][j];
-        pars_ini[1] = fGHVUVPars_flat_argon[1][j];
-        pars_ini[2] = fGHVUVPars_flat_argon[2][j];
-        pars_ini[3] = fGHVUVPars_flat_argon[3][j];
+        pars_ini[0] = GH_VUV_PARS[0][j];
+        pars_ini[1] = GH_VUV_PARS[1][j];
+        pars_ini[2] = GH_VUV_PARS[2][j];
+        pars_ini[3] = GH_VUV_PARS[3][j];
       }
       else{
-        double temp1 = fGHVUVPars_flat_argon[0][j];
-        double temp2 = fGHVUVPars_flat_argon[0][j+1];
+        double temp1 = GH_VUV_PARS[0][j];
+        double temp2 = GH_VUV_PARS[0][j+1];
         pars_ini[0] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
 
-        temp1 = fGHVUVPars_flat_argon[1][j];
-        temp2 = fGHVUVPars_flat_argon[1][j+1];
+        temp1 = GH_VUV_PARS[1][j];
+        temp2 = GH_VUV_PARS[1][j+1];
         pars_ini[1] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
 
-        temp1 = fGHVUVPars_flat_argon[2][j];
-        temp2 = fGHVUVPars_flat_argon[2][j+1];
+        temp1 = GH_VUV_PARS[2][j];
+        temp2 = GH_VUV_PARS[2][j+1];
         pars_ini[2] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
 
-        temp1 = fGHVUVPars_flat_argon[3][j];
-        temp2 = fGHVUVPars_flat_argon[3][j+1];
+        temp1 = GH_VUV_PARS[3][j];
+        temp2 = GH_VUV_PARS[3][j+1];
         pars_ini[3] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
       }
 
-      s1 = interpolate( angulo, slopes1_flat_argon, theta, true);
-      s2 = interpolate( angulo, slopes2_flat_argon, theta, true);
-      s3 = interpolate( angulo, slopes3_flat_argon, theta, true);
+      s1 = interpolate( angulo, slopes1_, theta, true);
+      s2 = interpolate( angulo, slopes2_, theta, true);
+      s3 = interpolate( angulo, slopes3_, theta, true);
     }
     else if (scintillation_type == 1) { // xenon
       pars_ini[0] = fGHVUVPars_flat_xenon[0][j];
       pars_ini[1] = fGHVUVPars_flat_xenon[1][j];
       pars_ini[2] = fGHVUVPars_flat_xenon[2][j];
       pars_ini[3] = fGHVUVPars_flat_xenon[3][j];
-      s1 = interpolate( angulo, slopes1_flat_xenon, theta, true);
-      s2 = interpolate( angulo, slopes2_flat_xenon, theta, true);
-      s3 = interpolate( angulo, slopes3_flat_xenon, theta, true);
+      s1 = interpolate( angulo, slopes1_, theta, true);
+      s2 = interpolate( angulo, slopes2_, theta, true);
+      s3 = interpolate( angulo, slopes3_, theta, true);
     }
     else {
       std::cout << "Error: Invalid scintillation type configuration." << endl;
