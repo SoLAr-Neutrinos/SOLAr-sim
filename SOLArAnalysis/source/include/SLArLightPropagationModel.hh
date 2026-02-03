@@ -76,8 +76,10 @@ namespace slarAna {
 
       double VisibilityOpDetTile(
           SLArCfgBaseModule* cfgTile, 
-          TVector3 detrframe,
-          const TVector3 &ScintPoint);
+          const TVector3 &ScintPoint,
+          const TVector3 &opDetTranslation = TVector3(0,0,0),
+          const TVector3 &scintTranslation = TVector3(0,0,0)
+          );
       
       // gaisser-hillas function
       static Double_t GaisserHillas(double x, double *par);
