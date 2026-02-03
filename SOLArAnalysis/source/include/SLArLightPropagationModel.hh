@@ -56,7 +56,7 @@ namespace slarAna {
       std::vector<double> fcorr_param = {0.032, 0.008258}; 
 
       // DUNE-SP Gaisser-Hillas angle bins
-      std::vector<double> angulo = {0, 10, 20, 30, 40, 50, 60, 70, 80};
+      std::vector<double> angulo = {5, 15, 25, 35, 45, 55, 65, 75, 85};
       const double delta_angle = 10.;
 
       bool _mathmore_loaded_ = false;
