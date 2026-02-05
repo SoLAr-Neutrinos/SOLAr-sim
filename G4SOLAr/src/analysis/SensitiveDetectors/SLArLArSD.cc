@@ -78,7 +78,7 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
   G4TouchableHistory* touchable
     = (G4TouchableHistory*)(step->GetPreStepPoint()->GetTouchable());
 #ifdef SLAR_DEBUG
-  printf("SLArLArSD::ProcessHits(trk %i)\n", step->GetTrack()->GetTrackID());
+  //printf("SLArLArSD::ProcessHits(trk %i)\n", step->GetTrack()->GetTrackID());
 #endif
 
   if (step->GetTrack()->GetDynamicParticle()
