@@ -379,15 +379,9 @@ namespace slarAna {
 
     if ( kFace == kBottom || kFace == kTop) {
       GH_VUV_PARS = fGHVUVPars_flat_argon;
-      printf("Using top/bottom GH parameters\n");
-      printf("GH_VUV_PARS[0][0] = %g, GH_VUV_PARS[1][0] = %g, GH_VUV_PARS[2][0] = %g, GH_VUV_PARS[3][0] = %g\n", 
-          GH_VUV_PARS[0][0], GH_VUV_PARS[1][0], GH_VUV_PARS[2][0], GH_VUV_PARS[3][0]);
     }
     else {
       GH_VUV_PARS = fGHVUVPars_flat_lateral_argon; 
-      printf("Using lateral GH parameters\n");
-      printf("GH_VUV_PARS[0][0] = %g, GH_VUV_PARS[1][0] = %g, GH_VUV_PARS[2][0] = %g, GH_VUV_PARS[3][0] = %g\n", 
-          GH_VUV_PARS[0][0], GH_VUV_PARS[1][0], GH_VUV_PARS[2][0], GH_VUV_PARS[3][0]);
     }
 
     if (scintillation_type == 0) { // argon
