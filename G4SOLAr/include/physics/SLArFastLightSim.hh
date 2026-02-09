@@ -10,8 +10,10 @@
 
 #include "G4TransportationManager.hh"
 #include "G4ThreeVector.hh"
+#include "G4ParticleDefinition.hh"
 
 #include "rapidjson/document.h"
+#include <G4Material.hh>
 
 class SLArFastLightSim {
   public:
@@ -47,10 +49,12 @@ class SLArFastLightSim {
     const G4String& GetName() const {return fName;}
 
     virtual void PropagatePhotons(
+        const G4ParticleDefinition* particleDef,
         const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         const int numPhotons,
-        const double emissionTime) = 0;
+        const std::vector<double>& emissionTime,
+        const std::vector<double>& emissionWvlen) = 0;
 
     virtual void Initialize(const rapidjson::Value& config) {}
 
@@ -105,10 +109,12 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
     }
 
     inline void PropagatePhotons(
+        const G4ParticleDefinition* particleDef,
         const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         int numPhotons,
-        double emissionTime) override {
+        const std::vector<double>& emissionTime,
+        const std::vector<double>& emissionWvlen) override {
 
       auto it = fVolumeToModuleMap.find(volumeName);
       if (it != fVolumeToModuleMap.end()) {
@@ -117,7 +123,8 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
         auto sim_it = fSimulators.find(moduleName);
         if (sim_it != fSimulators.end()) {
           return sim_it->second->PropagatePhotons(
-              volumeName, emissionPoint, numPhotons, emissionTime);
+              particleDef, volumeName, emissionPoint, 
+              numPhotons, emissionTime, emissionWvlen);
         }
       }
 

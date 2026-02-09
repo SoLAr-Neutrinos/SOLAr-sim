@@ -391,6 +391,9 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
 {
   aParticleChange.Initialize(aTrack);
   fNumPhotons = 0;
+  fNumIonElectrons = 0;
+  fPhotonWavelengths.clear();
+  fPhotonTimes.clear();
 
   const G4DynamicParticle* aParticle = aTrack.GetDynamicParticle();
   const G4Material* aMaterial        = aTrack.GetMaterial();
@@ -550,29 +553,23 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
     fNumIonElectrons = G4int(G4Poisson(MeanNumberOfIonElectrons)); 
   }
 
-  if (fDoGeneratePhotons == false) {
-    if(verboseLevel > 1)
+  if (fDoGeneratePhotons) {
+    if(fNumPhotons <= 0 || !fStackingFlag)
     {
-      G4cout << "\n Exiting from SLArScintillation::DoIt -- "
-        << "Generation of Opical Photon is disabled."<< G4endl;
-      G4cout << "\n n_photons = " << fNumPhotons 
-             << ", n_electrons = " << fNumIonElectrons << G4endl;
+      // return unchanged particle and no secondaries
+      aParticleChange.SetNumberOfSecondaries(0);
+      return G4VRestDiscreteProcess::PostStepDoIt(aTrack, aStep);
     }
-
-    return G4VRestDiscreteProcess::PostStepDoIt(aTrack, aStep);
+    
+    aParticleChange.SetNumberOfSecondaries(fNumPhotons);
+  }
+  else {
+    fPhotonWavelengths.reserve(fNumPhotons);
+    fPhotonTimes.reserve(fNumPhotons);
   }
 
-  if(fNumPhotons <= 0 || !fStackingFlag)
-  {
-    // return unchanged particle and no secondaries
-    aParticleChange.SetNumberOfSecondaries(0);
-    return G4VRestDiscreteProcess::PostStepDoIt(aTrack, aStep);
-  }
 
-  aParticleChange.SetNumberOfSecondaries(fNumPhotons);
-
-
-  if(fTrackSecondariesFirst)
+  if(fTrackSecondariesFirst && fDoGeneratePhotons)
   {
     if(aTrack.GetTrackStatus() == fAlive)
       aParticleChange.ProposeTrackStatus(fSuspend);
@@ -647,9 +644,6 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
       continue;
 
     G4double CIImax = scintIntegral->GetMaxValue();
-    //printf("[scnt %i] fNumPhotons: %i -> numPhot = %lu (%.2f\%%)\n", 
-        //scnt, fNumPhotons, numPhot, G4double(numPhot) / fNumPhotons); 
-    //getchar();
 
     const auto trackInfo = (SLArUserTrackInformation*)aTrack.GetUserInformation();
     const int ancestor_id = trackInfo->GetTrackAncestor();
@@ -665,37 +659,14 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
         G4cout << "sampledEnergy = " << sampledEnergy << G4endl;
         G4cout << "CIIvalue =        " << CIIvalue << G4endl;
       }
-
-      // Generate random photon direction
-      G4double cost = 1. - 2. * G4UniformRand();
-      G4double sint = std::sqrt((1. - cost) * (1. + cost));
-      G4double phi  = twopi * G4UniformRand();
-      G4double sinp = std::sin(phi);
-      G4double cosp = std::cos(phi);
-      G4ParticleMomentum photonMomentum(sint * cosp, sint * sinp, cost);
-
-      // Determine polarization of new photon
-      G4ThreeVector photonPolarization(cost * cosp, cost * sinp, -sint);
-      G4ThreeVector perp = photonMomentum.cross(photonPolarization);
-      phi                = twopi * G4UniformRand();
-      sinp               = std::sin(phi);
-      cosp               = std::cos(phi);
-      photonPolarization = (cosp * photonPolarization + sinp * perp).unit();
-
-      // Generate a new photon:
-      G4DynamicParticle* scintPhoton =
-        new G4DynamicParticle(opticalphoton, photonMomentum);
-      scintPhoton->SetPolarization(photonPolarization);
-      scintPhoton->SetKineticEnergy(sampledEnergy);
-
-      // Generate new G4Track object:
+      //
+      // emission time distribution
       G4double rand = G4UniformRand();
       if(aParticle->GetDefinition()->GetPDGCharge() == 0)
       {
         rand = 1.0;
       }
 
-      // emission time distribution
       G4double delta = rand * aStep.GetStepLength();
       G4double deltaTime =
         delta /
@@ -713,24 +684,53 @@ G4VParticleChange* SLArScintillation::PostStepDoIt(const G4Track& aTrack,
 
       G4double secTime          = t0 + deltaTime;
       G4ThreeVector secPosition = x0 + rand * aStep.GetDeltaPosition();
+      
+      if (fDoGeneratePhotons) {
+        // Generate random photon direction
+        G4double cost = 1. - 2. * G4UniformRand();
+        G4double sint = std::sqrt((1. - cost) * (1. + cost));
+        G4double phi  = twopi * G4UniformRand();
+        G4double sinp = std::sin(phi);
+        G4double cosp = std::cos(phi);
+        G4ParticleMomentum photonMomentum(sint * cosp, sint * sinp, cost);
 
-      G4Track* secTrack = new G4Track(scintPhoton, secTime, secPosition);
-      secTrack->SetTouchableHandle(
-        aStep.GetPreStepPoint()->GetTouchableHandle());
-      secTrack->SetParentID(aTrack.GetTrackID());
-      secTrack->SetCreatorModelID(secID);
-      if(fScintillationTrackInfo) {
-        secTrack->SetUserInformation(
-          new G4ScintillationTrackInformation(scintType));
+        // Determine polarization of new photon
+        G4ThreeVector photonPolarization(cost * cosp, cost * sinp, -sint);
+        G4ThreeVector perp = photonMomentum.cross(photonPolarization);
+        phi                = twopi * G4UniformRand();
+        sinp               = std::sin(phi);
+        cosp               = std::cos(phi);
+        photonPolarization = (cosp * photonPolarization + sinp * perp).unit();
+ 
+        // Generate a new photon:
+        G4DynamicParticle* scintPhoton =
+          new G4DynamicParticle(opticalphoton, photonMomentum);
+        scintPhoton->SetPolarization(photonPolarization);
+        scintPhoton->SetKineticEnergy(sampledEnergy);
+
+        // Generate new G4Track object:
+        G4Track* secTrack = new G4Track(scintPhoton, secTime, secPosition);
+        secTrack->SetTouchableHandle(
+            aStep.GetPreStepPoint()->GetTouchableHandle());
+        secTrack->SetParentID(aTrack.GetTrackID());
+        secTrack->SetCreatorModelID(secID);
+        if(fScintillationTrackInfo) {
+          secTrack->SetUserInformation(
+              new G4ScintillationTrackInformation(scintType));
+        }
+        else {
+          SLArUserPhotonTrackInformation* photonInfo = new SLArUserPhotonTrackInformation(); 
+          photonInfo->SetAncestorID( ancestor_id );
+          photonInfo->SetCreator( optical::kScintillation ); 
+          photonInfo->SetOriginVolume( aTrack.GetVolume()->GetCopyNo() );
+          secTrack->SetUserInformation( photonInfo ); 
+        }
+        aParticleChange.AddSecondary(secTrack);
       }
       else {
-        SLArUserPhotonTrackInformation* photonInfo = new SLArUserPhotonTrackInformation(); 
-        photonInfo->SetAncestorID( ancestor_id );
-        photonInfo->SetCreator( optical::kScintillation ); 
-        photonInfo->SetOriginVolume( aTrack.GetVolume()->GetCopyNo() );
-        secTrack->SetUserInformation( photonInfo ); 
+        fPhotonWavelengths.push_back(sampledEnergy);
+        fPhotonTimes.push_back(secTime);
       }
-      aParticleChange.AddSecondary(secTrack);
     }
   }
 

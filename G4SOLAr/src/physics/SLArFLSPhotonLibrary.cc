@@ -4,6 +4,7 @@
  * @created     : Sunday Dec 14, 2025 15:36:06 CET
  */
 
+#include <G4ParticleDefinition.hh>
 #include <set>
 #include "SLArFLSPhotonLibrary.hh"
 #include "SLArAnalysisManager.hh"
@@ -282,10 +283,12 @@ void SLArFLSPhotonLibrary::Print() const {
 }
 
 void SLArFLSPhotonLibrary::PropagatePhotons(
+    const G4ParticleDefinition *particleDef,
     const G4String& volumeName,
     const G4ThreeVector& emissionPoint,
     const int numPhotons,
-    const double emissionTime) 
+    const std::vector<double>& emissionTime,
+    const std::vector<double>& emissionWvlen) 
 {
   // Find the voxel corresponding to the emission point
   //printf("SLArFLSPhotonLibrary::PropagatePhotons: volume %s, emissionPoint (%.2f, %.2f, %.2f) cm, numPhotons %d, emissionTime %.2f ns\n",
@@ -322,10 +325,12 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
       //dx, dy, dz);
   //getchar(); 
 
+  SLArAnalysisManager* ana_mgr = SLArAnalysisManager::Instance();
 
   for (auto& anode_ev_itr : fBranchTargetAnodeSiPMMap) {
     const std::string& branch_name = anode_ev_itr.first;
     SLArEventAnode* anode_ev = anode_ev_itr.second;
+    auto& anode_cfg = ana_mgr->GetAnodeCfgByID( anode_ev->GetID() );
 
     const auto& vis_sipm = fEntry.sipmBuffers_.at(branch_name);
 
@@ -341,11 +346,17 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
       const int t_idx = static_cast<int>(idx / base_.at(2)) % base_.at(1);
       const int mt_idx = static_cast<int>(idx / (base_.at(2) * base_.at(1)));
 
+      const auto& mt_cfg = anode_cfg.GetConstMap().at(mt_idx);
+      const auto& t_cfg = mt_cfg.GetConstMap().at(t_idx);
+      const G4ThreeVector opDetPoint( t_cfg.GetPhysX(), t_cfg.GetPhysY(), t_cfg.GetPhysZ() );
+
       if (detected_photons > 0) {
+        
         for (int p = 0; p < detected_photons; p++) {
           //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
               //branch_name.c_str(), mt_idx, t_idx);
-          SLArEventPhotonHit hit( emissionTime, 0 ); 
+          //G4double timeOfFlight = SamplePhotonTimeOfFlight(emissionPoint, opDetPoint); 
+          SLArEventPhotonHit hit( emissionTime.at(detected_photons) , 0 ); 
           hit.SetCellNr( sipm_idx );
           anode_ev->RegisterHit(hit, mt_idx, t_idx);
         }

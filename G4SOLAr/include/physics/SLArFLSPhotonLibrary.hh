@@ -62,10 +62,12 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
     void Initialize(const rapidjson::Value& config) override;
 
     void PropagatePhotons(
+        const G4ParticleDefinition* particleDef,
         const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         const int numPhotons,
-        const double emissionTime) override;
+        const std::vector<double>& emissionTime, 
+        const std::vector<double>& emissionWvlen) override;
 
     inline float GetPDEScaleFactor() const {return fPDEScaleFactor;}
     inline void SetPDEScaleFactor(const float scale_factor) {fPDEScaleFactor = scale_factor;}
