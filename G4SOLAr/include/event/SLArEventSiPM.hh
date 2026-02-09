@@ -1,6 +1,6 @@
 /**
  * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        : SLArEventSiPM
+ * @file        : SLArEventSiPM.hh
  * @created     : Thursday Apr 17, 2025 17:00:35 CEST
  */
 
@@ -13,15 +13,12 @@
 
 class SLArEventSiPM : public SLArEventHitsCollection<SLArEventPhotonHit> {
   public: 
-    inline SLArEventSiPM() : SLArEventHitsCollection<SLArEventPhotonHit>() {
-      fClockUnit = 1;
-    } 
+    inline SLArEventSiPM() : SLArEventHitsCollection<SLArEventPhotonHit>() {} 
 
     inline SLArEventSiPM(const int& idx) 
       : SLArEventHitsCollection<SLArEventPhotonHit>(idx) 
     {
       fName = Form("EvSiPM%i", fIdx); 
-      fClockUnit = 1; 
     }
 
     inline SLArEventSiPM(const int& idx, const SLArEventPhotonHit& hit) 
