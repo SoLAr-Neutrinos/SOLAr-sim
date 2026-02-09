@@ -237,6 +237,7 @@ namespace slarAna {
       const TVector3 &OpDetTranslation,
       const TVector3 &scintTranslation) 
   {
+    bool verbose = false;
 
     TVector3 OpDetPoint(
         cfgTile->GetPhysX()/G4UIcommand::ValueOf("cm"), 
@@ -309,28 +310,31 @@ namespace slarAna {
         ); // Projection of the scint point onto opdet plane
     r_distance = r1.Mag();
 
-    /*
-     *printf("----------------------------------------\n");
-     *printf("Optical detector: %s - face: %s - class: %s\n", 
-     *    cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
-     *    (kClass == kReadoutTile) ? "ReadoutTile" :
-     *    (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
-     *printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
-     *    ScintPoint_tpc.x(), ScintPoint_tpc.y(), ScintPoint_tpc.z(), 
-     *    OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
-     *    distance, costheta, theta);
-     *printf("OpDetPlaneCenter : (%g, %g, %g)\n", 
-     *    OpDetPlaneCenter.x(), OpDetPlaneCenter.y(), OpDetPlaneCenter.z());
-     *printf("r1 : (%g, %g, %g) - |r_distance| = %g\n", 
-     *    r1.x(), r1.y(), r1.z(), r_distance);
-     */
+    //if (fabs(distance - 400) < 20 && (kFace == kNorth || kFace == kTop)) 
+      //verbose = true;
+
+    if (verbose) {
+      printf("----------------------------------------\n");
+      printf("Optical detector: %s - face: %s - class: %s\n", 
+          cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
+          (kClass == kReadoutTile) ? "ReadoutTile" :
+          (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
+      printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
+          ScintPoint_tpc.x(), ScintPoint_tpc.y(), ScintPoint_tpc.z(), 
+          OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
+          distance, costheta, theta);
+      printf("OpDetPlaneCenter : (%g, %g, %g)\n", 
+          OpDetPlaneCenter.x(), OpDetPlaneCenter.y(), OpDetPlaneCenter.z());
+      printf("r1 : (%g, %g, %g) - |r_distance| = %g\n", 
+          r1.x(), r1.y(), r1.z(), r_distance);
+    }
 
 
     if (costheta < 0.001)
       solid_angle = 0;
     else {
       if (kClass == kReadoutTile) { 
-        solid_angle= solid((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel, kFace);
+        solid_angle= solid((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel, kFace, verbose);
         //double solid_angle_test = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
         //double delta_solid = solid_angle - solid_angle_test; 
         //if (delta_solid > 1e-8) {
@@ -339,7 +343,7 @@ namespace slarAna {
         //}
       }
       else if (kClass == kSuperCell) 
-        solid_angle = solid((SLArCfgSuperCell*)cfgTile, ScintPoint_rel, kFace);
+        solid_angle = solid((SLArCfgSuperCell*)cfgTile, ScintPoint_rel, kFace, verbose);
     }
 
     // calculate solid angle
@@ -439,9 +443,13 @@ namespace slarAna {
     double vis_vuv = 0 ;
     vis_vuv = GH_correction*vis_geo/costheta;
 
-    //printf("\tGH_correction = %g\n", GH_correction);
-    //printf("\tvis_vuv = %g\n", vis_vuv);
-    //getchar(); 
+    if (verbose) {
+      printf("----------------------------------------\n");
+      printf("\tvis_geo = %g\n", vis_geo);
+      printf("\tGH_correction = %g\n", GH_correction);
+      printf("\tvis_vuv = %g\n", vis_vuv);
+      getchar(); 
+    }
 
     return vis_vuv;
   }
@@ -592,19 +600,25 @@ namespace slarAna {
     TVector3 detSize(0, 0, 0); 
     TVector3 XPlane[2]; 
 
+    if (verbose) {
+      printf("----------------------------------------\n");
+      printf("opDet axis0: (%g, %g, %g) - axis1: (%g, %g, %g)\n", 
+          cfgTile->GetAxis0().x(), cfgTile->GetAxis0().y(), cfgTile->GetAxis0().z(),
+          cfgTile->GetAxis1().x(), cfgTile->GetAxis1().y(), cfgTile->GetAxis1().z());
+    }
     if (kFace == kNorth || kFace == kSouth) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(0, 1, 0); 
     } else if (kFace == kTop || kFace == kBottom) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetX((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetX(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm")); 
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(1, 0, 0); 
     } else if (kFace == kUpstrm || kFace == kDownstrm) {
-      detSize.SetX((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));  
+      detSize.SetX(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));  
       XPlane[0] = TVector3(1, 0, 0); 
       XPlane[1] = TVector3(0, 1, 0); 
     }
@@ -625,8 +639,14 @@ namespace slarAna {
     for (int j=0; j<2; j++) {
       isOut[j] = std::fabs(vv.Dot(XPlane[j])) > 0.5*(detSize.Dot(XPlane[j])); 
     }
-    //printf("vv[0] = %g, vv[1] = %g, vv[2] = %g: %i - %i\n", 
-        //vv.x(), vv.y(), vv.z(), isOut[0], isOut[1]); 
+
+    if (verbose) {
+      printf("detSize = (%g, %g, %g)\n", detSize.x(), detSize.y(), detSize.z());
+      printf("v = (%g, %g, %g)\n", v.x(), v.y(), v.z());
+      printf("vv = (%g, %g,  %g): %i - %i\n", 
+          vv.x(), vv.y(), vv.z(), isOut[0], isOut[1]); 
+      getchar();
+    }
 
     if (isOut[0] == false && isOut[1] == false) {
       Dx[0] = 0.5*detSize.Dot(XPlane[0]) - std::fabs(vv.Dot(XPlane[0])); 
