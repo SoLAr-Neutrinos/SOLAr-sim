@@ -371,17 +371,17 @@ namespace slarAna {
     int scintillation_type = 0;  // TODO: Fix for argon
     const double (*GH_VUV_PARS)[9] = nullptr;
     const auto& slopes1_ = ( kFace == kBottom || kFace == kTop) ? 
-      slopes1_flat_argon : slopes1_flat_lateral_argon;
+      slopes1_flat_argon : slopes1_flat_argon;
     const auto& slopes2_ = ( kFace == kBottom || kFace == kTop) ?
-      slopes2_flat_argon : slopes2_flat_lateral_argon;
+      slopes2_flat_argon : slopes2_flat_argon;
     const auto& slopes3_ = ( kFace == kBottom || kFace == kTop) ?
-      slopes3_flat_argon : slopes3_flat_lateral_argon;
+      slopes3_flat_argon : slopes3_flat_argon;
 
     if ( kFace == kBottom || kFace == kTop) {
       GH_VUV_PARS = fGHVUVPars_flat_argon;
     }
     else {
-      GH_VUV_PARS = fGHVUVPars_flat_lateral_argon; 
+      GH_VUV_PARS = fGHVUVPars_flat_argon; 
     }
 
     if (scintillation_type == 0) { // argon
