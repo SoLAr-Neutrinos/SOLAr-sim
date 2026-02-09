@@ -375,17 +375,17 @@ namespace slarAna {
     int scintillation_type = 0;  // TODO: Fix for argon
     const double (*GH_VUV_PARS)[9] = nullptr;
     const auto& slopes1_ = ( kFace == kBottom || kFace == kTop) ? 
-      slopes1_flat_argon : slopes1_flat_argon;
+      slopes1_flat_argon : slopes1_flat_lateral_argon;
     const auto& slopes2_ = ( kFace == kBottom || kFace == kTop) ?
-      slopes2_flat_argon : slopes2_flat_argon;
+      slopes2_flat_argon : slopes2_flat_lateral_argon;
     const auto& slopes3_ = ( kFace == kBottom || kFace == kTop) ?
-      slopes3_flat_argon : slopes3_flat_argon;
+      slopes3_flat_argon : slopes3_flat_lateral_argon;
 
     if ( kFace == kBottom || kFace == kTop) {
       GH_VUV_PARS = fGHVUVPars_flat_argon;
     }
     else {
-      GH_VUV_PARS = fGHVUVPars_flat_argon; 
+      GH_VUV_PARS = fGHVUVPars_flat_lateral_argon; 
     }
 
     if (scintillation_type == 0) { // argon
@@ -483,7 +483,8 @@ namespace slarAna {
   double SLArLightPropagationModel::solid(
       SLArCfgReadoutTile* cfgTile, 
       TVector3 &v, 
-      EDetectorFace kFace) {
+      EDetectorFace kFace, 
+      bool verbose) {
 
     TVector3 OpDetNorm = cfgTile->GetNormal();     
 
@@ -493,18 +494,18 @@ namespace slarAna {
     TVector3 XPlane[2]; 
 
     if (kFace == kNorth || kFace == kSouth) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(0, 1, 0); 
     } else if (kFace == kTop || kFace == kBottom) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetX((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetX(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm")); 
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(1, 0, 0); 
     } else if (kFace == kUpstrm || kFace == kDownstrm) {
-      detSize.SetX((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));  
+      detSize.SetX(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));  
       XPlane[0] = TVector3(1, 0, 0); 
       XPlane[1] = TVector3(0, 1, 0); 
     }
@@ -591,7 +592,8 @@ namespace slarAna {
   double SLArLightPropagationModel::solid(
       SLArCfgSuperCell* cfgTile, 
       TVector3 &v, 
-      EDetectorFace kFace) {
+      EDetectorFace kFace, 
+      bool verbose) {
 
     TVector3 OpDetNorm = cfgTile->GetNormal();     
 
