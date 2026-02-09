@@ -333,6 +333,8 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     auto& anode_cfg = ana_mgr->GetAnodeCfgByID( anode_ev->GetID() );
 
     const auto& vis_sipm = fEntry.sipmBuffers_.at(branch_name);
+    size_t photon_entry = 0; 
+    size_t max_photon_entry = emissionTime.size() - 1;
 
     for (size_t idx = 0; idx < vis_sipm.size(); idx++) {
       const float& visibility = vis_sipm[idx];
@@ -351,12 +353,15 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
       const G4ThreeVector opDetPoint( t_cfg.GetPhysX(), t_cfg.GetPhysY(), t_cfg.GetPhysZ() );
 
       if (detected_photons > 0) {
-        
         for (int p = 0; p < detected_photons; p++) {
+          // sample one entry from the emissionTime/wavelength vector
+          photon_entry = static_cast<size_t>(G4UniformRand() * max_photon_entry);
+
           //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
               //branch_name.c_str(), mt_idx, t_idx);
           //G4double timeOfFlight = SamplePhotonTimeOfFlight(emissionPoint, opDetPoint); 
-          SLArEventPhotonHit hit( emissionTime.at(detected_photons) , 0 ); 
+
+          SLArEventPhotonHit hit( emissionTime.at(photon_entry) , 0 ); 
           hit.SetCellNr( sipm_idx );
           anode_ev->RegisterHit(hit, mt_idx, t_idx);
         }
