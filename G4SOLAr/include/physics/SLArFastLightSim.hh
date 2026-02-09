@@ -61,7 +61,34 @@ class SLArFastLightSim {
   protected:
     G4String fName = {};
     EFLSType fType = kUndefined;
+    G4Material* fMaterial = nullptr;
 
+    void GetScintillationYieldByParticleType(
+        const G4ParticleDefinition* pDef, G4double& yield1,
+        G4double& yield2, G4double& yield3) const;
+
+    virtual G4double SamplePhotonTimeOfFlight(
+        const G4ThreeVector& emissionPoint, const G4ThreeVector& opDetPoint) const {
+      G4double distance = (opDetPoint - emissionPoint).mag();
+      auto rindex_vec = fMaterial->GetMaterialPropertiesTable()->GetProperty(kRINDEX);
+      G4double c_light = CLHEP::c_light; 
+      return distance / c_light;
+    }
+
+    virtual G4double SamplePhotonEmissionTime(const G4ParticleDefinition* pDef) const; 
+
+    G4double sample_time(G4double tau1, G4double tau2) const;
+
+    inline G4double single_exp(G4double t, G4double tau2) const
+    {
+      return std::exp(-1.0 * t / tau2) / tau2;
+    }
+
+    inline G4double bi_exp(G4double t, G4double tau1, G4double tau2) const
+    {
+      return std::exp(-1.0 * t / tau2) * (1 - std::exp(-1.0 * t / tau1)) / tau2 /
+        tau2 * (tau1 + tau2);
+    }
 };
 
 class SLArFastLightSimDispatcher : public SLArFastLightSim {
