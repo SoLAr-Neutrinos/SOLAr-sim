@@ -86,17 +86,17 @@ namespace slarAna {
 
       // solid angle of rectangular aperture calculation functions
       double omega(const double &a, const double &b, const double &d) const;
-      double solid(SLArCfgReadoutTile* cfgTile, TVector3 &v, EDetectorFace kFace); 
-      inline double solid(SLArCfgReadoutTile* cfgTile, TVector3 &detrframe, TVector3 &v, EDetectorFace kFace)
+      double solid(SLArCfgReadoutTile* cfgTile, TVector3 &v, EDetectorFace kFace, bool verbose = false); 
+      inline double solid(SLArCfgReadoutTile* cfgTile, TVector3 &detrframe, TVector3 &v, EDetectorFace kFace, bool verbose = false)
       {
         TVector3 vv = v + detrframe;
-        return solid((SLArCfgReadoutTile*)cfgTile, vv, kFace);
+        return solid((SLArCfgReadoutTile*)cfgTile, vv, kFace, verbose);
       }
-      double solid(SLArCfgSuperCell* cfgTile, TVector3 &v, EDetectorFace kFace); 
-      inline double solid(SLArCfgSuperCell* cfgTile, TVector3& detrframe, TVector3 &v, EDetectorFace kFace)
+      double solid(SLArCfgSuperCell* cfgTile, TVector3 &v, EDetectorFace kFace, bool verbose = false); 
+      inline double solid(SLArCfgSuperCell* cfgTile, TVector3& detrframe, TVector3 &v, EDetectorFace kFace, bool verbose = false)
       {
         TVector3 vv = v + detrframe;
-        return solid((SLArCfgSuperCell*)cfgTile, vv, kFace);
+        return solid((SLArCfgSuperCell*)cfgTile, vv, kFace, verbose);
       }
       double solid_old(SLArCfgReadoutTile* cfgTile, TVector3 &v); 
 
