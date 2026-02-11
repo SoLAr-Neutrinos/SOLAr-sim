@@ -67,7 +67,7 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
         const G4ThreeVector& emissionPoint,
         const int numPhotons,
         const std::vector<double>& emissionTime, 
-        const std::vector<double>& emissionWvlen) override;
+        const std::vector<double>& emissionEnergy) override;
 
     inline float GetPDEScaleFactor() const {return fPDEScaleFactor;}
     inline void SetPDEScaleFactor(const float scale_factor) {fPDEScaleFactor = scale_factor;}

@@ -4,14 +4,18 @@
  * @created     : Sunday Dec 14, 2025 15:36:06 CET
  */
 
-#include <G4ParticleDefinition.hh>
 #include <set>
-#include "SLArFLSPhotonLibrary.hh"
-#include "SLArAnalysisManager.hh"
-#include "SLArEventAnode.hh"
-#include "SLArDebugUtils.hh"
-#include "SLArUnit.hpp"
 
+#include "SLArDebugUtils.hh"
+#include "physics/SLArFLSPhotonLibrary.hh"
+#include "analysis/SLArAnalysisManager.hh"
+#include "event/SLArEventAnode.hh"
+#include "action/SLArRunAction.hh"
+#include "geo/detector/SLArDetectorConstruction.hh"
+#include "geo/SLArUnit.hpp"
+
+#include "G4ParticleDefinition.hh"
+#include "G4RunManager.hh"
 #include "G4Poisson.hh"
 
 #include "TPRegexp.h"
@@ -291,7 +295,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     const G4ThreeVector& emissionPoint,
     const int numPhotons,
     const std::vector<double>& emissionTime,
-    const std::vector<double>& emissionWvlen) 
+    const std::vector<double>& emissionEnergy) 
 {
   // Find the voxel corresponding to the emission point
   //printf("SLArFLSPhotonLibrary::PropagatePhotons: volume %s, emissionPoint (%.2f, %.2f, %.2f) cm, numPhotons %d, emissionTime %.2f ns\n",
@@ -329,11 +333,21 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
   //getchar(); 
 
   SLArAnalysisManager* ana_mgr = SLArAnalysisManager::Instance();
+  auto detector = 
+    static_cast<const SLArDetectorConstruction*>
+    (G4RunManager::GetRunManager()->GetUserDetectorConstruction());
 
   for (auto& anode_ev_itr : fBranchTargetAnodeSiPMMap) {
     const std::string& branch_name = anode_ev_itr.first;
     SLArEventAnode* anode_ev = anode_ev_itr.second;
     auto& anode_cfg = ana_mgr->GetAnodeCfgByID( anode_ev->GetID() );
+    G4ThreeVector tpc_pos = detector->GetDetTPCs().at(anode_cfg.GetTPCID())->GetModPV()->GetTranslation();
+    G4ThreeVector anode_pos(anode_cfg.GetX(), anode_cfg.GetY(), anode_cfg.GetZ());
+    G4RotationMatrix* anode_rot = new G4RotationMatrix();
+    anode_rot->setPhi( anode_cfg.GetPhi() ); 
+    anode_rot->setTheta( anode_cfg.GetTheta() );
+    anode_rot->setPsi( anode_cfg.GetPsi() );
+    G4Transform3D anode_transform(*anode_rot, tpc_pos);
 
     const auto& vis_sipm = fEntry.sipmBuffers_.at(branch_name);
     size_t photon_entry = 0; 
@@ -345,31 +359,55 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
       //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
           //branch_name.c_str(), idx, visibility, detected_photons);
 
-      const auto& base_ = fAnodeNComponentMap[branch_name];
-
-      const int sipm_idx = static_cast<int>(idx % base_.at(2));
-      const int t_idx = static_cast<int>(idx / base_.at(2)) % base_.at(1);
-      const int mt_idx = static_cast<int>(idx / (base_.at(2) * base_.at(1)));
-
-      const auto& mt_cfg = anode_cfg.GetConstMap().at(mt_idx);
-      const auto& t_cfg = mt_cfg.GetConstMap().at(t_idx);
-      const G4ThreeVector opDetPoint( t_cfg.GetPhysX(), t_cfg.GetPhysY(), t_cfg.GetPhysZ() );
-
       if (detected_photons > 0) {
+        const auto& base_ = fAnodeNComponentMap[branch_name];
+
+        const int sipm_idx = static_cast<int>(idx % base_.at(2));
+        const int t_idx = static_cast<int>(idx / base_.at(2)) % base_.at(1);
+        const int mt_idx = static_cast<int>(idx / (base_.at(2) * base_.at(1)));
+
+        const auto& mt_cfg = anode_cfg.GetConstMap().at(mt_idx);
+        const auto& t_cfg = mt_cfg.GetConstMap().at(t_idx);
+        const auto& n_sipm_rows = t_cfg.GetNCellRows(); 
+        const auto& n_sipm_cols = t_cfg.GetNCellCols();
+        const int row = static_cast<int>(sipm_idx / n_sipm_cols);
+        const int col = static_cast<int>(sipm_idx % n_sipm_cols);
+
+        G4ThreeVector mt_pos(mt_cfg.GetX(), mt_cfg.GetY(), mt_cfg.GetZ());
+        G4ThreeVector t_pos(t_cfg.GetX(), t_cfg.GetY(), t_cfg.GetZ());
+        G4ThreeVector sipm_pos(
+            (row + 0.5) * 30.0 - t_cfg.GetSizeX()*0.5, 
+            0, 
+            (col + 0.5) * 30.0 - t_cfg.GetSizeZ()*0.5);
+        //printf("anode pos [%g, %g, %g] mm\n", anode_pos.x(), anode_pos.y(), anode_pos.z());
+        //printf("mt pos [%g, %g, %g] mm\n", mt_pos.x(), mt_pos.y(), mt_pos.z());
+        //printf("t pos [%g, %g, %g] mm\n", t_pos.x(), t_pos.y(), t_pos.z());
+        //printf("sipm pos [%g, %g, %g] mm\n", sipm_pos.x(), sipm_pos.y(), sipm_pos.z());
+
+        HepGeom::Point3D<double> local_sipm_pos = anode_pos + mt_pos + t_pos + sipm_pos;
+        HepGeom::Point3D<double> global_sipm_pos = anode_transform * local_sipm_pos;
+
+        //printf("local sipm pos [%g, %g, %g] mm\n", local_sipm_pos.x(), local_sipm_pos.y(), local_sipm_pos.z());
+        //printf("global sipm pos [%g, %g, %g] mm\n", global_sipm_pos.x(), global_sipm_pos.y(), global_sipm_pos.z());
+        //getchar(); 
+
+        const G4ThreeVector opDetPoint = global_sipm_pos;
+
         for (int p = 0; p < detected_photons; p++) {
           // sample one entry from the emissionTime/wavelength vector
           photon_entry = static_cast<size_t>(G4UniformRand() * max_photon_entry);
 
           //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
               //branch_name.c_str(), mt_idx, t_idx);
-          //G4double timeOfFlight = SamplePhotonTimeOfFlight(emissionPoint, opDetPoint); 
+          G4double timeOfFlight = SamplePhotonTimeOfFlight(emissionPoint, opDetPoint, emissionEnergy.at(photon_entry)); 
 
-          SLArEventPhotonHit hit( emissionTime.at(photon_entry) , 0 ); 
+          SLArEventPhotonHit hit( emissionTime.at(photon_entry) + timeOfFlight, 0 ); 
           hit.SetCellNr( sipm_idx );
           anode_ev->RegisterHit(hit, mt_idx, t_idx);
         }
       }
     }
+    delete anode_rot;
   }
 
   return;
