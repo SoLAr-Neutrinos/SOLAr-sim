@@ -54,7 +54,7 @@ class SLArFastLightSim {
         const G4ThreeVector& emissionPoint,
         const int numPhotons,
         const std::vector<double>& emissionTime,
-        const std::vector<double>& emissionWvlen) = 0;
+        const std::vector<double>& emissionEnergy) = 0;
 
     virtual void Initialize(const rapidjson::Value& config) {}
 
@@ -71,12 +71,13 @@ class SLArFastLightSim {
         const G4ParticleDefinition* pDef, G4double& yield1,
         G4double& yield2, G4double& yield3) const;
 
-    virtual G4double SamplePhotonTimeOfFlight(
-        const G4ThreeVector& emissionPoint, const G4ThreeVector& opDetPoint) const {
+    inline virtual G4double SamplePhotonTimeOfFlight(
+        const G4ThreeVector& emissionPoint, const G4ThreeVector& opDetPoint, 
+        const G4double ph_ene) const {
       G4double distance = (opDetPoint - emissionPoint).mag();
       auto rindex_vec = fMaterial->GetMaterialPropertiesTable()->GetProperty(kRINDEX);
-      G4double c_light = CLHEP::c_light; 
-      return distance / c_light;
+      const G4double rindex = rindex_vec ? rindex_vec->Value(ph_ene) : 1.0;
+      return rindex * distance / CLHEP::c_light ;
     }
 
     virtual G4double SamplePhotonEmissionTime(const G4ParticleDefinition* pDef) const; 
