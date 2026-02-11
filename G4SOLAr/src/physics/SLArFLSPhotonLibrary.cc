@@ -27,6 +27,9 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
   const auto& root_file_obj = doc["root_file_obj"];
   debug::require_json_member(root_file_obj, "filename");
   debug::require_json_member(root_file_obj, "objname");
+  debug::require_json_member(doc, "material");
+
+  fMaterial = G4Material::GetMaterial(doc["material"].GetString());
 
   if ( doc.HasMember("voxel_size") ) {
     const auto& jvoxel_size = doc["voxel_size"];
