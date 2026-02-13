@@ -77,6 +77,10 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     inline SLArDetReadoutTile* GetReadoutTile() const {return fReadoutTile;}
     //! Return TPC with given id
     SLArDetTPC* GetDetTPC(G4int tpcid);
+    //! Return Cryostat detector object
+    inline SLArDetCryostat* GetCryostat() {return fCryostat;}
+    //! Return Cryostat detector object
+    inline SLArDetCryostat* GetCryostat() const {return fCryostat;}
     //! Build SuperCell object and place the SuperCells according to the given configuration
     void BuildAndPlaceSuperCells();
     //! Build the ReadoutTile object and the place the MegaTiles according to the given configuration

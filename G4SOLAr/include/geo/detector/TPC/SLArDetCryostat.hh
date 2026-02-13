@@ -61,8 +61,10 @@ class SLArDetCryostat : public SLArBaseDetModule {
     virtual void Init(const rapidjson::Value&) override {}
     bool HasSupportStructure() const {return fBuildSupport;}
     void SetWorldMaterial(SLArMaterial* mat) {fMatWorld = mat;}
+    inline void SetSupportStructureVisibility(bool visible) {fSupportStructureVisibility = visible;}
     void SetVisAttributes();
     G4bool HasAirFlow() const {return fAddFloorAirflow;}
+    
 
   private: 
     SLArMaterial* fMatWorld = {}; 
@@ -75,6 +77,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     G4bool fBuildSupport; 
     G4bool fAddNeutronBricks; 
     G4bool fAddFloorAirflow; 
+    G4bool fSupportStructureVisibility;
     std::map<G4String, SLArMaterial*> fMaterials;
     std::map<geo::EBoxFace, SLArBaseDetModule*> fSupportStructureFaces;
     std::vector<G4VPhysicalVolume*> fSupportStructureEdges;

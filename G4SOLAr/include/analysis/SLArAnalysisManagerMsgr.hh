@@ -46,6 +46,7 @@ class SLArAnalysisManagerMsgr : public G4UImessenger
     G4UIcmdWithAString*         fCmdPlotXSec      ; 
     G4UIcmdWithAnInteger*       fCmdGeoAnodeDepth ; 
     G4UIcmdWithABool*           fCmdGeoFieldCageVis;
+    G4UIcmdWithABool*           fCmdGeoCryoSupportVis;
     G4UIcmdWithABool*           fCmdEnableMCTruthOutput;
     G4UIcmdWithABool*           fCmdEnableAnodeOutput; 
     G4UIcmdWithABool*           fCmdEnablePDSOutput;

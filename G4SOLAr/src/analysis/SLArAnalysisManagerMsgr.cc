@@ -28,6 +28,7 @@ SLArAnalysisManagerMsgr::SLArAnalysisManagerMsgr() :
   fCmdWriteCfgFile(nullptr), fCmdPlotXSec(nullptr), 
   fCmdGeoAnodeDepth(nullptr), 
   fCmdGeoFieldCageVis(nullptr),
+  fCmdGeoCryoSupportVis(nullptr),
   fCmdEnableMCTruthOutput(nullptr),
   fCmdEnableAnodeOutput(nullptr),
   fCmdEnablePDSOutput(nullptr),
@@ -128,6 +129,11 @@ SLArAnalysisManagerMsgr::SLArAnalysisManagerMsgr() :
   fCmdGeoAnodeDepth->SetGuidance("Set visualization depth for SoLAr anode");
   fCmdGeoAnodeDepth->SetParameterName("depth", false);
 
+  fCmdGeoCryoSupportVis = 
+    new G4UIcmdWithABool(UIGeometryPath+"setCryoSupportVisibility", this);
+  fCmdGeoCryoSupportVis->SetGuidance("Set cryostat support structure visibility");
+  fCmdGeoCryoSupportVis->SetParameterName("vis", false, true);
+
   fCmdGeoFieldCageVis =
     new G4UIcmdWithABool(UIGeometryPath+"setFieldCageVisibility", this);
   fCmdGeoFieldCageVis->SetGuidance("Set field cage visibility");
@@ -178,6 +184,7 @@ SLArAnalysisManagerMsgr::~SLArAnalysisManagerMsgr()
   if (fCmdPlotXSec           ) delete fCmdPlotXSec           ; 
   if (fCmdGeoAnodeDepth      ) delete fCmdGeoAnodeDepth      ; 
   if (fCmdGeoFieldCageVis    ) delete fCmdGeoFieldCageVis    ; 
+  if (fCmdGeoCryoSupportVis  ) delete fCmdGeoCryoSupportVis  ;
   if (fCmdStoreFullTrajectory) delete fCmdStoreFullTrajectory;
   if (fCmdEnableMCTruthOutput) delete fCmdEnableMCTruthOutput;
   if (fCmdEnableAnodeOutput  ) delete fCmdEnableAnodeOutput  ;
@@ -251,6 +258,10 @@ void SLArAnalysisManagerMsgr::SetNewValue
       auto tpc = tpc_.second;
       tpc->SetFieldCageVisibility( G4UIcmdWithABool::GetNewBoolValue(newVal) );
     }
+  }
+  else if (cmd == fCmdGeoCryoSupportVis) {
+    fConstr_->GetCryostat()->SetSupportStructureVisibility( G4UIcmdWithABool::GetNewBoolValue(newVal) );
+    fConstr_->GetCryostat()->SetVisAttributes();
   }
   else if (cmd == fCmdStoreFullTrajectory) {
     SLArAnaMgr->SetStoreTrajectoryFull( G4UIcmdWithABool::GetNewBoolValue(newVal) );
