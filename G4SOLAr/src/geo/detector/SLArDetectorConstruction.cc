@@ -766,6 +766,10 @@ void SLArDetectorConstruction::AddExternalScorer(const G4String phys_volume_name
 #else
   G4cout << "SLArDetectorConstruction::AddExternalScorer WARNING: " << G4endl;
   G4cout << "This method is active only when solar_sim is compiled with SLAR_EXTERNAL option, and this is not the case." << G4endl;
+  G4Exception("SLArDetectorConstruction::AddExternalScorer()",
+      "ExternalScorerNotEnabled",
+      FatalException,
+      "This method is active only when solar_sim is compiled with SLAR_EXTERNAL option, and this is not the case.");
 #endif
 
   return;
@@ -1032,17 +1036,19 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   printf("\nCryostat ----------------------------------------\n");
   if (fCryostat->HasAirFlow()) {
     auto airflow_pv = fCryostat->GetAirflowUnit()->GetModPV(); 
-    printf("Cryostat floor airflow PV ptr: %p\n", static_cast<void*>(airflow_pv)); 
+    printf("Adding air flow (%s, %p) with importance: %g\n", 
+        airflow_pv->GetName().data(), static_cast<void*>(airflow_pv), imp); 
     istore->AddImportanceGeometryCell(
         imp, *airflow_pv, airflow_pv->GetCopyNo());
   }
 
-  printf("fCryostat PV ptr: %p (%s)\n", static_cast<void*>(fCryostat->GetModPV()), 
-      fCryostat->GetModPV()->GetName().data()); 
+  printf("Adding Top Cryostat PV  (%s, %p) with importance %g\n", 
+      fCryostat->GetModPV()->GetName().data(), 
+      static_cast<void*>(fCryostat->GetModPV()), imp);
   istore->AddImportanceGeometryCell(
       imp, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
 
-  printf("Support structure\n");
+  printf("Adding Top Support structure PV with importance %g\n", imp);
   const auto support_structure_pv = fCryostat->GetSupportStructure()->GetModPV();
   istore->AddImportanceGeometryCell(
       imp, *support_structure_pv, support_structure_pv->GetCopyNo());
