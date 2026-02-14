@@ -14,6 +14,7 @@
 #include "geo/detector/SLArPlaneParameterisation.hpp"
 #include "G4PhysicalVolumeStore.hh"
 #include "G4Box.hh"
+#include "G4SubtractionSolid.hh"
 #include "G4Tubs.hh"
 #include "geo/VolumeStruct.hh"
 
@@ -23,14 +24,25 @@ namespace geo {
     static std::unordered_set<const G4VSolid*> flagged_solids;
 
     if (dynamic_cast<const G4Box*>(solid)) {
+      printf("geo::get_bounding_volume_surface: INFO: using exact surface area for box %s\n", solid->GetName().data());
       const auto box = (G4Box*)solid;
       return box->GetSurfaceArea(); 
+    }
+    else if (dynamic_cast<const G4SubtractionSolid*>(solid)) {
+      printf("geo::get_bounding_volume_surface: INFO: using bounding volume surface for subtraction solid %s\n", solid->GetName().data());
+      const auto sub = (G4SubtractionSolid*)solid;
+
+      // uses the outer solid as bounding volume, which is a good approximation for the surface area of the subtraction solid
+      const auto s1 = sub->GetConstituentSolid(0);
+      G4double s1_surface = get_bounding_volume_surface(s1);
+      return s1_surface;
     }
     else {
       if (flagged_solids.find(solid) == flagged_solids.end()) {
         flagged_solids.insert(solid);
         printf("geo::get_bounding_volume_surface: WARNING "); 
         printf("get_bounding_volume_surface is only implemented for G4Box solids. "); 
+        printf("%s is of type %s\n", solid->GetName().data(), solid->GetEntityType().data());
         printf("Feel free to work on your solid's implementation and let me know!\n");
         printf("Using a box approximation.\n");
       }
