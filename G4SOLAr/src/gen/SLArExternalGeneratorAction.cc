@@ -166,21 +166,25 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
     fParticleGun->SetParticleEnergy(fConfig.ene_config.energy_tmp); 
     fParticleGun->SetParticleMomentumDirection( dir ); 
 
+    status.push_back( fConfig.ene_config.energy_tmp );
+    status.push_back( vtx_pos.x() );
+    status.push_back( vtx_pos.y() );
+    status.push_back( vtx_pos.z() );
+
     fParticleGun->GeneratePrimaryVertex(ev); 
   }
 
-  auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
 
   return;
 }
 
 void SLArExternalGeneratorAction::Configure() {
   if (fConfig.ene_config.mode == EEnergyMode::kExtSpectrum) {
-    TH1D* hist_spectrum = get_from_rootfile<TH1D>( 
+    TH1* hist_spectrum = get_from_rootfile<TH1>( 
         fConfig.ene_config.spectrum_hist.filename , 
         fConfig.ene_config.spectrum_hist.objname );
 
-    fEnergySpectrum = std::unique_ptr<TH1D>( std::move(hist_spectrum) ); 
+    fEnergySpectrum = std::unique_ptr<TH1>( std::move(hist_spectrum) ); 
     printf("SLArExternalGenerator::Configure() Sourcing external energy spectrum\n"); 
     printf("fEnergySpectrum ptr: %p\n", fEnergySpectrum.get());
   }
