@@ -80,7 +80,7 @@ G4bool SLArExtScorerSD::ProcessHits(G4Step* step, G4TouchableHistory* ) {
   scorer_hit->fVertex[1] = thePostPoint->GetPosition().y();
   scorer_hit->fVertex[2] = thePostPoint->GetPosition().z();
 
-  fHitsCollection->insert( scorer_hit ); 
+  fHitsCollection->insert( std::move(scorer_hit) ); 
 
   if (verboseLevel > 1) {
     printf("SLArExtScorerSD::ProcessHits()\n");
