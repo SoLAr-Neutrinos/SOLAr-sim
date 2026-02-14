@@ -133,6 +133,11 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
     total_particles = fConfig.n_particles;
   }
 
+  auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
+  auto& status = record.GetGenStatus();
+  status.reserve( 1 + total_particles * 4 );
+  status.push_back( total_particles );
+
   for (size_t iev = 0; iev < total_particles; iev++) {
     G4ThreeVector vtx_pos(0, 0, 0); 
     G4ThreeVector dir(0, 0, 0);
