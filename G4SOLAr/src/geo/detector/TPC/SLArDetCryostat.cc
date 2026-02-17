@@ -1014,6 +1014,8 @@ void SLArDetCryostat::SetVisAttributes() {
         to_process.push_back(daughter_lv);
       }
     }
+    // always set support structure main volume invisible
+    fSupportStructure->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
   }
 
   for (auto &ll : fShieldingStructure) {
