@@ -24,12 +24,12 @@ namespace geo {
     static std::unordered_set<const G4VSolid*> flagged_solids;
 
     if (dynamic_cast<const G4Box*>(solid)) {
-      printf("geo::get_bounding_volume_surface: INFO: using exact surface area for box %s\n", solid->GetName().data());
+      //printf("geo::get_bounding_volume_surface: INFO: using exact surface area for box %s\n", solid->GetName().data());
       const auto box = (G4Box*)solid;
       return box->GetSurfaceArea(); 
     }
     else if (dynamic_cast<const G4SubtractionSolid*>(solid)) {
-      printf("geo::get_bounding_volume_surface: INFO: using bounding volume surface for subtraction solid %s\n", solid->GetName().data());
+      //printf("geo::get_bounding_volume_surface: INFO: using bounding volume surface for subtraction solid %s\n", solid->GetName().data());
       const auto sub = (G4SubtractionSolid*)solid;
 
       // uses the outer solid as bounding volume, which is a good approximation for the surface area of the subtraction solid
