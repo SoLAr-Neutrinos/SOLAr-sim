@@ -13,7 +13,122 @@
 #include "G4ParticleDefinition.hh"
 
 #include "rapidjson/document.h"
-#include <G4Material.hh>
+#include "G4Material.hh"
+#include "TMath.h"
+#include "G4PhysicsLinearVector.hh"
+
+/**
+ * @class SLArFastLightSimTime
+ * @brief Class responsible for producing optical photon emission and propagation times in the `SLArFastLightSim` framework.
+ *
+ * This class provides methods to sample the emission time of optical photons
+ * based on the scintillating material properties and on the particle type
+ * that produced the scintillation. 
+ * It also provides methods to sample the propagation time of optical 
+ * photons in LAr based on [1].
+ *
+ *
+ * [1] D. Garcia-Gamez, P. Green, A.M. Szelc, 
+ * "Predicting transport effects of scintillation light signals in large-scale liquid argon detectors", 
+ * Eur. Phys. J. C (2022) 81:349
+ *
+ */
+class SLArFastLightSimTime {
+  public:
+    SLArFastLightSimTime() {}
+
+    ~SLArFastLightSimTime() {
+      for (int i = 0; i < 2; i++) {
+        if (fParsLandauNormEntries[i]) delete fParsLandauNormEntries[i];
+        if (fParsLandauMPV[i]) delete fParsLandauMPV[i];
+        if (fParsLandauWidth[i]) delete fParsLandauWidth[i];
+        if (fParsExpSlope[i]) delete fParsExpSlope[i];
+        if (fParsExpNormOverLandau[i]) delete fParsExpNormOverLandau[i];
+      }
+    }
+
+    void Initialize(const rapidjson::Value& config);
+
+    inline void SetMaterial(const G4String& materialName) {
+      G4Material* mat = G4Material::GetMaterial(materialName);
+      if (!mat) {
+        char msg[256];
+        sprintf(msg, "SLArFastLightSimTime::SetMaterial: Material '%s' not found. Time simulation will not be functional.\n",
+            materialName.data());
+        G4Exception("SLArFastLightSimTime::SetMaterial", "UnknownMaterial", FatalException, msg);
+        fMaterial = nullptr;
+      } else {
+        fMaterial = mat;
+      }
+    }
+
+    virtual G4double SamplePhotonEmissionTime(const G4ParticleDefinition* pDef) const; 
+
+    virtual G4double SamplePropagationTime(const G4ThreeVector& emissionPoint, 
+        const G4ThreeVector& opDetPoint, 
+        const G4double ph_ene) const;
+
+  protected:
+    G4Material* fMaterial = nullptr;
+    G4PhysicsLinearVector* fParsLandauNormEntries[2] = {nullptr};
+    G4PhysicsLinearVector* fParsLandauMPV[2] = {nullptr};
+    G4PhysicsLinearVector* fParsLandauWidth[2]  = {nullptr};
+    G4PhysicsLinearVector* fParsExpSlope[2]    = {nullptr};
+    G4PhysicsLinearVector* fParsExpNormOverLandau[2] = {nullptr};
+
+    G4double fInflextionPointDist = -1.0; 
+    G4double fAngleBin = -1.0; 
+    G4double fMaxDist = -1.0;
+    G4double fMinDist = -1.0;
+
+    void GetScintillationYieldByParticleType(
+        const G4ParticleDefinition* pDef, G4double& yield1,
+        G4double& yield2, G4double& yield3) const;
+
+    inline G4double model_far(double* x, double* par) const {
+      // par[1] = Landau MPV
+      // par[2] = Landau width
+      // par[3] = normalization
+      // par[0] = t_min
+      if (x[0] <= par[0]) return 0.;
+      return par[3] * TMath::Landau(x[0], par[1], par[2]);
+    }
+
+    inline G4double model_close(double* x, double* par) const {
+      // par0 = joining point
+      // par1 = Landau MPV
+      // par2 = Landau width
+      // par3 = normalization
+      // par4 = Expo cte
+      // par5 = Expo tau
+      // par6 = t_min
+      double y1 = par[3] * TMath::Landau(x[0], par[1], par[2]);
+      double y2 = TMath::Exp(par[4] + x[0] * par[5]);
+      if (x[0] <= par[6] || x[0] > par[0]) y1 = 0.;
+      if (x[0] < par[0]) y2 = 0.;
+      return (y1 + y2);
+    }
+
+    inline G4double finter_d(double* x, double* par) const {
+      double y1 = par[2] * TMath::Landau(x[0], par[0], par[1]);
+      double y2 = TMath::Exp(par[3] + x[0] * par[4]);
+      return TMath::Abs(y1 - y2);
+    }
+
+    G4double sample_time(G4double tau1, G4double tau2) const;
+
+    inline G4double single_exp(G4double t, G4double tau2) const
+    {
+      return std::exp(-1.0 * t / tau2) / tau2;
+    }
+
+    inline G4double bi_exp(G4double t, G4double tau1, G4double tau2) const
+    {
+      return std::exp(-1.0 * t / tau2) * (1 - std::exp(-1.0 * t / tau1)) / tau2 /
+        tau2 * (tau1 + tau2);
+    }
+
+};
 
 class SLArFastLightSim {
   public:
@@ -64,36 +179,8 @@ class SLArFastLightSim {
 
   protected:
     G4String fName = {};
+    SLArFastLightSimTime fTimeSim;
     EFLSType fType = kUndefined;
-    G4Material* fMaterial = nullptr;
-
-    void GetScintillationYieldByParticleType(
-        const G4ParticleDefinition* pDef, G4double& yield1,
-        G4double& yield2, G4double& yield3) const;
-
-    inline virtual G4double SamplePhotonTimeOfFlight(
-        const G4ThreeVector& emissionPoint, const G4ThreeVector& opDetPoint, 
-        const G4double ph_ene) const {
-      G4double distance = (opDetPoint - emissionPoint).mag();
-      auto rindex_vec = fMaterial->GetMaterialPropertiesTable()->GetProperty(kRINDEX);
-      const G4double rindex = rindex_vec ? rindex_vec->Value(ph_ene) : 1.0;
-      return rindex * distance / CLHEP::c_light ;
-    }
-
-    virtual G4double SamplePhotonEmissionTime(const G4ParticleDefinition* pDef) const; 
-
-    G4double sample_time(G4double tau1, G4double tau2) const;
-
-    inline G4double single_exp(G4double t, G4double tau2) const
-    {
-      return std::exp(-1.0 * t / tau2) / tau2;
-    }
-
-    inline G4double bi_exp(G4double t, G4double tau1, G4double tau2) const
-    {
-      return std::exp(-1.0 * t / tau2) * (1 - std::exp(-1.0 * t / tau1)) / tau2 /
-        tau2 * (tau1 + tau2);
-    }
 };
 
 class SLArFastLightSimDispatcher : public SLArFastLightSim {
@@ -115,8 +202,8 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
         const G4ThreeVector& emissionPoint,
         int numPhotons,
         const std::vector<double>& emissionTime,
-        const std::vector<double>& emissionWvlen) override {
-
+        const std::vector<double>& emissionWvlen) override 
+    {
       auto it = fVolumeToModuleMap.find(volumeName);
       if (it != fVolumeToModuleMap.end()) {
         const G4String& moduleName = it->second;
@@ -128,7 +215,6 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
               numPhotons, emissionTime, emissionWvlen);
         }
       }
-
       return;
     }
 
@@ -157,7 +243,7 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
     std::map<std::string, std::string> fVolumeToModuleMap;
     G4String fDefaultVolume = {};
 
-    G4String GetVolumeNameAt(const G4ThreeVector& point) {
+    inline G4String GetVolumeNameAt(const G4ThreeVector& point) {
       G4Navigator* navigator = 
         G4TransportationManager::GetTransportationManager()
         ->GetNavigatorForTracking();

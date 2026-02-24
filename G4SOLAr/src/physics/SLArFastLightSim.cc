@@ -9,10 +9,157 @@
 #include "G4RandomTools.hh"
 #include "G4RunManager.hh"
 
+#include "SLArDebugUtils.hh"
+#include "SLArUnit.hpp"
 #include "SLArFastLightSim.hh"
 #include "SLArScintillation.hh"
 
-void SLArFastLightSim::GetScintillationYieldByParticleType(
+void SLArFastLightSimTime::Initialize(const rapidjson::Value& config) {
+
+  const auto& doc = config.GetObject();
+  if ( doc.HasMember("params") == false) return;
+
+  const auto& params = doc["params"];
+  debug::require_json_type(params, rapidjson::kObjectType);
+
+  if (params.HasMember("inflexion_point_distance")) {
+    fInflextionPointDist = unit::ParseJsonVal(params["inflexion_point_distance"]);
+  }
+
+  if (params.HasMember("angle_bin")) {
+    fAngleBin = unit::ParseJsonVal(params["angle_bin"]);
+  }
+
+  if (params.HasMember("max_d")) {
+    fMaxDist = unit::ParseJsonVal(params["max_d"]);
+  }
+
+  if (params.HasMember("min_d")) {
+    fMinDist = unit::ParseJsonVal(params["min_d"]);
+  }
+
+  std::vector<G4double> exp_dist;
+  if (params.HasMember("exp_distance")) {
+    auto tmp = unit::ParseJsonVec(params["exp_distance"]);
+    exp_dist.resize(tmp.size());
+    for (size_t i = 0; i < tmp.size(); ++i) {
+      exp_dist[i] = tmp[i];
+    }
+  }
+
+  if (params.HasMember("exp_slope")) {
+    const auto& jslope = params["exp_slope"];
+    debug::require_json_type(jslope, rapidjson::kArrayType);
+    if (jslope.Size() > 2) {
+      G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", JustWarning,
+          "Only up to 2 sets of exponential slope parameters are supported. Ignoring extra sets."
+          );
+    }
+    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+      fParsExpSlope[i] = 
+        new G4PhysicsLinearVector(exp_dist.front(), exp_dist.back(), exp_dist.size());
+      const auto& jslope_val = jslope[i];
+      debug::require_json_type(jslope_val, rapidjson::kArrayType);
+      if (exp_dist.size() != jslope_val.Size()) {
+        char msg[256];
+        std::sprintf(msg, "SLArFastLightSimTime::Initialize: Size of exp_distance (%lu) and exp_slope[%du] (%du) do not match.\n",
+            exp_dist.size(), i, jslope_val.Size());
+        G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", FatalException, msg);
+      }
+      for ( rapidjson::SizeType j=0; j<jslope_val.Size(); ++j ) {
+        fParsExpSlope[i]->PutValue(j, jslope_val[j].GetDouble());
+      }
+    }
+  }
+
+  if (params.HasMember("exp_norm_over_landau")) {
+    const auto& jnorm = params["exp_norm_over_landau"];
+    debug::require_json_type(jnorm, rapidjson::kArrayType);
+    if (jnorm.Size() > 2) {
+      G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", JustWarning,
+          "Only up to 2 sets of exponential norm over Landau parameters are supported. Ignoring extra sets."
+          );
+    }
+
+    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+      fParsExpNormOverLandau[i] = 
+        new G4PhysicsLinearVector(exp_dist.front(), exp_dist.back(), exp_dist.size());
+      const auto& jnorm_val = jnorm[i];
+      debug::require_json_type(jnorm_val, rapidjson::kArrayType);
+      if (exp_dist.size() != jnorm_val.Size()) {
+        char msg[256];
+        std::sprintf(msg, "SLArFastLightSimTime::Initialize: Size of exp_distance (%lu) and exp_norm_over_landau[%du] (%du) do not match.\n",
+            exp_dist.size(), i, jnorm_val.Size());
+        G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", FatalException, msg);
+      }
+      for ( rapidjson::SizeType j=0; j<jnorm_val.Size(); ++j ) {
+        fParsExpNormOverLandau[i]->PutValue(j, jnorm_val[j].GetDouble());
+      }
+    }
+  }
+
+  std::vector<G4double> landau_dist;
+  if (params.HasMember("landau_distance")) {
+    auto tmp = unit::ParseJsonVec(params["landau_distance"]);
+    landau_dist.resize(tmp.size());
+    for (size_t i = 0; i < tmp.size(); ++i) {
+      landau_dist[i] = tmp[i];
+    }
+  }
+
+  if (params.HasMember("landau_norm_over_entries")) {
+    const auto& jnorm = params["landau_norm_over_entries"];
+    debug::require_json_type(jnorm, rapidjson::kArrayType);
+    if (jnorm.Size() > 2) {
+      G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", JustWarning,
+          "Only up to 2 sets of Landau norm over entries parameters are supported. Ignoring extra sets.");
+    }
+    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+      fParsLandauNormEntries[i] = 
+        new G4PhysicsLinearVector(landau_dist.front(), landau_dist.back(), landau_dist.size());
+      const auto& jnorm_val = jnorm[i];
+      debug::require_json_type(jnorm_val, rapidjson::kArrayType);
+      if (landau_dist.size() != jnorm_val.Size()) {
+        char msg[256];
+        std::sprintf(msg, "SLArFastLightSimTime::Initialize: Size of landau_distance (%lu) and landau_norm_over_entries[%du] (%du) do not match.\n",
+            landau_dist.size(), i, jnorm_val.Size());
+        G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", FatalException, msg);
+      }
+      for ( rapidjson::SizeType j=0; j<jnorm_val.Size(); ++j ) {
+        fParsLandauNormEntries[i]->PutValue(j, jnorm_val[j].GetDouble());
+      }
+    }
+  }
+
+  if (params.HasMember("landau_mpv")) {
+    const auto& jmpv = params["landau_mpv"];
+    debug::require_json_type(jmpv, rapidjson::kArrayType);
+    if (jmpv.Size() > 2) {
+      G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", JustWarning,
+          "Only up to 2 sets of Landau MPV parameters are supported. Ignoring extra sets.");
+    }
+
+    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+      fParsLandauMPV[i] = 
+        new G4PhysicsLinearVector(landau_dist.front(), landau_dist.back(), landau_dist.size());
+      const auto& jmpv_val = jmpv[i];
+      debug::require_json_type(jmpv_val, rapidjson::kArrayType);
+      if (landau_dist.size() != jmpv_val.Size()) {
+        char msg[256];
+        std::sprintf(msg, "SLArFastLightSimTime::Initialize: Size of landau_distance (%lu) and landau_mpv[%du] (%du) do not match.\n",
+            landau_dist.size(), i, jmpv_val.Size());
+        G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", FatalException, msg);
+      }
+      for ( rapidjson::SizeType j=0; j<jmpv_val.Size(); ++j ) {
+        fParsLandauMPV[i]->PutValue(j, jmpv_val[j].GetDouble());
+      }
+    }
+  }
+
+  return;
+}
+
+void SLArFastLightSimTime::GetScintillationYieldByParticleType(
   const G4ParticleDefinition* pDef, G4double& yield1,
   G4double& yield2, G4double& yield3) const
 {
@@ -114,7 +261,7 @@ void SLArFastLightSim::GetScintillationYieldByParticleType(
   return;
 }
 
-G4double SLArFastLightSim::SamplePhotonEmissionTime(const G4ParticleDefinition* pDef) const 
+G4double SLArFastLightSimTime::SamplePhotonEmissionTime(const G4ParticleDefinition* pDef) const 
 {
   G4MaterialPropertiesTable* MPT = fMaterial->GetMaterialPropertiesTable();
   if(!MPT) return 0.0;
@@ -166,8 +313,25 @@ G4double SLArFastLightSim::SamplePhotonEmissionTime(const G4ParticleDefinition* 
   }
 }
 
+G4double SLArFastLightSimTime::SamplePropagationTime(const G4ThreeVector& emissionPoint, 
+    const G4ThreeVector& opDetPoint, 
+    const G4double ph_ene) const
+{
+  G4double distance = (opDetPoint - emissionPoint).mag();
+  // check if the parameters vectors are null 
+  if (fParsExpSlope[0] == nullptr || fParsExpNormOverLandau[0] == nullptr ||
+      fParsLandauNormEntries[0] == nullptr || fParsLandauMPV[0] == nullptr) {
+    const auto& rindex_vec = fMaterial->GetMaterialPropertiesTable()->GetProperty(kRINDEX);
+    const G4double rindex = rindex_vec ? rindex_vec->Value(ph_ene) : 1.0;
+    return rindex * distance / CLHEP::c_light ;
+  }
 
-G4double SLArFastLightSim::sample_time(G4double riseTime, G4double fallTime) const
+
+
+  return 0; 
+}
+
+G4double SLArFastLightSimTime::sample_time(G4double riseTime, G4double fallTime) const
 {
   // Loop checking, 07-Aug-2015, Vladimir Ivanchenko
   while(true)

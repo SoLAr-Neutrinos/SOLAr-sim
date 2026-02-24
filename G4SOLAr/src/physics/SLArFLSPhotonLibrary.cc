@@ -33,7 +33,10 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
   debug::require_json_member(root_file_obj, "objname");
   debug::require_json_member(doc, "material");
 
-  fMaterial = G4Material::GetMaterial(doc["material"].GetString());
+  fTimeSim.SetMaterial(doc["material"].GetString());
+  if (doc.HasMember("time")) {
+    fTimeSim.Initialize(doc["time"]);
+  }
 
   if ( doc.HasMember("voxel_size") ) {
     const auto& jvoxel_size = doc["voxel_size"];
@@ -399,7 +402,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
 
           //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
               //branch_name.c_str(), mt_idx, t_idx);
-          G4double timeOfFlight = SamplePhotonTimeOfFlight(emissionPoint, opDetPoint, emissionEnergy.at(photon_entry)); 
+          G4double timeOfFlight = fTimeSim.SamplePropagationTime(emissionPoint, opDetPoint, emissionEnergy.at(photon_entry)); 
 
           SLArEventPhotonHit hit( emissionTime.at(photon_entry) + timeOfFlight, 0 ); 
           hit.SetCellNr( sipm_idx );
