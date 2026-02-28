@@ -18,9 +18,14 @@ class SLArCfgSuperCellArray : public SLArCfgAssembly<SLArCfgSuperCell> {
     SLArCfgSuperCellArray(const SLArCfgSuperCellArray &cfg);
     ~SLArCfgSuperCellArray() override;
 
-    void DumpMap(); 
+    void DumpMap() const override; 
+    inline int GetTPCID() const {return fTPCID;}
+    inline void SetTPCID(int tpcID) {fTPCID = tpcID;}
 
-    ClassDefOverride(SLArCfgSuperCellArray, 3);
+  protected:
+    int fTPCID; 
+
+    ClassDefOverride(SLArCfgSuperCellArray, 4);
 };
 
 #endif /* end of include guard SLARCFGSUPERCELLARRAY_HH */
