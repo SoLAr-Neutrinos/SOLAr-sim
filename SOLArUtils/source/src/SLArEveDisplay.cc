@@ -35,19 +35,21 @@
 #include "TSystem.h"
 
 #include "TStyle.h"
+#include <limits>
 
 ClassImp(display::SLArEveDisplay)
 
 namespace display {
 
   SLArEveDisplay::SLArEveDisplay() 
-    : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fLastEvent(1), fCurEvent(0)
+    : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fCurEvent(0), fLastEvent(1) 
   {
     //gStyle->SetPalette(kSunset);
     fTimer = std::make_unique<TTimer>("gSystem->ProcessEvents();", 50, kFALSE);
     fEveManager = std::unique_ptr<TEveManager>( TEveManager::Create() );
     fPaletteQHits = std::make_unique<TEveRGBAPalette>();
     fPaletteOpHits = std::make_unique<TEveRGBAPalette>();
+    fPaletteOpHitsTime = std::make_unique<TEveRGBAPalette>();
 
     fParticleSelector.insert( {"gammas", MCParticleSelector_t("gammas", true, 1.0, kYellow-7, 7)} ); 
     fParticleSelector.insert( {"electrons", MCParticleSelector_t("electrons", true, 1.0, kOrange+7)} ); 
@@ -166,8 +168,11 @@ namespace display {
         const TString name = Form("opHit_%s", cfg_anode->GetName()); 
         const TString titl = Form("TPC %i Anode optical hits", tpc_id);
 
-        fPhotonDetectors.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
-        fPhotonDetectors.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+        fPhotonDetectorsNHits.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
+        fPhotonDetectorsNHits.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+
+        fPhotonDetectorsTHits.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
+        fPhotonDetectorsTHits.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
         printf("addbing box set with key %i\n", tpc_id);
       }
       else if ( strcmp(key->GetClassName(), "SLArCfgBaseSystem<SLArCfgSuperCellArray>") == 0) 
@@ -179,8 +184,10 @@ namespace display {
         for (const auto& wall_cfg_itr : fCfgPDS->GetConstMap()) {
           const TString name = Form("opHit_%s", wall_cfg_itr.second.GetName()); 
           const TString titl = Form("XA wall %i optical hits", wall_cfg_itr.first);
-          fPhotonDetectors.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
-          fPhotonDetectors.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+          fPhotonDetectorsNHits.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
+          fPhotonDetectorsNHits.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+          fPhotonDetectorsTHits.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
+          fPhotonDetectorsTHits.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
           printf("addbing box set with key %i\n", wall_cfg_itr.first);
         }
       }
@@ -290,8 +297,12 @@ namespace display {
       fEveManager->AddElement( track_list.get() );
     }
 
-    for (auto& ophit_set : fPhotonDetectors) {
+    for (auto& ophit_set : fPhotonDetectorsNHits) {
       fEveManager->AddElement( ophit_set.second.get() ); 
+    }
+
+    for (auto& ophit_set : fPhotonDetectorsTHits) {
+      fEveManager->AddElement( ophit_set.second.get() );
     }
 
     fEveManager->GetEditor(); 
@@ -351,15 +362,17 @@ namespace display {
     return 0;
   }
 
-  int SLArEveDisplay::ReadOpHitsFromOpDetArray(const int idx_array, const SLArEventSuperCellArray& ev_opdet_array)
+  std::vector<int> SLArEveDisplay::ReadOpHitsFromOpDetArray(const int idx_array, const SLArEventSuperCellArray& ev_opdet_array)
   {
     const auto& cfg_wall = fCfgPDS->GetBaseElement(idx_array); 
     const ROOT::Math::EulerAngles rot( cfg_wall.GetPhi(), cfg_wall.GetTheta(), cfg_wall.GetPsi() ); 
     const ROOT::Math::EulerAngles rrot = rot.Inverse();
 
-    auto& hitset = fPhotonDetectors.at(idx_array);
+    auto& hitset_nhits = fPhotonDetectorsNHits.at(idx_array);
+    auto& hitset_time = fPhotonDetectorsTHits.at(idx_array);
 
     int nhit_max = 0;
+    int time_min = std::numeric_limits<int>::max(); 
 
     for (const auto& ev_xa_itr : ev_opdet_array.GetConstSuperCellMap()) {
       const auto& idx_xa = ev_xa_itr.first; 
@@ -375,22 +388,36 @@ namespace display {
       ROOT::Math::XYZVectorD size_rot = rrot*size;
       size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) ); 
       const ROOT::Math::XYZVectorD pos_center = pos - 0.5*size_rot;
-      printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", idx_array,
-          pos.x(), pos.y(), pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
+      //printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", idx_array,
+          //pos.x(), pos.y(), pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
 
-      hitset->AddBox(pos_center.x(), pos_center.y(), pos_center.z(), size_rot.x(), size_rot.y(), size_rot.z());
-      hitset->DigitValue( nhit );
+      hitset_nhits->AddBox(pos_center.x(), pos_center.y(), pos_center.z(), size_rot.x(), size_rot.y(), size_rot.z());
+      hitset_nhits->DigitValue( nhit );
+
+      int hit_time = ev_xa.GetConstHits().begin()->first;
+      if (hit_time < time_min) time_min = hit_time;
+      hitset_time->AddBox(pos_center.x(), pos_center.y(), pos_center.z(), size_rot.x(), size_rot.y(), size_rot.z());
+      hitset_time->DigitValue( hit_time );
     }
-    hitset->RefitPlex(); 
-    hitset->SetPickable(1);
-    hitset->SetAlwaysSecSelect(1);
 
-    return nhit_max;
+    hitset_nhits->RefitPlex(); 
+    hitset_nhits->SetPickable(1);
+    hitset_nhits->SetAlwaysSecSelect(1);
+    hitset_nhits->SetRnrSelf(1);
+
+    hitset_time->RefitPlex(); 
+    hitset_time->SetPickable(1);
+    hitset_time->SetAlwaysSecSelect(1);
+    hitset_time->SetRnrSelf(0);
+
+    return std::vector<int>{nhit_max, time_min};
   }
 
-  int SLArEveDisplay::ReadOpHitsFromAnode(const int tpc_id, const SLArEventAnode& ev_anode) 
+  std::vector<int> SLArEveDisplay::ReadOpHitsFromAnode(const int tpc_id, const SLArEventAnode& ev_anode) 
   {
     int nhit_max = 0;
+    int time_min = std::numeric_limits<int>::max();
+
     auto& cfg_anode = fCfgAnodes.at(tpc_id);
     const auto tpc_index = GetTPCindex(tpc_id);
 
@@ -405,7 +432,8 @@ namespace display {
 
       auto& cfg_mt = cfg_anode->GetBaseElement(idx_mt);
 
-      auto& hitset = fPhotonDetectors.at(tpc_id);
+      auto& hitset_nhits = fPhotonDetectorsNHits.at(tpc_id);
+      auto& hitset_time = fPhotonDetectorsTHits.at(tpc_id);
 
       for (const auto& ev_t_itr : ev_mt.GetConstTileMap()) {
         const auto& idx_t = ev_t_itr.first;
@@ -443,27 +471,47 @@ namespace display {
           //printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", tpc_id,
           //world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
           //size_rot *= 0.95;
-          hitset->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), -nhit*10, size_rot.z() );
-          hitset->DigitValue( nhit); 
+          hitset_nhits->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), -nhit*10, size_rot.z() );
+          hitset_nhits->DigitValue( nhit); 
+
+          int hit_time = ev_sipm.GetConstHits().begin()->first;
+          if (hit_time < time_min) time_min = hit_time;
+
+          hitset_time->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), -nhit*10, size_rot.z() );
+          hitset_time->DigitValue( hit_time );
         }
       }
-      hitset->RefitPlex(); 
-      hitset->SetPickable(1);
-      hitset->SetAlwaysSecSelect(1);
+      hitset_nhits->RefitPlex(); 
+      hitset_nhits->SetPickable(1);
+      hitset_nhits->SetAlwaysSecSelect(1);
+      hitset_nhits->SetRnrSelf(1);
+
+      hitset_time->RefitPlex(); 
+      hitset_time->SetPickable(1);
+      hitset_time->SetAlwaysSecSelect(1);
+      hitset_time->SetRnrSelf(0);
     }
 
-    return nhit_max;
+    return std::vector<int>{nhit_max, time_min};
   }
 
   int SLArEveDisplay::ReadOpHits() {
     int nhit_max = 0; 
+    int time_min = std::numeric_limits<int>::max();
+    int time_max = 0;
 
     if (fEvAnodeList != nullptr) 
     {
       const auto& ev_anodes = fEvAnodeList->GetAnodeMap(); 
       for (const auto& ev_anode_itr : ev_anodes) {
-        int nhit = ReadOpHitsFromAnode( ev_anode_itr.first, ev_anode_itr.second );
+        auto hit_limits = ReadOpHitsFromAnode( ev_anode_itr.first, ev_anode_itr.second );
+        int& nhit = hit_limits.at(0);
+        int& anode_time = hit_limits.at(1);
         if (nhit > nhit_max) nhit_max = nhit;
+
+        if (anode_time == std::numeric_limits<int>::max()) continue;
+        else if (anode_time < time_min) time_min = anode_time;
+        else if (anode_time > time_max) time_max = anode_time;
       }
     }
 
@@ -472,14 +520,28 @@ namespace display {
       const auto& ev_pds = fEvPDSList->GetOpDetArrayMap(); 
       for (const auto& ev_wall_itr : ev_pds) {
         if (ev_wall_itr.second.GetNhits() == 0) continue;
-        int nhit = ReadOpHitsFromOpDetArray( ev_wall_itr.first, ev_wall_itr.second );
+        auto hit_limits = ReadOpHitsFromOpDetArray( ev_wall_itr.first, ev_wall_itr.second );
+        int& nhit = hit_limits.at(0);
+        int& wall_time = hit_limits.at(1);
         if (nhit > nhit_max) nhit_max = nhit;
+
+        if (wall_time == std::numeric_limits<int>::max()) continue;
+        else if (wall_time < time_min) time_min = wall_time;
+        else if (wall_time > time_max) time_max = wall_time;
       }
     }
 
     fPaletteOpHits->SetLimitsScaleMinMax(0, 1.2*nhit_max);
-    for (auto& ophitset_itr : fPhotonDetectors) {
+    for (auto& ophitset_itr : fPhotonDetectorsNHits) {
       ophitset_itr.second->SetPalette( fPaletteOpHits.get() ); 
+    }
+
+    
+    printf("op hits time range: [%i, %i] ns\n", time_min, time_max);
+    getchar();
+    fPaletteOpHitsTime->SetLimitsScaleMinMax(0.9*time_min, 1.2*time_max);
+    for (auto& ophitset_itr : fPhotonDetectorsTHits) {
+      ophitset_itr.second->SetPalette( fPaletteOpHitsTime.get() ); 
     }
 
     return 1;
@@ -587,8 +649,13 @@ namespace display {
       //fEveManager->GetCurrentEvent()->DestroyElements();
     }
 
-    for (auto& hitset_itr : fPhotonDetectors) {
+    for (auto& hitset_itr : fPhotonDetectorsNHits) {
       printf("deleting ophits...\n");
+      hitset_itr.second->Reset(TEveBoxSet::kBT_AABox, false, 100);
+    }
+
+    for (auto& hitset_itr : fPhotonDetectorsTHits) {
+      printf("deleting ophits time...\n");
       hitset_itr.second->Reset(TEveBoxSet::kBT_AABox, false, 100);
     }
 
@@ -697,9 +764,18 @@ namespace display {
    
    auto button_update = new TGTextButton(fGframeParticleSelection, "&Update", fIDs.GetUnID());
    button_update->Connect("Clicked()", "display::SLArEveDisplay", this, "ProcessEvent()");
+
+   fNhitsTimeToggleButton = new TGTextButton(fGgroupframeParticleSelection, "Show: Hit Count");
+   fNhitsTimeToggleButton->Connect("Clicked()", "display::SLArEveDisplay", this, 
+       "ToggleModeNHitsTime()");
+   fNhitsTimeToggleButton->SetHeight(30);
+
    fGframeParticleSelection->AddFrame( button_update, new TGLayoutHints(kLHintsExpandX) ); 
    fGframeParticleSelection->MapSubwindows();
    fGgroupframeParticleSelection->AddFrame( fGframeParticleSelection );  
+
+   fGgroupframeParticleSelection->AddFrame(fNhitsTimeToggleButton, 
+       new TGLayoutHints(kLHintsExpandX | kLHintsTop, 5, 5, 5, 5));
 
    frmMain->AddFrame(fGgroupframeParticleSelection);
 
