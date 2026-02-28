@@ -134,7 +134,7 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
   fPhotonLibraryTree->SetBranchAddress("vis_wls", &fEntry.vis_wls_);
 
   TPRegexp rgx_anode("anode_(\\d+)");
-  TPRegexp rgx_scarray("xarray_(\\d+)");
+  TPRegexp rgx_scarray("^(apex|scarray|xarapuca|arapuca)_([0-9]+)$");
 
   SLArAnalysisManager* ana_mgr = SLArAnalysisManager::Instance();
   
@@ -172,8 +172,7 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
             delete matches;
           } else if ( rgx_scarray.MatchB(pds_module) ) {
             TObjArray* matches = rgx_scarray.MatchS(pds_module);
-            TObjString* match_str = static_cast<TObjString*>( matches->At(1) );
-            G4int scarray_id = std::stoi( match_str->GetString().Data() );
+            G4int scarray_id = std::stoi( static_cast<TObjString*>(matches->At(2))->GetString().Data() );
             fBranchTargetSCArrayMap[name] = &(ana_mgr->GetEventPDS().GetOpDetArrayByID(scarray_id));
             delete matches;
           } else {
@@ -344,7 +343,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     const std::string& branch_name = anode_ev_itr.first;
     SLArEventAnode* anode_ev = anode_ev_itr.second;
     auto& anode_cfg = ana_mgr->GetAnodeCfgByID( anode_ev->GetID() );
-    G4ThreeVector tpc_pos = detector->GetDetTPCs().at(anode_cfg.GetTPCID())->GetModPV()->GetTranslation();
+    G4ThreeVector tpc_pos = detector->GetDetTPCs().at(anode_cfg.GetTPCID())->GetModPV()->GetObjectTranslation();
     G4ThreeVector anode_pos(anode_cfg.GetX(), anode_cfg.GetY(), anode_cfg.GetZ());
     G4RotationMatrix* anode_rot = new G4RotationMatrix();
     anode_rot->setPhi( anode_cfg.GetPhi() ); 
@@ -411,6 +410,88 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
       }
     }
     delete anode_rot;
+  }
+
+  TPRegexp rgx_xa_wall_nr(".*(\\d).*");
+
+  for (auto& pds_ev_itr : fBranchTargetSCArrayMap) {
+    const std::string& branch_name = pds_ev_itr.first;
+    SLArEventSuperCellArray* pds_ev = pds_ev_itr.second;
+    // read number from the branch name to get the corresponding OpDet array configuration
+    auto matches = rgx_xa_wall_nr.MatchS(branch_name.c_str());
+    int opdet_array_id = -1;
+    if (matches->GetEntries() > 0) {
+      TObjString* match_str = static_cast<TObjString*>( matches->At(1) );
+      opdet_array_id = 40 + std::stoi( match_str->GetString().Data() );
+    } else {
+      G4Exception(
+          "SLArFLSPhotonLibrary::PropagatePhotons", "ConfigError", JustWarning,
+          Form("Could not extract OpDet array ID from branch name '%s'. Expected format: '...<number>'.", branch_name.c_str())
+          );
+    }
+    auto& opdet_array_cfg = ana_mgr->GetPDSCfg().GetMap().at( opdet_array_id );
+    G4ThreeVector tpc_pos = detector->GetDetTPCs().at(opdet_array_cfg.GetTPCID())->GetModPV()->GetObjectTranslation();
+    G4ThreeVector opdet_wall_pos(opdet_array_cfg.GetX(), opdet_array_cfg.GetY(), opdet_array_cfg.GetZ());
+    G4RotationMatrix* opdet_wall_rot = new G4RotationMatrix();
+    opdet_wall_rot->setPhi  ( opdet_array_cfg.GetPhi() ); 
+    opdet_wall_rot->setTheta( opdet_array_cfg.GetTheta() );
+    opdet_wall_rot->setPsi  ( opdet_array_cfg.GetPsi() );
+    G4RotationMatrix* opdet_wall_rot_inv = new G4RotationMatrix(*opdet_wall_rot);
+    opdet_wall_rot_inv->invert();
+    G4Transform3D opdet_wall_transform(*opdet_wall_rot_inv, tpc_pos + opdet_wall_pos); 
+
+    const auto& vis_opdet_array = fEntry.tilearrayBuffers_.at(branch_name);
+    size_t photon_entry = 0; 
+    size_t max_photon_entry = emissionTime.size() - 1;
+
+    for (size_t idx = 0; idx < vis_opdet_array.size(); idx++) {
+      const float& visibility = vis_opdet_array[idx];
+      const int detected_photons = G4Poisson(numPhotons * visibility);
+      const auto& base_ = fAnodeNComponentMap[branch_name];
+      const int t_idx = idx;
+      if (detected_photons > 0) {
+        const auto& t_cfg = opdet_array_cfg.GetConstMap().at(t_idx);
+        G4ThreeVector t_pos(t_cfg.GetX(), t_cfg.GetY(), t_cfg.GetZ());
+        G4ThreeVector t_size( t_cfg.GetSizeX(), t_cfg.GetSizeY(), t_cfg.GetSizeZ() );
+        HepGeom::Point3D<double> local_hit_pos(t_size.x()*(G4UniformRand() - 0.5), 0.0, t_size.z()*(G4UniformRand() - 0.5));
+        local_hit_pos += HepGeom::Point3D<double>(t_pos.x(), t_pos.y(), t_pos.z());
+        HepGeom::Point3D<double> global_hit_pos = opdet_wall_transform * local_hit_pos;
+
+        //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
+        //branch_name.c_str(), idx, visibility, detected_photons);
+        //printf("Rot: phi %g, theta %g, psi %g deg\n", 
+            //opdet_array_cfg.GetPhi(), opdet_array_cfg.GetTheta(), opdet_array_cfg.GetPsi());
+        //printf("TPC %i pos [%g, %g, %g] mm\n", opdet_array_cfg.GetTPCID(), tpc_pos.x(), tpc_pos.y(), tpc_pos.z());
+        //printf("opdet wall pos [%g, %g, %g] mm\n", opdet_wall_pos.x(), opdet_wall_pos.y(), opdet_wall_pos.z());
+        //printf("t pos [%g, %g, %g] mm\n", t_pos.x(), t_pos.y(), t_pos.z());
+        //printf("t pos (phys): [%g, %g, %g] mm\n", t_cfg.GetPhysX(), t_cfg.GetPhysY(), t_cfg.GetPhysZ());
+        //printf("local hit pos [%g, %g, %g] mm\n", local_hit_pos.x(), local_hit_pos.y(), local_hit_pos.z());
+        //printf("global hit pos [%g, %g, %g] mm\n", global_hit_pos.x(), global_hit_pos.y(), global_hit_pos.z());
+
+         
+        //printf("----------------------------------------------------------------------------\n");
+        //printf("%i DETECTED PHOTONS on OpDet array %s, tile idx %zu, visibility %g\n", 
+            //detected_photons, branch_name.c_str(), idx, visibility);
+        //printf("\n----------------------------------------------------------------------------\n\n");
+        //getchar(); 
+
+        for (int p = 0; p < detected_photons; p++) {
+          // sample one entry from the emissionTime/wavelength vector
+          photon_entry = static_cast<size_t>(G4UniformRand() * max_photon_entry);
+
+          //printf("Detected photon on anode %s, mt_idx %d, t_idx %d\n", 
+              //branch_name.c_str(), mt_idx, t_idx);
+          //printf("emission point (%.2f, %.2f, %.2f) cm\n", emissionPoint.x(), emissionPoint.y(), emissionPoint.z());
+          //printf("opdet point (%.2f, %.2f, %.2f) cm\n", opDetPoint.x(), opDetPoint.y(), opDetPoint.z());
+          G4double timeOfFlight = fTimeSim.SamplePropagationTime(emissionPoint, global_hit_pos, emissionEnergy.at(photon_entry)); 
+
+          SLArEventPhotonHit hit( emissionTime.at(photon_entry) + timeOfFlight, 0 ); 
+          pds_ev->RegisterHit(hit, t_idx);
+        }
+      }
+    }
+    delete opdet_wall_rot;
+    delete opdet_wall_rot_inv;
   }
 
   return;
