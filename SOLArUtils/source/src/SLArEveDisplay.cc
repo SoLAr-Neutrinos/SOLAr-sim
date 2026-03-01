@@ -7,6 +7,7 @@
 #include "TObject.h"
 #include "TKey.h"
 #include "TClass.h"
+#include "TCanvas.h"
 #include "SLArEveDisplay.hh"
 #include "geo/SLArUnit.hpp"
 #include "event/SLArMCPrimaryInfo.hh"
@@ -30,11 +31,14 @@
 #include "TGButton.h"
 #include "TGNumberEntry.h"
 #include "TGLabel.h"
+#include "TGLViewer.h"
 
 #include "TString.h"
 #include "TSystem.h"
+#include "TEnv.h"
 
 #include "TStyle.h"
+#include <ctime>
 #include <limits>
 
 ClassImp(display::SLArEveDisplay)
@@ -44,9 +48,12 @@ namespace display {
   SLArEveDisplay::SLArEveDisplay() 
     : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fCurEvent(0), fLastEvent(1) 
   {
+    gEnv->SetValue("OpenGL.UseHardwareSelection", 0);
+    gEnv->SetValue("OpenGL.UseHWGLSelect", 0);
     //gStyle->SetPalette(kSunset);
     fTimer = std::make_unique<TTimer>("gSystem->ProcessEvents();", 50, kFALSE);
     fEveManager = std::unique_ptr<TEveManager>( TEveManager::Create() );
+
     fPaletteQHits = std::make_unique<TEveRGBAPalette>();
     fPaletteOpHits = std::make_unique<TEveRGBAPalette>();
     fPaletteOpHitsTime = std::make_unique<TEveRGBAPalette>();
@@ -61,6 +68,46 @@ namespace display {
     fParticleSelector.insert( {"baryons", MCParticleSelector_t("baryons", true, 1.0, kRed+2)} ); 
     fParticleSelector.insert( {"ions", MCParticleSelector_t("ions", true, 1.0, kViolet+4)} ); 
     fParticleSelector.insert( {"others", MCParticleSelector_t("others", true, 1.0, kWhite)} ); 
+  }
+
+  void SLArEveDisplay::setup_time_hist() {
+    for (const auto& ophit_set : fPhotonDetectorsTHits) {
+      fPhotonDetectorsHitTimeHists[ophit_set.first] = std::vector<TH1F>{};
+      auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
+
+      TString hname = Form("hFirstOpHitTime_%i", ophit_set.first);
+      TString htitl = Form("OpDet Group %i first optical hit time;Time [ps];Counts", ophit_set.first);
+      hist_vec.emplace_back(hname, htitl, 1000, 0, 50000);
+
+      hname = Form("hOpHitTime_%i", ophit_set.first);
+      htitl = Form("OpDet Group %i optical hit time;Time [ns];Counts", ophit_set.first);
+      hist_vec.emplace_back(hname, htitl, 300, 0, 3000);
+    }
+  }
+
+  void SLArEveDisplay::update_time_histograms() {
+    TCanvas* c = fTimeHistCanvas->GetCanvas();
+    c->Clear();
+    c->Divide(2, 1);
+
+    c->cd(1);
+    for (const auto& ophit_set : fPhotonDetectorsTHits) {
+      if (ophit_set.first == 10 || (ophit_set.first>=30 && ophit_set.first<40)) continue;
+      const auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
+      TString opt = (ophit_set == *fPhotonDetectorsTHits.begin()) ? "hist" : "hist same";
+      hist_vec.at(0).DrawClone(opt);
+    }
+
+    c->cd(2);
+    for (const auto& ophit_set : fPhotonDetectorsTHits) {
+      if (ophit_set.first == 10 || (ophit_set.first>=30 && ophit_set.first<40)) continue;
+      const auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
+      TString opt = (ophit_set == *fPhotonDetectorsTHits.begin()) ? "hist" : "hist same";
+      hist_vec.at(1).DrawClone(opt);
+    }
+
+    c->Modified();
+    c->Update();
   }
 
   const MCParticleSelector_t& SLArEveDisplay::get_particle_selection(const int pdg) {
@@ -173,7 +220,7 @@ namespace display {
 
         fPhotonDetectorsTHits.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
         fPhotonDetectorsTHits.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
-        printf("addbing box set with key %i\n", tpc_id);
+        //printf("addbing box set with key %i\n", tpc_id);
       }
       else if ( strcmp(key->GetClassName(), "SLArCfgBaseSystem<SLArCfgSuperCellArray>") == 0) 
       {
@@ -188,10 +235,12 @@ namespace display {
           fPhotonDetectorsNHits.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
           fPhotonDetectorsTHits.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
           fPhotonDetectorsTHits.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
-          printf("addbing box set with key %i\n", wall_cfg_itr.first);
+          //printf("addbing box set with key %i\n", wall_cfg_itr.first);
         }
       }
     }
+
+    setup_time_hist();
 
     return 0;
   }
@@ -374,6 +423,9 @@ namespace display {
     int nhit_max = 0;
     int time_min = std::numeric_limits<int>::max(); 
 
+    auto& h_first_hit = fPhotonDetectorsHitTimeHists.at(idx_array).at(0);
+    auto& h_all_hits = fPhotonDetectorsHitTimeHists.at(idx_array).at(1);
+
     for (const auto& ev_xa_itr : ev_opdet_array.GetConstSuperCellMap()) {
       const auto& idx_xa = ev_xa_itr.first; 
       const auto& ev_xa = ev_xa_itr.second;
@@ -398,6 +450,11 @@ namespace display {
       if (hit_time < time_min) time_min = hit_time;
       hitset_time->AddBox(pos_center.x(), pos_center.y(), pos_center.z(), size_rot.x(), size_rot.y(), size_rot.z());
       hitset_time->DigitValue( hit_time );
+
+      h_first_hit.Fill( hit_time );
+      for (const auto& hit_itr : ev_xa.GetConstHits()) {
+        h_all_hits.Fill( hit_itr.first*1e-3, hit_itr.second );
+      }
     }
 
     hitset_nhits->RefitPlex(); 
@@ -423,6 +480,9 @@ namespace display {
 
     const ROOT::Math::EulerAngles rot(cfg_anode->GetPhi(), cfg_anode->GetTheta(), cfg_anode->GetPsi()); 
     const ROOT::Math::EulerAngles rrot = rot.Inverse();
+
+    auto& h_first_hit = fPhotonDetectorsHitTimeHists.at(tpc_id).at(0);
+    auto& h_all_hits = fPhotonDetectorsHitTimeHists.at(tpc_id).at(1);
 
     for (const auto& ev_mt_itr : ev_anode.GetConstMegaTilesMap()) {
       const auto& idx_mt = ev_mt_itr.first;
@@ -479,6 +539,11 @@ namespace display {
 
           hitset_time->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), -nhit*10, size_rot.z() );
           hitset_time->DigitValue( hit_time );
+
+          h_first_hit.Fill( hit_time );
+          for (const auto& hit_itr : ev_sipm.GetConstHits()) {
+            h_all_hits.Fill( hit_itr.first*1e-3, hit_itr.second );
+          }
         }
       }
       hitset_nhits->RefitPlex(); 
@@ -537,9 +602,8 @@ namespace display {
     }
 
     
-    printf("op hits time range: [%i, %i] ns\n", time_min, time_max);
-    getchar();
-    fPaletteOpHitsTime->SetLimitsScaleMinMax(0.9*time_min, 1.2*time_max);
+    //getchar();
+    fPaletteOpHitsTime->SetLimitsScaleMinMax(0.9*time_min, 4*time_max);
     for (auto& ophitset_itr : fPhotonDetectorsTHits) {
       ophitset_itr.second->SetPalette( fPaletteOpHitsTime.get() ); 
     }
@@ -651,12 +715,18 @@ namespace display {
 
     for (auto& hitset_itr : fPhotonDetectorsNHits) {
       printf("deleting ophits...\n");
-      hitset_itr.second->Reset(TEveBoxSet::kBT_AABox, false, 100);
+      hitset_itr.second->Reset(TEveBoxSet::kBT_AABox, false, 10000);
+    }
+
+    for (auto& histset_itr : fPhotonDetectorsHitTimeHists) {
+      printf("reset ophits time distributions...\n");
+      auto& hist_vec = histset_itr.second;
+      for (auto& h : hist_vec) h.Reset();
     }
 
     for (auto& hitset_itr : fPhotonDetectorsTHits) {
       printf("deleting ophits time...\n");
-      hitset_itr.second->Reset(TEveBoxSet::kBT_AABox, false, 100);
+      hitset_itr.second->Reset(TEveBoxSet::kBT_AABox, false, 10000);
     }
 
     fTrackLists.clear();
@@ -676,6 +746,8 @@ namespace display {
     update_entry_label();
 
     ReDraw();
+
+    update_time_histograms();
   }
 
   void SLArEveDisplay::NextEvent() { 
@@ -785,6 +857,20 @@ namespace display {
 
    browser->StopEmbedding();
    browser->SetTabTitle("Event Control", 0);
+
+   // Create a new tab in the Eve browser
+   TEveWindowSlot* slot = TEveWindow::CreateWindowInTab(
+       gEve->GetBrowser()->GetTabRight());
+
+   // Create embedded canvas in the slot
+   TEveWindowFrame* time_hist_frame = slot->MakeFrame();
+   time_hist_frame->SetElementName("Time Distributions");
+
+   fTimeHistCanvas = new TRootEmbeddedCanvas("TimeHistCanvas", time_hist_frame->GetGUICompositeFrame(), 800, 600);
+   time_hist_frame->GetGUICompositeFrame()->AddFrame(fTimeHistCanvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+   time_hist_frame->GetGUICompositeFrame()->MapSubwindows();
+
+   fTimeHistCanvas->GetCanvas()->Divide(2, 1); 
 
    return 1;
   }
