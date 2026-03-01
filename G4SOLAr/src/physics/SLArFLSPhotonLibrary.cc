@@ -83,11 +83,6 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
     }
   }
 
-  if ( doc.HasMember("pde_scale_factor") ) {
-    debug::require_json_type(doc["pde_scale_factor"], rapidjson::kNumberType);
-    fPDEScaleFactor = doc["pde_scale_factor"].GetFloat();
-  }
-
   // setup the photon librart entry containers
   fPhotonLibraryFile = TFile::Open(root_file_obj["filename"].GetString(), "READ");
   fPhotonLibraryTree = fPhotonLibraryFile->Get<TTree>(root_file_obj["objname"].GetString());
@@ -154,6 +149,14 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
         auto& vis_buffer = fEntry.tilearrayBuffers_[name];
         vis_buffer.resize(size, 0.0f);
         fPhotonLibraryTree->SetBranchAddress(name.c_str(), vis_buffer.data());
+
+        if ( buffer_obj.HasMember("pde_scale_factor") ) {
+          fPDEScaleFactor[name] = buffer_obj["pde_scale_factor"].GetFloat();
+        }
+        else {
+          fPDEScaleFactor[name] = 1.0;
+        }
+
         if ( buffer_obj.HasMember("pds_module") ) {
           TString pds_module = buffer_obj["pds_module"].GetString();
           if ( rgx_anode.MatchB(pds_module) ) {
@@ -169,11 +172,13 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
             for ( rapidjson::SizeType i=0; i<jn_elements.Size(); ++i ) {
               base_map.push_back( jn_elements[i].GetUint() );
             }
+
             delete matches;
           } else if ( rgx_scarray.MatchB(pds_module) ) {
             TObjArray* matches = rgx_scarray.MatchS(pds_module);
             G4int scarray_id = std::stoi( static_cast<TObjString*>(matches->At(2))->GetString().Data() );
             fBranchTargetSCArrayMap[name] = &(ana_mgr->GetEventPDS().GetOpDetArrayByID(scarray_id));
+
             delete matches;
           } else {
             G4Exception(
@@ -224,6 +229,14 @@ void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
             for ( rapidjson::SizeType i=0; i<jn_elements.Size(); ++i ) {
               base_map.push_back( jn_elements[i].GetUint() );
             }
+
+            if ( buffer_obj.HasMember("pde_scale_factor") ) {
+              fPDEScaleFactor[name] = buffer_obj["pde_scale_factor"].GetFloat();
+            }
+            else {
+              fPDEScaleFactor[name] = 1.0;
+            }
+
             delete matches;
           }  
           else {
@@ -273,17 +286,19 @@ void SLArFLSPhotonLibrary::Print() const {
   if (fBranchTargetAnodeSiPMMap.size() > 0) {
     printf("\nAnode SiPM branch targets:\n");
     for (const auto& anode_itr : fBranchTargetAnodeSiPMMap) {
-      printf("\tBranch: %s -> Anode TPC ID: %d\n",
+      printf("\tBranch: %s -> Anode TPC ID: %d (PDE scaling: %g)\n",
           anode_itr.first.c_str(),
-          anode_itr.second->GetID());
+          anode_itr.second->GetID(), 
+          GetPDEScaleFactor(anode_itr.first));
     }
   }
   if (fBranchTargetAnodeTileMap.size() > 0) {
     printf("\nAnode Tile branch targets:\n");
     for (const auto& anode_itr : fBranchTargetAnodeTileMap) {
-      printf("\tBranch: %s -> Anode TPC ID: %d\n",
+      printf("\tBranch: %s -> Anode TPC ID: %d (PDE scaling: %g)\n",
           anode_itr.first.c_str(),
-          anode_itr.second->GetID());
+          anode_itr.second->GetID(), 
+          GetPDEScaleFactor(anode_itr.first));
     }
   }
 
@@ -355,9 +370,11 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     size_t photon_entry = 0; 
     size_t max_photon_entry = emissionTime.size() - 1;
 
+    const float pde_scale_factor = GetPDEScaleFactor(branch_name);
+
     for (size_t idx = 0; idx < vis_sipm.size(); idx++) {
       const float& visibility = vis_sipm[idx];
-      const int detected_photons = G4Poisson(numPhotons * visibility * fPDEScaleFactor);
+      const int detected_photons = G4Poisson(numPhotons * visibility * pde_scale_factor);
       //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
           //branch_name.c_str(), idx, visibility, detected_photons);
 
@@ -403,7 +420,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
               //branch_name.c_str(), mt_idx, t_idx);
           G4double timeOfFlight = fTimeSim.SamplePropagationTime(emissionPoint, opDetPoint, emissionEnergy.at(photon_entry)); 
 
-          SLArEventPhotonHit hit( emissionTime.at(photon_entry) + timeOfFlight, 0 ); 
+          SLArEventPhotonHit hit( (emissionTime.at(photon_entry) + timeOfFlight)/CLHEP::ps , 0 ); 
           hit.SetCellNr( sipm_idx );
           anode_ev->RegisterHit(hit, mt_idx, t_idx);
         }
@@ -444,9 +461,11 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     size_t photon_entry = 0; 
     size_t max_photon_entry = emissionTime.size() - 1;
 
+    const float pde_scale_factor = GetPDEScaleFactor(branch_name);
+
     for (size_t idx = 0; idx < vis_opdet_array.size(); idx++) {
       const float& visibility = vis_opdet_array[idx];
-      const int detected_photons = G4Poisson(numPhotons * visibility);
+      const int detected_photons = G4Poisson(numPhotons * visibility * pde_scale_factor);
       const auto& base_ = fAnodeNComponentMap[branch_name];
       const int t_idx = idx;
       if (detected_photons > 0) {
@@ -485,7 +504,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
           //printf("opdet point (%.2f, %.2f, %.2f) cm\n", opDetPoint.x(), opDetPoint.y(), opDetPoint.z());
           G4double timeOfFlight = fTimeSim.SamplePropagationTime(emissionPoint, global_hit_pos, emissionEnergy.at(photon_entry)); 
 
-          SLArEventPhotonHit hit( emissionTime.at(photon_entry) + timeOfFlight, 0 ); 
+          SLArEventPhotonHit hit( (emissionTime.at(photon_entry) + timeOfFlight)/CLHEP::ps, 0 ); 
           pds_ev->RegisterHit(hit, t_idx);
         }
       }

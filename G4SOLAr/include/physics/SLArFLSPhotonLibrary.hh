@@ -69,8 +69,21 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
         const std::vector<double>& emissionTime, 
         const std::vector<double>& emissionEnergy) override;
 
-    inline float GetPDEScaleFactor() const {return fPDEScaleFactor;}
-    inline void SetPDEScaleFactor(const float scale_factor) {fPDEScaleFactor = scale_factor;}
+    inline float GetPDEScaleFactor(const std::string key) const 
+    {
+      if (fPDEScaleFactor.find(key) == fPDEScaleFactor.end()) {
+        G4Exception(
+            "SLArFLSPhotonLibrary::GetPDEScaleFactor",
+            "ConfigError",
+            JustWarning,
+            Form("PDE scale factor for key '%s' not found. Returning default value of 1.0.", key.c_str())
+            );
+        return 1.0;
+      }
+      else return fPDEScaleFactor.at(key);
+    }
+
+    inline void SetPDEScaleFactor(const std::string key, const float scale_factor) {fPDEScaleFactor[key] = scale_factor;}
 
     void Print() const override;
 
@@ -84,13 +97,13 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
     Long64_t fNumVoxelsX = 0;
     Long64_t fNumVoxelsY = 0;
     Long64_t fNumVoxelsZ = 0;
-    float    fPDEScaleFactor = 1.0; 
 
     std::map<std::string, SLArEventAnode*> fBranchTargetAnodeSiPMMap = {};
     std::map<std::string, SLArEventAnode*> fBranchTargetAnodeTileMap = {};
     std::map<std::string, SLArEventSuperCellArray*> fBranchTargetSCArrayMap = {};
     std::map<std::string, NComponentBase_t> fAnodeNComponentMap = {};
     std::map<std::string, NComponentBase_t> fSCArrayNComponentMap = {};
+    std::map<std::string,float> fPDEScaleFactor = {}; 
 
 };
 

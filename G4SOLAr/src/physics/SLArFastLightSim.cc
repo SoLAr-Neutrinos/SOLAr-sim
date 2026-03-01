@@ -326,8 +326,6 @@ G4double SLArFastLightSimTime::SamplePropagationTime(const G4ThreeVector& emissi
     return rindex * distance / CLHEP::c_light ;
   }
 
-
-
   return 0; 
 }
 
