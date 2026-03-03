@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include "TFile.h"
+#include "CLHEP/Units//SystemOfUnits.h"
 #include "rapidjson/document.h"
 
 
@@ -124,6 +125,7 @@ namespace gen {
   struct EnergyConfig_t {
     EEnergyMode mode = EEnergyMode::kFixed; 
     std::string energy_distribution_label = {};
+    double energy_unit = 1.0*CLHEP::MeV;
     double energy_value = 0.0;
     double energy_tmp = {}; 
     ExtSourceInfo_t spectrum_hist = {}; 
