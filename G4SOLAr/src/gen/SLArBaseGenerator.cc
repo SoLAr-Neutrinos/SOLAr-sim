@@ -290,7 +290,7 @@ G4double SLArBaseGenerator::SampleEnergy(EnergyConfig_t& ene_config) {
       G4Exception("SLArBaseGenerator::SampleEnergy", "NoEnergySpectrum", FatalException, 
           "Attempting to sample from an external energy spectrum but no spectrum has been configured.");
     }
-    ene_config.energy_tmp = fEnergySpectrum->GetRandom( slar_random->GetEngine().get() ); 
+    ene_config.energy_tmp = fEnergySpectrum->GetRandom( slar_random->GetEngine().get() ) * ene_config.energy_unit; 
   }
 
   return ene_config.energy_tmp;
@@ -407,6 +407,9 @@ void SLArBaseGenerator::SourceEnergyConfig(const rapidjson::Value& ene_config, E
       exit(EXIT_FAILURE); 
     }
     local.spectrum_hist.Configure( ene_config["energy_distribution"] );
+    if (ene_config.HasMember("unit")) {
+      local.energy_unit = unit::Unit2Val( ene_config["unit"] );
+    }
   }
 
   return;
