@@ -48,9 +48,8 @@ namespace display {
   SLArEveDisplay::SLArEveDisplay() 
     : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fCurEvent(0), fLastEvent(1) 
   {
-    gEnv->SetValue("OpenGL.UseHardwareSelection", 0);
-    gEnv->SetValue("OpenGL.UseHWGLSelect", 0);
     //gStyle->SetPalette(kSunset);
+    gEnv->SetValue("MESA_GL_VERSION_OVERRIDE", "3.3");
     fTimer = std::make_unique<TTimer>("gSystem->ProcessEvents();", 50, kFALSE);
     fEveManager = std::unique_ptr<TEveManager>( TEveManager::Create() );
 
@@ -81,7 +80,7 @@ namespace display {
 
       hname = Form("hOpHitTime_%i", ophit_set.first);
       htitl = Form("OpDet Group %i optical hit time;Time [ns];Counts", ophit_set.first);
-      hist_vec.emplace_back(hname, htitl, 300, 0, 3000);
+      hist_vec.emplace_back(hname, htitl, 300, 0, 100);
     }
   }
 
@@ -217,8 +216,10 @@ namespace display {
 
         fPhotonDetectorsNHits.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
         fPhotonDetectorsNHits.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+        fPhotonDetectorsNHits.at(tpc_id)->SetRenderMode( TEveBoxSet::kRM_Fill );
 
         fPhotonDetectorsTHits.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
+        fPhotonDetectorsTHits.at(tpc_id)->SetRenderMode( TEveBoxSet::kRM_Fill );
         fPhotonDetectorsTHits.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
         //printf("addbing box set with key %i\n", tpc_id);
       }
@@ -233,8 +234,10 @@ namespace display {
           const TString titl = Form("XA wall %i optical hits", wall_cfg_itr.first);
           fPhotonDetectorsNHits.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
           fPhotonDetectorsNHits.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+          fPhotonDetectorsNHits.at(wall_cfg_itr.first)->SetRenderMode( TEveBoxSet::kRM_Fill );
           fPhotonDetectorsTHits.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
           fPhotonDetectorsTHits.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+          fPhotonDetectorsTHits.at(wall_cfg_itr.first)->SetRenderMode( TEveBoxSet::kRM_Fill );
           //printf("addbing box set with key %i\n", wall_cfg_itr.first);
         }
       }
@@ -436,7 +439,7 @@ namespace display {
       if (nhit > nhit_max) nhit_max = nhit;
 
       const ROOT::Math::XYZVectorD pos = {cfg_xa.GetPhysX(), cfg_xa.GetPhysY(), cfg_xa.GetPhysZ() }; 
-      const ROOT::Math::XYZVectorD size = {cfg_xa.GetSizeX(), cfg_xa.GetSizeY(), cfg_xa.GetSizeZ()}; 
+      const ROOT::Math::XYZVectorD size = {0.95*cfg_xa.GetSizeX(), cfg_xa.GetSizeY(), 0.95*cfg_xa.GetSizeZ()}; 
       ROOT::Math::XYZVectorD size_rot = rrot*size;
       size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) ); 
       const ROOT::Math::XYZVectorD pos_center = pos - 0.5*size_rot;
@@ -509,7 +512,7 @@ namespace display {
         const ROOT::Math::XYZVectorD t_pos = {cfg_t.GetPhysX(), cfg_t.GetPhysY(), cfg_t.GetPhysZ() }; 
         const ROOT::Math::XYZVectorD& tpc_pos = fTPCs[tpc_index].fPosition;
         const ROOT::Math::XYZVectorD t_size = {cfg_t.GetSizeX(), cfg_t.GetSizeY(), cfg_t.GetSizeZ()}; 
-        const ROOT::Math::XYZVectorD sipm_size = {20.0, 1.0, 20.0};
+        const ROOT::Math::XYZVectorD sipm_size = {32.0, 1.0, 32.0};
 
         for (const auto& ev_sipm_itr : ev_t.GetConstSiPMEvents()) {
           const auto& ev_sipm = ev_sipm_itr.second;
@@ -603,7 +606,7 @@ namespace display {
 
     
     //getchar();
-    fPaletteOpHitsTime->SetLimitsScaleMinMax(0.9*time_min, 4*time_max);
+    fPaletteOpHitsTime->SetLimitsScaleMinMax(0.9*time_min, 2*time_max);
     for (auto& ophitset_itr : fPhotonDetectorsTHits) {
       ophitset_itr.second->SetPalette( fPaletteOpHitsTime.get() ); 
     }
