@@ -109,9 +109,9 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
     auto stepMngr = trackingAction->GetTrackingManager()->GetSteppingManager(); 
     if (stepMngr->GetfStepStatus() != fAtRestDoItProc) {
       G4ProcessVector* process_vector = stepMngr->GetfPostStepDoItVector(); 
-      for (size_t iproc = 0; iproc < stepMngr->GetMAXofPostStepLoops(); iproc++) {
+      for (size_t iproc = 0; iproc < process_vector->size(); iproc++) {
         G4VProcess* proc = (*process_vector)[iproc]; 
-
+        if (!proc) continue;
         if (proc->GetProcessName() == "Scintillation")  {
           SLArScintillation* scint_process = (SLArScintillation*)proc; 
           n_ph = scint_process->GetNumPhotons(); 
