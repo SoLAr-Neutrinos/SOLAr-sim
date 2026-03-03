@@ -360,10 +360,8 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     auto& anode_cfg = ana_mgr->GetAnodeCfgByID( anode_ev->GetID() );
     G4ThreeVector tpc_pos = detector->GetDetTPCs().at(anode_cfg.GetTPCID())->GetModPV()->GetObjectTranslation();
     G4ThreeVector anode_pos(anode_cfg.GetX(), anode_cfg.GetY(), anode_cfg.GetZ());
-    G4RotationMatrix* anode_rot = new G4RotationMatrix();
-    anode_rot->setPhi( anode_cfg.GetPhi() ); 
-    anode_rot->setTheta( anode_cfg.GetTheta() );
-    anode_rot->setPsi( anode_cfg.GetPsi() );
+    G4RotationMatrix* anode_rot = new G4RotationMatrix(
+        anode_cfg.GetPhi(), anode_cfg.GetTheta(), anode_cfg.GetPsi() );
     G4Transform3D anode_transform(*anode_rot, tpc_pos);
 
     const auto& vis_sipm = fEntry.sipmBuffers_.at(branch_name);
@@ -449,10 +447,9 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     auto& opdet_array_cfg = ana_mgr->GetPDSCfg().GetMap().at( opdet_array_id );
     G4ThreeVector tpc_pos = detector->GetDetTPCs().at(opdet_array_cfg.GetTPCID())->GetModPV()->GetObjectTranslation();
     G4ThreeVector opdet_wall_pos(opdet_array_cfg.GetX(), opdet_array_cfg.GetY(), opdet_array_cfg.GetZ());
-    G4RotationMatrix* opdet_wall_rot = new G4RotationMatrix();
-    opdet_wall_rot->setPhi  ( opdet_array_cfg.GetPhi() ); 
-    opdet_wall_rot->setTheta( opdet_array_cfg.GetTheta() );
-    opdet_wall_rot->setPsi  ( opdet_array_cfg.GetPsi() );
+    G4RotationMatrix* opdet_wall_rot = new G4RotationMatrix(
+        opdet_array_cfg.GetPhi(), opdet_array_cfg.GetTheta(), opdet_array_cfg.GetPsi() );
+
     G4RotationMatrix* opdet_wall_rot_inv = new G4RotationMatrix(*opdet_wall_rot);
     opdet_wall_rot_inv->invert();
     G4Transform3D opdet_wall_transform(*opdet_wall_rot_inv, tpc_pos + opdet_wall_pos); 
@@ -472,14 +469,16 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
         const auto& t_cfg = opdet_array_cfg.GetConstMap().at(t_idx);
         G4ThreeVector t_pos(t_cfg.GetX(), t_cfg.GetY(), t_cfg.GetZ());
         G4ThreeVector t_size( t_cfg.GetSizeX(), t_cfg.GetSizeY(), t_cfg.GetSizeZ() );
-        HepGeom::Point3D<double> local_hit_pos(t_size.x()*(G4UniformRand() - 0.5), 0.0, t_size.z()*(G4UniformRand() - 0.5));
-        local_hit_pos += HepGeom::Point3D<double>(t_pos.x(), t_pos.y(), t_pos.z());
-        HepGeom::Point3D<double> global_hit_pos = opdet_wall_transform * local_hit_pos;
+        HepGeom::Point3D<G4double> local_hit_pos(t_size.x()*(G4UniformRand() - 0.5), 0.0, t_size.z()*(G4UniformRand() - 0.5));
+        local_hit_pos += HepGeom::Point3D<G4double>(t_pos.x(), t_pos.y(), t_pos.z());
+        HepGeom::Point3D<double> global_hit_pos = opdet_wall_transform* local_hit_pos;
 
         //printf("Anode %s, idx %zu, visibility %g, detected photons %d\n", 
         //branch_name.c_str(), idx, visibility, detected_photons);
         //printf("Rot: phi %g, theta %g, psi %g deg\n", 
-            //opdet_array_cfg.GetPhi(), opdet_array_cfg.GetTheta(), opdet_array_cfg.GetPsi());
+        //opdet_array_cfg.GetPhi(), opdet_array_cfg.GetTheta(), opdet_array_cfg.GetPsi());
+        //printf("Rot matrix:\n");
+        //opdet_wall_rot->print(std::cout);
         //printf("TPC %i pos [%g, %g, %g] mm\n", opdet_array_cfg.GetTPCID(), tpc_pos.x(), tpc_pos.y(), tpc_pos.z());
         //printf("opdet wall pos [%g, %g, %g] mm\n", opdet_wall_pos.x(), opdet_wall_pos.y(), opdet_wall_pos.z());
         //printf("t pos [%g, %g, %g] mm\n", t_pos.x(), t_pos.y(), t_pos.z());
@@ -487,12 +486,11 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
         //printf("local hit pos [%g, %g, %g] mm\n", local_hit_pos.x(), local_hit_pos.y(), local_hit_pos.z());
         //printf("global hit pos [%g, %g, %g] mm\n", global_hit_pos.x(), global_hit_pos.y(), global_hit_pos.z());
 
-         
+
         //printf("----------------------------------------------------------------------------\n");
         //printf("%i DETECTED PHOTONS on OpDet array %s, tile idx %zu, visibility %g\n", 
-            //detected_photons, branch_name.c_str(), idx, visibility);
+        //detected_photons, branch_name.c_str(), idx, visibility);
         //printf("\n----------------------------------------------------------------------------\n\n");
-        //getchar(); 
 
         for (int p = 0; p < detected_photons; p++) {
           // sample one entry from the emissionTime/wavelength vector
