@@ -163,11 +163,11 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     G4String terminator; 
 
 #ifdef SLAR_EXTERNAL
-   if (thePostPoint->GetStepStatus() == fGeomBoundary) {
-      if ( G4StrUtil::contains(thePostPV->GetLogicalVolume()->GetMaterial()->GetName(), "LAr") )
-      {
-        track->SetTrackStatus( fStopAndKill ); 
-/*
+/*  if (thePostPoint->GetStepStatus() == fGeomBoundary) {
+ *    if ( G4StrUtil::contains(thePostPV->GetLogicalVolume()->GetMaterial()->GetName(), "LAr") )
+ *     {
+ *       track->SetTrackStatus( fStopAndKill ); 
+ *
  *        
  *        auto& ext_record = SLArAnalysisManager::Instance()->GetExternalRecord(); 
  *        auto iev = G4RunManager::GetRunManager()->GetCurrentRun()->GetNumberOfEvent();
@@ -185,10 +185,11 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
  *
  *        ext_record.Reset(); 
  *
- */
-        terminator = "SLArUserInterfaceKiller";
-      }
-   }
+ *
+ *       terminator = "SLArUserInterfaceKiller";
+ *     }
+ *  }
+ */  
 #endif 
 
     if (track->GetTrackStatus() == fStopAndKill) {
