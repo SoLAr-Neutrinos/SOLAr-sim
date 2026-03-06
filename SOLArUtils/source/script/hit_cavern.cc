@@ -23,8 +23,8 @@ void print_usage() {
   printf("Usage: "); 
   printf("hit_calibration\n"); 
   printf("\t[--input_list | -l] input file list\n"); 
-  printf("\t[--output     | -o] output filename\n\n");
-  printf("\t[--buffer     | -b] buffer thickness (in mm)");
+  printf("\t[--output     | -o] output filename\n");
+  printf("\t[--buffer     | -b] buffer thickness (in mm)\n\n");
   exit( EXIT_SUCCESS );
 }
 
@@ -140,7 +140,7 @@ int main (int argc, char *argv[]) {
     TString event_file_path = line;
     const int seed_pos = event_file_path.Index( rgx_seed );
     TString hit_file_path = event_file_path; 
-    hit_file_path.Insert(seed_pos, "hit_");
+    //hit_file_path.Insert(seed_pos, "hit_");
 
     TFile* hit_file = TFile::Open(hit_file_path);
     if (hit_file == nullptr || hit_file->IsZombie()) {
@@ -210,14 +210,15 @@ int main (int argc, char *argv[]) {
 
 
     if (y_mean < 0) {
-      drift_coordinate = y_mean + 650;
+      drift_coordinate = y_mean + tpc_half_y*0.1;
     }
     else {
-      drift_coordinate = 650 - y_mean;
+      drift_coordinate = tpc_half_y*0.1 - y_mean;
     }
 
     collected_energy = total_q * argon_w * recombination_factor;
-    double tau_elec = 0.04586717986370039*collected_energy + 5.278259363488911;
+    //double tau_elec = 0.04586717986370039*collected_energy + 5.278259363488911;
+    double tau_elec = 0.107*0.04586717986370039*collected_energy + 5.278259363488911;
 
     calibrated_energy = collected_energy * exp(drift_coordinate / (drift_velocity * tau_elec) );
     
