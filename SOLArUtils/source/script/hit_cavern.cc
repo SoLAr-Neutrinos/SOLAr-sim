@@ -186,9 +186,9 @@ int main (int argc, char *argv[]) {
       const double& yy = hit_y->at(ihit); 
       const double& zz = hit_z->at(ihit); 
 
-      if ( is_inside_buffer(xx, yy, zz, buffer_len) ) {
-        continue;
-      }
+      //if ( is_inside_buffer(xx, yy, zz, buffer_len) ) {
+        //continue;
+      //}
 
       const double& q_hit = hit_q->at(ihit); 
       
@@ -200,6 +200,19 @@ int main (int argc, char *argv[]) {
     }
 
     if (total_q == 0) {
+      // set default values for empty clusters, fill and skip
+      cluster_x = 0.0;
+      cluster_y = 0.0;
+      cluster_z = 0.0;
+      cluster_wd = 0.0;
+
+      neutrino_energy = 0.0;
+      collected_energy = 0.0;
+      calibrated_energy = 0.0;
+      drift_coordinate = 0.0;
+      
+      output_tree->Fill();
+
       continue;
     }
 
