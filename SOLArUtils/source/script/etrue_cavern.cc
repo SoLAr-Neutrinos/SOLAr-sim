@@ -195,26 +195,29 @@ int main (int argc, char *argv[]) {
     y_mean = 0.0;
     z_mean = 0.0;
 
-    const SLArMCPrimaryInfo& primary = truth->GetPrimary(0); 
-    primary_energy = primary.GetEnergy();
-    const auto& tracks = primary.GetConstTrajectories(); 
-    for (const auto& t : tracks) {
-      if (t->GetTime() > 1e6) continue;
-      if (is_neutron && t->GetTrackID() == 1) {
-        n_killer = t->GetEndProcess(); 
-      }
-      const auto& traj_points = t->GetConstPoints(); 
-      track_edep = 0.0;
-      for (const auto& p : traj_points) {
-        if (p.fLAr) { 
-          track_edep += p.fEdep; 
-          x_mean += p.fX * p.fEdep;
-          y_mean += p.fY * p.fEdep;
-          z_mean += p.fZ * p.fEdep;
+    const auto& primaries = truth->GetPrimaries();
+
+    for (const auto& primary : primaries) {
+      primary_energy = primary.GetEnergy();
+      const auto& tracks = primary.GetConstTrajectories(); 
+      for (const auto& t : tracks) {
+        if (t->GetTime() > 2e6) continue;
+        if (is_neutron && t->GetPDGID() == 2112) {
+          n_killer = t->GetEndProcess(); 
         }
+        const auto& traj_points = t->GetConstPoints(); 
+        track_edep = 0.0;
+        for (const auto& p : traj_points) {
+          if (p.fLAr) { 
+            track_edep += p.fEdep; 
+            x_mean += p.fX * p.fEdep;
+            y_mean += p.fY * p.fEdep;
+            z_mean += p.fZ * p.fEdep;
+          }
+        }
+        if ( abs(t->GetPDGID()) > 2000 ) edep_had += track_edep;
+        else edep += track_edep;
       }
-      if ( fabs(t->GetPDGID()) > 1000 ) edep_had += track_edep;
-      else edep += track_edep;
     }
 
     x_mean /= 10.0*(edep + edep_had);
