@@ -61,18 +61,16 @@ int main (int argc, char *argv[]) {
   const double drift_velocity = 158.2; // cm/s
   const double argon_w = 23.6e-6; // MeV
   const double recombination_factor = 1.0 / 0.6; 
-  double buffer_len = 0.0; 
   
   TString hit_file_list = {}; 
   TString output_filename = {};
 
   // Parse command line options
-  const char* short_opts = "l:o:b:h";
+  const char* short_opts = "l:o:h";
   // Define long options
   static struct option long_options[] = {
     {"hitfile_list", required_argument, 0, 'l'},
     {"output", required_argument, 0, 'o'},
-    {"buffer", required_argument, 0, 'b'},
     {"help", no_argument, 0, 'h'},
     {0, 0, 0, 0}
   };
@@ -87,9 +85,6 @@ int main (int argc, char *argv[]) {
         break;
       case 'o' :
         output_filename = optarg;
-        break;
-      case 'b' : 
-        buffer_len = std::stod(optarg); 
         break;
       case 'h' : 
         print_usage(); 
@@ -193,9 +188,9 @@ int main (int argc, char *argv[]) {
       const double& q_hit = hit_q->at(ihit); 
       
       total_q += q_hit;
-      x_mean += hit_x->at(ihit) * q_hit;
-      y_mean += hit_y->at(ihit) * q_hit; 
-      z_mean += hit_z->at(ihit) * q_hit; 
+      x_mean += xx * q_hit;
+      y_mean += yy * q_hit; 
+      z_mean += zz * q_hit; 
       ww += q_hit;
     }
 
