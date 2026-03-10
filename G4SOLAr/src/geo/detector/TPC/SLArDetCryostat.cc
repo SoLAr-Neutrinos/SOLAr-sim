@@ -1030,6 +1030,7 @@ void SLArDetCryostat::SetVisAttributes() {
     lv->SetVisAttributes( G4VisAttributes( col ) ); 
   }
 
+  fSupportStructure->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
   fModLV->SetVisAttributes( G4VisAttributes(false) );
 }
 
