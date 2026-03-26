@@ -24,7 +24,28 @@
 
 #include "rapidjson/document.h"
 
-void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) {
+/**
+ * Source the configuration file and initialize the Photon Library simulator
+ * by associating the specified branch address to the appropriate data structure
+ * variables.
+ *
+ * The configuration file is expected to be in JSON format and contain the following fields: 
+ *
+ * | Field | Required/Opt   | Type | Description |
+ * |-------|----------------|------|-------------|
+ * | `root_file_obj` | Required | Object | Object containing the ROOT file information: `filename` (string, path to the ROOT file containing the photon library) and `objname` (string, name of the TTree object in the ROOT file containing the photon library data) |
+ * | `material` | Required | String | Name of the material for which the photon library is defined (used for time of flight simulation) |
+ * | `time` | Optional | Object | Configuration for the time of flight simulation (see `SLArFLSTimeOfFlightSim::Initialize` for details) |
+ * | `voxel_size` | Optional | Array of 3 numbers or Object | Size of the voxels in the photon library along each axis (in mm). Can be specified as an array of 3 numbers (e.g. `[10, 10, 10]`) or as an object with a `val` field containing the array and a unit field (e.g. `{ "val": [1, 1, 1], "unit": "cm" }`) |
+ * | `shift` | Optional | Array of 3 numbers or Object | Shift to be applied to the emission point coordinates before retrieving the corresponding voxel from the photon library (in mm). Can be specified as an array of 3 numbers (e.g. `[0, 0, 0]`) or as an object with a `val` field containing the array and a unit field (e.g. `{ "val": [0, 0, 0], "unit": "cm" }`) |
+ * | `n_voxels` | Optional | Array of 3 integers | Number of voxels along each axis in the photon library. If not specified, the number of voxels will be inferred from the data in the ROOT file |
+ * | `tile_array_branches` | Optional | Array of Objects | Array of objects specifying the configuration for tile array branches. Each object should contain the following fields: `name` (string, name of the branch in the photon library TTree), `size` (integer, size of the visibility buffer for this branch), `enabled` (boolean, whether to enable this branch or not), `pde_scale_factor` (float, optional, scale factor to be applied to the PDE when simulating detected photons for this branch), `pds_module` (string, optional, name of the PDS module associated with this branch, used to determine the target data structure for registering detected photons), and `n_elements` (array of integers, required if `pds_module` is specified and corresponds to an anode, specifies the number of components along each axis for the anode geometry) |
+ * | `sipm_array_branches` | Optional | Array of Objects | Array of objects specifying the configuration for SiPM array branches. Each object should contain the following fields: `name` (string, name of the branch in the photon library TTree), `size` (integer, size of the visibility buffer for this branch), `enabled` (boolean, whether to enable this branch or not), `pde_scale_factor` (float, optional, scale factor to be applied to the PDE when simulating detected photons for this branch), `pds_module` (string, optional, name of the PDS module associated with this branch, used to determine the target data structure for registering detected photons), and `n_elements` (array of integers, required if `pds_module` is specified and corresponds to an anode, specifies the number of components along each axis for the anode geometry) |
+ *
+ * @param config configuration file path
+ */
+void SLArFLSPhotonLibrary::Initialize(const rapidjson::Value& config) 
+{
   const auto& doc = config.GetObject();
 
   debug::require_json_member(doc, "root_file_obj");
@@ -306,6 +327,13 @@ void SLArFLSPhotonLibrary::Print() const {
 
 }
 
+/**
+ * Propagate photons from the emission point to the optical detectors
+ * by retrieving the corresponding visibility from the photon library
+ * and simulating the detection process (including time of flight and PDE)
+ * to register hits on the target data structures.
+ *
+ */
 void SLArFLSPhotonLibrary::PropagatePhotons(
     const G4ParticleDefinition *particleDef,
     const G4String& volumeName,

@@ -130,13 +130,31 @@ class SLArFastLightSimTime {
 
 };
 
+/**
+ * @class SLArFastLightSim
+ * @brief Abstract base class for fast light simulation in the `SLArFastLightSim` framework.
+ *
+ * This class defines the interface for the fast light simulation modules that can 
+ * be registed in the `SLArFastLightSimDispatcher`. Each module should inherit from this class
+ * and implement the `PropagatePhotons` method, which is responsible for simulating the propagation
+ * of optical photons from the emission point to the optical detectors. 
+ *
+ */
 class SLArFastLightSim {
   public:
+    /**
+     * @brief Enumeration of the available fast light simulation types.
+     */
     enum EFLSType {kUndefined = 0, kLUT = 1};
+    
+    /**
+     * @brief Mapping of the `EFLSType` enumeration values to their string representations
+     */
     const std::map<EFLSType, G4String> EFLSTypeNames = {
       {kUndefined, "Undefined"},
       {kLUT, "LUT"}
     };
+
     inline const EFLSType GetType() const {return fType;}
     inline const EFLSType GetType(const G4String& type_name) const {
       for (const auto& type_itr : EFLSTypeNames) {
@@ -163,6 +181,16 @@ class SLArFastLightSim {
     void SetName(const G4String& name) {fName = name;}
     const G4String& GetName() const {return fName;}
 
+    /**
+     * @brief Pure virtual method to propagate optical photons from the emission point to the optical detectors.
+     *
+     * @param particleDef Particle definition (for particle specific scintillation properties)
+     * @param volumeName Name of the volume where the photons are emitted
+     * @param emissionPoint 3D position of the photon emission point
+     * @param numPhotons Number of photons to propagate
+     * @param emissionTime Vector of emission times for the photons
+     * @param emissionEnergy Vector of emission energies for the photons
+     */
     virtual void PropagatePhotons(
         const G4ParticleDefinition* particleDef,
         const G4String& volumeName,
@@ -171,8 +199,23 @@ class SLArFastLightSim {
         const std::vector<double>& emissionTime,
         const std::vector<double>& emissionEnergy) = 0;
 
+    /**
+     * @brief Virtual method to initialize the fast light simulation module with configuration parameters.
+     *
+     * The JSON configuration object containing the parameters for 
+     * the fast light simulation module.
+     * The expected format of the configuration object depends on 
+     * the specific implementation of the fast light simulation module.
+     */
     virtual void Initialize(const rapidjson::Value& config) {}
 
+    /**
+     * @brief Virtual method to print the configuration and properties of the fast light simulation module.
+     *
+     * This method can be overridden by derived classes to provide specific 
+     * information about the configuration and properties of the
+     * fast light simulation module.
+     */
     virtual void Print() const {}
 
     virtual void Reset() {}
@@ -183,26 +226,44 @@ class SLArFastLightSim {
     EFLSType fType = kUndefined;
 };
 
-class SLArFastLightSimDispatcher : public SLArFastLightSim {
+/**
+ * @class SLArFastLightSimDispatcher
+ * @brief Dispatcher object for Fast Light Simulation modules
+ *
+ * The `SLArFastLightSimDispatcher` acts as a dispatcher for multiple
+ * fast light simulation modules in `SOLAr-sim`. 
+ * Each module (simulator) is given a name and is associated to one or 
+ * more physical volumes. 
+ */
+class SLArFastLightSimDispatcher {
   public:
     SLArFastLightSimDispatcher() = default;
 
+    /**
+     * @brief Register a fast light simulation module.
+     */
     void RegisterSimulator(const G4String& moduleName, 
         std::unique_ptr<SLArFastLightSim> sim) {
       fSimulators[moduleName] = std::move(sim);
     }
 
-    void SetDefaultVolume(const G4String& volumeName) {
+    /**
+     * @brief Set the name of the default volume where fast light simulation is applied
+     */
+    inline void SetDefaultVolume(const G4String& volumeName) {
       fDefaultVolume = volumeName;
     }
 
+    /**
+     * @brief Find the relevant simulator for a given position and execute it
+     */
     inline void PropagatePhotons(
         const G4ParticleDefinition* particleDef,
         const G4String& volumeName,
         const G4ThreeVector& emissionPoint,
         int numPhotons,
         const std::vector<double>& emissionTime,
-        const std::vector<double>& emissionWvlen) override 
+        const std::vector<double>& emissionWvlen) 
     {
       auto it = fVolumeToModuleMap.find(volumeName);
       if (it != fVolumeToModuleMap.end()) {
@@ -218,13 +279,19 @@ class SLArFastLightSimDispatcher : public SLArFastLightSim {
       return;
     }
 
+  /**
+   * @brief Register a volume and associate it to a given simulator
+   */
   inline void RegisterVolume(
       const G4String& volumeName,
       const G4String& moduleName) {
       fVolumeToModuleMap[volumeName] = moduleName;
   }
 
-  inline void Print() const override {
+  /**
+   * @brief Print the details of all registered simulators and volumes
+   */
+  inline void Print() const {
     printf("----------------------------------------------------------------\n");
     printf("SLArFastLightSimDispatcher configuration:\n");
     printf("Simulator list:\n"); 
