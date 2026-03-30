@@ -54,16 +54,14 @@ namespace debug {
     if (j.HasMember("val") == false) {
       G4String msg = "SLArGPSDirectionGenerator::Config ERROR: ";
       msg += "Field \"" + field + "\" must have a \"val\" field\n";
-      fprintf(stderr, "%s", msg.data());
-      exit(EXIT_FAILURE);
+      G4Exception("debug::check_json_value_field", "JsonDebug003", FatalException, msg);
     }
 
     const auto& jval = j["val"];
     if (jval.IsNumber() == false && jval.IsArray() == false) {
       G4String msg = "SLArGPSDirectionGenerator::CheckJSONFieldIsSValue ERROR: ";
       msg += "Field \"val\" must be a number or an array\n";
-      fprintf(stderr, "%s", msg.data());
-      exit(EXIT_FAILURE);
+      G4Exception("debug::check_json_value_field", "JsonDebug004", FatalException, msg);
     }
 
     if (j.HasMember("unit")) {
