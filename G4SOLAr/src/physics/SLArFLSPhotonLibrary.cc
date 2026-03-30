@@ -342,6 +342,14 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     const std::vector<double>& emissionTime,
     const std::vector<double>& emissionEnergy) 
 {
+  if (emissionTime.size() == 0 || emissionEnergy.size() == 0) {
+    G4Exception(
+        "SLArFLSPhotonLibrary::PropagatePhotons", "ConfigError", JustWarning,
+        "Emission time and energy vectors must not be empty for photon propagation. Skipping photon propagation."
+        );
+    return;
+  }
+
   // Find the voxel corresponding to the emission point
   //printf("SLArFLSPhotonLibrary::PropagatePhotons: volume %s, emissionPoint (%.2f, %.2f, %.2f) cm, numPhotons %d, emissionTime %.2f ns\n",
       //volumeName.c_str(),
@@ -463,15 +471,25 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     // read number from the branch name to get the corresponding OpDet array configuration
     auto matches = rgx_xa_wall_nr.MatchS(branch_name.c_str());
     int opdet_array_id = -1;
-    if (matches->GetEntries() > 0) {
-      TObjString* match_str = static_cast<TObjString*>( matches->At(1) );
-      opdet_array_id = 40 + std::stoi( match_str->GetString().Data() );
+    if (matches && matches->GetEntries() > 1) {
+      TObjString* match_str = dynamic_cast<TObjString*>( matches->At(1) );
+      if (match_str) {
+        opdet_array_id = 40 + std::stoi( match_str->GetString().Data() );
+      }
+      else {
+        G4Exception(
+            "SLArFLSPhotonLibrary::PropagatePhotons", "ConfigError", JustWarning,
+            Form("Could not extract OpDet array ID from branch name '%s'. Expected format: '...<number>'.",
+            branch_name.c_str()));
+      }
     } else {
       G4Exception(
           "SLArFLSPhotonLibrary::PropagatePhotons", "ConfigError", JustWarning,
           Form("Could not extract OpDet array ID from branch name '%s'. Expected format: '...<number>'.", branch_name.c_str())
           );
     }
+    delete matches;
+
     auto& opdet_array_cfg = ana_mgr->GetPDSCfg().GetMap().at( opdet_array_id );
     G4ThreeVector tpc_pos = detector->GetDetTPCs().at(opdet_array_cfg.GetTPCID())->GetModPV()->GetObjectTranslation();
     G4ThreeVector opdet_wall_pos(opdet_array_cfg.GetX(), opdet_array_cfg.GetY(), opdet_array_cfg.GetZ());
@@ -491,7 +509,7 @@ void SLArFLSPhotonLibrary::PropagatePhotons(
     for (size_t idx = 0; idx < vis_opdet_array.size(); idx++) {
       const float& visibility = vis_opdet_array[idx];
       const int detected_photons = G4Poisson(numPhotons * visibility * pde_scale_factor);
-      const auto& base_ = fAnodeNComponentMap[branch_name];
+      const auto& base_ = fAnodeNComponentMap.at(branch_name);
       const int t_idx = idx;
       if (detected_photons > 0) {
         const auto& t_cfg = opdet_array_cfg.GetConstMap().at(t_idx);

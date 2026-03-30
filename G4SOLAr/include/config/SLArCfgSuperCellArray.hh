@@ -23,7 +23,7 @@ class SLArCfgSuperCellArray : public SLArCfgAssembly<SLArCfgSuperCell> {
     inline void SetTPCID(int tpcID) {fTPCID = tpcID;}
 
   protected:
-    int fTPCID; 
+    int fTPCID = -1; 
 
     ClassDefOverride(SLArCfgSuperCellArray, 4);
 };

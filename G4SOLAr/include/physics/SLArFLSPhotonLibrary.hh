@@ -115,7 +115,7 @@ class SLArFLSPhotonLibrary : public SLArFastLightSim {
      * @param key sub-system name
      * @return PDE scale factor
      */
-    inline float GetPDEScaleFactor(const std::string key) const 
+    inline float GetPDEScaleFactor(const std::string& key) const 
     {
       if (fPDEScaleFactor.find(key) == fPDEScaleFactor.end()) {
         G4Exception(

@@ -5,19 +5,18 @@
       "type" : "PhotonLibrary",
       "config" : {
         "root_file_obj" : {
-          "filename" : "/home/guff/Dune/SOLAr/SoLAr-ProtoDUNE3-utils/data/solar_phlib_apex.root",
+          "filename" : "/path/to/solar_phlib.root",
           "objname" : "photonLib"
         },
         "voxel_size" : {"unit" : "cm", "val" : [10.0, 10.0, 10.0]},
         "n_voxels" : [30, 35, 32],
-        "pde_scale_factor" : 0.286,
         "shift" : {"unit" : "mm", "val" : [1500.0, 3500.0, 1600.0]},
         "material" : "LAr",
         "tile_array_branches" : [
-          {"name" : "vis_apex_0_module", "size" : 30, "enabled" : true, "pds_module" : "apex_40", "nelements" : [1], "pde_scale_factor" : 0.667},
-          {"name" : "vis_apex_1_module", "size" : 30, "enabled" : true, "pds_module" : "apex_41", "nelements" : [1], "pde_scale_factor" : 0.667},
-          {"name" : "vis_apex_2_module", "size" : 30, "enabled" : true, "pds_module" : "apex_42", "nelements" : [1], "pde_scale_factor" : 0.667},
-          {"name" : "vis_apex_3_module", "size" : 30, "enabled" : true, "pds_module" : "apex_43", "nelements" : [1], "pde_scale_factor" : 0.667}
+          {"name" : "vis_apex_0_module", "size" : 30, "enabled" : true, "pds_module" : "apex_40", "n_elements" : [1], "pde_scale_factor" : 0.667},
+          {"name" : "vis_apex_1_module", "size" : 30, "enabled" : true, "pds_module" : "apex_41", "n_elements" : [1], "pde_scale_factor" : 0.667},
+          {"name" : "vis_apex_2_module", "size" : 30, "enabled" : true, "pds_module" : "apex_42", "n_elements" : [1], "pde_scale_factor" : 0.667},
+          {"name" : "vis_apex_3_module", "size" : 30, "enabled" : true, "pds_module" : "apex_43", "n_elements" : [1], "pde_scale_factor" : 0.667}
         ],
         "sipm_array_branches" : [
           {"name" : "vis_sipm_main"  , "size" : 9600, "enabled" : true, "pds_module" : "anode_11", "n_elements" : [2, 30, 160], "pde_scale_factor" : 0.286},

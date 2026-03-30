@@ -55,7 +55,7 @@ void SLArFastLightSimTime::Initialize(const rapidjson::Value& config) {
           "Only up to 2 sets of exponential slope parameters are supported. Ignoring extra sets."
           );
     }
-    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+    for ( rapidjson::SizeType i=0; i<std::min<rapidjson::SizeType>(2, jslope.Size()); ++i ) {
       fParsExpSlope[i] = 
         new G4PhysicsLinearVector(exp_dist.front(), exp_dist.back(), exp_dist.size());
       const auto& jslope_val = jslope[i];
@@ -81,7 +81,7 @@ void SLArFastLightSimTime::Initialize(const rapidjson::Value& config) {
           );
     }
 
-    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+    for ( rapidjson::SizeType i=0; i<std::min<rapidjson::SizeType>(2, jnorm.Size()); ++i ) {
       fParsExpNormOverLandau[i] = 
         new G4PhysicsLinearVector(exp_dist.front(), exp_dist.back(), exp_dist.size());
       const auto& jnorm_val = jnorm[i];
@@ -114,7 +114,7 @@ void SLArFastLightSimTime::Initialize(const rapidjson::Value& config) {
       G4Exception("SLArFastLightSimTime::Initialize", "ConfigError", JustWarning,
           "Only up to 2 sets of Landau norm over entries parameters are supported. Ignoring extra sets.");
     }
-    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+    for ( rapidjson::SizeType i=0; i<std::min<rapidjson::SizeType>(2, jnorm.Size()) ; ++i ) {
       fParsLandauNormEntries[i] = 
         new G4PhysicsLinearVector(landau_dist.front(), landau_dist.back(), landau_dist.size());
       const auto& jnorm_val = jnorm[i];
@@ -139,7 +139,7 @@ void SLArFastLightSimTime::Initialize(const rapidjson::Value& config) {
           "Only up to 2 sets of Landau MPV parameters are supported. Ignoring extra sets.");
     }
 
-    for ( rapidjson::SizeType i=0; i<2; ++i ) {
+    for ( rapidjson::SizeType i=0; i<std::min<rapidjson::SizeType>(2, jmpv.Size()); ++i ) {
       fParsLandauMPV[i] = 
         new G4PhysicsLinearVector(landau_dist.front(), landau_dist.back(), landau_dist.size());
       const auto& jmpv_val = jmpv[i];

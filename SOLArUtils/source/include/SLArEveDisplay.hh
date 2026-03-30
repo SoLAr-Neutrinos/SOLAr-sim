@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <iostream>
 #include "TFile.h"
+#include "TH1F.h"
 #include "TTree.h"
 
 #include "TGLabel.h"

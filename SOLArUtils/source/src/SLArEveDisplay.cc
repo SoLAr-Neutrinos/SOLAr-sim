@@ -49,7 +49,6 @@ namespace display {
     : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fCurEvent(0), fLastEvent(1) 
   {
     //gStyle->SetPalette(kSunset);
-    gEnv->SetValue("MESA_GL_VERSION_OVERRIDE", "3.3");
     fTimer = std::make_unique<TTimer>("gSystem->ProcessEvents();", 50, kFALSE);
     fEveManager = std::unique_ptr<TEveManager>( TEveManager::Create() );
 
@@ -90,19 +89,23 @@ namespace display {
     c->Divide(2, 1);
 
     c->cd(1);
+    bool draw_1 = true;
     for (const auto& ophit_set : fPhotonDetectorsTHits) {
       if (ophit_set.first == 10 || (ophit_set.first>=30 && ophit_set.first<40)) continue;
       const auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
-      TString opt = (ophit_set == *fPhotonDetectorsTHits.begin()) ? "hist" : "hist same";
+      TString opt = (draw_1) ? "hist" : "hist same";
       hist_vec.at(0).DrawClone(opt);
+      if (draw_1) draw_1 = false;
     }
 
     c->cd(2);
+    bool draw_2 = true;
     for (const auto& ophit_set : fPhotonDetectorsTHits) {
       if (ophit_set.first == 10 || (ophit_set.first>=30 && ophit_set.first<40)) continue;
       const auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
-      TString opt = (ophit_set == *fPhotonDetectorsTHits.begin()) ? "hist" : "hist same";
+      TString opt = (draw_2) ? "hist" : "hist same";
       hist_vec.at(1).DrawClone(opt);
+      if (draw_2) draw_2 = false;
     }
 
     c->Modified();
