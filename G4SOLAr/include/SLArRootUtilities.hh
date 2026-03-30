@@ -125,6 +125,7 @@ template<> inline TGraph* get_from_rootfile<TGraph>(const std::string& filename,
 extern template TH1*    get_from_rootfile<TH1 >  (const rapidjson::Value& file_and_key); 
 extern template TH1D*   get_from_rootfile<TH1D>  (const rapidjson::Value& file_and_key); 
 extern template TH1F*   get_from_rootfile<TH1F>  (const rapidjson::Value& file_and_key); 
+extern template TH2*    get_from_rootfile<TH2 >  (const rapidjson::Value& file_and_key);
 extern template TH2D*   get_from_rootfile<TH2D>  (const rapidjson::Value& file_and_key); 
 extern template TH2F*   get_from_rootfile<TH2F>  (const rapidjson::Value& file_and_key); 
 template<> inline TGraph* get_from_rootfile<TGraph>(const rapidjson::Value& file_and_key) {
