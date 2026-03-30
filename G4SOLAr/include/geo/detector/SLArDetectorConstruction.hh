@@ -70,6 +70,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     G4VIStore* CreateImportanceStore();
     //! Return SLArDetectorConstruction::fTPCs map
     inline std::map<G4int, SLArDetTPC*>& GetDetTPCs() {return fTPC;}
+    //! Return SLArDetectorConstruction::fTPCs map
+    inline const std::map<G4int, SLArDetTPC*>& GetDetTPCs() const {return fTPC;}
     //! Return ReadoutTile detector object
     inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) {
       auto it = fReadoutTile.find(tile_model_name);

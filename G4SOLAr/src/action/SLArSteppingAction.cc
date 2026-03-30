@@ -120,6 +120,27 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 
           n_ph = scint_process->GetNumPhotons(); 
           n_el = scint_process->GetNumIonElectrons(); 
+          auto& ph_wvlen = scint_process->GetPhotonWavelengths();
+          auto& ph_times = scint_process->GetPhotonTimes();
+
+          auto runAction = 
+            (SLArRunAction*)G4RunManager::GetRunManager()->GetUserRunAction();
+
+          if (runAction->IsFastLightSimEnabled() && n_ph > 0) {
+            const HepGeom::Point3D<G4double> pos(
+                thePostPoint->GetPosition().x(),
+                thePostPoint->GetPosition().y(),
+                thePostPoint->GetPosition().z());
+            const HepGeom::Point3D<G4double> pos_det_frame = fTransformWorld2Det * pos;
+
+            runAction->GetFastLightSimDispatcher()->PropagatePhotons(
+                particleDef,
+                thePostPoint->GetPhysicalVolume()->GetName(),
+                G4ThreeVector(pos_det_frame.x(), pos_det_frame.y(), pos_det_frame.z()),
+                n_ph, 
+                ph_times, 
+                ph_wvlen);
+          }
 
           break;
         } 
@@ -160,20 +181,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
     trajectory->IncrementNion( n_el ); 
     trajectory->IncrementNph ( n_ph ); 
 
-    auto runAction = 
-      (SLArRunAction*)G4RunManager::GetRunManager()->GetUserRunAction();
 
-    if (runAction->IsFastLightSimEnabled() && n_ph > 0) {
-      const HepGeom::Point3D<G4double> pos(
-          thePostPoint->GetPosition().x(),
-          thePostPoint->GetPosition().y(),
-          thePostPoint->GetPosition().z());
-      const HepGeom::Point3D<G4double> pos_det_frame = fTransformWorld2Det * pos;
-
-      runAction->GetFastLightSimDispatcher()->PropagatePhotons(
-          thePostPoint->GetPhysicalVolume()->GetName(),
-          G4ThreeVector(pos_det_frame.x(), pos_det_frame.y(), pos_det_frame.z()), n_ph, thePostPoint->GetGlobalTime() );
-    }
 
     //printf("SLArSteppingAction::UserSteppingAction: adding %i ph and %i e ion. to %s [%i]\n", 
     //n_ph, n_el, 

@@ -23,7 +23,7 @@ SLArCfgSuperCellArray::SLArCfgSuperCellArray(TString name, int serie)
 
 
 SLArCfgSuperCellArray::SLArCfgSuperCellArray(const SLArCfgSuperCellArray &cfg)
-  : SLArCfgAssembly<SLArCfgSuperCell>(cfg)
+  : SLArCfgAssembly<SLArCfgSuperCell>(cfg), fTPCID(cfg.fTPCID)
 {}
 
 SLArCfgSuperCellArray::~SLArCfgSuperCellArray()
@@ -35,7 +35,7 @@ SLArCfgSuperCellArray::~SLArCfgSuperCellArray()
   fNElements = 0;
 }
 
-void SLArCfgSuperCellArray::DumpMap() 
+void SLArCfgSuperCellArray::DumpMap() const
 {
   const size_t n_elements = fElementsMap.size();
   std::printf("SLArCfgSuperCellArray %s has %lu entries\n", 

@@ -45,10 +45,10 @@ class SLArEventSuperCellArray : public TNamed {
 
 class SLArListEventPDS: public TObject {
   public: 
-    inline SLArListEventPDS() : fEvNumber(-1), TObject() {}
+    inline SLArListEventPDS() : TObject(), fEvNumber(-1)  {}
 
     inline SLArListEventPDS(const SLArListEventPDS& ev) 
-      : fEvNumber(ev.fEvNumber), TObject(ev) 
+      : TObject(ev), fEvNumber(ev.fEvNumber)
     {
       for (const auto& p : ev.fOpDetArrayMap) {
         fOpDetArrayMap[p.first] = SLArEventSuperCellArray(p.second);

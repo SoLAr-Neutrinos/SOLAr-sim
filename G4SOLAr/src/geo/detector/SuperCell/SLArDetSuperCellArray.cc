@@ -220,6 +220,7 @@ SLArCfgSuperCellArray SLArDetSuperCellArray::BuildSuperCellArrayCfg() {
   SLArCfgSuperCellArray arrayCfg("SC_array_"+std::to_string(fID), fID); 
 
   arrayCfg.SetIdx( fID ); 
+  arrayCfg.SetTPCID( fTPCID );
   arrayCfg.SetNormal( fNormal.x(), fNormal.y(), fNormal.z() ); 
   arrayCfg.SetupAxes(); 
   arrayCfg.SetPhi  ( fGeoInfo->GetGeoPar("scarray_phi") ); 

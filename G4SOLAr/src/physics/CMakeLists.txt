@@ -23,6 +23,7 @@ set(SLAR_PHYSICS_SOURCES
   "${SLAR_PHYSICS_SOURCE_DIR}/SLArScintillation.cc"
   "${SLAR_PHYSICS_SOURCE_DIR}/SLArOpWLS.cc"
   "${SLAR_PHYSICS_SOURCE_DIR}/SLArOpticalPhysics.cc"
+  "${SLAR_PHYSICS_SOURCE_DIR}/SLArFastLightSim.cc"
   "${SLAR_PHYSICS_SOURCE_DIR}/SLArFLSPhotonLibrary.cc"
   "${SLAR_PHYSICS_SOURCE_DIR}/SLArFastLightSimMessenger.cc"
   "${SLAR_PHYSICS_SOURCE_DIR}/SLArPhysicsList.cc"
