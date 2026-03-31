@@ -29,7 +29,6 @@ set(SLAR_GEN_HEADERS
 )
 
 set(SLAR_GEN_SRC
-  "${SLAR_GEN_SOURCE_DIR}/SLArRootUtilities.cc"
   "${SLAR_GEN_SOURCE_DIR}/SLArRandomExtra.cc"
   "${SLAR_GEN_SOURCE_DIR}/SLArPointVertexGenerator.cc"
   "${SLAR_GEN_SOURCE_DIR}/SLArBulkVertexGenerator.cc"

@@ -164,6 +164,7 @@ configure_file(${PROJECT_SOURCE_DIR}/rootrc.in ${CMAKE_INSTALL_PREFIX}/.rootrc @
 set(solarsim_sources "")
 set(solarsim_headers "")
 
+add_subdirectory(${SOLARSIM_SRC_DIR}/core)
 add_subdirectory(${SOLARSIM_SRC_DIR}/config)
 add_subdirectory(${SOLARSIM_SRC_DIR}/event)
 add_subdirectory(${SOLARSIM_SRC_DIR}/action)
@@ -219,6 +220,7 @@ endif()
 # include directories
 target_include_directories(solar_sim PUBLIC
   $<BUILD_INTERFACE:${SOLARSIM_INCLUDE_DIR}>
+  $<BUILD_INTERFACE:${SOLARSIM_INCLUDE_DIR}/core>
   $<BUILD_INTERFACE:${SOLARSIM_INCLUDE_DIR}/action>
   $<BUILD_INTERFACE:${SOLARSIM_INCLUDE_DIR}/analysis>
   $<BUILD_INTERFACE:${SOLARSIM_INCLUDE_DIR}/event>
@@ -228,6 +230,7 @@ target_include_directories(solar_sim PUBLIC
   $<BUILD_INTERFACE:${SOLARSIM_INCLUDE_DIR}/physics>
 
   $<INSTALL_INTERFACE:${SOLARSIM_INC_DEST}>
+  $<INSTALL_INTERFACE:${SOLARSIM_INC_DEST}/core>
   $<INSTALL_INTERFACE:${SOLARSIM_INC_DEST}/action>
   $<INSTALL_INTERFACE:${SOLARSIM_INC_DEST}/analysis>
   $<INSTALL_INTERFACE:${SOLARSIM_INC_DEST}/event>

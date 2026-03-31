@@ -4,7 +4,7 @@
  * @created     : Monday Mar 30, 2026
  */
 
-#include "SLArRootUtilities.hh"
+#include "core/SLArRootUtilities.hh"
 
 template TH1*    get_from_rootfile<TH1 >  (const rapidjson::Value& file_and_key); 
 template TH1D*   get_from_rootfile<TH1D>  (const rapidjson::Value& file_and_key); 
