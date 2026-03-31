@@ -75,7 +75,7 @@ namespace gen{
       GenConfig_t fConfig; 
       std::unique_ptr<vertex::SLArVertexGenerator> fVtxGen;
       std::unique_ptr<direction::SLArDirectionGenerator> fDirGen;
-      std::unique_ptr<TH1D> fEnergySpectrum; 
+      std::unique_ptr<TH1> fEnergySpectrum; 
       G4String fJSONConfigDump;
 
       void CopyConfigurationToString(const rapidjson::Value& config); 

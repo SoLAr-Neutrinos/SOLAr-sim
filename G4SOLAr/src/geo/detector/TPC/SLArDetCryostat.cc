@@ -23,6 +23,21 @@ SLArCryostatLayer::SLArCryostatLayer() :
 
 SLArCryostatLayer::SLArCryostatLayer(
     G4String   model_name, 
+    G4double   thickness,
+    G4String   material_name, 
+    G4int      importance)
+  : fHalfSizeX(1.0), fHalfSizeY(1.0), fHalfSizeZ(1.0), fMaterial(nullptr), fModule(nullptr)
+{
+
+  fName      = model_name;
+  fThickness =  thickness;
+  fImportance=  importance;
+
+  fMaterialName = material_name;
+}
+
+SLArCryostatLayer::SLArCryostatLayer(
+    G4String   model_name, 
     G4double*  halfSize,  
     G4double   thickness,
     G4String   material_name, 
@@ -42,8 +57,9 @@ SLArCryostatLayer::SLArCryostatLayer(
 
 SLArDetCryostat::SLArDetCryostat() : 
   fMatWorld(nullptr), fMatWaffle(nullptr), fMatBrick(nullptr), 
-  fWaffleUnit(nullptr), fWaffleEdgeUnit(nullptr), 
-  fBuildSupport(false), fAddNeutronBricks(false)
+  fWaffleUnit(nullptr), fWaffleEdgeUnit(nullptr), fAirFlowUnit(nullptr),
+  fBuildSupport(false), fAddNeutronBricks(false), fAddFloorAirflow(false), 
+  fSupportStructureVisibility(true)
 {
     
 }
@@ -72,6 +88,7 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
   }
 
   G4double cryostat_waffle_tk = cryostat_tk; 
+  G4double neutron_brick_tk = 0.;
 
   if (jcryo.HasMember("Cryostat_support")) {
     fBuildSupport = true; 
@@ -88,12 +105,45 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
     fGeoInfo->RegisterGeoPar("waffle_spacing", 
         unit::ParseJsonVal(jsupport["main_spacing"])); 
 
-    if (jsupport.HasMember("neutron_brick")) {
+    if (jsupport.HasMember("neutron_brick")) { //Fixed in order to correctly register the total thickness 
       const auto jbrick = jsupport["neutron_brick"].GetObj(); 
-      fGeoInfo->RegisterGeoPar("brick_thickness", 
-          unit::ParseJsonVal(jbrick["thickness"])); 
-      fMatBrick = new SLArMaterial(); 
-      fMatBrick->SetMaterialID(jbrick["material"].GetString()); 
+
+      G4int ilayer = 0;
+      if (jbrick.HasMember("layers") && jbrick["layers"].IsArray()) {
+        const auto jlayers = jbrick["layers"].GetArray();
+        for (const auto &layer : jlayers) {
+          assert(layer.IsObject());
+          assert(layer.HasMember("name"));
+          assert(layer.HasMember("material"));
+          assert(layer.HasMember("thickness"));
+          G4String mat_name = layer["material"].GetString();
+          G4double tk = unit::ParseJsonVal(layer["thickness"]);
+          G4double importance = 
+            (layer.HasMember("importance")) ? layer["importance"].GetInt() : 1;
+          fShieldingStructure.emplace(ilayer, 
+              SLArCryostatLayer(layer["name"].GetString(), tk, mat_name, importance));
+          neutron_brick_tk += tk;
+          ilayer++;
+        }
+      } else {
+        // single layer brick
+        assert(jbrick.HasMember("name"));
+        assert(jbrick.HasMember("material"));
+        assert(jbrick.HasMember("thickness"));
+        G4String mat_name = jbrick["material"].GetString();
+        G4double tk = unit::ParseJsonVal(jbrick["thickness"]);
+        G4double importance = 
+          (jbrick.HasMember("importance")) ? jbrick["importance"].GetInt() : 1;
+        fShieldingStructure.insert( std::make_pair(ilayer, 
+              SLArCryostatLayer(jbrick["name"].GetString(), tk, mat_name, importance) ) );
+        neutron_brick_tk += tk;
+      }
+
+      fGeoInfo->RegisterGeoPar("brick_thickness", neutron_brick_tk);
+      for (const auto& bl : fShieldingStructure) {
+        SLArMaterial* mat = new SLArMaterial(); 
+        mat->SetMaterialID(bl.second.fMaterialName);
+      } 
       fAddNeutronBricks = true; 
     }
   }
@@ -118,20 +168,24 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
         importance = layer["importance"].GetInt(); 
       }
       
-      SLArCryostatLayer* ll = new SLArCryostatLayer(
-          layer["name"].GetString(), halfSize, 
-          unit::ParseJsonVal(layer["thickness"]), 
-          layer["material"].GetString(),importance);
+      //SLArCryostatLayer* ll = new SLArCryostatLayer(
+          //layer["name"].GetString(), halfSize, 
+          //unit::ParseJsonVal(layer["thickness"]), 
+          //layer["material"].GetString(),importance);
 
-      fCryostatStructure.insert(std::make_pair(layer["id"].GetInt(), ll)); 
+      fCryostatStructure.emplace(layer["id"].GetInt(), 
+            SLArCryostatLayer(
+              layer["name"].GetString(), halfSize, 
+              unit::ParseJsonVal(layer["thickness"]), 
+              layer["material"].GetString(),importance)); 
     }
   }
 
   printf("SLArDetCryostat::BuildCryostatStructure: Cryostat layered structure built\n");
   for (const auto& l : fCryostatStructure) {
     printf("%i: %s %g mm %s\n", 
-        l.first, l.second->fName.c_str(), l.second->fThickness, 
-        l.second->fMaterialName.c_str());
+        l.first, l.second.fName.c_str(), l.second.fThickness, 
+        l.second.fMaterialName.c_str());
   }
 
   if (fBuildSupport) {
@@ -141,10 +195,36 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
     if (fGeoInfo->Contains("brick_thickness") && fAddNeutronBricks) {
       n_brick_tk = fGeoInfo->GetGeoPar("brick_thickness"); 
     }
-    const G4double unit_thickness = std::max(major_width, minor_width + n_brick_tk); 
+    const G4double unit_thickness = major_width + n_brick_tk; 
     fGeoInfo->RegisterGeoPar("waffle_total_width", unit_thickness); 
   }
+
+  if (jcryo.HasMember("floor_airflow")) {
+    G4double airflow_tk = 
+      unit::ParseJsonVal(jcryo["floor_airflow"]["thickness"]);
+    fGeoInfo->RegisterGeoPar("floor_airflow_thickness", airflow_tk);
+    fAddFloorAirflow = true;
+  }
+
   return; 
+}
+
+void SLArDetCryostat::BuildAirFlowUnit() {
+  fAirFlowUnit = new SLArBaseDetModule();
+  const G4double airflow_tk = fGeoInfo->GetGeoPar("floor_airflow_thickness");
+  const G4double tgtX = fGeoInfo->GetGeoPar("target_size_x");
+  const G4double tgtZ = fGeoInfo->GetGeoPar("target_size_z");
+  const G4double cryostat_tk = fGeoInfo->GetGeoPar("cryostat_tk");
+  const G4double cryostat_waffle_tk = 
+    (fBuildSupport) ? fGeoInfo->GetGeoPar("waffle_total_width") : 0.;
+  const G4double total_cryostat_tk = cryostat_tk + cryostat_waffle_tk;
+
+  fAirFlowUnit->SetSolidVolume( new G4Box("airflow_unit_sv", 
+      0.5*(tgtX + 2*total_cryostat_tk), 0.5*airflow_tk, 0.5*(tgtZ + 2*total_cryostat_tk) ) );
+  fAirFlowUnit->SetLogicVolume( new G4LogicalVolume( 
+        fAirFlowUnit->GetModSV(), fMatWorld->GetMaterial(), "airflow_unit_lv"));
+  fAirFlowUnit->GetGeoInfo()->RegisterGeoPar("thickness", airflow_tk);
+  return;
 }
 
 void SLArDetCryostat::BuildSupportStructureUnit() {
@@ -169,6 +249,8 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
         fWaffleUnit->GetModSV(), fMatWorld->GetMaterial(), "waffle_unit_lv"));
   fWaffleUnit->GetModLV()->SetVisAttributes( G4VisAttributes(false) ); 
 
+  G4Colour waffle_col(1.0, 0.0, 0.0);
+
   // build waffle unit steel structure
   // Main frame (along the z axis)
   auto waffle_main_bar = new G4Box("waffle_main_sv", 0.25*tk, 0.5*major_width, 0.5*spacing); 
@@ -183,7 +265,8 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
 
   auto waffle_main_lv = new G4LogicalVolume(
       waffle_main_sv, fMatWaffle->GetMaterial(), "waffle_main_lv"); 
-  waffle_main_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  waffle_main_lv->SetVisAttributes( new G4VisAttributes( 
+        (fSupportStructureVisibility) ? waffle_col : false ) ); 
   new G4PVPlacement(0, 
       G4ThreeVector(-0.5*(spacing - 0.5*tk), -0.5*(unit_thickness - major_width), 0), 
       waffle_main_lv, "waffle_main_pv0", fWaffleUnit->GetModLV(), 0, 1); 
@@ -207,7 +290,8 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
       G4ThreeVector(0.0, -0.5*(trnv_width+tk), 0.5*(majorT_width - 0.5*tk) )); 
   auto waffle_trnv_lv = new G4LogicalVolume(
       waffle_trnv_sv, fMatWaffle->GetMaterial(), "waffle_trnv_lv"); 
-  waffle_trnv_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  waffle_trnv_lv->SetVisAttributes( 
+      new G4VisAttributes( (fSupportStructureVisibility) ? waffle_col : false ) ); 
   new G4PVPlacement(0, 
       G4ThreeVector(0, -0.5*(unit_thickness-major_width), -0.5*(spacing - 0.5*tk)), 
       waffle_trnv_lv, "waffle_trnv_pv0", fWaffleUnit->GetModLV(), 0, 1); 
@@ -237,38 +321,42 @@ void SLArDetCryostat::BuildSupportStructureUnit() {
 
   auto waffle_minor_lv = new G4LogicalVolume(waffle_minor_sv, fMatWaffle->GetMaterial(),
       "waffle_minor_lv"); 
-  waffle_minor_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  waffle_minor_lv->SetVisAttributes( 
+      new G4VisAttributes( fSupportStructureVisibility ? waffle_col : false) ); 
   new G4PVPlacement(0, G4ThreeVector(0, -0.5*(unit_thickness - minor_width), 0), 
       waffle_minor_lv, "waffle_minor_pv", fWaffleUnit->GetModLV(), 0, 1); 
 
+  
   if (fAddNeutronBricks) {
-    G4VSolid* brick_sv = nullptr; 
-    G4double yshift = 0.; 
-    if (n_brick_tk <= major_width - minor_width) {
-      brick_sv = new G4Box("brick_sv", 
-          0.5*(spacing-2*majorT_width-tk), 0.5*n_brick_tk, 0.5*(spacing-2*majorT_width-tk)); 
-      //yshift = 0.5*(unit_thickness - n_brick_tk);
-      yshift = -0.5*(unit_thickness - 2*minor_width - n_brick_tk);
-    } else {
-      G4double main_tk = n_brick_tk - (major_width - minor_width); 
-      G4double fit_tk = major_width-minor_width;
-      G4Box* brick_main = new G4Box("brick_main_sv", 
-          0.5*spacing, 0.5*main_tk, 0.5*spacing); 
-      G4Box* brick_fit  = new G4Box("brick_fit_sv", 
-          0.5*(spacing-2*majorT_width-tk), 0.5*fit_tk, 0.5*(spacing-2*majorT_width-tk)); 
-      brick_sv = new G4UnionSolid("brick_sv", brick_fit, brick_main, 
-          G4TranslateY3D(0.5*(fit_tk + main_tk)) ); 
-      yshift = -0.5*(unit_thickness - 2*minor_width - fit_tk);
+    const G4double half_x = 0.5 * (spacing);
+    const G4double half_z = 0.5 * (spacing);
+    const G4double total_tk = n_brick_tk;
+    G4double yshift = 0;
+
+    // multi-layer brick
+    G4double curr_y = 0.5 * unit_thickness;
+    for (auto& layer_itr : fShieldingStructure) {
+      const int id = layer_itr.first;
+      auto& brick_layer = layer_itr.second;
+      G4double layer_tk = brick_layer.fThickness;
+      
+      brick_layer.fModule = BuildShieldingLayer(brick_layer.fName, 
+          half_x, half_z, layer_tk, brick_layer.fMaterial);
+
+      G4double halfLayer_tk = 0.5 * layer_tk;
+
+      curr_y -= halfLayer_tk;
+      new G4PVPlacement(G4Translate3D(0, curr_y + yshift, 0), brick_layer.fModule->GetModLV(),
+          ("shielding_brick_layer_" + std::to_string(id) + "_pv").c_str(),
+          fWaffleUnit->GetModLV(), 0, 1);
+      curr_y -= halfLayer_tk;
     }
-    auto brick_lv = new G4LogicalVolume(brick_sv, fMatBrick->GetMaterial(), "brick_lv"); 
-    brick_lv->SetVisAttributes( G4VisAttributes( G4Colour(0, 0, 1) )); 
-    new G4PVPlacement(G4TranslateY3D( yshift ), 
-        brick_lv, "brick_pv", fWaffleUnit->GetModLV(), 0, 2); 
   }
 }
 
-SLArBaseDetModule* SLArDetCryostat::BuildSupportStructure(geo::EBoxFace kFace) {
+SLArBaseDetModule* SLArDetCryostat::BuildSupportStructureFace(geo::EBoxFace kFace) {
   SLArBaseDetModule* waffle = new SLArBaseDetModule(); 
+  G4Colour waffle_col(1.0, 0.0, 0.0);
 
   // get cryostat dimensions
   G4ThreeVector dim;
@@ -312,7 +400,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructure(geo::EBoxFace kFace) {
         face_name, 0.5*wffl_dim.x()*nx, 0.5*wffl_dim.y(), 0.5*wffl_dim.z()*nz)); 
   face_name = "waffle_face"+std::to_string(kFace)+"_lv"; 
   waffle->SetLogicVolume( new G4LogicalVolume(waffle->GetModSV(), fMatWorld->GetMaterial(), face_name)); 
-  waffle->GetModLV()->SetVisAttributes( G4VisAttributes( false /*G4Colour( 1, 0.9, 0.2) */ )); 
+  waffle->GetModLV()->SetVisAttributes( 
+      G4VisAttributes( fSupportStructureVisibility ? waffle_col : false) ); 
 
 
   std::vector<SLArPlaneParameterisation*> prmtr = 
@@ -428,6 +517,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructure(geo::EBoxFace kFace) {
 }
 
 SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G4double len, G4String name) {
+  G4Colour waffle_col(1.0, 0.0, 0.0);
+
   const G4double spacing     = fGeoInfo->GetGeoPar("waffle_spacing"); 
   const G4double major_width = fGeoInfo->GetGeoPar("waffle_major_width"); 
   const G4double minor_width = fGeoInfo->GetGeoPar("waffle_minor_width"); 
@@ -450,7 +541,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G
       //G4ThreeVector(0.5*majorT_width, 0.5*(h-tk), 0)); 
   auto main_bar_lv = new G4LogicalVolume(main_bar_Z, fMatWaffle->GetMaterial(), 
       "main_bar_lv"); 
-  main_bar_lv->SetVisAttributes( G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  main_bar_lv->SetVisAttributes( 
+      G4VisAttributes( fSupportStructureVisibility ? waffle_col : false ) ); 
   new G4PVPlacement(0, G4ThreeVector(0.5*(width-0.5*tk), 0, 0), main_bar_lv, "main_bar_pv", patch_unit->GetModLV(), false, 1); ; 
   auto rot = new G4RotationMatrix(0, 0, 0); 
   rot->rotateY(CLHEP::pi); 
@@ -469,7 +561,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G
       G4ThreeVector(0.0, -0.5*(trnv_width+tk), 0.5*(majorT_width - 0.5*tk) )); 
   auto patch_trnv_lv = new G4LogicalVolume(
       patch_trnv_sv, fMatWaffle->GetMaterial(), "waffle_trnv_lv"); 
-  patch_trnv_lv->SetVisAttributes( new G4VisAttributes( G4Colour(1, 0, 0) ) ); 
+  patch_trnv_lv->SetVisAttributes( 
+      new G4VisAttributes( fSupportStructureVisibility ? waffle_col : false ) ); 
   new G4PVPlacement(0, 
       G4ThreeVector(0, -0.5*(h-major_width), -0.5*(spacing - 0.5*tk)), 
       patch_trnv_lv, "patch_trnv_pv0", patch_unit->GetModLV(), 0, 1); 
@@ -495,6 +588,8 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructurePatch(G4double width, G
 }
 
 void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
+  G4Colour waffle_col(1.0, 0.0, 0.0);
+
   const G4double spacing     = fGeoInfo->GetGeoPar("waffle_spacing"); 
   const G4double major_width = fGeoInfo->GetGeoPar("waffle_major_width"); 
   const G4double minor_width = fGeoInfo->GetGeoPar("waffle_minor_width"); 
@@ -515,7 +610,7 @@ void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
   auto corner_main_sv = new G4Box("corner_main_sv", 0.5*major_width, 0.5*major_width, 0.25*tk); 
   auto corner_main_lv = new G4LogicalVolume(corner_main_sv, fMatWaffle->GetMaterial(), 
       "corner_main_lv"); 
-  corner_main_lv->SetVisAttributes( G4Colour(1, 0, 0) ); 
+  corner_main_lv->SetVisAttributes( fSupportStructureVisibility ? waffle_col : false ); 
   G4Transform3D tt = G4Translate3D(-0.5*(unit_thickness-major_width), -0.5*(unit_thickness-major_width), 0); 
   auto corner_main_pv = new G4PVPlacement(tt * G4Translate3D(0, 0, 0.5*(spacing-0.5*tk)),
       corner_main_lv, "corner_main_pv0", 
@@ -527,7 +622,7 @@ void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
   auto corner_tx_sv = new G4Box("corner_tx_sv", 0.5*(major_width-2*tk), 0.5*tk, 0.5*majorT_width); 
   auto corner_tx_lv = new G4LogicalVolume(corner_tx_sv, fMatWaffle->GetMaterial(), 
       "corner_tx_lv"); 
-  corner_tx_lv->SetVisAttributes( G4Colour(1, 0, 0) ); 
+  corner_tx_lv->SetVisAttributes( fSupportStructureVisibility ? waffle_col : false ); 
   new G4PVPlacement(0, 
       G4ThreeVector(-0.5*(unit_thickness-major_width), -0.5*(unit_thickness-tk), 
         -0.5*(spacing-majorT_width-tk)), 
@@ -550,7 +645,7 @@ void SLArDetCryostat::BuildSupportStructureEdgeUnit() {
   auto corner_ty_sv = new G4Box("corner_ty_sv", 0.5*tk, 0.5*major_width, 0.5*majorT_width); 
   auto corner_ty_lv = new G4LogicalVolume(corner_ty_sv, fMatWaffle->GetMaterial(), 
       "corner_ty_lv"); 
-  corner_ty_lv->SetVisAttributes( G4Colour(1, 0, 0) ); 
+  corner_ty_lv->SetVisAttributes( fSupportStructureVisibility ? waffle_col : false ); 
   new G4PVPlacement(0, 
       G4ThreeVector(-0.5*(unit_thickness-tk), -0.5*(unit_thickness-major_width), 
         -0.5*(spacing-majorT_width-tk)), 
@@ -627,7 +722,7 @@ void SLArDetCryostat::BuildCryostat()
 
   // Create outer box 
   G4Box* boxOut = new G4Box("fBoxOut_solid", 
-      x_ + 2*CLHEP::mm, y_ + 2*CLHEP::mm, z_ + 2*CLHEP::mm); 
+      x_, y_, z_); 
   
   // Create inner box 
   G4Box* boxInn = new G4Box("fBoxInn_solid", 
@@ -654,152 +749,193 @@ void SLArDetCryostat::BuildCryostat()
       "CryostatLV", 0, 0, 0)
     );
 
+  if (fBuildSupport) {
+    BuildSupportStructure();
+    fSupportStructure->GetModPV("cryostat_support_structure_pv", 
+        0, G4ThreeVector(0,0,0), fModLV, false, 996 );
+  }
+
   // -------------------------------------------------------------------------
   // create cryostat layers
-
-  G4cerr << "create cryostat layers" << G4endl; 
-  for (const auto& ll : fCryostatStructure) {
-    auto layer = ll.second;
+  G4cout << "create cryostat layers" << G4endl; 
+  for (auto& ll : fCryostatStructure) {
+    auto& layer = ll.second;
     printf("layer: %i\n", ll.first); 
-    layer->fMaterial = SLArMaterial::FindInMaterialTable(layer->fMaterialName); 
+    layer.fMaterial = SLArMaterial::FindInMaterialTable(layer.fMaterialName); 
     printf("size: %.0f, %.0f, %.0f - tk: %.0f\n", 
-        2*layer->fHalfSizeX, 2*layer->fHalfSizeY, 2*layer->fHalfSizeZ, 
-        layer->fThickness);
-    layer->fModule = BuildCryostatLayer(layer->fName, 
-        layer->fHalfSizeX, layer->fHalfSizeY, layer->fHalfSizeZ, 
-        layer->fThickness, layer->fMaterial); 
-    printf("placing layer in LV %p\n", static_cast<void*>(fModLV)); 
-    layer->fModule->GetModPV(
-        layer->fName, 0, G4ThreeVector(0, 0, 0), fModLV, 
+        2*layer.fHalfSizeX, 2*layer.fHalfSizeY, 2*layer.fHalfSizeZ, 
+        layer.fThickness);
+    layer.fModule = BuildCryostatLayer(layer.fName, 
+        layer.fHalfSizeX, layer.fHalfSizeY, layer.fHalfSizeZ, 
+        layer.fThickness, layer.fMaterial); 
+    layer.fModule->GetModPV(
+        layer.fName, 0, G4ThreeVector(0, 0, 0), fModLV, 
         false, ll.first);
   }
 
-  if (fBuildSupport) {
-
-
-    for (int i=0; i<6; i++) {
-      auto kFace = (geo::EBoxFace)i; 
-      auto waffle_face = BuildSupportStructure(kFace);
-      waffle_face->GetModLV()->SetVisAttributes( G4VisAttributes(false) ); 
-      const auto face_normal = geo::BoxFaceNormal[kFace]; 
-      const G4ThreeVector waffle_local_normal(0, -1, 0); 
-      G4ThreeVector rot_axis = face_normal.cross(waffle_local_normal); 
-      G4double rot_angle = face_normal.angle(waffle_local_normal); 
-      if (rot_axis.mag2() < 1e-6) rot_axis = face_normal.orthogonal(); 
-
-      G4String face_pv_name = "waffle_face"+std::to_string(i)+"_pv"; 
-      G4ThreeVector pos = -face_normal * 
-        (fabs(face_normal.dot(cryostat_dim)) 
-         - 0.5*fGeoInfo->GetGeoPar("waffle_total_width")); 
-      G4RotationMatrix* rot = new G4RotationMatrix(rot_axis, rot_angle);
-      waffle_face->GetModPV(face_pv_name, rot, pos, fModLV, false, i+1); 
-      fSupportStructure.insert( std::make_pair(kFace, waffle_face) ); 
-    }
-
-    BuildSupportStructureEdgeUnit(); 
-
-    // build support structure edges
-    
-    // top view 
-    const auto face_top = fSupportStructure[geo::kYplus]; 
-    const auto face_side = fSupportStructure[geo::kZplus]; 
-    const auto sv_top = face_top->GetModLV()->GetDaughter(0)->GetLogicalVolume()->GetSolid(); 
-    const auto sv_side = face_side->GetModLV()->GetDaughter(0)->GetLogicalVolume()->GetSolid(); 
-    const auto len_z = static_cast<G4Box*>(sv_top)->GetZHalfLength() * 2; 
-    const auto len_x = static_cast<G4Box*>(sv_top)->GetXHalfLength() * 2; 
-    const auto len_y = static_cast<G4Box*>(sv_side)->GetZHalfLength() * 2; 
-
-    auto edge_yx = BuildSupportStructureEdge(len_z, "yx"); 
-    auto edge_yz = BuildSupportStructureEdge(len_x, "yz"); 
-    auto edge_xz = BuildSupportStructureEdge(len_y, "xz"); 
-
-    G4Transform3D t0 = G4Rotate3D(CLHEP::pi, G4ThreeVector(0, 1, 0)); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement(0, 
-          G4ThreeVector(cryostat_dim.x() - 0.5*waffle_tk, 
-            cryostat_dim.y()-0.5*waffle_tk, 0), 
-          edge_yx->GetModLV(),
-          "edge_y+_x+_pv", fModLV, 0, 6) ); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(-cryostat_dim.x() + 0.5*waffle_tk, 
-            cryostat_dim.y()-0.5*waffle_tk, 0) * t0,
-          edge_yx->GetModLV(),
-          "edge_y+_x-_pv", fModLV, 0, 7) ); 
-    G4Transform3D t1 = G4Rotate3D(CLHEP::pi, G4ThreeVector(1, 0, 0)); 
-    fSupportStructureEdges.push_back( 
-        new G4PVPlacement(
-          G4Translate3D( cryostat_dim.x() - 0.5*waffle_tk, 
-            -cryostat_dim.y()+0.5*waffle_tk, 0) * t1,
-          edge_yx->GetModLV(),
-          "edge_y-_x+_pv", fModLV, 0, 8) ); 
-    fSupportStructureEdges.push_back( 
-        new G4PVPlacement( G4Transform3D(
-          G4Translate3D(-cryostat_dim.x() + 0.5*waffle_tk, 
-            -cryostat_dim.y()+0.5*waffle_tk, 0) * t1 * t0),
-          edge_yx->GetModLV(),
-          "edge_y-_x-_pv", fModLV, 0, 9) ); 
-    
-    fSupportStructureEdges.push_back( 
-        new G4PVPlacement( 
-          G4Translate3D(0, cryostat_dim.y() - 0.5*waffle_tk, 
-            -cryostat_dim.z()+0.5*waffle_tk)*
-          G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
-          edge_yz->GetModLV(), "edge_y+z-_pv", fModLV, false, 10, true) ); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(0, cryostat_dim.y() - 0.5*waffle_tk, 
-            +cryostat_dim.z()-0.5*waffle_tk)*
-          G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) *
-          G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
-          edge_yz->GetModLV(), "edge_y+z+_pv", fModLV, false, 11, true) ); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(0, -cryostat_dim.y() + 0.5*waffle_tk, 
-            -cryostat_dim.z()+0.5*waffle_tk)*
-          G4Rotate3D(1.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) *
-          G4Rotate3D(.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
-          edge_yz->GetModLV(), "edge_y-z-_pv", fModLV, false, 12, true) ); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(0, -cryostat_dim.y() + 0.5*waffle_tk, 
-            +cryostat_dim.z()-0.5*waffle_tk)*
-          G4Rotate3D(CLHEP::pi, G4ThreeVector(1, 0, 0)) *
-          G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
-          edge_yz->GetModLV(), "edge_y-z-_pv", fModLV, false, 13, true) ); 
-
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(cryostat_dim.x()-0.5*waffle_tk, 0, 
-            -cryostat_dim.z()+0.5*waffle_tk)*
-          G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
-          G4Rotate3D(1.5*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
-          edge_xz->GetModLV(), "edge_x+z-_pv", fModLV, false, 14, true) ); 
-    fSupportStructureEdges.push_back( 
-        new G4PVPlacement( 
-          G4Translate3D(-cryostat_dim.x()+0.5*waffle_tk, 0, 
-            -cryostat_dim.z()+0.5*waffle_tk)*
-          G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
-          G4Rotate3D(1.0*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
-          edge_xz->GetModLV(), "edge_x-z-_pv", fModLV, false, 15, true) ); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(cryostat_dim.x()-0.5*waffle_tk, 0, 
-            cryostat_dim.z()-0.5*waffle_tk)*
-          G4Rotate3D(-0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
-          G4Rotate3D(1.5*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
-          edge_xz->GetModLV(), "edge_x+z+_pv", fModLV, false, 16, true) ); 
-    fSupportStructureEdges.push_back(
-        new G4PVPlacement( 
-          G4Translate3D(-cryostat_dim.x()+0.5*waffle_tk, 0, 
-            cryostat_dim.z()-0.5*waffle_tk)*
-          G4Rotate3D(-0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
-          G4Rotate3D(1.0*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
-          edge_xz->GetModLV(), "edge_x-z+_pv", fModLV, false, 17, true) ); 
+  // -------------------------------------------------------------------------
+  // crate airflow volume (in case) 
+  if (fAddFloorAirflow) {
+    BuildAirFlowUnit();
   }
 
   return; 
 }
+
+SLArBaseDetModule* SLArDetCryostat::BuildSupportStructure() {
+  G4double tgtZ         = fGeoInfo->GetGeoPar("target_size_z");
+  G4double tgtY         = fGeoInfo->GetGeoPar("target_size_y");
+  G4double tgtX         = fGeoInfo->GetGeoPar("target_size_x");
+  G4double cryo_tk      = fGeoInfo->GetGeoPar("cryostat_tk"); 
+  G4double waffle_tk    = 0.0; 
+  if (fBuildSupport) waffle_tk = fGeoInfo->GetGeoPar("waffle_total_width"); 
+  const G4double cryo_tot_tk  = cryo_tk + waffle_tk; 
+  G4double x_ = tgtX*0.5 + cryo_tot_tk;
+  G4double y_ = tgtY*0.5 + cryo_tot_tk;
+  G4double z_ = tgtZ*0.5 + cryo_tot_tk;
+  const G4ThreeVector cryostat_dim(x_, y_, z_); 
+
+  G4Box* boxInn = new G4Box("fBoxInn_solid_support", 
+      tgtX*0.5 + cryo_tk, tgtY*0.5 + cryo_tk, tgtZ*0.5 + cryo_tk);
+  G4Box* boxOut = new G4Box("fBoxOut_solid_support", 
+      tgtX*0.5 + cryo_tk + waffle_tk, 
+      tgtY*0.5 + cryo_tk + waffle_tk, 
+      tgtZ*0.5 + cryo_tk + waffle_tk);
+
+  fSupportStructure = new SLArBaseDetModule();
+  fSupportStructure->SetSolidVolume( 
+      new G4SubtractionSolid("support_structure_solid", 
+        boxOut, boxInn, 0, G4ThreeVector(0,0,0)) );
+  fSupportStructure->SetLogicVolume(
+      new G4LogicalVolume(
+        fSupportStructure->GetModSV(), 
+        fMatWorld->GetMaterial(), 
+        "support_structure_lv"));
+
+  for (int i=0; i<6; i++) {
+    auto kFace = (geo::EBoxFace)i; 
+    auto waffle_face = BuildSupportStructureFace(kFace);
+    waffle_face->GetModLV()->SetVisAttributes( G4VisAttributes(false) ); 
+    const auto face_normal = geo::BoxFaceNormal[kFace]; 
+    const G4ThreeVector waffle_local_normal(0, -1, 0); 
+    G4ThreeVector rot_axis = face_normal.cross(waffle_local_normal); 
+    G4double rot_angle = face_normal.angle(waffle_local_normal); 
+    if (rot_axis.mag2() < 1e-6) rot_axis = face_normal.orthogonal(); 
+
+    G4String face_pv_name = "waffle_face"+std::to_string(i)+"_pv"; 
+    G4ThreeVector pos = -face_normal * 
+      (fabs(face_normal.dot(cryostat_dim)) 
+       - 0.5*fGeoInfo->GetGeoPar("waffle_total_width")); 
+    G4RotationMatrix* rot = new G4RotationMatrix(rot_axis, rot_angle);
+    waffle_face->GetModPV(face_pv_name, rot, pos, fSupportStructure->GetModLV(), false, i+1); 
+    fSupportStructureFaces.insert( std::make_pair(kFace, waffle_face) ); 
+  }
+
+  BuildSupportStructureEdgeUnit(); 
+
+  // build support structure edges
+
+  // top view 
+  const auto face_top = fSupportStructureFaces[geo::kYplus]; 
+  const auto face_side = fSupportStructureFaces[geo::kZplus]; 
+  const auto sv_top = face_top->GetModLV()->GetDaughter(0)->GetLogicalVolume()->GetSolid(); 
+  const auto sv_side = face_side->GetModLV()->GetDaughter(0)->GetLogicalVolume()->GetSolid(); 
+  const auto len_z = static_cast<G4Box*>(sv_top)->GetZHalfLength() * 2; 
+  const auto len_x = static_cast<G4Box*>(sv_top)->GetXHalfLength() * 2; 
+  const auto len_y = static_cast<G4Box*>(sv_side)->GetZHalfLength() * 2; 
+
+  auto edge_yx = BuildSupportStructureEdge(len_z, "yx"); 
+  auto edge_yz = BuildSupportStructureEdge(len_x, "yz"); 
+  auto edge_xz = BuildSupportStructureEdge(len_y, "xz"); 
+
+  G4Transform3D t0 = G4Rotate3D(CLHEP::pi, G4ThreeVector(0, 1, 0)); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement(0, 
+        G4ThreeVector(cryostat_dim.x() - 0.5*waffle_tk, 
+          cryostat_dim.y()-0.5*waffle_tk, 0), 
+        edge_yx->GetModLV(),
+        "edge_y+_x+_pv", fSupportStructure->GetModLV(), 0, 6) ); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(-cryostat_dim.x() + 0.5*waffle_tk, 
+          cryostat_dim.y()-0.5*waffle_tk, 0) * t0,
+        edge_yx->GetModLV(),
+        "edge_y+_x-_pv", fSupportStructure->GetModLV(), 0, 7) ); 
+  G4Transform3D t1 = G4Rotate3D(CLHEP::pi, G4ThreeVector(1, 0, 0)); 
+  fSupportStructureEdges.push_back( 
+      new G4PVPlacement(
+        G4Translate3D( cryostat_dim.x() - 0.5*waffle_tk, 
+          -cryostat_dim.y()+0.5*waffle_tk, 0) * t1,
+        edge_yx->GetModLV(),
+        "edge_y-_x+_pv", fSupportStructure->GetModLV(), 0, 8) ); 
+  fSupportStructureEdges.push_back( 
+      new G4PVPlacement( G4Transform3D(
+          G4Translate3D(-cryostat_dim.x() + 0.5*waffle_tk, 
+            -cryostat_dim.y()+0.5*waffle_tk, 0) * t1 * t0),
+        edge_yx->GetModLV(),
+        "edge_y-_x-_pv", fSupportStructure->GetModLV(), 0, 9) ); 
+
+  fSupportStructureEdges.push_back( 
+      new G4PVPlacement( 
+        G4Translate3D(0, cryostat_dim.y() - 0.5*waffle_tk, 
+          -cryostat_dim.z()+0.5*waffle_tk)*
+        G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
+        edge_yz->GetModLV(), "edge_y+z-_pv", fSupportStructure->GetModLV(), false, 10, true) ); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(0, cryostat_dim.y() - 0.5*waffle_tk, 
+          +cryostat_dim.z()-0.5*waffle_tk)*
+        G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) *
+        G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
+        edge_yz->GetModLV(), "edge_y+z+_pv", fSupportStructure->GetModLV(), false, 11, true) ); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(0, -cryostat_dim.y() + 0.5*waffle_tk, 
+          -cryostat_dim.z()+0.5*waffle_tk)*
+        G4Rotate3D(1.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) *
+        G4Rotate3D(.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
+        edge_yz->GetModLV(), "edge_y-z-_pv", fSupportStructure->GetModLV(), false, 12, true) ); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(0, -cryostat_dim.y() + 0.5*waffle_tk, 
+          +cryostat_dim.z()-0.5*waffle_tk)*
+        G4Rotate3D(CLHEP::pi, G4ThreeVector(1, 0, 0)) *
+        G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(0, 1, 0)), 
+        edge_yz->GetModLV(), "edge_y-z-_pv", fSupportStructure->GetModLV(), false, 13, true) ); 
+
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(cryostat_dim.x()-0.5*waffle_tk, 0, 
+          -cryostat_dim.z()+0.5*waffle_tk)*
+        G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
+        G4Rotate3D(1.5*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
+        edge_xz->GetModLV(), "edge_x+z-_pv", fSupportStructure->GetModLV(), false, 14, true) ); 
+  fSupportStructureEdges.push_back( 
+      new G4PVPlacement( 
+        G4Translate3D(-cryostat_dim.x()+0.5*waffle_tk, 0, 
+          -cryostat_dim.z()+0.5*waffle_tk)*
+        G4Rotate3D(0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
+        G4Rotate3D(1.0*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
+        edge_xz->GetModLV(), "edge_x-z-_pv", fSupportStructure->GetModLV(), false, 15, true) ); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(cryostat_dim.x()-0.5*waffle_tk, 0, 
+          cryostat_dim.z()-0.5*waffle_tk)*
+        G4Rotate3D(-0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
+        G4Rotate3D(1.5*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
+        edge_xz->GetModLV(), "edge_x+z+_pv", fSupportStructure->GetModLV(), false, 16, true) ); 
+  fSupportStructureEdges.push_back(
+      new G4PVPlacement( 
+        G4Translate3D(-cryostat_dim.x()+0.5*waffle_tk, 0, 
+          cryostat_dim.z()-0.5*waffle_tk)*
+        G4Rotate3D(-0.5*CLHEP::pi, G4ThreeVector(1, 0, 0)) * 
+        G4Rotate3D(1.0*CLHEP::pi, G4ThreeVector(0, 0, 1)), 
+        edge_xz->GetModLV(), "edge_x-z+_pv", fSupportStructure->GetModLV(), false, 17, true) ); 
+
+
+  return fSupportStructure;
+}
+
 
 SLArBaseDetModule* SLArDetCryostat::BuildCryostatLayer(
     G4String name, 
@@ -821,16 +957,39 @@ SLArBaseDetModule* SLArDetCryostat::BuildCryostatLayer(
   return mod; 
 }
 
+
+SLArBaseDetModule* SLArDetCryostat::BuildShieldingLayer(
+    G4String name, 
+    G4double x_, G4double z_, G4double tk_, 
+    G4Material* mat) 
+{
+  G4Box* sv = new G4Box("b_shielding_" +name, x_ , 0.5*tk_ , z_ ); 
+
+  SLArBaseDetModule* mod = new SLArBaseDetModule(); 
+  mod->SetMaterial(mat); 
+  mod->SetSolidVolume(sv); 
+  mod->SetLogicVolume(new G4LogicalVolume(
+        mod->GetModSV(), mod->GetMaterial(), name+"LV", 0, 0, 0)); 
+
+  return mod; 
+}
+
 void SLArDetCryostat::SetVisAttributes() {
   std::map<G4String, G4Colour> col_map; 
   col_map.insert( std::make_pair("Steel", G4Colour(0.231, 0.231, 0.227))); 
+  col_map.insert( std::make_pair("DuneSteel", G4Colour(0.231, 0.231, 0.227))); 
   col_map.insert( std::make_pair("Plywood", G4Colour(0.671, 0.553, 0.196))); 
   col_map.insert( std::make_pair("Water", G4Colour(0.561, 0.863, 0.91))); 
   col_map.insert( std::make_pair("BoratedPolyethilene", G4Colour(0.267, 0.671, 0.22))); 
   col_map.insert( std::make_pair("Polyurethane", G4Colour(0.867, 0.871, 0.769))); 
+  col_map.insert( std::make_pair("Air", G4Colour(0.53, 0.80, 0.98)));
+  col_map.insert( std::make_pair("HDPE", G4Colour(0.82, 0.41, 0.12)));
+  col_map.insert( std::make_pair("Lead", G4Colour(0.43, 0.50, 0.56)));
   G4Colour stdCol(0.611, 0.847, 0.988);
+
   for (auto &ll : fCryostatStructure) {
-    auto lv = ll.second->fModule->GetModLV();
+    printf("setting vis for layer %s\n", ll.second.fName.c_str());
+    auto lv = ll.second.fModule->GetModLV();
     printf("%s\n", lv->GetName().c_str());
     G4Colour col = stdCol; 
     if (col_map.count(lv->GetMaterial()->GetName()))
@@ -840,19 +999,65 @@ void SLArDetCryostat::SetVisAttributes() {
     lv->SetVisAttributes( G4VisAttributes( col ) ); 
   }
 
+  if ( fSupportStructureVisibility == false ) {
+    auto lv = fSupportStructure->GetModLV();
+    int n_daughters = lv->GetNoDaughters();
+    // recursively set vis = false for support structure daughters
+    std::vector<G4LogicalVolume*> to_process;
+    to_process.push_back(lv);
+    while (!to_process.empty()) {
+      auto current_lv = to_process.back();
+      to_process.pop_back();
+      current_lv->SetVisAttributes( G4VisAttributes(false) );
+      for (int i=0; i<current_lv->GetNoDaughters(); i++) {
+        auto daughter_lv = current_lv->GetDaughter(i)->GetLogicalVolume();
+        to_process.push_back(daughter_lv);
+      }
+    }
+    // always set support structure main volume invisible
+    fSupportStructure->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
+  }
+
+  for (auto &ll : fShieldingStructure) {
+    printf("setting vis for shielding layer %s\n", ll.second.fName.c_str());
+    auto lv = ll.second.fModule->GetModLV();
+    printf("%s\n", lv->GetName().c_str());
+    G4Colour col = stdCol; 
+    if (col_map.count(lv->GetMaterial()->GetName()))
+    {
+      col = col_map[lv->GetMaterial()->GetName()]; 
+    }
+    lv->SetVisAttributes( G4VisAttributes( col ) ); 
+  }
+
+  fSupportStructure->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
   fModLV->SetVisAttributes( G4VisAttributes(false) );
 }
 
 void SLArDetCryostat::BuildMaterials(G4String material_db) {
+  printf("Building materials for Cryostat...\n");
   for (auto &layer : fCryostatStructure) {
     SLArMaterial* mat = new SLArMaterial; 
-    mat->SetMaterialID( layer.second->fMaterialName ); 
+    mat->SetMaterialID( layer.second.fMaterialName ); 
     mat->BuildMaterialFromDB(material_db); 
-    layer.second->fMaterial = mat->GetMaterial(); 
+    layer.second.fMaterial = mat->GetMaterial(); 
   }
 
+  printf("Building shielding materials...\n");
+  for (auto &layer : fShieldingStructure) {
+    printf("shielding layer: %s\n", layer.second.fName.c_str());
+    SLArMaterial* mat = new SLArMaterial; 
+    mat->SetMaterialID( layer.second.fMaterialName ); 
+    mat->BuildMaterialFromDB(material_db); 
+    layer.second.fMaterial = mat->GetMaterial(); 
+  }
+
+  fMatWorld = new SLArMaterial();
+  fMatWorld->SetMaterialID("Air");
+  fMatWorld->BuildMaterialFromDB(material_db);
+
   fMatWaffle = new SLArMaterial(); 
-  fMatWaffle->SetMaterialID("Steel"); 
+  fMatWaffle->SetMaterialID("DuneSteel"); 
   fMatWaffle->BuildMaterialFromDB(material_db); 
 
   if (fMatBrick) {

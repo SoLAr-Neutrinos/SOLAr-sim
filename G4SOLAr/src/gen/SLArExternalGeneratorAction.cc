@@ -10,6 +10,7 @@
 #include "SLArRootUtilities.hh"
 #include "SLArExternalGeneratorAction.hh"
 #include "SLArPointVertexGenerator.hh"  
+#include "SLArGPSVertexGenerator.hh"
 #include "SLArBoxSurfaceVertexGenerator.hh"
 #include "SLArIsotropicDirectionGenerator.hh"
 #include "SLArBulkVertexGenerator.hh"
@@ -115,6 +116,10 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
   if (auto ptr = dynamic_cast<const vertex::SLArBoxSurfaceVertexGenerator*>(fVtxGen.get())) {
     face_area = ptr->GetSurfaceGenerator();
     //G4cout << "Face Area: " << face_area << G4endl;
+  } 
+  else if (auto ptr = dynamic_cast<const vertex::SLArGPSVertexGenerator*>(fVtxGen.get())) {
+    face_area = ptr->GetSurfaceGenerator();
+    //G4cout << "GPS vtx gen Face Area: " << face_area << G4endl;
   }
   //G4cout << "Flux: " << fConfig.flux << G4endl;
 
@@ -127,6 +132,11 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
   if (fConfig.n_particles != 1) {
     total_particles = fConfig.n_particles;
   }
+
+  auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
+  auto& status = record.GetGenStatus();
+  status.reserve( 1 + total_particles * 4 );
+  status.push_back( total_particles );
 
   for (size_t iev = 0; iev < total_particles; iev++) {
     G4ThreeVector vtx_pos(0, 0, 0); 
@@ -161,21 +171,25 @@ void SLArExternalGeneratorAction::GeneratePrimaries(G4Event* ev)
     fParticleGun->SetParticleEnergy(fConfig.ene_config.energy_tmp); 
     fParticleGun->SetParticleMomentumDirection( dir ); 
 
-    fParticleGun->GeneratePrimaryVertex(ev); 
+    status.push_back( fConfig.ene_config.energy_tmp );
+    status.push_back( vtx_pos.x() );
+    status.push_back( vtx_pos.y() );
+    status.push_back( vtx_pos.z() );
 
-    auto& record = gen_records.AddRecord( GetGeneratorEnum(), fLabel ); 
+    fParticleGun->GeneratePrimaryVertex(ev); 
   }
+
 
   return;
 }
 
 void SLArExternalGeneratorAction::Configure() {
   if (fConfig.ene_config.mode == EEnergyMode::kExtSpectrum) {
-    TH1D* hist_spectrum = get_from_rootfile<TH1D>( 
+    TH1* hist_spectrum = get_from_rootfile<TH1>( 
         fConfig.ene_config.spectrum_hist.filename , 
         fConfig.ene_config.spectrum_hist.objname );
 
-    fEnergySpectrum = std::unique_ptr<TH1D>( std::move(hist_spectrum) ); 
+    fEnergySpectrum = std::unique_ptr<TH1>( std::move(hist_spectrum) ); 
     printf("SLArExternalGenerator::Configure() Sourcing external energy spectrum\n"); 
     printf("fEnergySpectrum ptr: %p\n", fEnergySpectrum.get());
   }

@@ -1,0 +1,20 @@
+######################################################################
+# @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+# @file        : cavern_generator.mac
+# @created     : Monday Nov 18, 2024 12:55:10 CET
+#
+# @description : Example macro for cavern background generation (kill at cryostat)
+######################################################################
+
+/SLAr/phys/electronCut 1.5 mm
+/SLAr/phys/positronCut 1.5 mm
+/SLAr/phys/gammaCut 2.5 mm
+/SLAr/phys/stepMax 2.5 mm
+/SLAr/scint/enablePhGeneration false
+
+/SLAr/manager/storeFullTrajectory false
+
+/SLAr/manager/addExtScorer cryostat_pv:cryo
+
+/run/beamOn 100000
+

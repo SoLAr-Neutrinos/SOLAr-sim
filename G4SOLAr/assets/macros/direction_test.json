@@ -1,0 +1,79 @@
+{
+  "generator" : [
+    {
+      "type" : "particlegun", 
+      "label" : "fixed_test", 
+      "config" : {
+        "particle" : "e-", 
+        "energy" : {
+          "mode" : "monoenergetic", 
+          "value" : {"val" : 2, "unit" : "MeV"}
+        },
+        "direction" : {
+          "type" : "fixed", 
+          "config" : {
+            "axis" : [0, 1, 0]
+          }
+        },
+        "vertex_gen" : {
+          "type" : "point", 
+          "config" : {
+            "xyz" : {"val" : [0, 15, 35], "unit" : "cm"},
+            "time" : {"mode" : "fixed", "event_time" : {"val" : 4.0, "unit" : "ns"}}
+          }
+        }
+      }
+    }, 
+    {
+      "type" : "particlebomb", 
+      "label" : "isotropic_test", 
+      "config" : {
+        "n_particles" : 100,
+        "particle" : "gamma", 
+        "energy" : {
+          "mode" : "monoenergetic", 
+          "value" : {"val" : 2, "unit" : "MeV"}
+        },
+        "direction" : {
+          "type" : "isotropic"
+        },
+        "vertex_gen" : {
+          "type" : "point", 
+          "config" : {
+            "xyz" : {"val" : [0, -15, 35], "unit" : "cm"},
+            "time" : {"mode" : "fixed", "event_time" : {"val" : 4.0, "unit" : "ns"}}
+          }
+        }
+      }
+    }, 
+    {
+      "type" : "particlegun", 
+      "label" : "gps_planar_test", 
+      "config" : {
+        "particle" : "geantino", 
+        "energy" : {
+          "mode" : "monoenergetic", 
+          "value" : {"val" : 2, "unit" : "MeV"}
+        },
+        "direction" : {
+          "type" : "gps_dir",
+          "config" : {
+            "type" : "planar",
+            "mintheta" : {"val" : 0, "unit" : "deg"},
+            "maxtheta" : {"val" : 90, "unit" : "deg"}
+          }
+        },
+        "vertex_gen" : {
+          "type" : "gps_pos", 
+          "config" : {
+            "type" : "Plane",
+            "shape" : "Circle",
+            "center" : {"val" : [0, -30, 75], "unit" : "cm"},
+            "radius" : {"val" : 10, "unit" : "cm"},
+            "time" : {"mode" : "fixed", "event_time" : {"val" : 4.0, "unit" : "ns"}}
+          }
+        }
+      }
+    }
+  ]
+}

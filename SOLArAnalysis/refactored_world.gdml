@@ -1,0 +1,1285 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gdml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://service-spi.web.cern.ch/service-spi/app/releases/GDML/schema/gdml.xsd">
+
+  <define>
+    <matrix coldim="2" name="REFLECTIVITY0x559d50156650" values="2e-06 0 1.3e-05 0"/>
+    <matrix coldim="2" name="EFFICIENCY0x559d500ed760" values="2e-06 0.3 1.3e-05 0.3"/>
+    <matrix coldim="2" name="RINDEX0x559d500f3a20" values="1.18626e-06 1.24664 1.68626e-06 1.2205 2.18626e-06 1.22694 2.68626e-06 1.22932 3.18626e-06 1.23124 3.68626e-06 1.23322 4.18626e-06 1.23545 4.68626e-06 1.23806 5.18626e-06 1.24116 5.68626e-06 1.24489 6.18626e-06 1.24942 6.68626e-06 1.25499 7.18626e-06 1.26197 7.68626e-06 1.2709 8.18626e-06 1.28263 8.68626e-06 1.29865 9.18626e-06 1.32169 9.68626e-06 1.35747 1.01863e-05 1.42039 1.06863e-05 1.56011 1.11863e-05 2.16626"/>
+    <matrix coldim="2" name="GROUPVEL0x559d500f4570" values="1.18626e-06 240.48 1.43626e-06 243.028 1.93626e-06 240.118 2.43626e-06 241.829 2.93626e-06 241.471 3.43626e-06 240.64 3.93626e-06 239.476 4.43626e-06 237.952 4.93626e-06 236.022 5.43626e-06 233.565 5.93626e-06 230.449 6.43626e-06 226.452 6.93626e-06 221.205 7.43626e-06 214.26 7.93626e-06 204.932 8.43626e-06 192.069 8.93626e-06 174.111 9.43626e-06 148.804 9.93628e-06 113.603 1.04363e-05 68.0417 1.11863e-05 19.4392"/>
+    <matrix coldim="2" name="RAYLEIGH0x559d50111330" values="1.18626e-06 1.2008e+07 1.68626e-06 3.90747e+06 2.18626e-06 1.28633e+06 2.68626e-06 549691 3.18626e-06 271918 3.68626e-06 148537 4.18626e-06 87169 4.68626e-06 53974.2 5.18626e-06 34813.7 5.68626e-06 23165.1 6.18626e-06 15776.3 6.68626e-06 10920.2 7.18626e-06 7630.45 7.68626e-06 5342.32 8.18626e-06 3713.35 8.68626e-06 2529.42 9.18626e-06 1653.8 9.68626e-06 999.003 1.01863e-05 512.653 1.06863e-05 174.95 1.11863e-05 9.64341"/>
+    <matrix coldim="2" name="ABSLENGTH0x559d50111290" values="4e-06 20000 5e-06 20000 6e-06 20000 7e-06 20000 8e-06 20000 9e-06 20000 1e-05 20000 1.1e-05 20000 1.3e-05 20000"/>
+    <matrix coldim="2" name="PROTONSCINTILLATIONYIELD0x559d5010fcd0" values="0 3.84 10000 1.92e+08"/>
+    <matrix coldim="2" name="ALPHASCINTILLATIONYIELD0x559d50111160" values="0.0002 3.36 10000 1.68e+08"/>
+    <matrix coldim="2" name="IONSCINTILLATIONYIELD0x559d5010fd70" values="0.0002 3.36 10000 1.68e+08"/>
+    <matrix coldim="2" name="ELECTRONSCINTILLATIONYIELD0x559d501110c0" values="0.0002 4 20000 4e+08"/>
+    <matrix coldim="2" name="SCINTILLATIONCOMPONENT10x559d50110dd0" values="7.2e-06 0 7.9e-06 0.04 8.3e-06 0.12 8.6e-06 0.27 8.9e-06 0.44 9.1e-06 0.62 9.3e-06 0.8 9.6e-06 0.91 9.7e-06 0.92 9.8e-06 0.85 1e-05 0.7 1.02e-05 0.5 1.03e-05 0.31 1.06e-05 0.13 1.1e-05 0.04 1.16e-05 0.01 1.19e-05 0"/>
+    <matrix coldim="2" name="SCINTILLATIONCOMPONENT20x559d50110ec0" values="7.2e-06 0 7.9e-06 0.04 8.3e-06 0.12 8.6e-06 0.27 8.9e-06 0.44 9.1e-06 0.62 9.3e-06 0.8 9.6e-06 0.91 9.7e-06 0.92 9.8e-06 0.85 1e-05 0.7 1.02e-05 0.5 1.03e-05 0.31 1.06e-05 0.13 1.1e-05 0.04 1.16e-05 0.01 1.19e-05 0"/>
+    <matrix coldim="1" name="RS_SCALE_FACTOR0x559d500f2f90" values="1"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD0x559d500f2f90" values="24000"/>
+    <matrix coldim="1" name="RESOLUTIONSCALE0x559d500f2f90" values="1"/>
+    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT10x559d500f2f90" values="1590"/>
+    <matrix coldim="1" name="SCINTILLATIONTIMECONSTANT20x559d500f2f90" values="6"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD10x559d500f2f90" values="0.77"/>
+    <matrix coldim="1" name="SCINTILLATIONYIELD20x559d500f2f90" values="0.23"/>
+    <matrix coldim="1" name="PROTONSCINTILLATIONYIELD10x559d500f2f90" values="0.71"/>
+    <matrix coldim="1" name="PROTONSCINTILLATIONYIELD20x559d500f2f90" values="0.29"/>
+    <matrix coldim="1" name="ALPHASCINTILLATIONYIELD10x559d500f2f90" values="0.44"/>
+    <matrix coldim="1" name="ALPHASCINTILLATIONYIELD20x559d500f2f90" values="0.56"/>
+    <matrix coldim="1" name="IONSCINTILLATIONYIELD10x559d500f2f90" values="0.44"/>
+    <matrix coldim="1" name="IONSCINTILLATIONYIELD20x559d500f2f90" values="0.56"/>
+    <matrix coldim="1" name="ELECTRONSCINTILLATIONYIELD10x559d500f2f90" values="0.73"/>
+    <matrix coldim="1" name="ELECTRONSCINTILLATIONYIELD20x559d500f2f90" values="0.27"/>
+    <matrix coldim="1" name="BIRKSRECOMBK0x559d500f2f90" values="0.486"/>
+    <matrix coldim="1" name="BIRKSRECOMBA0x559d500f2f90" values="0.8"/>
+    <matrix coldim="1" name="WION0x559d500f2f90" values="2.36e-05"/>
+    <matrix coldim="1" name="LARQL_ELECTRONIONRATIO0x559d500f2f90" values="0.29"/>
+    <matrix coldim="1" name="LARQL_ALPHA0x559d500f2f90" values="0.0372"/>
+    <matrix coldim="1" name="LARQL_BETA0x559d500f2f90" values="0.0124"/>
+    <matrix coldim="1" name="LARQL_CHIPAR00x559d500f2f90" values="0.00338427"/>
+    <matrix coldim="1" name="LARQL_CHIPAR10x559d500f2f90" values="-6.57037"/>
+    <matrix coldim="1" name="LARQL_CHIPAR20x559d500f2f90" values="1.88418"/>
+    <matrix coldim="1" name="LARQL_CHIPAR30x559d500f2f90" values="0.000129379"/>
+    <matrix coldim="1" name="SPRT_MODBOXA0x559d500f2f90" values="0.93"/>
+    <matrix coldim="1" name="SPRT_MODBOXB0x559d500f2f90" values="0.212"/>
+    <matrix coldim="1" name="SPRT_USEMODBOX0x559d500f2f90" values="1"/>
+    <matrix coldim="2" name="REFLECTIVITY0x559d501119e0" values="2e-06 0 1.3e-05 0"/>
+    <matrix coldim="2" name="EFFICIENCY0x559d500f7fd0" values="2e-06 0.015 1.3e-05 0.015"/>
+    <matrix coldim="2" name="RINDEX0x559d50111430" values="2.034e-06 1 2.068e-06 1 2.103e-06 1 2.139e-06 1 2.177e-06 1 2.216e-06 1 2.256e-06 1 2.298e-06 1 2.341e-06 1 2.386e-06 1 2.433e-06 1 2.481e-06 1 2.532e-06 1 2.585e-06 1 2.64e-06 1 2.697e-06 1 2.757e-06 1 2.82e-06 1 2.885e-06 1 2.954e-06 1 3.026e-06 1 3.102e-06 1 3.181e-06 1 3.265e-06 1 3.353e-06 1 3.446e-06 1 3.545e-06 1 3.649e-06 1 3.76e-06 1 3.877e-06 1 4.002e-06 1 4.136e-06 1"/>
+    <matrix coldim="2" name="GROUPVEL0x559d5010fe10" values="2.034e-06 299.792 2.051e-06 299.792 2.0855e-06 299.792 2.121e-06 299.792 2.158e-06 299.792 2.1965e-06 299.792 2.236e-06 299.792 2.277e-06 299.792 2.3195e-06 299.792 2.3635e-06 299.792 2.4095e-06 299.792 2.457e-06 299.792 2.5065e-06 299.792 2.5585e-06 299.792 2.6125e-06 299.792 2.6685e-06 299.792 2.727e-06 299.792 2.7885e-06 299.792 2.8525e-06 299.792 2.9195e-06 299.792 2.99e-06 299.792 3.064e-06 299.792 3.1415e-06 299.792 3.223e-06 299.792 3.309e-06 299.792 3.3995e-06 299.792 3.4955e-06 299.792 3.597e-06 299.792 3.7045e-06 299.792 3.8185e-06 299.792 3.9395e-06 299.792 4.136e-06 299.792"/>
+  </define>
+
+  <materials>
+    <isotope N="28" Z="14" name="Si280x559d501049f0">
+      <atom unit="g/mole" value="27.9769"/>
+    </isotope>
+    <isotope N="29" Z="14" name="Si290x559d500ff4c0">
+      <atom unit="g/mole" value="28.9765"/>
+    </isotope>
+    <isotope N="30" Z="14" name="Si300x559d501054d0">
+      <atom unit="g/mole" value="29.9738"/>
+    </isotope>
+    <element name="Si0x559d50105550">
+      <fraction n="0.922296077703922" ref="Si280x559d501049f0"/>
+      <fraction n="0.0468319531680468" ref="Si290x559d500ff4c0"/>
+      <fraction n="0.0308719691280309" ref="Si300x559d501054d0"/>
+    </element>
+    <isotope N="16" Z="8" name="O160x559d501087e0">
+      <atom unit="g/mole" value="15.9949"/>
+    </isotope>
+    <isotope N="17" Z="8" name="O170x559d50108670">
+      <atom unit="g/mole" value="16.9991"/>
+    </isotope>
+    <isotope N="18" Z="8" name="O180x559d4ff6d970">
+      <atom unit="g/mole" value="17.9992"/>
+    </isotope>
+    <element name="O0x559d50106af0">
+      <fraction n="0.99757" ref="O160x559d501087e0"/>
+      <fraction n="0.00038" ref="O170x559d50108670"/>
+      <fraction n="0.00205" ref="O180x559d4ff6d970"/>
+    </element>
+    <isotope N="40" Z="20" name="Ca400x559d50121b00">
+      <atom unit="g/mole" value="39.9626"/>
+    </isotope>
+    <isotope N="42" Z="20" name="Ca420x559d50127d50">
+      <atom unit="g/mole" value="41.9586"/>
+    </isotope>
+    <isotope N="43" Z="20" name="Ca430x559d501220b0">
+      <atom unit="g/mole" value="42.9588"/>
+    </isotope>
+    <isotope N="44" Z="20" name="Ca440x559d500f08b0">
+      <atom unit="g/mole" value="43.9555"/>
+    </isotope>
+    <isotope N="46" Z="20" name="Ca460x559d501210b0">
+      <atom unit="g/mole" value="45.9537"/>
+    </isotope>
+    <isotope N="48" Z="20" name="Ca480x559d500ed8d0">
+      <atom unit="g/mole" value="47.9525"/>
+    </isotope>
+    <element name="Ca0x559d5012a8a0">
+      <fraction n="0.96941" ref="Ca400x559d50121b00"/>
+      <fraction n="0.00647" ref="Ca420x559d50127d50"/>
+      <fraction n="0.00135" ref="Ca430x559d501220b0"/>
+      <fraction n="0.02086" ref="Ca440x559d500f08b0"/>
+      <fraction n="4e-05" ref="Ca460x559d501210b0"/>
+      <fraction n="0.00187" ref="Ca480x559d500ed8d0"/>
+    </element>
+    <isotope N="10" Z="5" name="B100x559d50107660">
+      <atom unit="g/mole" value="10.0129"/>
+    </isotope>
+    <isotope N="11" Z="5" name="B110x559d500e8cd0">
+      <atom unit="g/mole" value="11.0093"/>
+    </isotope>
+    <element name="B0x559d500eae50">
+      <fraction n="0.199" ref="B100x559d50107660"/>
+      <fraction n="0.801" ref="B110x559d500e8cd0"/>
+    </element>
+    <isotope N="23" Z="11" name="Na230x559d50119880">
+      <atom unit="g/mole" value="22.9898"/>
+    </isotope>
+    <element name="Na0x559d4fc599f0">
+      <fraction n="1" ref="Na230x559d50119880"/>
+    </element>
+    <isotope N="27" Z="13" name="Al270x559d50121d60">
+      <atom unit="g/mole" value="26.9815"/>
+    </isotope>
+    <element name="Al0x559d5012b450">
+      <fraction n="1" ref="Al270x559d50121d60"/>
+    </element>
+    <isotope N="12" Z="6" name="C120x559d500fee30">
+      <atom unit="g/mole" value="12"/>
+    </isotope>
+    <isotope N="13" Z="6" name="C130x559d501037c0">
+      <atom unit="g/mole" value="13.0034"/>
+    </isotope>
+    <element name="C0x559d5010f7c0">
+      <fraction n="0.9893" ref="C120x559d500fee30"/>
+      <fraction n="0.0107" ref="C130x559d501037c0"/>
+    </element>
+    <isotope N="1" Z="1" name="H10x559d50103920">
+      <atom unit="g/mole" value="1.00782503081372"/>
+    </isotope>
+    <isotope N="2" Z="1" name="H20x559d50103970">
+      <atom unit="g/mole" value="2.01410199966617"/>
+    </isotope>
+    <element name="H0x559d501039e0">
+      <fraction n="0.999885" ref="H10x559d50103920"/>
+      <fraction n="0.000115" ref="H20x559d50103970"/>
+    </element>
+    <isotope N="14" Z="7" name="N140x559d50107550">
+      <atom unit="g/mole" value="14.0031"/>
+    </isotope>
+    <isotope N="15" Z="7" name="N150x559d50107500">
+      <atom unit="g/mole" value="15.0001"/>
+    </isotope>
+    <element name="N0x559d50108720">
+      <fraction n="0.99632" ref="N140x559d50107550"/>
+      <fraction n="0.00368" ref="N150x559d50107500"/>
+    </element>
+    <material name="FR40x559d500eb690" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="97.3053681712423"/>
+      <D unit="g/cm3" value="1.8"/>
+      <fraction n="0.157057770841953" ref="Si0x559d50105550"/>
+      <fraction n="0.365346916794346" ref="O0x559d50106af0"/>
+      <fraction n="0.0900510722850873" ref="Ca0x559d5012a8a0"/>
+      <fraction n="0.0149074193162096" ref="B0x559d500eae50"/>
+      <fraction n="0.00445114704467721" ref="Na0x559d4fc599f0"/>
+      <fraction n="0.044457041295078" ref="Al0x559d5012b450"/>
+      <fraction n="0.275294485761732" ref="C0x559d5010f7c0"/>
+      <fraction n="0.0342756035967338" ref="H0x559d501039e0"/>
+      <fraction n="0.0141585430641826" ref="N0x559d50108720"/>
+    </material>
+    <material name="Plastic0x559d5014cc90" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="64.7"/>
+      <D unit="g/cm3" value="1.032"/>
+      <fraction n="0.914708531800025" ref="C0x559d5010f7c0"/>
+      <fraction n="0.0852914681999746" ref="H0x559d501039e0"/>
+    </material>
+    <isotope N="19" Z="9" name="F190x559d50151970">
+      <atom unit="g/mole" value="18.9984"/>
+    </isotope>
+    <element name="F0x559d50150ed0">
+      <fraction n="1" ref="F190x559d50151970"/>
+    </element>
+    <material name="PTP0x559d50150d30" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="88.8"/>
+      <D unit="g/cm3" value="1.76"/>
+      <fraction n="0.37513531701325" ref="C0x559d5010f7c0"/>
+      <fraction n="0.0314813481720603" ref="H0x559d501039e0"/>
+      <fraction n="0.59338333481469" ref="F0x559d50150ed0"/>
+    </material>
+    <material name="Vacuum0x559d5014cdc0" state="gas">
+      <T unit="K" value="2.73"/>
+      <P unit="pascal" value="3e-18"/>
+      <MEE unit="eV" value="21.8"/>
+      <D unit="g/cm3" value="1e-25"/>
+      <fraction n="1" ref="H0x559d501039e0"/>
+    </material>
+    <isotope N="36" Z="18" name="Ar360x559d500f4520">
+      <atom unit="g/mole" value="35.9675"/>
+    </isotope>
+    <isotope N="38" Z="18" name="Ar380x559d500f4740">
+      <atom unit="g/mole" value="37.9627"/>
+    </isotope>
+    <isotope N="40" Z="18" name="Ar400x559d500f5380">
+      <atom unit="g/mole" value="39.9624"/>
+    </isotope>
+    <element name="Ar0x559d4ff6a4d0">
+      <fraction n="0.003365" ref="Ar360x559d500f4520"/>
+      <fraction n="0.000632" ref="Ar380x559d500f4740"/>
+      <fraction n="0.996003" ref="Ar400x559d500f5380"/>
+    </element>
+    <material name="LAr0x559d500f8540" state="liquid">
+      <property name="RINDEX" ref="RINDEX0x559d500f3a20"/>
+      <property name="GROUPVEL" ref="GROUPVEL0x559d500f4570"/>
+      <property name="RAYLEIGH" ref="RAYLEIGH0x559d50111330"/>
+      <property name="ABSLENGTH" ref="ABSLENGTH0x559d50111290"/>
+      <property name="PROTONSCINTILLATIONYIELD" ref="PROTONSCINTILLATIONYIELD0x559d5010fcd0"/>
+      <property name="ALPHASCINTILLATIONYIELD" ref="ALPHASCINTILLATIONYIELD0x559d50111160"/>
+      <property name="IONSCINTILLATIONYIELD" ref="IONSCINTILLATIONYIELD0x559d5010fd70"/>
+      <property name="ELECTRONSCINTILLATIONYIELD" ref="ELECTRONSCINTILLATIONYIELD0x559d501110c0"/>
+      <property name="SCINTILLATIONCOMPONENT1" ref="SCINTILLATIONCOMPONENT10x559d50110dd0"/>
+      <property name="SCINTILLATIONCOMPONENT2" ref="SCINTILLATIONCOMPONENT20x559d50110ec0"/>
+      <property name="RS_SCALE_FACTOR" ref="RS_SCALE_FACTOR0x559d500f2f90"/>
+      <property name="SCINTILLATIONYIELD" ref="SCINTILLATIONYIELD0x559d500f2f90"/>
+      <property name="RESOLUTIONSCALE" ref="RESOLUTIONSCALE0x559d500f2f90"/>
+      <property name="SCINTILLATIONTIMECONSTANT1" ref="SCINTILLATIONTIMECONSTANT10x559d500f2f90"/>
+      <property name="SCINTILLATIONTIMECONSTANT2" ref="SCINTILLATIONTIMECONSTANT20x559d500f2f90"/>
+      <property name="SCINTILLATIONYIELD1" ref="SCINTILLATIONYIELD10x559d500f2f90"/>
+      <property name="SCINTILLATIONYIELD2" ref="SCINTILLATIONYIELD20x559d500f2f90"/>
+      <property name="PROTONSCINTILLATIONYIELD1" ref="PROTONSCINTILLATIONYIELD10x559d500f2f90"/>
+      <property name="PROTONSCINTILLATIONYIELD2" ref="PROTONSCINTILLATIONYIELD20x559d500f2f90"/>
+      <property name="ALPHASCINTILLATIONYIELD1" ref="ALPHASCINTILLATIONYIELD10x559d500f2f90"/>
+      <property name="ALPHASCINTILLATIONYIELD2" ref="ALPHASCINTILLATIONYIELD20x559d500f2f90"/>
+      <property name="IONSCINTILLATIONYIELD1" ref="IONSCINTILLATIONYIELD10x559d500f2f90"/>
+      <property name="IONSCINTILLATIONYIELD2" ref="IONSCINTILLATIONYIELD20x559d500f2f90"/>
+      <property name="ELECTRONSCINTILLATIONYIELD1" ref="ELECTRONSCINTILLATIONYIELD10x559d500f2f90"/>
+      <property name="ELECTRONSCINTILLATIONYIELD2" ref="ELECTRONSCINTILLATIONYIELD20x559d500f2f90"/>
+      <property name="BIRKSRECOMBK" ref="BIRKSRECOMBK0x559d500f2f90"/>
+      <property name="BIRKSRECOMBA" ref="BIRKSRECOMBA0x559d500f2f90"/>
+      <property name="WION" ref="WION0x559d500f2f90"/>
+      <property name="LARQL_ELECTRONIONRATIO" ref="LARQL_ELECTRONIONRATIO0x559d500f2f90"/>
+      <property name="LARQL_ALPHA" ref="LARQL_ALPHA0x559d500f2f90"/>
+      <property name="LARQL_BETA" ref="LARQL_BETA0x559d500f2f90"/>
+      <property name="LARQL_CHIPAR0" ref="LARQL_CHIPAR00x559d500f2f90"/>
+      <property name="LARQL_CHIPAR1" ref="LARQL_CHIPAR10x559d500f2f90"/>
+      <property name="LARQL_CHIPAR2" ref="LARQL_CHIPAR20x559d500f2f90"/>
+      <property name="LARQL_CHIPAR3" ref="LARQL_CHIPAR30x559d500f2f90"/>
+      <property name="SPRT_MODBOXA" ref="SPRT_MODBOXA0x559d500f2f90"/>
+      <property name="SPRT_MODBOXB" ref="SPRT_MODBOXB0x559d500f2f90"/>
+      <property name="SPRT_USEMODBOX" ref="SPRT_USEMODBOX0x559d500f2f90"/>
+      <T unit="K" value="87"/>
+      <MEE unit="eV" value="188"/>
+      <D unit="g/cm3" value="1.39"/>
+      <fraction n="1" ref="Ar0x559d4ff6a4d0"/>
+    </material>
+    <material name="Polyethilene0x559d50103670" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="57.4"/>
+      <D unit="g/cm3" value="0.94"/>
+      <fraction n="0.856281712255198" ref="C0x559d5010f7c0"/>
+      <fraction n="0.143718287744802" ref="H0x559d501039e0"/>
+    </material>
+    <material name="SiliconPassive0x559d50105380" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="173"/>
+      <D unit="g/cm3" value="2.33"/>
+      <fraction n="1" ref="Si0x559d50105550"/>
+    </material>
+    <isotope N="54" Z="26" name="Fe540x559d50103cc0">
+      <atom unit="g/mole" value="53.9396"/>
+    </isotope>
+    <isotope N="56" Z="26" name="Fe560x559d50104220">
+      <atom unit="g/mole" value="55.9349"/>
+    </isotope>
+    <isotope N="57" Z="26" name="Fe570x559d50103810">
+      <atom unit="g/mole" value="56.9354"/>
+    </isotope>
+    <isotope N="58" Z="26" name="Fe580x559d501042c0">
+      <atom unit="g/mole" value="57.9333"/>
+    </isotope>
+    <element name="Fe0x559d50104310">
+      <fraction n="0.05845" ref="Fe540x559d50103cc0"/>
+      <fraction n="0.91754" ref="Fe560x559d50104220"/>
+      <fraction n="0.02119" ref="Fe570x559d50103810"/>
+      <fraction n="0.00282" ref="Fe580x559d501042c0"/>
+    </element>
+    <isotope N="50" Z="24" name="Cr500x559d501044b0">
+      <atom unit="g/mole" value="49.946"/>
+    </isotope>
+    <isotope N="52" Z="24" name="Cr520x559d50104520">
+      <atom unit="g/mole" value="51.9405"/>
+    </isotope>
+    <isotope N="53" Z="24" name="Cr530x559d50104590">
+      <atom unit="g/mole" value="52.9407"/>
+    </isotope>
+    <isotope N="54" Z="24" name="Cr540x559d501045e0">
+      <atom unit="g/mole" value="53.9389"/>
+    </isotope>
+    <element name="Cr0x559d50104630">
+      <fraction n="0.04345" ref="Cr500x559d501044b0"/>
+      <fraction n="0.83789" ref="Cr520x559d50104520"/>
+      <fraction n="0.09501" ref="Cr530x559d50104590"/>
+      <fraction n="0.02365" ref="Cr540x559d501045e0"/>
+    </element>
+    <isotope N="58" Z="28" name="Ni580x559d50104820">
+      <atom unit="g/mole" value="57.9353"/>
+    </isotope>
+    <isotope N="60" Z="28" name="Ni600x559d50104890">
+      <atom unit="g/mole" value="59.9308"/>
+    </isotope>
+    <isotope N="61" Z="28" name="Ni610x559d50104900">
+      <atom unit="g/mole" value="60.9311"/>
+    </isotope>
+    <isotope N="62" Z="28" name="Ni620x559d50104950">
+      <atom unit="g/mole" value="61.9283"/>
+    </isotope>
+    <isotope N="64" Z="28" name="Ni640x559d501049a0">
+      <atom unit="g/mole" value="63.928"/>
+    </isotope>
+    <element name="Ni0x559d50104a40">
+      <fraction n="0.680769" ref="Ni580x559d50104820"/>
+      <fraction n="0.262231" ref="Ni600x559d50104890"/>
+      <fraction n="0.011399" ref="Ni610x559d50104900"/>
+      <fraction n="0.036345" ref="Ni620x559d50104950"/>
+      <fraction n="0.009256" ref="Ni640x559d501049a0"/>
+    </element>
+    <material name="Steel0x559d50104020" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="282.97693634122"/>
+      <D unit="g/cm3" value="8"/>
+      <fraction n="0.746212874621521" ref="Fe0x559d50104310"/>
+      <fraction n="0.169001044311525" ref="Cr0x559d50104630"/>
+      <fraction n="0.0847860810669534" ref="Ni0x559d50104a40"/>
+    </material>
+    <isotope N="32" Z="16" name="S320x559d50119920">
+      <atom unit="g/mole" value="31.9721"/>
+    </isotope>
+    <isotope N="33" Z="16" name="S330x559d501199c0">
+      <atom unit="g/mole" value="32.9715"/>
+    </isotope>
+    <isotope N="34" Z="16" name="S340x559d500e7800">
+      <atom unit="g/mole" value="33.9679"/>
+    </isotope>
+    <isotope N="36" Z="16" name="S360x559d501198d0">
+      <atom unit="g/mole" value="35.9671"/>
+    </isotope>
+    <element name="S0x559d4fc59ad0">
+      <fraction n="0.9493" ref="S320x559d50119920"/>
+      <fraction n="0.0076" ref="S330x559d501199c0"/>
+      <fraction n="0.0429" ref="S340x559d500e7800"/>
+      <fraction n="0.0002" ref="S360x559d501198d0"/>
+    </element>
+    <material name="Plywood0x559d500e74b0" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="76.8889225004347"/>
+      <D unit="g/cm3" value="0.5"/>
+      <fraction n="0.509098459520752" ref="C0x559d5010f7c0"/>
+      <fraction n="0.054704001217301" ref="H0x559d501039e0"/>
+      <fraction n="0.0247457882155746" ref="N0x559d50108720"/>
+      <fraction n="0.02707741871296" ref="Na0x559d4fc599f0"/>
+      <fraction n="0.346606817943743" ref="O0x559d50106af0"/>
+      <fraction n="0.0377675143896701" ref="S0x559d4fc59ad0"/>
+    </material>
+    <material name="BoratedPolyethilene0x559d500e9700" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="59.9864717502177"/>
+      <D unit="g/cm3" value="1"/>
+      <fraction n="0.0465856853631551" ref="B0x559d500eae50"/>
+      <fraction n="0.103414314636845" ref="O0x559d50106af0"/>
+      <fraction n="0.727839455416919" ref="C0x559d5010f7c0"/>
+      <fraction n="0.122160544583082" ref="H0x559d501039e0"/>
+    </material>
+    <material name="Polyurethane0x559d500ea980" state="solid">
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="70.8977631157086"/>
+      <D unit="g/cm3" value="0.09"/>
+      <fraction n="0.591140755590253" ref="C0x559d5010f7c0"/>
+      <fraction n="0.0661446935774174" ref="H0x559d501039e0"/>
+      <fraction n="0.0510652501933688" ref="N0x559d50108720"/>
+      <fraction n="0.291649300638961" ref="O0x559d50106af0"/>
+    </material>
+    <material name="Air0x559d50107960" state="gas">
+      <property name="RINDEX" ref="RINDEX0x559d50111430"/>
+      <property name="GROUPVEL" ref="GROUPVEL0x559d5010fe10"/>
+      <T unit="K" value="293.15"/>
+      <MEE unit="eV" value="85.7"/>
+      <D unit="g/cm3" value="0.00120479"/>
+      <fraction n="0.000124000124000124" ref="C0x559d5010f7c0"/>
+      <fraction n="0.755267755267755" ref="N0x559d50108720"/>
+      <fraction n="0.231781231781232" ref="O0x559d50106af0"/>
+      <fraction n="0.0128270128270128" ref="Ar0x559d4ff6a4d0"/>
+    </material>
+  </materials>
+
+  <solids>
+    <box lunit="mm" name="cathode999_sv0x559d501213f0" x="1" y="1550" z="2500"/>
+    <box lunit="mm" name="LightGuideSlab0x559d50156470" x="200" y="10" z="600"/>
+    <box lunit="mm" name="Coating0x559d50156290" x="200" y="1" z="600"/>
+    <opticalsurface finish="0" model="0" name="PTP_Surf0x559d5014eee0" type="0" value="0.8">
+      <property name="REFLECTIVITY" ref="REFLECTIVITY0x559d50156650"/>
+      <property name="EFFICIENCY" ref="EFFICIENCY0x559d500ed760"/>
+    </opticalsurface>
+    <box lunit="mm" name="SuperCell0x559d50116af0" x="200" y="22" z="600"/>
+    <box lunit="mm" name="SC_sv0x559d50155520" x="800" y="11" z="600"/>
+    <box lunit="mm" name="SC_row_sv0x559d50154360" x="800" y="11" z="1600"/>
+    <box lunit="mm" name="SC_sv0x559d5012a4f0" x="800" y="11" z="600"/>
+    <box lunit="mm" name="SC_row_sv0x559d50132680" x="800" y="11" z="1600"/>
+    <box lunit="mm" name="PCBBaseSolid0x559d50164780" x="120" y="2.5" z="120"/>
+    <box lunit="mm" name="SiPMBox0x559d50163060" x="12" y="1.2" z="12"/>
+    <box lunit="mm" name="SiPMActiveBox0x559d50137000" x="11.9939984992495" y="1.2" z="11.9939984992495"/>
+    <subtraction name="SiPMCapsuleBox0x559d50163ef0">
+      <first ref="SiPMBox0x559d50163060"/>
+      <second ref="SiPMActiveBox0x559d50137000"/>
+    </subtraction>
+    <opticalsurface finish="0" model="0" name="SiPM_Surf0x559d500ff2a0" type="0" value="0.9">
+      <property name="REFLECTIVITY" ref="REFLECTIVITY0x559d501119e0"/>
+      <property name="EFFICIENCY" ref="EFFICIENCY0x559d500f7fd0"/>
+    </opticalsurface>
+    <box lunit="mm" name="tileCellBox0x559d50134ad0" x="12" y="1.8" z="12"/>
+    <box lunit="mm" name="tileCellRow0x559d5013ce60" x="12" y="1.8" z="120"/>
+    <box lunit="mm" name="tileCellPlane0x559d5013e3f0" x="120" y="1.8" z="120"/>
+    <box lunit="mm" name="ReadoutTile0x559d50135cd0" x="120" y="4.3" z="120"/>
+    <box lunit="mm" name="tile_row_z_box0x559d5013e280" x="120" y="4.3" z="360"/>
+    <box lunit="mm" name="ReadoutPlane_box0x559d50138120" x="360" y="4.3" z="360"/>
+    <box lunit="mm" name="anode_row_sv0x559d501385d0" x="360" y="4.3" z="2160"/>
+    <box lunit="mm" name="anode_sv0x559d5017b190" x="1440" y="4.3" z="2160"/>
+    <box lunit="mm" name="TPC0x559d5011c350" x="1010" y="1620" z="2600"/>
+    <box lunit="mm" name="SC_sv0x559d501599b0" x="800" y="11" z="600"/>
+    <box lunit="mm" name="SC_row_sv0x559d5012e770" x="800" y="11" z="1600"/>
+    <box lunit="mm" name="SC_sv0x559d50167400" x="800" y="11" z="600"/>
+    <box lunit="mm" name="SC_row_sv0x559d50167060" x="800" y="11" z="1600"/>
+    <box lunit="mm" name="anode_row_sv0x559d50183340" x="360" y="4.3" z="2160"/>
+    <box lunit="mm" name="anode_sv0x559d51fd6ce0" x="1440" y="4.3" z="2160"/>
+    <box lunit="mm" name="TPC0x559d5012c380" x="1010" y="1620" z="2600"/>
+    <box lunit="mm" name="target_solid0x559d4ff6b830" x="2011" y="1620" z="2600"/>
+    <box lunit="mm" name="b_test_sv_outer_frame0x559d500ecb40" x="4096.4" y="3705.4" z="10"/>
+    <box lunit="mm" name="b_out_outer_frame0x559d50119a10" x="4116.4" y="3725.4" z="4705.4"/>
+    <box lunit="mm" name="b_in_outer_frame0x559d500edef0" x="4096.4" y="3705.4" z="4685.4"/>
+    <subtraction name="outer_frame_solid0x559d500ec440">
+      <first ref="b_out_outer_frame0x559d50119a10"/>
+      <second ref="b_in_outer_frame0x559d500edef0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_plywood_10x559d500ee450" x="4076.4" y="3685.4" z="10"/>
+    <box lunit="mm" name="b_out_plywood_10x559d500efd30" x="4096.4" y="3705.4" z="4685.4"/>
+    <box lunit="mm" name="b_in_plywood_10x559d50118aa0" x="4076.4" y="3685.4" z="4665.4"/>
+    <subtraction name="plywood_1_solid0x559d500f00f0">
+      <first ref="b_out_plywood_10x559d500efd30"/>
+      <second ref="b_in_plywood_10x559d50118aa0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_bpolyethilene_10x559d500eeca0" x="3876.4" y="3485.4" z="100"/>
+    <box lunit="mm" name="b_out_bpolyethilene_10x559d500ef790" x="4076.4" y="3685.4" z="4665.4"/>
+    <box lunit="mm" name="b_in_bpolyethilene_10x559d500ef360" x="3876.4" y="3485.4" z="4465.4"/>
+    <subtraction name="bpolyethilene_1_solid0x559d500efb50">
+      <first ref="b_out_bpolyethilene_10x559d500ef790"/>
+      <second ref="b_in_bpolyethilene_10x559d500ef360"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_plywood_20x559d500f1190" x="3856.4" y="3465.4" z="10"/>
+    <box lunit="mm" name="b_out_plywood_20x559d500f0c40" x="3876.4" y="3485.4" z="4465.4"/>
+    <box lunit="mm" name="b_in_plywood_20x559d500f27f0" x="3856.4" y="3465.4" z="4445.4"/>
+    <subtraction name="plywood_2_solid0x559d500f0ec0">
+      <first ref="b_out_plywood_20x559d500f0c40"/>
+      <second ref="b_in_plywood_20x559d500f27f0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_polyurethane_10x559d500f2450" x="3076.4" y="2685.4" z="390"/>
+    <box lunit="mm" name="b_out_polyurethane_10x559d500f1f00" x="3856.4" y="3465.4" z="4445.4"/>
+    <box lunit="mm" name="b_in_polyurethane_10x559d500f05f0" x="3076.4" y="2685.4" z="3665.4"/>
+    <subtraction name="polyurethane_1_solid0x559d500f21b0">
+      <first ref="b_out_polyurethane_10x559d500f1f00"/>
+      <second ref="b_in_polyurethane_10x559d500f05f0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_plywood_30x559d5011a540" x="3056.4" y="2665.4" z="10"/>
+    <box lunit="mm" name="b_out_plywood_30x559d50121f40" x="3076.4" y="2685.4" z="3665.4"/>
+    <box lunit="mm" name="b_in_plywood_30x559d500f1880" x="3056.4" y="2665.4" z="3645.4"/>
+    <subtraction name="plywood_3_solid0x559d50122100">
+      <first ref="b_out_plywood_30x559d50121f40"/>
+      <second ref="b_in_plywood_30x559d500f1880"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_triplex0x559d50120970" x="3053.4" y="2662.4" z="1.5"/>
+    <box lunit="mm" name="b_out_triplex0x559d501215d0" x="3056.4" y="2665.4" z="3645.4"/>
+    <box lunit="mm" name="b_in_triplex0x559d50121120" x="3053.4" y="2662.4" z="3642.4"/>
+    <subtraction name="triplex_solid0x559d50121860">
+      <first ref="b_out_triplex0x559d501215d0"/>
+      <second ref="b_in_triplex0x559d50121120"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_plywood_40x559d500f6610" x="3033.4" y="2642.4" z="10"/>
+    <box lunit="mm" name="b_out_plywood_40x559d500f7000" x="3053.4" y="2662.4" z="3642.4"/>
+    <box lunit="mm" name="b_in_plywood_40x559d50121030" x="3033.4" y="2642.4" z="3622.4"/>
+    <subtraction name="plywood_4_solid0x559d500f7290">
+      <first ref="b_out_plywood_40x559d500f7000"/>
+      <second ref="b_in_plywood_40x559d50121030"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_polyurethane_20x559d50124580" x="2253.4" y="1862.4" z="390"/>
+    <box lunit="mm" name="b_out_polyurethane_20x559d50125f70" x="3033.4" y="2642.4" z="3622.4"/>
+    <box lunit="mm" name="b_in_polyurethane_20x559d50125cd0" x="2253.4" y="1862.4" z="2842.4"/>
+    <subtraction name="polyurethane_2_solid0x559d501261d0">
+      <first ref="b_out_polyurethane_20x559d50125f70"/>
+      <second ref="b_in_polyurethane_20x559d50125cd0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_plywood_50x559d50124ce0" x="2233.4" y="1842.4" z="10"/>
+    <box lunit="mm" name="b_out_plywood_50x559d50125870" x="2253.4" y="1862.4" z="2842.4"/>
+    <box lunit="mm" name="b_in_plywood_50x559d50125460" x="2233.4" y="1842.4" z="2822.4"/>
+    <subtraction name="plywood_5_solid0x559d50125a50">
+      <first ref="b_out_plywood_50x559d50125870"/>
+      <second ref="b_in_plywood_50x559d50125460"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_bpolyethilene_20x559d501016e0" x="2033.4" y="1642.4" z="100"/>
+    <box lunit="mm" name="b_out_bpolyethilene_20x559d50128100" x="2233.4" y="1842.4" z="2822.4"/>
+    <box lunit="mm" name="b_in_bpolyethilene_20x559d50127da0" x="2033.4" y="1642.4" z="2622.4"/>
+    <subtraction name="bpolyethilene_2_solid0x559d501283b0">
+      <first ref="b_out_bpolyethilene_20x559d50128100"/>
+      <second ref="b_in_bpolyethilene_20x559d50127da0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_plywood_60x559d50126560" x="2013.4" y="1622.4" z="10"/>
+    <box lunit="mm" name="b_out_plywood_60x559d5012a5c0" x="2033.4" y="1642.4" z="2622.4"/>
+    <box lunit="mm" name="b_in_plywood_60x559d50101db0" x="2013.4" y="1622.4" z="2602.4"/>
+    <subtraction name="plywood_6_solid0x559d5012a7a0">
+      <first ref="b_out_plywood_60x559d5012a5c0"/>
+      <second ref="b_in_plywood_60x559d50101db0"/>
+    </subtraction>
+    <box lunit="mm" name="b_test_sv_inner_frame0x559d50126d10" x="2011" y="1620" z="1.2"/>
+    <box lunit="mm" name="b_out_inner_frame0x559d501277d0" x="2013.4" y="1622.4" z="2602.4"/>
+    <box lunit="mm" name="b_in_inner_frame0x559d50127470" x="2011" y="1620" z="2600"/>
+    <subtraction name="inner_frame_solid0x559d50127a80">
+      <first ref="b_out_inner_frame0x559d501277d0"/>
+      <second ref="b_in_inner_frame0x559d50127470"/>
+    </subtraction>
+    <box lunit="mm" name="fBoxOut_solid0x559d500ede40" x="4116.4" y="3725.4" z="4705.4"/>
+    <box lunit="mm" name="fBoxInn_solid0x559d500e7780" x="2011" y="1620" z="2600"/>
+    <subtraction name="cryostat_solid0x559d500f77e0">
+      <first ref="fBoxOut_solid0x559d500ede40"/>
+      <second ref="fBoxInn_solid0x559d500e7780"/>
+    </subtraction>
+    <box lunit="mm" name="World0x559d501076b0" x="7000" y="8000" z="13000"/>
+  </solids>
+
+  <structure>
+    <volume name="cathode999_lv0x559d5012c970">
+      <materialref ref="FR40x559d500eb690"/>
+      <solidref ref="cathode999_sv0x559d501213f0"/>
+    </volume>
+    <volume name="LightGuideLV0x559d50150380">
+      <materialref ref="Plastic0x559d5014cc90"/>
+      <solidref ref="LightGuideSlab0x559d50156470"/>
+    </volume>
+    <volume name="Coating0x559d50151650">
+      <materialref ref="PTP0x559d50150d30"/>
+      <solidref ref="Coating0x559d50156290"/>
+    </volume>
+    <volume name="SuperCellLV0x559d50116dc0">
+      <materialref ref="Vacuum0x559d5014cdc0"/>
+      <solidref ref="SuperCell0x559d50116af0"/>
+      <physvol copynumber="101" name="SuperCellLightGuide0x559d50152150">
+        <volumeref ref="LightGuideLV0x559d50150380"/>
+        <position name="SuperCellLightGuide0x559d50152150_pos" unit="mm" x="0" y="5" z="0"/>
+      </physvol>
+      <physvol copynumber="102" name="SuperCellCoating0x559d50117c50">
+        <volumeref ref="Coating0x559d50151650"/>
+        <position name="SuperCellCoating0x559d50117c50_pos" unit="mm" x="0" y="10.5" z="0"/>
+      </physvol>
+    </volume>
+    <volume name="SC_lv0x559d50117660">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_sv0x559d50155520"/>
+      <paramvol ncopies="3">
+        <volumeref ref="SuperCellLV0x559d50116dc0"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_ppv0x559d501544c00_pos" unit="mm" x="-300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_ppv0x559d501544c01_pos" unit="mm" x="0" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="3">
+            <position name="SC_ppv0x559d501544c02_pos" unit="mm" x="300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="SC_row_lv0x559d50154eb0">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_row_sv0x559d50154360"/>
+      <paramvol ncopies="2">
+        <volumeref ref="SC_lv0x559d50117660"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_row_ppv0x559d501345900_pos" unit="mm" x="0" y="-5.5" z="-400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_row_ppv0x559d501345901_pos" unit="mm" x="0" y="-5.5" z="400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="SC_lv0x559d50133000">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_sv0x559d5012a4f0"/>
+      <paramvol ncopies="3">
+        <volumeref ref="SuperCellLV0x559d50116dc0"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_ppv0x559d501391c00_pos" unit="mm" x="-300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_ppv0x559d501391c01_pos" unit="mm" x="0" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="3">
+            <position name="SC_ppv0x559d501391c02_pos" unit="mm" x="300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="SC_row_lv0x559d50141320">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_row_sv0x559d50132680"/>
+      <paramvol ncopies="2">
+        <volumeref ref="SC_lv0x559d50133000"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_row_ppv0x559d5015a0500_pos" unit="mm" x="0" y="-5.5" z="-400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_row_ppv0x559d5015a0501_pos" unit="mm" x="0" y="-5.5" z="400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="PCBBaseLV0x559d50169640">
+      <materialref ref="Polyethilene0x559d50103670"/>
+      <solidref ref="PCBBaseSolid0x559d50164780"/>
+    </volume>
+    <volume name="SiPMCapsule_lv0x559d501640d0">
+      <materialref ref="SiliconPassive0x559d50105380"/>
+      <solidref ref="SiPMCapsuleBox0x559d50163ef0"/>
+    </volume>
+    <volume name="SiPMActive_lv0x559d50163de0">
+      <materialref ref="SiliconPassive0x559d50105380"/>
+      <solidref ref="SiPMActiveBox0x559d50137000"/>
+    </volume>
+    <volume name="SiPM_lv0x559d50136360">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SiPMBox0x559d50163060"/>
+      <physvol copynumber="251" name="SiPMCapsulePV0x559d501641e0">
+        <volumeref ref="SiPMCapsule_lv0x559d501640d0"/>
+      </physvol>
+      <physvol copynumber="250" name="SiPMActivePV0x559d5013ebd0">
+        <volumeref ref="SiPMActive_lv0x559d50163de0"/>
+      </physvol>
+    </volume>
+    <volume name="rdtile_cell_lv0x559d50135680">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="tileCellBox0x559d50134ad0"/>
+      <physvol copynumber="999" name="sipm0x559d50134c20">
+        <volumeref ref="SiPM_lv0x559d50136360"/>
+        <position name="sipm0x559d50134c20_pos" unit="mm" x="0" y="-0.3" z="0"/>
+      </physvol>
+    </volume>
+    <volume name="rdtile_cell_row_lv0x559d5013d0c0">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="tileCellRow0x559d5013ce60"/>
+      <paramvol ncopies="10">
+        <volumeref ref="rdtile_cell_lv0x559d50135680"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="cell_row0x559d50135a100_pos" unit="mm" x="0" y="0" z="-54"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="2">
+            <position name="cell_row0x559d50135a101_pos" unit="mm" x="0" y="0" z="-42"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="3">
+            <position name="cell_row0x559d50135a102_pos" unit="mm" x="0" y="0" z="-30"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="4">
+            <position name="cell_row0x559d50135a103_pos" unit="mm" x="0" y="0" z="-18"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="5">
+            <position name="cell_row0x559d50135a104_pos" unit="mm" x="0" y="0" z="-6"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="6">
+            <position name="cell_row0x559d50135a105_pos" unit="mm" x="0" y="0" z="6"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="7">
+            <position name="cell_row0x559d50135a106_pos" unit="mm" x="0" y="0" z="18"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="8">
+            <position name="cell_row0x559d50135a107_pos" unit="mm" x="0" y="0" z="30"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="9">
+            <position name="cell_row0x559d50135a108_pos" unit="mm" x="0" y="0" z="42"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+          <parameters number="10">
+            <position name="cell_row0x559d50135a109_pos" unit="mm" x="0" y="0" z="54"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="12"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="rdtile_cell_plane_lv0x559d50136a80">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="tileCellPlane0x559d5013e3f0"/>
+      <paramvol ncopies="10">
+        <volumeref ref="rdtile_cell_row_lv0x559d5013d0c0"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="cell_plane0x559d501367a00_pos" unit="mm" x="-54" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="2">
+            <position name="cell_plane0x559d501367a01_pos" unit="mm" x="-42" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="3">
+            <position name="cell_plane0x559d501367a02_pos" unit="mm" x="-30" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="4">
+            <position name="cell_plane0x559d501367a03_pos" unit="mm" x="-18" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="5">
+            <position name="cell_plane0x559d501367a04_pos" unit="mm" x="-6" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="6">
+            <position name="cell_plane0x559d501367a05_pos" unit="mm" x="6" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="7">
+            <position name="cell_plane0x559d501367a06_pos" unit="mm" x="18" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="8">
+            <position name="cell_plane0x559d501367a07_pos" unit="mm" x="30" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="9">
+            <position name="cell_plane0x559d501367a08_pos" unit="mm" x="42" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+          <parameters number="10">
+            <position name="cell_plane0x559d501367a09_pos" unit="mm" x="54" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="12" y="1.8" z="120"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="ReadoutTileLV0x559d5013cc00">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="ReadoutTile0x559d50135cd0"/>
+      <physvol copynumber="200" name="ReadoutTilePCB0x559d50135ef0">
+        <volumeref ref="PCBBaseLV0x559d50169640"/>
+        <position name="ReadoutTilePCB0x559d50135ef0_pos" unit="mm" x="0" y="-0.9" z="0"/>
+      </physvol>
+      <physvol copynumber="50" name="ReadoutTileSensors0x559d501368a0">
+        <volumeref ref="rdtile_cell_plane_lv0x559d50136a80"/>
+        <position name="ReadoutTileSensors0x559d501368a0_pos" unit="mm" x="0" y="1.25" z="0"/>
+      </physvol>
+    </volume>
+    <volume name="tile_row_z_lv0x559d5013dfb0">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="tile_row_z_box0x559d5013e280"/>
+      <paramvol ncopies="3">
+        <volumeref ref="ReadoutTileLV0x559d5013cc00"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="tile_row_z0x559d5013d2700_pos" unit="mm" x="0" y="0" z="-120"/>
+            <box_dimensions lunit="mm" x="120" y="4.3" z="120"/>
+          </parameters>
+          <parameters number="2">
+            <position name="tile_row_z0x559d5013d2701_pos" unit="mm" x="0" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="120" y="4.3" z="120"/>
+          </parameters>
+          <parameters number="3">
+            <position name="tile_row_z0x559d5013d2702_pos" unit="mm" x="0" y="0" z="120"/>
+            <box_dimensions lunit="mm" x="120" y="4.3" z="120"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="ReadoutPlaneLV0x559d50138020">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="ReadoutPlane_box0x559d50138120"/>
+      <paramvol ncopies="3">
+        <volumeref ref="tile_row_z_lv0x559d5013dfb0"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="ReadoutPlane0x559d5013dc800_pos" unit="mm" x="-120" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="120" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="2">
+            <position name="ReadoutPlane0x559d5013dc801_pos" unit="mm" x="0" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="120" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="3">
+            <position name="ReadoutPlane0x559d5013dc802_pos" unit="mm" x="120" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="120" y="4.3" z="360"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="anode_row_lv0x559d5017ba90">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="anode_row_sv0x559d501385d0"/>
+      <paramvol ncopies="6">
+        <volumeref ref="ReadoutPlaneLV0x559d50138020"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="anode_row_pv0x559d5017bcc00_pos" unit="mm" x="0" y="0" z="-900"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="2">
+            <position name="anode_row_pv0x559d5017bcc01_pos" unit="mm" x="0" y="0" z="-540"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="3">
+            <position name="anode_row_pv0x559d5017bcc02_pos" unit="mm" x="0" y="0" z="-180"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="4">
+            <position name="anode_row_pv0x559d5017bcc03_pos" unit="mm" x="0" y="0" z="180"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="5">
+            <position name="anode_row_pv0x559d5017bcc04_pos" unit="mm" x="0" y="0" z="540"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="6">
+            <position name="anode_row_pv0x559d5017bcc05_pos" unit="mm" x="0" y="0" z="900"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="anode_lv0x559d5017b090">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="anode_sv0x559d5017b190"/>
+      <paramvol ncopies="4">
+        <volumeref ref="anode_row_lv0x559d5017ba90"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="anode_pv0x559d50137a300_pos" unit="mm" x="-540" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+          <parameters number="2">
+            <position name="anode_pv0x559d50137a301_pos" unit="mm" x="-180" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+          <parameters number="3">
+            <position name="anode_pv0x559d50137a302_pos" unit="mm" x="180" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+          <parameters number="4">
+            <position name="anode_pv0x559d50137a303_pos" unit="mm" x="540" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="TPC0x559d5014f5e0">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="TPC0x559d5011c350"/>
+      <physvol copynumber="30" name="anode300x559d501337b0">
+        <volumeref ref="SC_row_lv0x559d50154eb0"/>
+        <position name="anode300x559d501337b0_pos" unit="mm" x="0" y="790" z="0"/>
+        <rotation name="anode300x559d501337b0_rot" unit="deg" x="0" y="0" z="-180"/>
+      </physvol>
+      <physvol copynumber="31" name="anode310x559d5015ab50">
+        <volumeref ref="SC_row_lv0x559d50141320"/>
+        <position name="anode310x559d5015ab50_pos" unit="mm" x="0" y="-790" z="0"/>
+      </physvol>
+      <physvol copynumber="50" name="anode500x559d5017b550">
+        <volumeref ref="anode_lv0x559d5017b090"/>
+        <position name="anode500x559d5017b550_pos" unit="mm" x="-500" y="0" z="0"/>
+        <rotation name="anode500x559d5017b550_rot" unit="deg" x="0" y="0" z="90"/>
+      </physvol>
+    </volume>
+    <volume name="SC_lv0x559d5012f190">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_sv0x559d501599b0"/>
+      <paramvol ncopies="3">
+        <volumeref ref="SuperCellLV0x559d50116dc0"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_ppv0x559d5012e6f00_pos" unit="mm" x="-300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_ppv0x559d5012e6f01_pos" unit="mm" x="0" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="3">
+            <position name="SC_ppv0x559d5012e6f02_pos" unit="mm" x="300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="SC_row_lv0x559d5012ecc0">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_row_sv0x559d5012e770"/>
+      <paramvol ncopies="2">
+        <volumeref ref="SC_lv0x559d5012f190"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_row_ppv0x559d501475d00_pos" unit="mm" x="0" y="-5.5" z="-400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_row_ppv0x559d501475d01_pos" unit="mm" x="0" y="-5.5" z="400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="SC_lv0x559d50146780">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_sv0x559d50167400"/>
+      <paramvol ncopies="3">
+        <volumeref ref="SuperCellLV0x559d50116dc0"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_ppv0x559d501576300_pos" unit="mm" x="-300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_ppv0x559d501576301_pos" unit="mm" x="0" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+          <parameters number="3">
+            <position name="SC_ppv0x559d501576302_pos" unit="mm" x="300" y="-5.5" z="0"/>
+            <box_dimensions lunit="mm" x="200" y="22" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="SC_row_lv0x559d501403d0">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="SC_row_sv0x559d50167060"/>
+      <paramvol ncopies="2">
+        <volumeref ref="SC_lv0x559d50146780"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="SC_row_ppv0x559d501597700_pos" unit="mm" x="0" y="-5.5" z="-400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+          <parameters number="2">
+            <position name="SC_row_ppv0x559d501597701_pos" unit="mm" x="0" y="-5.5" z="400"/>
+            <box_dimensions lunit="mm" x="800" y="11" z="600"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="anode_row_lv0x559d5017b360">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="anode_row_sv0x559d50183340"/>
+      <paramvol ncopies="6">
+        <volumeref ref="ReadoutPlaneLV0x559d50138020"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="anode_row_pv0x559d5218c3600_pos" unit="mm" x="0" y="0" z="-900"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="2">
+            <position name="anode_row_pv0x559d5218c3601_pos" unit="mm" x="0" y="0" z="-540"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="3">
+            <position name="anode_row_pv0x559d5218c3602_pos" unit="mm" x="0" y="0" z="-180"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="4">
+            <position name="anode_row_pv0x559d5218c3603_pos" unit="mm" x="0" y="0" z="180"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="5">
+            <position name="anode_row_pv0x559d5218c3604_pos" unit="mm" x="0" y="0" z="540"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+          <parameters number="6">
+            <position name="anode_row_pv0x559d5218c3605_pos" unit="mm" x="0" y="0" z="900"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="360"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="anode_lv0x559d51fc6040">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="anode_sv0x559d51fd6ce0"/>
+      <paramvol ncopies="4">
+        <volumeref ref="anode_row_lv0x559d5017b360"/>
+        <parameterised_position_size>
+          <parameters number="1">
+            <position name="anode_pv0x559d501896b00_pos" unit="mm" x="-540" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+          <parameters number="2">
+            <position name="anode_pv0x559d501896b01_pos" unit="mm" x="-180" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+          <parameters number="3">
+            <position name="anode_pv0x559d501896b02_pos" unit="mm" x="180" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+          <parameters number="4">
+            <position name="anode_pv0x559d501896b03_pos" unit="mm" x="540" y="0" z="0"/>
+            <box_dimensions lunit="mm" x="360" y="4.3" z="2160"/>
+          </parameters>
+        </parameterised_position_size>
+      </paramvol>
+    </volume>
+    <volume name="TPC0x559d50151c90">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="TPC0x559d5012c380"/>
+      <physvol copynumber="40" name="anode400x559d5015a6d0">
+        <volumeref ref="SC_row_lv0x559d5012ecc0"/>
+        <position name="anode400x559d5015a6d0_pos" unit="mm" x="0" y="790" z="0"/>
+        <rotation name="anode400x559d5015a6d0_rot" unit="deg" x="0" y="0" z="-180"/>
+      </physvol>
+      <physvol copynumber="41" name="anode410x559d501478b0">
+        <volumeref ref="SC_row_lv0x559d501403d0"/>
+        <position name="anode410x559d501478b0_pos" unit="mm" x="0" y="-790" z="0"/>
+      </physvol>
+      <physvol copynumber="51" name="anode510x559d5018a160">
+        <volumeref ref="anode_lv0x559d51fc6040"/>
+        <position name="anode510x559d5018a160_pos" unit="mm" x="500" y="0" z="0"/>
+        <rotation name="anode510x559d5018a160_rot" unit="deg" x="0" y="0" z="-90"/>
+      </physvol>
+    </volume>
+    <volume name="lar_target_lv0x559d5010e250">
+      <materialref ref="LAr0x559d500f8540"/>
+      <solidref ref="target_solid0x559d4ff6b830"/>
+      <physvol copynumber="999" name="cathode_pv_9990x559d5011ac80">
+        <volumeref ref="cathode999_lv0x559d5012c970"/>
+      </physvol>
+      <physvol copynumber="10" name="TPC100x559d5014ef60">
+        <volumeref ref="TPC0x559d5014f5e0"/>
+        <position name="TPC100x559d5014ef60_pos" unit="mm" x="-500.5" y="0" z="0"/>
+      </physvol>
+      <physvol copynumber="11" name="TPC110x559d50150ca0">
+        <volumeref ref="TPC0x559d50151c90"/>
+        <position name="TPC110x559d50150ca0_pos" unit="mm" x="500.5" y="0" z="0"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_outer_frame0x559d500ec770">
+      <materialref ref="Steel0x559d50104020"/>
+      <solidref ref="b_test_sv_outer_frame0x559d500ecb40"/>
+    </volume>
+    <volume name="outer_frameLV0x559d500ec580">
+      <materialref ref="Steel0x559d50104020"/>
+      <solidref ref="outer_frame_solid0x559d500ec440"/>
+      <physvol copynumber="8" name="b_test_pv_outer_frame0x559d500ec8a0">
+        <volumeref ref="b_test_lv_outer_frame0x559d500ec770"/>
+        <position name="b_test_pv_outer_frame0x559d500ec8a0_pos" unit="mm" x="0" y="0" z="-2347.7"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_plywood_10x559d500ee5b0">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="b_test_sv_plywood_10x559d500ee450"/>
+    </volume>
+    <volume name="plywood_1LV0x559d500f01f0">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="plywood_1_solid0x559d500f00f0"/>
+      <physvol copynumber="8" name="b_test_pv_plywood_10x559d500ee6e0">
+        <volumeref ref="b_test_lv_plywood_10x559d500ee5b0"/>
+        <position name="b_test_pv_plywood_10x559d500ee6e0_pos" unit="mm" x="0" y="0" z="-2337.7"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_bpolyethilene_10x559d500eeda0">
+      <materialref ref="BoratedPolyethilene0x559d500e9700"/>
+      <solidref ref="b_test_sv_bpolyethilene_10x559d500eeca0"/>
+    </volume>
+    <volume name="bpolyethilene_1LV0x559d500f14b0">
+      <materialref ref="BoratedPolyethilene0x559d500e9700"/>
+      <solidref ref="bpolyethilene_1_solid0x559d500efb50"/>
+      <physvol copynumber="8" name="b_test_pv_bpolyethilene_10x559d500eeed0">
+        <volumeref ref="b_test_lv_bpolyethilene_10x559d500eeda0"/>
+        <position name="b_test_pv_bpolyethilene_10x559d500eeed0_pos" unit="mm" x="0" y="0" z="-2282.7"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_plywood_20x559d500f12d0">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="b_test_sv_plywood_20x559d500f1190"/>
+    </volume>
+    <volume name="plywood_2LV0x559d500f1080">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="plywood_2_solid0x559d500f0ec0"/>
+      <physvol copynumber="8" name="b_test_pv_plywood_20x559d500f1400">
+        <volumeref ref="b_test_lv_plywood_20x559d500f12d0"/>
+        <position name="b_test_pv_plywood_20x559d500f1400_pos" unit="mm" x="0" y="0" z="-2227.7"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_polyurethane_10x559d500f2550">
+      <materialref ref="Polyurethane0x559d500ea980"/>
+      <solidref ref="b_test_sv_polyurethane_10x559d500f2450"/>
+    </volume>
+    <volume name="polyurethane_1LV0x559d500f22b0">
+      <materialref ref="Polyurethane0x559d500ea980"/>
+      <solidref ref="polyurethane_1_solid0x559d500f21b0"/>
+      <physvol copynumber="8" name="b_test_pv_polyurethane_10x559d500f2680">
+        <volumeref ref="b_test_lv_polyurethane_10x559d500f2550"/>
+        <position name="b_test_pv_polyurethane_10x559d500f2680_pos" unit="mm" x="0" y="0" z="-2027.7"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_plywood_30x559d5011a680">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="b_test_sv_plywood_30x559d5011a540"/>
+    </volume>
+    <volume name="plywood_3LV0x559d5011a430">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="plywood_3_solid0x559d50122100"/>
+      <physvol copynumber="8" name="b_test_pv_plywood_30x559d5011a7b0">
+        <volumeref ref="b_test_lv_plywood_30x559d5011a680"/>
+        <position name="b_test_pv_plywood_30x559d5011a7b0_pos" unit="mm" x="0" y="0" z="-1827.7"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_triplex0x559d50120ad0">
+      <materialref ref="Steel0x559d50104020"/>
+      <solidref ref="b_test_sv_triplex0x559d50120970"/>
+    </volume>
+    <volume name="triplexLV0x559d50121960">
+      <materialref ref="Steel0x559d50104020"/>
+      <solidref ref="triplex_solid0x559d50121860"/>
+      <physvol copynumber="8" name="b_test_pv_triplex0x559d50120c00">
+        <volumeref ref="b_test_lv_triplex0x559d50120ad0"/>
+        <position name="b_test_pv_triplex0x559d50120c00_pos" unit="mm" x="0" y="0" z="-1821.95"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_plywood_40x559d500f6770">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="b_test_sv_plywood_40x559d500f6610"/>
+    </volume>
+    <volume name="plywood_4LV0x559d500f7390">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="plywood_4_solid0x559d500f7290"/>
+      <physvol copynumber="8" name="b_test_pv_plywood_40x559d500f68a0">
+        <volumeref ref="b_test_lv_plywood_40x559d500f6770"/>
+        <position name="b_test_pv_plywood_40x559d500f68a0_pos" unit="mm" x="0" y="0" z="-1816.2"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_polyurethane_20x559d50124680">
+      <materialref ref="Polyurethane0x559d500ea980"/>
+      <solidref ref="b_test_sv_polyurethane_20x559d50124580"/>
+    </volume>
+    <volume name="polyurethane_2LV0x559d501262d0">
+      <materialref ref="Polyurethane0x559d500ea980"/>
+      <solidref ref="polyurethane_2_solid0x559d501261d0"/>
+      <physvol copynumber="8" name="b_test_pv_polyurethane_20x559d501247b0">
+        <volumeref ref="b_test_lv_polyurethane_20x559d50124680"/>
+        <position name="b_test_pv_polyurethane_20x559d501247b0_pos" unit="mm" x="0" y="0" z="-1616.2"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_plywood_50x559d50124e40">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="b_test_sv_plywood_50x559d50124ce0"/>
+    </volume>
+    <volume name="plywood_5LV0x559d50124bd0">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="plywood_5_solid0x559d50125a50"/>
+      <physvol copynumber="8" name="b_test_pv_plywood_50x559d50124f70">
+        <volumeref ref="b_test_lv_plywood_50x559d50124e40"/>
+        <position name="b_test_pv_plywood_50x559d50124f70_pos" unit="mm" x="0" y="0" z="-1416.2"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_bpolyethilene_20x559d501017e0">
+      <materialref ref="BoratedPolyethilene0x559d500e9700"/>
+      <solidref ref="b_test_sv_bpolyethilene_20x559d501016e0"/>
+    </volume>
+    <volume name="bpolyethilene_2LV0x559d501284b0">
+      <materialref ref="BoratedPolyethilene0x559d500e9700"/>
+      <solidref ref="bpolyethilene_2_solid0x559d501283b0"/>
+      <physvol copynumber="8" name="b_test_pv_bpolyethilene_20x559d50101910">
+        <volumeref ref="b_test_lv_bpolyethilene_20x559d501017e0"/>
+        <position name="b_test_pv_bpolyethilene_20x559d50101910_pos" unit="mm" x="0" y="0" z="-1361.2"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_plywood_60x559d501266c0">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="b_test_sv_plywood_60x559d50126560"/>
+    </volume>
+    <volume name="plywood_6LV0x559d50126450">
+      <materialref ref="Plywood0x559d500e74b0"/>
+      <solidref ref="plywood_6_solid0x559d5012a7a0"/>
+      <physvol copynumber="8" name="b_test_pv_plywood_60x559d501267f0">
+        <volumeref ref="b_test_lv_plywood_60x559d501266c0"/>
+        <position name="b_test_pv_plywood_60x559d501267f0_pos" unit="mm" x="0" y="0" z="-1306.2"/>
+      </physvol>
+    </volume>
+    <volume name="b_test_lv_inner_frame0x559d50126e70">
+      <materialref ref="Steel0x559d50104020"/>
+      <solidref ref="b_test_sv_inner_frame0x559d50126d10"/>
+    </volume>
+    <volume name="inner_frameLV0x559d50127b80">
+      <materialref ref="Steel0x559d50104020"/>
+      <solidref ref="inner_frame_solid0x559d50127a80"/>
+      <physvol copynumber="8" name="b_test_pv_inner_frame0x559d50126fa0">
+        <volumeref ref="b_test_lv_inner_frame0x559d50126e70"/>
+        <position name="b_test_pv_inner_frame0x559d50126fa0_pos" unit="mm" x="0" y="0" z="-1300.6"/>
+      </physvol>
+    </volume>
+    <volume name="CryostatLV0x559d500ecdc0">
+      <materialref ref="Air0x559d50107960"/>
+      <solidref ref="cryostat_solid0x559d500f77e0"/>
+      <physvol copynumber="21" name="outer_frame0x559d500ecc10">
+        <volumeref ref="outer_frameLV0x559d500ec580"/>
+      </physvol>
+      <physvol copynumber="22" name="plywood_10x559d500ee950">
+        <volumeref ref="plywood_1LV0x559d500f01f0"/>
+      </physvol>
+      <physvol copynumber="23" name="bpolyethilene_10x559d500eefb0">
+        <volumeref ref="bpolyethilene_1LV0x559d500f14b0"/>
+      </physvol>
+      <physvol copynumber="24" name="plywood_20x559d500f03f0">
+        <volumeref ref="plywood_2LV0x559d500f1080"/>
+      </physvol>
+      <physvol copynumber="25" name="polyurethane_10x559d500f15c0">
+        <volumeref ref="polyurethane_1LV0x559d500f22b0"/>
+      </physvol>
+      <physvol copynumber="26" name="plywood_30x559d50121c10">
+        <volumeref ref="plywood_3LV0x559d5011a430"/>
+      </physvol>
+      <physvol copynumber="27" name="triplex0x559d50120e70">
+        <volumeref ref="triplexLV0x559d50121960"/>
+      </physvol>
+      <physvol copynumber="28" name="plywood_40x559d500f6b10">
+        <volumeref ref="plywood_4LV0x559d500f7390"/>
+      </physvol>
+      <physvol copynumber="29" name="polyurethane_20x559d50124890">
+        <volumeref ref="polyurethane_2LV0x559d501262d0"/>
+      </physvol>
+      <physvol copynumber="30" name="plywood_50x559d501251e0">
+        <volumeref ref="plywood_5LV0x559d50124bd0"/>
+      </physvol>
+      <physvol copynumber="31" name="bpolyethilene_20x559d501019f0">
+        <volumeref ref="bpolyethilene_2LV0x559d501284b0"/>
+      </physvol>
+      <physvol copynumber="32" name="plywood_60x559d50126a60">
+        <volumeref ref="plywood_6LV0x559d50126450"/>
+      </physvol>
+      <physvol copynumber="33" name="inner_frame0x559d50127210">
+        <volumeref ref="inner_frameLV0x559d50127b80"/>
+      </physvol>
+    </volume>
+    <volume name="World0x559d50100190">
+      <materialref ref="Air0x559d50107960"/>
+      <solidref ref="World0x559d501076b0"/>
+      <physvol copynumber="9" name="target_lar_pv0x559d500e2130">
+        <volumeref ref="lar_target_lv0x559d5010e250"/>
+      </physvol>
+      <physvol copynumber="999" name="cryostat_pv0x559d5012c840">
+        <volumeref ref="CryostatLV0x559d500ecdc0"/>
+      </physvol>
+    </volume>
+    <skinsurface name="PTP_LgSkin0x559d5014f020" surfaceproperty="PTP_Surf0x559d5014eee0">
+      <volumeref ref="Coating0x559d50151650"/>
+    </skinsurface>
+    <skinsurface name="SiPM_LgSkin0x559d50135c80" surfaceproperty="SiPM_Surf0x559d500ff2a0">
+      <volumeref ref="SiPMActive_lv0x559d50163de0"/>
+    </skinsurface>
+  </structure>
+
+  <setup name="Default" version="1.0">
+    <world ref="World0x559d50100190"/>
+  </setup>
+
+</gdml>

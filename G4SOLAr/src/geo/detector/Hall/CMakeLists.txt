@@ -1,9 +1,11 @@
 set(SLAR_GEO_HALL_HEADERS
   "${SLAR_GEO_INCLUDE_DIR}/detector/Hall/SLArDetExpHall.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/detector/Hall/SLArDetShielding.hh"
 )
 
 set(SLAR_GEO_HALL_SRC
   "${SLAR_GEO_SRC_DIR}/detector/Hall/SLArDetExpHall.cc"
+  "${SLAR_GEO_SRC_DIR}/detector/Hall/SLArDetShielding.cc"
 )
 
 set(SLAR_GEO_DETECTOR_HEADERS ${SLAR_GEO_DETECTOR_HEADERS} ${SLAR_GEO_HALL_HEADERS} PARENT_SCOPE)

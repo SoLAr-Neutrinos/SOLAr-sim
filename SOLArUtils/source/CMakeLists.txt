@@ -58,15 +58,15 @@ set(SOLAR_UTILS_INC_DEST "${CMAKE_INSTALL_PREFIX}/include")
 set(SOLAR_UTILS_INSTALL_CMAKE_DIR "${SOLAR_UTILS_LIB_DIR}/cmake/${PROJECT_NAME}")
 
 include(ExternalProject)
-ExternalProject_Add("progressbar"
-  SOURCE_DIR      ${CMAKE_CURRENT_BINARY_DIR}/progressbar
-  INSTALL_DIR     ${SOLAR_UTILS_INC_DIR}
-  UPDATE_DISCONNECTED 1
-  GIT_REPOSITORY  "https://github.com/dguff/progressbar.git"
-  GIT_TAG         "main"
-  CONFIGURE_COMMAND echo "configuring progressbar"
-  BUILD_COMMAND echo "fetching progressbar"
-  INSTALL_COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/progressbar/include/progressbar.hpp ${SOLAR_UTILS_INC_DIR} )
+#ExternalProject_Add("progressbar"
+  #SOURCE_DIR      ${CMAKE_CURRENT_BINARY_DIR}/progressbar
+  #INSTALL_DIR     ${SOLAR_UTILS_INC_DIR}
+  #UPDATE_DISCONNECTED 1
+  #GIT_REPOSITORY  "https://github.com/dguff/progressbar.git"
+  #GIT_TAG         "main"
+  #CONFIGURE_COMMAND echo "configuring progressbar"
+  #BUILD_COMMAND echo "fetching progressbar"
+  #INSTALL_COMMAND cp ${CMAKE_CURRENT_BINARY_DIR}/progressbar/include/progressbar.hpp ${SOLAR_UTILS_INC_DIR} )
 
 include_directories(
   ${SOLAR_UTILS_INC_DIR}

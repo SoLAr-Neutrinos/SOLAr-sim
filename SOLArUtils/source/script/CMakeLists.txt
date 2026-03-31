@@ -57,7 +57,35 @@ target_include_directories(hit_calibration
   "${RapidJSON_INCLUDE_DIR}/.."
   )
 
-install(TARGETS hit_converter hit_viewer hit_calibration
+add_executable(hit_cavern hit_cavern.cc)
+target_link_libraries(hit_cavern
+  PRIVATE
+  ${ROOT_LIBRARIES} 
+  SOLARSIM::SLArGenRecords
+)
+target_include_directories(hit_cavern
+  PRIVATE
+  ${SOLARSIM_INCLUDE_DIR}
+  ${Geant4_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIRS}
+  "${RapidJSON_INCLUDE_DIR}"
+  )
+
+add_executable(etrue_cavern etrue_cavern.cc)
+target_link_libraries(etrue_cavern
+  PRIVATE 
+  ${ROOT_LIBRARIES}
+  SOLARSIM::SLArGenRecords
+  SOLARSIM::SLArMCTruth
+  SOLARSIM::SLArReadoutSystemConfig
+)
+target_include_directories(etrue_cavern
+  PRIVATE
+  ${SOLARSIM_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIRS}
+)
+
+install(TARGETS hit_converter hit_viewer hit_calibration hit_cavern etrue_cavern
   LIBRARY DESTINATION "${SOLAR_UTILS_BIN_DIR}"
   RUNTIME DESTINATION "${SOLAR_UTILS_BIN_DIR}"
   )

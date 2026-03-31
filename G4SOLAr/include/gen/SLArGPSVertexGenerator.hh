@@ -62,6 +62,8 @@ class SLArGPSVertexGenerator : public SLArVertexGenerator
     const rapidjson::Document ExportConfig() const override;
     G4String GetType() const override {return "gps_pos";}
     void Print() const override;
+    G4double GetSurfaceGenerator() const;
+    G4double GetVolumeGenerator() const;
 
   protected:
     std::unique_ptr<G4SPSPosDistribution> fPSPosGen = nullptr;

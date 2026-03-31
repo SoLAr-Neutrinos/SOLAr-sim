@@ -63,7 +63,10 @@ void SLArElectronDrift::Drift(const int& n,
 #endif
 
   G4int n_elec_anode = G4Poisson(n*f_surv); 
-
+  
+  if (n_elec_anode == 0) {
+    return;
+  }
   std::vector<double> x_(n_elec_anode); 
   std::vector<double> y_(n_elec_anode); 
   std::vector<double> t_(n_elec_anode);

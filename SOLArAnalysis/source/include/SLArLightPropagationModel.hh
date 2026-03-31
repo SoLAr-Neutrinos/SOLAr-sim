@@ -34,8 +34,6 @@
 #include "config/SLArCfgReadoutTile.hh"
 #include "config/SLArCfgSuperCell.hh"
 
-typedef SLArCfgBaseSystem<SLArCfgMegaTile> SLArPixCfg;
-
 namespace slarAna {
   /*! \enum EDetectorFace
    *
@@ -58,7 +56,7 @@ namespace slarAna {
       std::vector<double> fcorr_param = {0.032, 0.008258}; 
 
       // DUNE-SP Gaisser-Hillas angle bins
-      std::vector<double> angulo = {0, 10, 20, 30, 40, 50, 60, 70, 80};
+      std::vector<double> angulo = {5, 15, 25, 35, 45, 55, 65, 75, 85};
       const double delta_angle = 10.;
 
       bool _mathmore_loaded_ = false;
@@ -76,13 +74,30 @@ namespace slarAna {
           SLArCfgBaseModule* cfgTile, 
           const TVector3 &ScintPoint);
 
+      double VisibilityOpDetTile(
+          SLArCfgBaseModule* cfgTile, 
+          const TVector3 &ScintPoint,
+          const TVector3 &opDetTranslation = TVector3(0,0,0),
+          const TVector3 &scintTranslation = TVector3(0,0,0)
+          );
+      
       // gaisser-hillas function
       static Double_t GaisserHillas(double x, double *par);
 
       // solid angle of rectangular aperture calculation functions
       double omega(const double &a, const double &b, const double &d) const;
-      double solid(SLArCfgReadoutTile* cfgTile, TVector3 &v, EDetectorFace kFace); 
-      double solid(SLArCfgSuperCell* cfgTile, TVector3 &v, EDetectorFace kFace); 
+      double solid(SLArCfgReadoutTile* cfgTile, TVector3 &v, EDetectorFace kFace, bool verbose = false); 
+      inline double solid(SLArCfgReadoutTile* cfgTile, TVector3 &detrframe, TVector3 &v, EDetectorFace kFace, bool verbose = false)
+      {
+        TVector3 vv = v + detrframe;
+        return solid((SLArCfgReadoutTile*)cfgTile, vv, kFace, verbose);
+      }
+      double solid(SLArCfgSuperCell* cfgTile, TVector3 &v, EDetectorFace kFace, bool verbose = false); 
+      inline double solid(SLArCfgSuperCell* cfgTile, TVector3& detrframe, TVector3 &v, EDetectorFace kFace, bool verbose = false)
+      {
+        TVector3 vv = v + detrframe;
+        return solid((SLArCfgSuperCell*)cfgTile, vv, kFace, verbose);
+      }
       double solid_old(SLArCfgReadoutTile* cfgTile, TVector3 &v); 
 
       // solid angle of circular aperture calculation functions

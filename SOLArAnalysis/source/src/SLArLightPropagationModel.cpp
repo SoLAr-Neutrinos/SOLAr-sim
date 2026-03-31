@@ -102,28 +102,37 @@ namespace slarAna {
 
     costheta   = (ScintPoint_rel).Unit().Dot(OpDetNorm); 
     theta = acos(costheta)*TMath::RadToDeg();
-    r_distance = (
+    TVector3 r_ =  (
         ScintPoint - 
         OpDetNorm*(OpDetNorm.Dot(ScintPoint - TVector3(0, 0, 0)))
-        ).Mag();
+        );
+    r_distance = r_.Mag();
+    printf("r_ : (%g, %g, %g) - |r_| = %g\n", 
+        r_.x(), r_.y(), r_.z(), r_distance);
 
-    //printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
-        //ScintPoint.x(), ScintPoint.y(), ScintPoint.z(), 
-        //OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
-        //distance, costheta, theta);
 
+/*
+ *    printf("----------------------------------------\n");
+ *    printf("Optical detector: %s - face: %s - class: %s\n", 
+ *        cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
+ *        (kClass == kReadoutTile) ? "ReadoutTile" :
+ *        (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
+ *    printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
+ *        ScintPoint.x(), ScintPoint.y(), ScintPoint.z(), 
+ *        OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
+ *        distance, costheta, theta);
+ */
 
     if (costheta < 0.001)
       solid_angle = 0;
     else {
       if (kClass == kReadoutTile) { 
         solid_angle= solid((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel, kFace);
-        //solid_angle = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
+        //double solid_angle_test = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
         //double delta_solid = solid_angle - solid_angle_test; 
         //if (delta_solid > 1e-8) {
           //printf("Ω = %g - Ω old = %g [δ = %g]\n", solid_angle, solid_angle_test, 
               //delta_solid);
-          //getchar(); 
         //}
       }
       else if (kClass == kSuperCell) 
@@ -200,6 +209,8 @@ namespace slarAna {
       exit(1);
     }
     // add border correction
+    // FIXME: set r_distance to zero for testing purposes
+    r_distance = 0;
     pars_ini[0] = pars_ini[0] + s1 * r_distance;
     pars_ini[1] = pars_ini[1] + s2 * r_distance;
     pars_ini[2] = pars_ini[2] + s3 * r_distance;
@@ -218,6 +229,232 @@ namespace slarAna {
 
     return vis_vuv;
   }
+
+
+  double SLArLightPropagationModel::VisibilityOpDetTile(
+      SLArCfgBaseModule* cfgTile,
+      const TVector3 &ScintPoint, 
+      const TVector3 &OpDetTranslation,
+      const TVector3 &scintTranslation) 
+  {
+    bool verbose = false;
+
+    TVector3 OpDetPoint(
+        cfgTile->GetPhysX()/G4UIcommand::ValueOf("cm"), 
+        cfgTile->GetPhysY()/G4UIcommand::ValueOf("cm"), 
+        cfgTile->GetPhysZ()/G4UIcommand::ValueOf("cm"));
+
+    OpDetPoint = OpDetPoint - OpDetTranslation;
+
+    TVector3 ScintPoint_tpc = ScintPoint - scintTranslation;
+
+    TVector3 ScintPoint_rel = ScintPoint_tpc - OpDetPoint; 
+
+
+    double costheta   = 0.; 
+    double theta      = 0.; 
+    double distance   = (ScintPoint_rel).Mag();
+
+    double r_distance = -1; 
+    double solid_angle= -1; 
+
+    TVector3 OpDetNorm(-1, 0, 0);
+    OpDetNorm = cfgTile->GetNormal(); 
+    TVector3 OpDetPlaneCenter(OpDetPoint); 
+
+    EDetectorFace kFace = kDownstrm; 
+    if (OpDetNorm        == TVector3(+1, 0, 0)) {
+      kFace = kSouth; 
+      OpDetPlaneCenter.SetZ(0.0); OpDetPlaneCenter.SetY(0.0);
+    } else if (OpDetNorm == TVector3(-1, 0, 0)) {
+      kFace = kNorth; 
+      OpDetPlaneCenter.SetY(0.0); OpDetPlaneCenter.SetZ(0.0);
+    } else if (OpDetNorm == TVector3(0, +1, 0)) {
+      kFace = kBottom; 
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetZ(0.0);
+    } else if (OpDetNorm == TVector3(0, -1, 0)) {
+      kFace = kTop; 
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetZ(0.0);
+    } else if (OpDetNorm == TVector3(0, 0, +1)) {
+      kFace = kUpstrm; 
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetY(0.0);
+    } else if (OpDetNorm == TVector3(0, 0, -1)) {
+      kFace = kDownstrm;
+      OpDetPlaneCenter.SetX(0.0); OpDetPlaneCenter.SetY(0.0);
+    } else {
+      printf("WARNING: Optical module %s[%i] has normal [%.2f, %.2f, %.2f]\n", 
+          cfgTile->GetName(), cfgTile->GetIdx(), OpDetNorm.x(), OpDetNorm.y(), OpDetNorm.z());
+      printf("which is not among the expected directions.\n\n"); 
+      getchar();
+    }
+
+    EDetectorClass kClass; 
+    if (fFaceClass.count(kFace) == 0) {
+      printf("%s norm [%.1f, %.1f, %.1f], pos [%g, %g, %g] cm\n", 
+          cfgTile->GetName(), OpDetNorm.x(), OpDetNorm.y(), OpDetNorm.z(), 
+          OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z());
+
+      printf("WARNING: Unknown detector type for %s face of the TPC\n", 
+          DetectorFaceName[kFace].Data());
+      return 0.; 
+    }
+
+    kClass = fFaceClass[kFace]; 
+
+    costheta   = (ScintPoint_rel).Unit().Dot(OpDetNorm); 
+    theta = acos(costheta)*TMath::RadToDeg();
+    TVector3 ScintPoint_rel_plane = ScintPoint_tpc - OpDetPlaneCenter;
+    TVector3 r1 =  (
+        ScintPoint_rel_plane -
+        OpDetNorm*(OpDetNorm.Dot(ScintPoint_rel_plane))
+        ); // Projection of the scint point onto opdet plane
+    r_distance = r1.Mag();
+
+    //if (fabs(distance - 400) < 20 && (kFace == kNorth || kFace == kTop)) 
+      //verbose = true;
+
+    if (verbose) {
+      printf("----------------------------------------\n");
+      printf("Optical detector: %s - face: %s - class: %s\n", 
+          cfgTile->GetName(), DetectorFaceName[kFace].Data(), 
+          (kClass == kReadoutTile) ? "ReadoutTile" :
+          (kClass == kSuperCell)   ? "SuperCell"   : "Unknown");
+      printf("scint pos: (%g, %g, %g) cm - tile pos: (%g, %g, %g):\n\td = %g cm - cosθ = %g - θ = %g deg\n", 
+          ScintPoint_tpc.x(), ScintPoint_tpc.y(), ScintPoint_tpc.z(), 
+          OpDetPoint.x(), OpDetPoint.y(), OpDetPoint.z(), 
+          distance, costheta, theta);
+      printf("OpDetPlaneCenter : (%g, %g, %g)\n", 
+          OpDetPlaneCenter.x(), OpDetPlaneCenter.y(), OpDetPlaneCenter.z());
+      printf("r1 : (%g, %g, %g) - |r_distance| = %g\n", 
+          r1.x(), r1.y(), r1.z(), r_distance);
+    }
+
+
+    if (costheta < 0.001)
+      solid_angle = 0;
+    else {
+      if (kClass == kReadoutTile) { 
+        solid_angle= solid((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel, kFace, verbose);
+        //double solid_angle_test = solid_old((SLArCfgReadoutTile*)cfgTile, ScintPoint_rel); 
+        //double delta_solid = solid_angle - solid_angle_test; 
+        //if (delta_solid > 1e-8) {
+          //printf("Ω = %g - Ω old = %g [δ = %g]\n", solid_angle, solid_angle_test, 
+              //delta_solid);
+        //}
+      }
+      else if (kClass == kSuperCell) 
+        solid_angle = solid((SLArCfgSuperCell*)cfgTile, ScintPoint_rel, kFace, verbose);
+    }
+
+    // calculate solid angle
+    if(solid_angle < 0){
+      std::cout << "Error: solid angle is negative" << std::endl;
+      exit(1);
+    }
+    if(r_distance < 0){
+      std::cout << "Error: r_distance is negative" << std::endl;
+      exit(1);
+    }
+    
+
+    double vis_geo = exp(-1.*distance/L_abs) * (solid_angle / (4*pi));
+
+
+    // determine Gaisser-Hillas correction for Rayleigh scattering, 
+    // distance and angular dependence, accounting for border effects
+    // offset angle bin
+    if(theta>89.0){
+      return vis_geo;
+    }
+    int j = (theta/delta_angle);
+
+    // identify GH parameters and border corrections by optical detector type 
+    // and scintillation type
+    double pars_ini[4] = {0,0,0,0};
+    double s1, s2, s3;
+    int scintillation_type = 0;  // TODO: Fix for argon
+    const double (*GH_VUV_PARS)[9] = nullptr;
+    const auto& slopes1_ = ( kFace == kBottom || kFace == kTop) ? 
+      slopes1_flat_argon : slopes1_flat_lateral_argon;
+    const auto& slopes2_ = ( kFace == kBottom || kFace == kTop) ?
+      slopes2_flat_argon : slopes2_flat_lateral_argon;
+    const auto& slopes3_ = ( kFace == kBottom || kFace == kTop) ?
+      slopes3_flat_argon : slopes3_flat_lateral_argon;
+
+    if ( kFace == kBottom || kFace == kTop) {
+      GH_VUV_PARS = fGHVUVPars_flat_argon;
+    }
+    else {
+      GH_VUV_PARS = fGHVUVPars_flat_lateral_argon; 
+    }
+
+    if (scintillation_type == 0) { // argon
+      if (j >= 8){
+        pars_ini[0] = GH_VUV_PARS[0][j];
+        pars_ini[1] = GH_VUV_PARS[1][j];
+        pars_ini[2] = GH_VUV_PARS[2][j];
+        pars_ini[3] = GH_VUV_PARS[3][j];
+      }
+      else{
+        double temp1 = GH_VUV_PARS[0][j];
+        double temp2 = GH_VUV_PARS[0][j+1];
+        pars_ini[0] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+
+        temp1 = GH_VUV_PARS[1][j];
+        temp2 = GH_VUV_PARS[1][j+1];
+        pars_ini[1] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+
+        temp1 = GH_VUV_PARS[2][j];
+        temp2 = GH_VUV_PARS[2][j+1];
+        pars_ini[2] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+
+        temp1 = GH_VUV_PARS[3][j];
+        temp2 = GH_VUV_PARS[3][j+1];
+        pars_ini[3] = temp1 + (temp2-temp1)*(theta-j*delta_angle)/delta_angle;
+      }
+
+      s1 = interpolate( angulo, slopes1_, theta, true);
+      s2 = interpolate( angulo, slopes2_, theta, true);
+      s3 = interpolate( angulo, slopes3_, theta, true);
+    }
+    else if (scintillation_type == 1) { // xenon
+      pars_ini[0] = fGHVUVPars_flat_xenon[0][j];
+      pars_ini[1] = fGHVUVPars_flat_xenon[1][j];
+      pars_ini[2] = fGHVUVPars_flat_xenon[2][j];
+      pars_ini[3] = fGHVUVPars_flat_xenon[3][j];
+      s1 = interpolate( angulo, slopes1_, theta, true);
+      s2 = interpolate( angulo, slopes2_, theta, true);
+      s3 = interpolate( angulo, slopes3_, theta, true);
+    }
+    else {
+      std::cout << "Error: Invalid scintillation type configuration." << endl;
+      exit(1);
+    }
+    // add border correction
+    pars_ini[0] = pars_ini[0] + s1 * r_distance;
+    pars_ini[1] = pars_ini[1] + s2 * r_distance;
+    pars_ini[2] = pars_ini[2] + s3 * r_distance;
+    pars_ini[3] = pars_ini[3];
+
+    // calculate correction factor
+    double GH_correction = GaisserHillas(distance, pars_ini);
+
+    // apply correction
+    double vis_vuv = 0 ;
+    vis_vuv = GH_correction*vis_geo/costheta;
+
+    if (verbose) {
+      printf("----------------------------------------\n");
+      printf("\tvis_geo = %g\n", vis_geo);
+      printf("\tGH_correction = %g\n", GH_correction);
+      printf("\tvis_vuv = %g\n", vis_vuv);
+      getchar(); 
+    }
+
+    return vis_vuv;
+  }
+
+
 
   // gaisser-hillas function definition
   Double_t SLArLightPropagationModel::GaisserHillas(double x,double *par) {
@@ -246,7 +483,8 @@ namespace slarAna {
   double SLArLightPropagationModel::solid(
       SLArCfgReadoutTile* cfgTile, 
       TVector3 &v, 
-      EDetectorFace kFace) {
+      EDetectorFace kFace, 
+      bool verbose) {
 
     TVector3 OpDetNorm = cfgTile->GetNormal();     
 
@@ -256,18 +494,18 @@ namespace slarAna {
     TVector3 XPlane[2]; 
 
     if (kFace == kNorth || kFace == kSouth) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(0, 1, 0); 
     } else if (kFace == kTop || kFace == kBottom) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetX((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetX(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm")); 
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(1, 0, 0); 
     } else if (kFace == kUpstrm || kFace == kDownstrm) {
-      detSize.SetX((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));  
+      detSize.SetX(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));  
       XPlane[0] = TVector3(1, 0, 0); 
       XPlane[1] = TVector3(0, 1, 0); 
     }
@@ -354,7 +592,8 @@ namespace slarAna {
   double SLArLightPropagationModel::solid(
       SLArCfgSuperCell* cfgTile, 
       TVector3 &v, 
-      EDetectorFace kFace) {
+      EDetectorFace kFace, 
+      bool verbose) {
 
     TVector3 OpDetNorm = cfgTile->GetNormal();     
 
@@ -363,19 +602,25 @@ namespace slarAna {
     TVector3 detSize(0, 0, 0); 
     TVector3 XPlane[2]; 
 
+    if (verbose) {
+      printf("----------------------------------------\n");
+      printf("opDet axis0: (%g, %g, %g) - axis1: (%g, %g, %g)\n", 
+          cfgTile->GetAxis0().x(), cfgTile->GetAxis0().y(), cfgTile->GetAxis0().z(),
+          cfgTile->GetAxis1().x(), cfgTile->GetAxis1().y(), cfgTile->GetAxis1().z());
+    }
     if (kFace == kNorth || kFace == kSouth) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(0, 1, 0); 
     } else if (kFace == kTop || kFace == kBottom) {
-      detSize.SetZ((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetX((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
+      detSize.SetZ(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetX(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm")); 
       XPlane[0] = TVector3(0, 0, 1); 
       XPlane[1] = TVector3(1, 0, 0); 
     } else if (kFace == kUpstrm || kFace == kDownstrm) {
-      detSize.SetX((cfgTile->GetAxis0().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm")); 
-      detSize.SetY((cfgTile->GetAxis1().Dot(cfgTile->GetSize()))/G4UIcommand::ValueOf("cm"));  
+      detSize.SetX(cfgTile->GetSizeZ()/G4UIcommand::ValueOf("cm")); 
+      detSize.SetY(cfgTile->GetSizeX()/G4UIcommand::ValueOf("cm"));  
       XPlane[0] = TVector3(1, 0, 0); 
       XPlane[1] = TVector3(0, 1, 0); 
     }
@@ -396,8 +641,14 @@ namespace slarAna {
     for (int j=0; j<2; j++) {
       isOut[j] = std::fabs(vv.Dot(XPlane[j])) > 0.5*(detSize.Dot(XPlane[j])); 
     }
-    //printf("vv[0] = %g, vv[1] = %g, vv[2] = %g: %i - %i\n", 
-        //vv.x(), vv.y(), vv.z(), isOut[0], isOut[1]); 
+
+    if (verbose) {
+      printf("detSize = (%g, %g, %g)\n", detSize.x(), detSize.y(), detSize.z());
+      printf("v = (%g, %g, %g)\n", v.x(), v.y(), v.z());
+      printf("vv = (%g, %g,  %g): %i - %i\n", 
+          vv.x(), vv.y(), vv.z(), isOut[0], isOut[1]); 
+      getchar();
+    }
 
     if (isOut[0] == false && isOut[1] == false) {
       Dx[0] = 0.5*detSize.Dot(XPlane[0]) - std::fabs(vv.Dot(XPlane[0])); 

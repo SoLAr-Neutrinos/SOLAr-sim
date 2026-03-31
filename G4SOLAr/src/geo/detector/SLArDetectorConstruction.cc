@@ -8,10 +8,12 @@
 #include "rapidjson/filereadstream.h"
 
 #include "action/SLArRunAction.hh"
+#include "SLArDebugUtils.hh"
 #include "SLArAnalysisManager.hh"
 #include "physics/SLArCrossSectionBiasing.hh"
 
 #include "detector/SLArDetectorConstruction.hh"
+#include "geo/SLArGeoUtils.hh"
 
 #include "detector/SLArBaseDetModule.hh"
 #include "detector/TPC/SLArDetTPC.hh"
@@ -65,13 +67,13 @@
  */
 SLArDetectorConstruction::SLArDetectorConstruction(
     G4String geometry_cfg_file, G4String material_db_file)
- : G4VUserDetectorConstruction(),
-   fGeometryCfgFile(""), 
-   fMaterialDBFile(""),
-   fExpHall(nullptr),
-   fSuperCell(nullptr),
-   fWorldLog(nullptr), 
-   fWorldPhys(nullptr) 
+  : G4VUserDetectorConstruction(),
+  fGeometryCfgFile(""), 
+  fMaterialDBFile(""),
+  fExpHall(nullptr),
+  fSuperCell(nullptr),
+  fWorldLog(nullptr), 
+  fWorldPhys(nullptr) 
 { 
   fDetectorMsgr = new SLArDetectorConstructionMsgr(this);
 
@@ -91,7 +93,7 @@ SLArDetectorConstruction::~SLArDetectorConstruction(){
   {
     delete fVisAttributes[i];
   }
-  
+
   G4cerr << "SLArDetectorConstruction DONE" << G4endl;
 }
 
@@ -153,12 +155,20 @@ void SLArDetectorConstruction::Init() {
   }
   InitExpHall(*jhall);
 
+  //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+  // Parse shielding description
+  if (d.HasMember("Shielding")) {
+    G4cout << "SLArDetectorConstruction::Init Shielding" << G4endl;
+    InitShielding(d["Shielding"]); 
+  }
+
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialize TPC objects
   G4cout << "SLArDetectorConstruction::Init TPC" << G4endl;
   InitTPC(d["TPC"]); 
   InitCathode(d["Cathode"]);
-  ConstructTarget(); 
+
+  ConstructTarget(d); 
 
   fCryostat = new SLArDetCryostat(); 
   fCryostat->SetGeoPar( "target_size_x", fDetector->GetGeoPar("det_size_x") ); 
@@ -195,6 +205,28 @@ void SLArDetectorConstruction::Init() {
 void SLArDetectorConstruction::InitExpHall(const rapidjson::Value& jexp) {
   fExpHall = new SLArDetExpHall(); 
   fExpHall->Init(jexp); 
+}
+
+void SLArDetectorConstruction::InitShielding(const rapidjson::Value& jshield) {
+  if (jshield.IsArray()) {
+    for (const auto& shielding_wall : jshield.GetArray()) {
+      fShielding.emplace_back( new SLArDetShielding() ); 
+      auto& shield = fShielding.back();
+      shield->Init(shielding_wall);
+    }
+  }
+  else if (jshield.IsObject()) {
+    fShielding.emplace_back( new SLArDetShielding() ); 
+    auto& shield = fShielding.back();
+    shield->Init(jshield);
+  }
+  else {
+    G4Exception("SLArDetectorConstruction::InitShielding()",
+        "InvalidGeometryConfig",
+        FatalException,
+        "Shielding configuration must be an object or an array of objects");
+  }
+  return;
 }
 
 void SLArDetectorConstruction::InitTPC(const rapidjson::Value& jtpc) {
@@ -245,7 +277,7 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
     detSCArray->Init(jarray); 
     fSCArray.insert( std::make_pair(detSCArray->GetID(), detSCArray) ); 
   }
-  
+
   return;
 }
 
@@ -317,7 +349,7 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
  */
 void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
   fReadoutTile = new SLArDetReadoutTile();
-  
+
   assert(pixsys.HasMember("dimensions")); 
   assert(pixsys.HasMember("components")); 
   assert(pixsys.HasMember("unit_cell")); 
@@ -332,6 +364,10 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
 
     for (const auto &mtile : pixsys["tile_assembly"].GetArray()) {
       // Setup megatile
+      if (mtile.HasMember("name")) {
+        printf("SLArDetectorConstruction::InitReadoutTile: Setting up %s tile assembly\n", 
+            mtile["name"].GetString()); 
+      } 
       SLArDetReadoutTileAssembly* megatile = new SLArDetReadoutTileAssembly(); 
       assert(mtile.HasMember("dimensions")); 
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
@@ -352,41 +388,85 @@ void SLArDetectorConstruction::InitAnode(const rapidjson::Value& jconf) {
 
 }
 
-void SLArDetectorConstruction::ConstructTarget() {
+void SLArDetectorConstruction::ConstructTarget(const rapidjson::Value& d) {
   G4ThreeVector target_min   (0, 0, 0); 
   G4ThreeVector target_max   (0, 0, 0); 
 
   G4double eps = 1*CLHEP::mm;
+  G4ThreeVector lar_target_dim(0., 0., 0.);
+  G4ThreeVector lar_target_pos(0., 0., 0.); 
 
-  for (const auto &tpc_ : fTPC) {
-    auto& tpc = tpc_.second; 
-    G4ThreeVector local_center; 
-    G4ThreeVector local_dim;  
-    local_center.setX(tpc->GetGeoPar("tpc_pos_x")); 
-    local_center.setY(tpc->GetGeoPar("tpc_pos_y")); 
-    local_center.setZ(tpc->GetGeoPar("tpc_pos_z"));
-    local_dim   .setX(tpc->GetGeoPar("tpc_x")); 
-    local_dim   .setY(tpc->GetGeoPar("tpc_y")); 
-    local_dim   .setZ(tpc->GetGeoPar("tpc_z"));
+  if (d.HasMember("LArTarget")) {
+    debug::require_json_type(d["LArTarget"], rapidjson::kObjectType);
+    const rapidjson::Value& jlar_target = d["LArTarget"].GetObject();
 
-    G4ThreeVector local_min = local_center - 0.5*local_dim; 
-    G4ThreeVector local_max = local_center + 0.5*local_dim; 
+    if (jlar_target.HasMember("position")) {
+      const auto& jlar_target_pos = jlar_target["position"];
+      debug::require_json_type(jlar_target_pos, rapidjson::kObjectType);
+      debug::require_json_member(jlar_target_pos, "xyz");
+      const auto& jlar_target_pos_xyz = jlar_target_pos["xyz"].GetArray();
+      G4double unit_val = unit::GetJSONunit(jlar_target_pos);
+      assert(jlar_target_pos_xyz.Size() == 3);
+      lar_target_pos.setX( jlar_target_pos_xyz[0].GetDouble() * unit_val );
+      lar_target_pos.setY( jlar_target_pos_xyz[1].GetDouble() * unit_val );
+      lar_target_pos.setZ( jlar_target_pos_xyz[2].GetDouble() * unit_val );
+    }
 
-    G4cout << local_center << G4endl; 
-    G4cout << local_min << G4endl; 
-    G4cout << local_max << G4endl; 
+    if ( jlar_target.HasMember("dimensions") ) {
+      const auto& jlar_target_dim = jlar_target["dimensions"];
+      assert(jlar_target_dim.IsArray());
+      assert(jlar_target_dim.Size() == 3);
+      for (const auto &dim : jlar_target_dim.GetArray()) {
+        assert(dim.IsObject());
+        assert(dim.HasMember("name")); 
+        TString dim_name = dim["name"].GetString();
+        int idx = -1;
+        if (dim_name == "size_x") {
+          idx = 0; 
+        } else if (dim_name == "size_y") {
+          idx = 1; 
+        } else if (dim_name == "size_z") {
+          idx = 2; 
+        } else {
+          fprintf(stderr, "LAr target dimension %s not recognized\n", dim_name.Data());
+          exit( EXIT_FAILURE ); 
+        }
 
-    for (int idim = 0; idim <3; idim++) {
-      if (local_min[idim] < target_min[idim]) target_min[idim] = local_min[idim]; 
-      if (local_max[idim] > target_max[idim]) target_max[idim] = local_max[idim]; 
+        lar_target_dim[idx] = unit::ParseJsonVal(dim);
+      }
 
-      //printf("target_max: [%g, %g, %g], target_min: [%g, %g, %g]\n", 
-          //target_max[0], target_max[1], target_max[2], 
-          //target_min[0], target_min[1], target_min[2]); 
+      target_min = lar_target_pos - 0.5*lar_target_dim;
+      target_max = lar_target_pos + 0.5*lar_target_dim;
+    }
+  }
+  
+  if (lar_target_dim.mag2() == 0.0) {
+    for (const auto &tpc_ : fTPC) {
+      auto& tpc = tpc_.second; 
+      G4ThreeVector local_center; 
+      G4ThreeVector local_dim;  
+      local_center.setX(tpc->GetGeoPar("tpc_pos_x")); 
+      local_center.setY(tpc->GetGeoPar("tpc_pos_y")); 
+      local_center.setZ(tpc->GetGeoPar("tpc_pos_z"));
+      local_dim   .setX(tpc->GetGeoPar("tpc_x")); 
+      local_dim   .setY(tpc->GetGeoPar("tpc_y")); 
+      local_dim   .setZ(tpc->GetGeoPar("tpc_z"));
+
+      G4ThreeVector local_min = local_center - 0.5*local_dim; 
+      G4ThreeVector local_max = local_center + 0.5*local_dim; 
+
+      G4cout << local_center << G4endl; 
+      G4cout << local_min << G4endl; 
+      G4cout << local_max << G4endl; 
+
+      for (int idim = 0; idim <3; idim++) {
+        if (local_min[idim] < target_min[idim]) target_min[idim] = local_min[idim]; 
+        if (local_max[idim] > target_max[idim]) target_max[idim] = local_max[idim]; 
+      }
     }
   }
 
-  G4ThreeVector target_center = 0.5*(target_min + target_max); 
+  G4ThreeVector target_center = 0.5*(target_min + target_max) + lar_target_pos; 
   G4double target_dim[3] = {0.}; 
   for (int idim = 0; idim < 3; idim++) {
     target_dim[idim] = target_max[idim] - target_min[idim] + 2*eps; 
@@ -396,7 +476,7 @@ void SLArDetectorConstruction::ConstructTarget() {
   fDetector->SetGeoPar("det_pos_x", target_center.x()); 
   fDetector->SetGeoPar("det_pos_y", target_center.y()); 
   fDetector->SetGeoPar("det_pos_z", target_center.z()); 
-  
+
   fDetector->SetGeoPar("det_size_x", target_dim[0]); 
   fDetector->SetGeoPar("det_size_y", target_dim[1]); 
   fDetector->SetGeoPar("det_size_z", target_dim[2]); 
@@ -406,18 +486,33 @@ void SLArDetectorConstruction::ConstructTarget() {
       target_dim[0], target_dim[1], target_dim[2]); 
 
   fDetector->SetSolidVolume( new G4Box("target_lar_solid", 
-      0.5*target_dim[0], 0.5*target_dim[1], 0.5*target_dim[2]) ); 
+        0.5*target_dim[0], 0.5*target_dim[1], 0.5*target_dim[2]) ); 
   SLArMaterial* matTarget = new SLArMaterial("LAr"); 
   matTarget->BuildMaterialFromDB(fMaterialDBFile); 
   fDetector->SetLogicVolume( new G4LogicalVolume(fDetector->GetModSV(), 
-      matTarget->GetMaterial(), "target_lar_lv") ); 
-  fDetector->GetModLV()->SetVisAttributes( G4VisAttributes( false ) ); 
+        matTarget->GetMaterial(), "target_lar_lv") ); 
+  fDetector->GetModLV()->SetVisAttributes( G4VisAttributes(false) ); 
 
 }
 
 void SLArDetectorConstruction::ConstructCryostat() {
   fCryostat->BuildMaterials(fMaterialDBFile); 
   fCryostat->BuildCryostat(); 
+
+  if (fCryostat->HasAirFlow()) {
+    G4double target_size_y = fDetector->GetGeoPar("det_size_y");
+    G4double cryostat_tk = fCryostat->GetGeoPar("cryostat_tk");
+    G4double waffle_tk = (fCryostat->HasSupportStructure()) ? 
+      fCryostat->GetGeoPar("waffle_total_width") : 0.0;
+    G4double airflow_tk = fCryostat->GetAirflowUnit()->GetGeoPar("thickness");
+
+    G4ThreeVector airflow_pos = 
+      fDetector->GetModPV()->GetTranslation() 
+      - G4ThreeVector(0, 0.5*target_size_y + cryostat_tk + waffle_tk + 0.5*airflow_tk, 0);
+
+    fCryostat->GetAirflowUnit()->GetModPV("airflow_pv", 0, 
+        airflow_pos, fWorldLog, 0) ;
+  }
 
   fCryostat->GetModPV("cryostat_pv", 0, 
       fDetector->GetModPV()->GetTranslation(), 
@@ -476,13 +571,25 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
 
   // 2. Build and place the Experimental Hall
   ConstructExperimentalHall();
-  
+
+  // 3. Build and place the detector's shielding (just in case)
+  ConstructShielding();
+
   // Compute the position of the TPCs including cryostat dimensions
   const G4double target_size_y = fDetector->GetGeoPar("det_size_y"); 
   G4double cryostat_tk = fCryostat->GetGeoPar("cryostat_tk");
+  G4double shielding_tk = 0.0; 
+  for (const auto &shield : fShielding) {
+    if (shield->GetFace() == geo::EBoxFace::kYminus) {
+      shielding_tk = shield->GetGeoPar("shielding_thickness");
+    }
+  }
+  G4double airflow_tk = (fCryostat->HasAirFlow()) ? 
+    fCryostat->GetGeoPar("floor_airflow_thickness") : 0.0;
+
   if (fCryostat->HasSupportStructure()) cryostat_tk += fCryostat->GetGeoPar("waffle_total_width");
 
-  // 3. Build and place the LAr target
+  // 4. Build and place the LAr target
   G4cout << "\nSLArDetectorConstruction: Building the Detector Volume" << G4endl;
   G4ThreeVector target_center( 
       fDetector->GetGeoPar("det_pos_x"), 
@@ -492,20 +599,24 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   G4ThreeVector hall_center = fExpHall->GetBoxCenter();
   G4ThreeVector hall_halfsize = fExpHall->GetBoxHalfSize();
 
-  G4double detector_floor_spacing = 5*CLHEP::cm;
-  G4ThreeVector target_pos = hall_center + G4ThreeVector(0, cryostat_tk + 0.5*target_size_y - hall_halfsize.y() + detector_floor_spacing, 0);
+  G4double detector_floor_spacing = 0*CLHEP::cm;
+  G4ThreeVector target_y_shift = G4ThreeVector(0, airflow_tk + cryostat_tk + shielding_tk 
+      + 0.5*target_size_y - hall_halfsize.y() + detector_floor_spacing, 0);
+  G4ThreeVector target_pos = hall_center + target_center + target_y_shift; 
   G4cout << "target_center: " << target_center << G4endl;
   G4cout << "target_halfsize: " << 0.5*target_size_y << G4endl;
   G4cout << "hall_center: " << hall_center << G4endl;
   G4cout << "cryostat thickness: " << cryostat_tk << G4endl; 
+  G4cout << "shielding thickness: " << shielding_tk << G4endl;
+  G4cout << "airflow thickness: " << airflow_tk << G4endl;
   G4cout << "target_y: " << target_pos << G4endl;
 
   fDetector->SetModPV( new G4PVPlacement(
         0, 
         target_pos,
         fDetector->GetModLV(), "target_lar_pv", fWorldLog, 0, 9) ); 
-  
-  // 3. Build and place the Cryostat
+
+  // 5. Build and place the Cryostat
   G4cout << "\nSLArDetectorConstruction: Building the Cryostat" << G4endl;
   fCryostat->SetWorldMaterial(matWorld); 
   ConstructCryostat(); 
@@ -523,10 +634,10 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
     tpc.second->SetVisAttributes(); 
   }
 
-  // 3. Build and place the "conventional" Photon Detection System 
+  // 6. Build and place the "conventional" Photon Detection System 
   if (fSuperCell) BuildAndPlaceSuperCells();
 
-  // 4. Build and place the "pixel-based" readout system 
+  // 7. Build and place the "pixel-based" readout system 
   BuildAndPlaceAnode(); 
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -655,6 +766,10 @@ void SLArDetectorConstruction::AddExternalScorer(const G4String phys_volume_name
 #else
   G4cout << "SLArDetectorConstruction::AddExternalScorer WARNING: " << G4endl;
   G4cout << "This method is active only when solar_sim is compiled with SLAR_EXTERNAL option, and this is not the case." << G4endl;
+  G4Exception("SLArDetectorConstruction::AddExternalScorer()",
+      "ExternalScorerNotEnabled",
+      FatalException,
+      "This method is active only when solar_sim is compiled with SLAR_EXTERNAL option, and this is not the case.");
 #endif
 
   return;
@@ -675,14 +790,14 @@ SLArDetTPC* SLArDetectorConstruction::GetDetTPC(int copyid)
 
 //SLArDetPMT* SLArDetectorConstruction::GetDetPMT(const char* mod) 
 //{
-  //SLArDetPMT* pmt = nullptr;
-  //pmt = fPMTs.find(mod)->second;
-  //return pmt;
+//SLArDetPMT* pmt = nullptr;
+//pmt = fPMTs.find(mod)->second;
+//return pmt;
 //}
 
 //std::map<G4String,SLArDetPMT*>& SLArDetectorConstruction::GetDetPMTs()
 //{
-  //return fPMTs;
+//return fPMTs;
 //}
 
 
@@ -749,7 +864,7 @@ void SLArDetectorConstruction::BuildAndPlaceSuperCells()
     pdsCfg.RegisterElement( array_cfg ); 
   }
 
- 
+
   SLArAnaMgr->LoadPDSCfg(pdsCfg); 
   G4cout << "SLArDetectorConstruction::BuildAndPlaceSuperCell DONE" << G4endl;
   return;
@@ -779,7 +894,8 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
     auto anode = anode_.second; 
     auto anode_id = anode_.first; 
     anode->BuildMaterial(fMaterialDBFile); 
-    printf("---- Building anode volume\n");
+    printf("---- Building anode volume with %s tile assembly\n", 
+        anode->GetTileAssemblyModel().c_str() );
     anode->BuildAnodeAssembly( 
         fReadoutMegaTile.find(anode->GetTileAssemblyModel())->second );
     auto pos = anode->GetPosition(); 
@@ -828,10 +944,10 @@ void SLArDetectorConstruction::ConstructAnodeMap() {
     const size_t n_megatiles = anodeCfg.GetMap().size(); 
     if (n_megatiles == 0) {
       printf("SLArDetectorConstruction::ConstructAnodeMap WARNING: Anode %i has no megatiles registered.\n", 
-        anodeCfg.GetIdx()); 
+          anodeCfg.GetIdx()); 
       return;
     }
-    
+
     printf("getting front megatile\n"); 
     SLArCfgMegaTile& mtileCfg = anodeCfg.GetMap().front(); 
 
@@ -892,13 +1008,52 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     }
   }
 
-  printf("\nCryostat ----------------------------------------\n");
-  printf("fCryostat PV ptr: %p\n", static_cast<void*>(fCryostat->GetModPV())); 
-  istore->AddImportanceGeometryCell(
-      1, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
+  printf("\nShielding --------------------------------------\n");
+  for (const auto &shield : fShielding) {
+    auto shield_pv = shield->GetModPV(); 
+    printf("fShielding PV ptr: %p\n", static_cast<void*>(shield_pv)); 
+    istore->AddImportanceGeometryCell(
+        imp, *shield_pv, shield_pv->GetCopyNo()); 
+    G4LogicalVolume* shield_lv = shield_pv->GetLogicalVolume();
+    for (const auto &layer : shield->GetShieldingLayers()) {
+      printf("[%i]: %s - imp: %i\n", layer.first, 
+          layer.second.fName.data(), layer.second.fImportance);
+    }
 
-  printf("Support structure\n");
-  for (const auto &face_ : fCryostat->GetCryostatSupportStructure() ) {
+    for (int i=0; i<shield_lv->GetNoDaughters(); i++) {
+      auto vol = shield_lv->GetDaughter(i);
+      auto cell = G4GeometryCell(*vol, vol->GetCopyNo());
+      imp = shield->GetShieldingLayers()[vol->GetCopyNo()].fImportance;
+      printf("Adding %s (copyNo %i) to istore with importance %g (rep nr. %i, %p)\n", 
+          cell.GetPhysicalVolume().GetName().data(), vol->GetCopyNo(),
+          imp, cell.GetReplicaNumber(), static_cast<void*>(vol) );
+      if (istore->IsKnown(cell) == false) {
+        istore->AddImportanceGeometryCell(imp, cell); 
+      }
+    }
+  }
+
+  printf("\nCryostat ----------------------------------------\n");
+  if (fCryostat->HasAirFlow()) {
+    auto airflow_pv = fCryostat->GetAirflowUnit()->GetModPV(); 
+    printf("Adding air flow (%s, %p) with importance: %g\n", 
+        airflow_pv->GetName().data(), static_cast<void*>(airflow_pv), imp); 
+    istore->AddImportanceGeometryCell(
+        imp, *airflow_pv, airflow_pv->GetCopyNo());
+  }
+
+  printf("Adding Top Cryostat PV  (%s, %p) with importance %g\n", 
+      fCryostat->GetModPV()->GetName().data(), 
+      static_cast<void*>(fCryostat->GetModPV()), imp);
+  istore->AddImportanceGeometryCell(
+      imp, *(fCryostat->GetModPV()), fCryostat->GetModPV()->GetCopyNo());
+
+  printf("Adding Top Support structure PV with importance %g\n", imp);
+  const auto support_structure_pv = fCryostat->GetSupportStructure()->GetModPV();
+  istore->AddImportanceGeometryCell(
+      imp, *support_structure_pv, support_structure_pv->GetCopyNo());
+
+  for (const auto &face_ : fCryostat->GetCryostatSupportStructureFaces() ) {
     auto face = face_.second;
     G4GeometryCell cell(*face->GetModPV(), face->GetModPV()->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
@@ -907,7 +1062,7 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
           cell.GetReplicaNumber(), imp);              
       istore->AddImportanceGeometryCell(imp, cell); 
     }
-    
+
     const auto pv = face->GetModLV()->GetDaughter(0); 
     const auto lv = pv->GetLogicalVolume();
 
@@ -931,7 +1086,6 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     }
 
 
-
     auto vol_unit = vol_row->GetLogicalVolume()->GetDaughter(0); 
     auto row_repl = get_plane_replication_data(static_cast<G4PVParameterised*>(vol_unit)); 
     for (int iunit = 0; iunit<row_repl.fNreplica; iunit++) {
@@ -949,7 +1103,7 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
     for (int i=1; i<face->GetModLV()->GetNoDaughters(); i++) {
       auto pv_patch = face->GetModLV()->GetDaughter(i); 
       auto lv_patch = pv_patch->GetLogicalVolume(); 
-      
+
       G4GeometryCell cell(*pv_patch, pv_patch->GetCopyNo()); 
       if (istore->IsKnown(cell) == false) {
         printf("PATCH MODULE: Adding %s (rp nr %i) to istore with importance %g\n",
@@ -958,7 +1112,7 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         istore->AddImportanceGeometryCell(imp, cell);  
 
         const auto ppv_patch = (G4PVParameterised*)lv_patch->GetDaughter(0); 
-        
+
         if (ppv_patch->IsParameterised()) {
           const auto unit_lv = ppv_patch->GetLogicalVolume(); 
           const auto rpl = get_plane_replication_data(ppv_patch); 
@@ -1045,17 +1199,17 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       istore->AddImportanceGeometryCell(imp, cell); 
     }
   }
-  
+
 
 
   printf("\nCryostat layers\n");
   for (const auto &layer : fCryostat->GetCryostatStructure())
   {
-    imp = layer.second->fImportance;
-      const auto vol = layer.second->fModule->GetModPV();
-      G4cout << "Going to assign importance: " << imp << ", to volume: " 
-             << vol->GetName() << " rep nr: " << vol->GetCopyNo() << G4endl;
-      istore->AddImportanceGeometryCell(imp, *vol, vol->GetCopyNo());
+    imp = layer.second.fImportance;
+    const auto vol = layer.second.fModule->GetModPV();
+    G4cout << "Going to assign importance: " << imp << ", to volume: " 
+      << vol->GetName() << " rep nr: " << vol->GetCopyNo() << G4endl;
+    istore->AddImportanceGeometryCell(imp, *vol, vol->GetCopyNo());
   }
 
   // the remaining part pf the geometry (rest) gets the same
@@ -1077,7 +1231,7 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   printf("\nTPCs --------------------------------------------\n");
   for (const auto &tpc_ : fTPC) {
     auto tpc = tpc_.second;
-    
+
     auto field_cage = tpc->GetFieldCage(); 
     if (field_cage) {
       auto field_cage_vol = field_cage->GetModLV()->GetDaughter(0); 
@@ -1146,8 +1300,8 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         }
       }
     }
-    
-    
+
+
   }
 
   printf("\nReadout Tile System -------------------------\n");
@@ -1287,8 +1441,8 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
         istore->AddImportanceGeometryCell(imp, cell); 
       }
     }
-    
-  
+
+
   }
 
   return istore;
@@ -1311,10 +1465,10 @@ void SLArDetectorConstruction::ConstructCryostatScorer() {
   G4SDParticleFilter* gammaFilter = new G4SDParticleFilter("gammaFilter"); 
   G4SDParticleWithEnergyFilter* gammaEnergyFilter = 
     new G4SDParticleWithEnergyFilter("gamma", 0.5); 
-  
+
   neutronFilter->add("neutron"); 
   gammaFilter->add("gamma"); 
-  
+
 
   G4SDManager* SDman = G4SDManager::GetSDMpointer();
   std::vector<G4MultiFunctionalDetector*> MFDetectors; 
@@ -1322,14 +1476,14 @@ void SLArDetectorConstruction::ConstructCryostatScorer() {
   int ilayer = 0;
   for (const auto &layer_ : fCryostat->GetCryostatStructure()) {
     auto layer = layer_.second;
-    auto mfd = new G4MultiFunctionalDetector("Cryostat/"+layer->fName); 
+    auto mfd = new G4MultiFunctionalDetector("Cryostat/"+layer.fName); 
 
     // create scorers 
     G4PSTermination* captureCntsNeutrons = 
-      new G4PSTermination("terminationNeutrons"+layer->fName); 
+      new G4PSTermination("terminationNeutrons"+layer.fName); 
     captureCntsNeutrons->SetFilter(neutronFilter); 
     G4PSNofSecondary* secondaries = 
-      new G4PSNofSecondary("secondaryGammas"+layer->fName); 
+      new G4PSNofSecondary("secondaryGammas"+layer.fName); 
     secondaries->SetFilter(gammaEnergyFilter);
     G4PSTermination* captureCntsGamma = 
       new G4PSTermination("terminationGamma"+std::to_string(ilayer)); 
@@ -1339,10 +1493,10 @@ void SLArDetectorConstruction::ConstructCryostatScorer() {
 
     SDman->AddNewDetector( mfd );  
 
-    SetSensitiveDetector(layer->fModule->GetModLV(), mfd); 
+    SetSensitiveDetector(layer.fModule->GetModLV(), mfd); 
     ilayer++; 
   }
- 
+
 }
 
 void SLArDetectorConstruction::ConstructExperimentalHall() {
@@ -1352,4 +1506,130 @@ void SLArDetectorConstruction::ConstructExperimentalHall() {
 
   return;
 }
+
+void SLArDetectorConstruction::ConstructShielding() {
+
+  if (fShielding.empty())  return;
+
+  G4cout << "\nSLArDetectorConstruction: Building the Shielding" << G4endl;
+  const G4ThreeVector hall_center = fExpHall->GetBoxCenter();
+  const G4ThreeVector hall_halfsize = fExpHall->GetBoxHalfSize();
+  const G4double target_dim_x = fDetector->GetGeoPar("det_size_x");
+  const G4double target_dim_y = fDetector->GetGeoPar("det_size_y");
+  const G4double target_dim_z = fDetector->GetGeoPar("det_size_z");
+  const G4double target_pos_x = fDetector->GetGeoPar("det_pos_x");
+  const G4double target_pos_y = fDetector->GetGeoPar("det_pos_y");
+  const G4double target_pos_z = fDetector->GetGeoPar("det_pos_z");
+  G4double cryostat_tk  = fCryostat->GetGeoPar("cryostat_tk");
+  if (fCryostat->HasSupportStructure()) {
+    cryostat_tk += fCryostat->GetGeoPar("waffle_total_width");
+  }
+  
+  const G4ThreeVector target_pos(target_pos_x, target_pos_y, target_pos_z);
+  const G4ThreeVector target_halfsize(0.5*target_dim_x, 0.5*target_dim_y, 0.5*target_dim_z);
+  const G4ThreeVector cryostat_halfsize = target_halfsize + 
+    G4ThreeVector( cryostat_tk, cryostat_tk, cryostat_tk );
+
+  const G4ThreeVector gap_cavern_cryostat = hall_halfsize - (cryostat_halfsize + target_pos);
+
+  // get thickness of the floor shielding (in case there is one)
+  G4double floor_shield_thickness = 0.0;
+  for (const auto& shield : fShielding) {
+    if (shield->GetFace() == geo::EBoxFace::kYminus) {
+      floor_shield_thickness += shield->GetGeoPar("shielding_thickness");
+    }
+  }
+
+  for (auto& shield : fShielding) {
+    const geo::EBoxFace face = shield->GetFace();
+    const G4String face_name = geo::get_face_name( face ); 
+    G4RotationMatrix* shield_rot = nullptr;
+
+    G4ThreeVector shield_pos(0.0, 0.0, 0.0);
+    G4double shield_thickness = shield->GetGeoPar("shielding_thickness");
+    G4ThreeVector gap_shield_cryostat = gap_cavern_cryostat - 
+      G4ThreeVector( shield_thickness, shield_thickness, shield_thickness );
+    G4ThreeVector shield_halfsize(shield->GetGeoPar("dim_x")*0.5,
+        shield_thickness*0.5, // this value is unused 
+        shield->GetGeoPar("dim_z")*0.5);
+
+    G4double gap = 0.0;
+
+    switch (face) {
+      case geo::EBoxFace::kYminus:
+        shield_pos.set(0.0, 
+            hall_center.y() - hall_halfsize.y() + shield_thickness*0.5,
+            hall_center.z());
+        break;
+      case geo::EBoxFace::kYplus:
+        {
+          shield_rot = new G4RotationMatrix();
+          shield_rot->rotateZ(CLHEP::pi);
+          shield_pos.set(0.0, 
+              hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_thickness*0.5 + 
+              target_dim_y + 2*cryostat_tk,
+              hall_center.z());
+          break;
+        }
+      case geo::EBoxFace::kXminus:
+        shield_rot = new G4RotationMatrix();
+        shield_rot->rotateZ(CLHEP::halfpi);
+        gap = fabs( gap_shield_cryostat.x() );
+        shield_pos.set(
+            hall_center.x() - hall_halfsize.x() + (shield_thickness+gap)*0.5,
+            hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.x(),
+            hall_center.z());
+        break;
+      case geo::EBoxFace::kXplus:
+        shield_rot = new G4RotationMatrix();
+        shield_rot->rotateZ(-CLHEP::halfpi);
+        gap = fabs( gap_shield_cryostat.x() );
+        shield_pos.set(
+            hall_center.x() + hall_halfsize.x() - (shield_thickness+gap)*0.5,
+            hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.x(),
+            hall_center.z());
+        break;
+      case geo::EBoxFace::kZminus:
+        shield_rot = new G4RotationMatrix();
+        shield_rot->rotateX(-CLHEP::halfpi);
+        gap = fabs( gap_shield_cryostat.z() );
+        shield_pos.set(
+            hall_center.x(),
+             hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.z(),
+            hall_center.z() - hall_halfsize.z() + (shield_thickness+gap)*0.5);
+        break;
+      case geo::EBoxFace::kZplus:
+        shield_rot = new G4RotationMatrix();
+        shield_rot->rotateX(CLHEP::halfpi);
+        gap = fabs( gap_shield_cryostat.z() );
+        shield_pos.set(
+            hall_center.x(),
+            hall_center.y() - hall_halfsize.y() + floor_shield_thickness + shield_halfsize.z(),
+            hall_center.z() + hall_halfsize.z() - (shield_thickness+gap)*0.5);
+        break;
+      default:
+        G4Exception("SLArDetectorConstruction::Construct()",
+            "InvalidGeometryConfig", FatalException, 
+            "Invalid shielding face orientation");
+        break;
+    }
+
+    if (gap > 0.0) {
+      // get importance of the last layer in the map
+      G4double imp_last = shield->GetShieldingLayers().rbegin()->second.fImportance;
+      shield->AddLayer("airgap", gap, "Air", imp_last);
+    }
+    shield->SetMaterial( fWorldLog->GetMaterial() );
+    shield->BuildMaterials(fMaterialDBFile);
+    shield->BuildShielding();
+    shield->SetVisAttributes();
+
+    shield->GetModPV(face_name+"_shielding_pv", shield_rot, shield_pos, 
+        fWorldLog, false, static_cast<int>(face) );
+
+    printf("Shielding face %s constructed with effective thickness %g cm (airgap included) \n", 
+        face_name.data(), shield->GetGeoInfo()->GetGeoPar("shielding_thickness")/CLHEP::cm);
+  }
+}
+
 
