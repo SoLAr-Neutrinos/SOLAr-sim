@@ -41,10 +41,6 @@
 #include "G4UIcmdWithoutParameter.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
 
-#include "G4PhaseSpaceDecayChannel.hh"
-#include "G4ProcessTable.hh"
-#include "G4PionRadiativeDecayChannel.hh"
-
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
@@ -157,12 +153,6 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
   fDecayDirectory = new G4UIdirectory("/decay/");
   fDecayDirectory->SetGuidance("Decay chain control commands.");
 
-  fPienuCMD = new G4UIcmdWithoutParameter("/decay/pienu", this);
-  fPienuCMD->SetGuidance("Sets the pi+ to decay into e+, nu");
-
-  fPimunuCMD = new G4UIcmdWithoutParameter("/decay/pimunu", this);
-  fPimunuCMD->SetGuidance("Sets the pi+ to decay into mu+, nu");
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -188,9 +178,6 @@ SLArPhysicsListMessenger::~SLArPhysicsListMessenger()
   delete fRemovePhysicsCMD;
 
   delete fListCMD;
-
-  delete fPienuCMD;
-  delete fPimunuCMD;
 
   delete fDirectory;
 }
@@ -219,28 +206,6 @@ void SLArPhysicsListMessenger::SetNewValue(G4UIcommand* command,
   else if( command == fCerenkovCmd ) {
     fPhysicsList->
       SetNbOfPhotonsCerenkov(fCerenkovCmd->GetNewIntValue(newValue));
-  }
-
-  else if (command == fPienuCMD) {
-    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particleDef = particleTable->FindParticle("pi+");
-    G4VDecayChannel* mode = 
-      new G4PhaseSpaceDecayChannel("pi+",1.0,2,"e+","nu_e");
-    G4DecayTable* table = new G4DecayTable();
-    table->Insert(mode);
-    // mode = new G4PionRadiativeDecayChannel("pi+",0.000017);
-    // table->Insert(mode);
-    particleDef->SetDecayTable(table);
-  }
-
-  else if (command == fPimunuCMD) {
-    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particleDef = particleTable->FindParticle("pi+");
-    G4VDecayChannel* mode =
-      new G4PhaseSpaceDecayChannel("pi+",1.000,2,"mu+","nu_mu");
-    G4DecayTable* table = new G4DecayTable();
-    table->Insert(mode);
-    particleDef->SetDecayTable(table);
   }
 
   else if (command == fGammaCutCMD) {

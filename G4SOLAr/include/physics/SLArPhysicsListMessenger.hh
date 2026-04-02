@@ -91,9 +91,6 @@ class SLArPhysicsListMessenger : public G4UImessenger
 
     G4UIcmdWithoutParameter*   fListCMD;
 
-    G4UIcmdWithoutParameter* fPienuCMD;
-    G4UIcmdWithoutParameter* fPimunuCMD;
-
 };
 
 #endif
