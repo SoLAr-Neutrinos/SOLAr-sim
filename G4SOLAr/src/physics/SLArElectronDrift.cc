@@ -22,15 +22,19 @@ SLArElectronDrift::SLArElectronDrift(const SLArLArProperties& lar_properties) : 
 void SLArElectronDrift::Drift(const int& n, 
     const int& trkId,
     const int& ancestorId,
-    const G4ThreeVector& pos, 
-    const double time, 
+    const G4ThreeVector& prePos, 
+    const G4ThreeVector& postPos, 
+    const double& prestep_time, 
+    const double& poststep_time,
     SLArCfgAnode* anodeCfg, 
     SLArEventAnode* anodeEv) 
 {
-  auto ana_mngr = SLArAnalysisManager::Instance();
-  auto bkt_mngr = ana_mngr->GetBacktrackerManager( backtracker:: kCharge );
+  if (n <= 0) return;
 
-  // Find the megatile interested by the hit
+  auto ana_mngr = SLArAnalysisManager::Instance();
+  auto bkt_mngr = ana_mngr->GetBacktrackerManager( backtracker::kCharge );
+
+  // Build anode reference frame
   G4ThreeVector anodeXaxis = 
     G4ThreeVector(anodeCfg->GetAxis0().x(), anodeCfg->GetAxis0().y(), anodeCfg->GetAxis0().z());
   G4ThreeVector anodeYaxis = 
@@ -40,66 +44,94 @@ void SLArElectronDrift::Drift(const int& n,
   G4ThreeVector anodePos = 
     G4ThreeVector(anodeCfg->GetPhysX(), anodeCfg->GetPhysY(), anodeCfg->GetPhysZ()); 
 
-  // Get anode position and compute drift time
-  G4ThreeVector pos_local = (pos - anodePos);
-  G4double driftLength = pos_local.dot(anodeNormal);
-  if (driftLength < 0) return;
+  // Step assessment 
+  G4ThreeVector stepVec = postPos - prePos;
+  double stepLen = stepVec.mag();
+  double dt_step = poststep_time - prestep_time;
 
-  G4double driftTime   = driftLength / fLArProperties.fvDrift;
-  G4double hitTime     = time + driftTime; 
-  // compute diffusion length and fraction of surviving electrons
-  G4double diffLengthT = sqrt(2*fLArProperties.fDiffCoefficientT*driftTime); 
-  G4double diffLengthL = sqrt(2*fLArProperties.fDiffCoefficientL*driftTime); 
-  G4double f_surv      = exp (-driftTime/fLArProperties.fElectronLifetime); 
+  unsigned int nSegments = 1; 
+  if (stepLen > fStepThreshold) {
+    nSegments = static_cast<unsigned int>(std::ceil(stepLen/fLSegment));
+    if (nSegments > fNSegmentsLimit) nSegments = fNSegmentsLimit;
+  }
+
+  const int n_per_segment = static_cast<int>( n / nSegments );
+  const int n_remaining = static_cast<int>(n % nSegments);
+
+  for (unsigned int iseg =0; iseg < nSegments; iseg++) {
+
+    int n_elec_segment = n_per_segment + (iseg < n_remaining ? 1 : 0);
+    if (n_elec_segment == 0) continue;
+
+    // Compute segment position and time
+    double u = (iseg + 0.5) / nSegments;
+    G4ThreeVector pos = prePos + u*stepVec;
+    double time = prestep_time + u*dt_step;
+
+    // Get anode position and compute drift time
+    G4ThreeVector pos_local = (pos - anodePos);
+    G4double driftLength = pos_local.dot(anodeNormal);
+    if (driftLength < 0) return;
+
+    G4double driftTime   = driftLength * fLArProperties.fvDriftInverse;
+    G4double hitTime     = time + driftTime; 
+    // compute diffusion length and fraction of surviving electrons
+    G4double diffLengthT = sqrt(2*fLArProperties.fDiffCoefficientT*driftTime); 
+    G4double diffLengthL = sqrt(2*fLArProperties.fDiffCoefficientL*driftTime); 
+
+    G4double f_surv      = exp (-driftTime * fLArProperties.fElectronLifetimeInverse); 
 
 #ifdef SLAR_DEBUG
-  printf("%i electrons at [%.0f, %0.f, %0.f] mm, t = %g ns\n", 
-      n, pos.x(), pos.y(), pos.z(), time);
-  printf("local_coordinates: [%.0f, %.0f, %.0f] mm\n", pos_local.x(), pos_local.y(), pos_local.z());
-  printf("axis projection: [%.0f, %.0f]\n", pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
-  printf("Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
-  driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
-  getchar(); 
+    printf("%i electrons at [%.0f, %0.f, %0.f] mm, t = %g ns\n", 
+        n, pos.x(), pos.y(), pos.z(), time);
+    printf("local_coordinates: [%.0f, %.0f, %.0f] mm\n", pos_local.x(), pos_local.y(), pos_local.z());
+    printf("axis projection: [%.0f, %.0f]\n", pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
+    printf("Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
+        driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
+    getchar(); 
 #endif
 
-  G4int n_elec_anode = G4Poisson(n*f_surv); 
+    G4int n_elec_anode = G4Poisson(n_elec_segment*f_surv); 
   
-  if (n_elec_anode == 0) {
-    return;
-  }
-  std::vector<double> x_(n_elec_anode); 
-  std::vector<double> y_(n_elec_anode); 
-  std::vector<double> t_(n_elec_anode);
-  G4RandGauss::shootArray(n_elec_anode, &x_[0], pos_local.dot(anodeXaxis), diffLengthT); 
-  G4RandGauss::shootArray(n_elec_anode, &y_[0], pos_local.dot(anodeYaxis), diffLengthT); 
-  G4RandGauss::shootArray(n_elec_anode, &t_[0], hitTime, diffLengthL / fLArProperties.fvDrift); 
+    if (n_elec_anode == 0) continue;
+    
+    std::vector<double> x_(n_elec_anode); 
+    std::vector<double> y_(n_elec_anode); 
+    std::vector<double> t_(n_elec_anode);
+    G4double posX = pos_local.dot(anodeXaxis);
+    G4double posY = pos_local.dot(anodeYaxis);
+    G4RandGauss::shootArray(n_elec_anode, &x_[0], posX, diffLengthT); 
+    G4RandGauss::shootArray(n_elec_anode, &y_[0], posY, diffLengthT); 
+    G4RandGauss::shootArray(n_elec_anode, &t_[0], hitTime, diffLengthL * fLArProperties.fvDriftInverse); 
 
-  SLArCfgAnode::SLArPixIdx pixID;
-  for (G4int i=0; i<n_elec_anode; i++) {
-    pixID = anodeCfg->GetPixelIndex(x_[i], y_[i]); 
-    //printf("pixID: %i, %i, %i\n", pixID[0], pixID[1], pixID[2]);
-    if (pixID[0] >= 0 && pixID[1] >= 0 && pixID[2] >= 0 ) {
+    // Register hits on anode
+    SLArCfgAnode::SLArPixIdx pixID;
+    for (G4int i=0; i<n_elec_anode; i++) {
+      pixID = anodeCfg->GetPixelIndex(x_[i], y_[i]); 
+      //printf("pixID: %i, %i, %i\n", pixID[0], pixID[1], pixID[2]);
+      if (pixID[0] >= 0 && pixID[1] >= 0 && pixID[2] >= 0 ) {
 
-      SLArEventChargeHit hit(t_[i], trkId, ancestorId); 
-      auto& evPixel = anodeEv->RegisterChargeHit(pixID, hit); 
+        SLArEventChargeHit hit(t_[i], trkId, ancestorId); 
+        auto& evPixel = anodeEv->RegisterChargeHit(pixID, hit); 
 
-      //#ifdef SLAR_DEBUG
-      //printf("\tdiff x,y: %.2f - %.2f mm\n", x_[i], y_[i]);
-      //printf("\tpix id: %i, %i, %i\n", pixID[0], pixID[1], pixID[2]);
-      ////evT->PrintHits(); 
-      //getchar();
-      //#endif
+        //#ifdef SLAR_DEBUG
+        //printf("\tdiff x,y: %.2f - %.2f mm\n", x_[i], y_[i]);
+        //printf("\tpix id: %i, %i, %i\n", pixID[0], pixID[1], pixID[2]);
+        ////evT->PrintHits(); 
+        //getchar();
+        //#endif
 
-      if (bkt_mngr == nullptr) continue;
+        if (bkt_mngr == nullptr) continue;
 
-      if (bkt_mngr->IsNull()) continue;
+        if (bkt_mngr->IsNull()) continue;
 
-      auto& records = 
-        evPixel.GetBacktrackerVector( evPixel.ConvertToClock<float>(hit.GetTime()));
+        auto& records = 
+          evPixel.GetBacktrackerVector( evPixel.ConvertToClock<float>(hit.GetTime()));
 
-      for (size_t ib = 0; ib < bkt_mngr->GetBacktrackers().size(); ib++) {
-        bkt_mngr->GetBacktrackers().at(ib)->Eval(&hit, 
-            &records.GetRecords().at(ib));
+        for (size_t ib = 0; ib < bkt_mngr->GetBacktrackers().size(); ib++) {
+          bkt_mngr->GetBacktrackers().at(ib)->Eval(&hit, 
+              &records.GetRecords().at(ib));
+        }
       }
     }
   }

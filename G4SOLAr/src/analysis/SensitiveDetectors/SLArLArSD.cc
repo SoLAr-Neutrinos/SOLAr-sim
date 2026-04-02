@@ -156,7 +156,9 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
       if (physicsList->DoDriftElectrons()) {
         runAction->GetElectronDrift()->Drift(n_el, 
             step->GetTrack()->GetTrackID(), ancestor_id,
-            0.5*(postStepPoint->GetPosition()+preStepPoint->GetPosition()),
+            preStepPoint->GetPosition(),
+            postStepPoint->GetPosition(),
+            preStepPoint->GetGlobalTime(),
             postStepPoint->GetGlobalTime(), 
             &anodeCfg, 
             &anaMngr->GetEventAnode().GetEventAnodeByTPCID(fTPCID)); 
