@@ -10,13 +10,14 @@
 SLArLArProperties::SLArLArProperties() :
   fElectricField(0.5), fLArTemperature(87.7), fMuElectron(1.), 
   fDiffCoefficientL(0.), fDiffCoefficientT(0.), 
-  fvDrift(1.0), fElectronLifetime(1e7)
+  fvDrift(1.0), fvDriftInverse(1.0), fElectronLifetime(1e7), fElectronLifetimeInverse(1e-7)
 {}
 
 SLArLArProperties::SLArLArProperties(const SLArLArProperties& p) :
   fElectricField(p.fElectricField), fLArTemperature(p.fLArTemperature), fMuElectron(p.fMuElectron), 
   fDiffCoefficientL(p.fDiffCoefficientL), fDiffCoefficientT(p.fDiffCoefficientT), 
-  fvDrift(p.fvDrift), fElectronLifetime(p.fElectronLifetime)
+  fvDrift(p.fvDrift), fvDriftInverse(p.fvDriftInverse), 
+  fElectronLifetime(p.fElectronLifetime), fElectronLifetimeInverse(p.fElectronLifetimeInverse)
 {}
 
 SLArLArProperties& SLArLArProperties::operator=(const SLArLArProperties& p) {
@@ -27,7 +28,9 @@ SLArLArProperties& SLArLArProperties::operator=(const SLArLArProperties& p) {
     fDiffCoefficientL = p.fDiffCoefficientL;
     fDiffCoefficientT = p.fDiffCoefficientT;
     fvDrift = p.fvDrift;
+    fvDriftInverse = p.fvDriftInverse;
     fElectronLifetime = p.fElectronLifetime;
+    fElectronLifetimeInverse = p.fElectronLifetimeInverse;
   }
 
   return *this;
@@ -39,6 +42,7 @@ void SLArLArProperties::ComputeProperties() {
 
   fMuElectron = ComputeMobility(fElectricField, fLArTemperature);
   fvDrift     = ComputeDriftVelocity(fElectricField); 
+  fvDriftInverse = 1.0/fvDrift;
   auto diff   = ComputeDiffusion(fElectricField, fLArTemperature); 
   fDiffCoefficientL = diff.at(0); 
   fDiffCoefficientT = diff.at(1); 

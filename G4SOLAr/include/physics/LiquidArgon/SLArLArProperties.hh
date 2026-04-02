@@ -22,7 +22,7 @@ class SLArLArProperties {
     inline G4double GetElectronLifetime() const {return fElectronLifetime;}
 
     void SetElectricField(double _E) {fElectricField = _E;}
-    inline void SetElectronLifetime(double lt) { fElectronLifetime = lt; }
+    inline void SetElectronLifetime(double lt) { fElectronLifetime = lt; fElectronLifetimeInverse = 1.0/lt; }
     void ComputeProperties(); 
     void PrintProperties() const; 
 
@@ -33,7 +33,9 @@ class SLArLArProperties {
     double fDiffCoefficientL;    //!< Longitudinal Diffusion Coefficient
     double fDiffCoefficientT;    //!< Transverse Diffusion Coefficient
     double fvDrift;              //!< Electron drift velocity
+    double fvDriftInverse;       //!< Inverse of drift velocity, for fast computation of drift time
     double fElectronLifetime;    //!< Electron lifetime 
+    double fElectronLifetimeInverse; //!< Inverse of electron lifetime, for fast computation of survival fraction
 
     double ComputeMobility(double E, double larT);
     double ComputeMobility(std::array<double, 2> par); 
