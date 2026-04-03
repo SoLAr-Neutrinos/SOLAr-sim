@@ -10,9 +10,9 @@
 
 #include <math.h>
 #include <vector>
-#include <functional>
 #include "physics/LiquidArgon/SLArLArProperties.hh"
 #include "G4ThreeVector.hh"
+#include "G4SystemOfUnits.hh"
 
 class SLArCfgAnode;
 class SLArEventAnode;
@@ -23,8 +23,10 @@ class SLArElectronDrift {
     ~SLArElectronDrift() {} 
 
     void Drift(const int& n, const int& trkId, const int& ancestorId,
-        const G4ThreeVector& pos, 
-        const double time, 
+        const G4ThreeVector& prestep_pos,
+        const G4ThreeVector& poststep_pos, 
+        const double& prestep_time, 
+        const double& poststep_time,
         SLArCfgAnode* anodeCfg, SLArEventAnode* anodeEv);
 
   private: 

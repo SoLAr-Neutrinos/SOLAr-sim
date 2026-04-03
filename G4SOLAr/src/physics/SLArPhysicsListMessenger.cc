@@ -31,19 +31,17 @@
 //
 #include "globals.hh"
 
-#include "SLArPhysicsListMessenger.hh"
-#include "SLArPhysicsList.hh"
+#include "physics/SLArPhysicsListMessenger.hh"
+#include "physics/SLArPhysicsList.hh"
+#include "geo/detector/SLArDetectorConstruction.hh"
 
+#include "G4RunManager.hh"
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithABool.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithAnInteger.hh"
 #include "G4UIcmdWithoutParameter.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
-
-#include "G4PhaseSpaceDecayChannel.hh"
-#include "G4ProcessTable.hh"
-#include "G4PionRadiativeDecayChannel.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -66,6 +64,33 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
   fCmdDriftElectrons->SetParameterName("do_trace", false, true); 
   fCmdDriftElectrons->SetDefaultValue(true);
 
+  fCmdElectronLifetime = 
+    new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setElectronLifetime", this); 
+  fCmdElectronLifetime->SetGuidance("Set electrons lifetime in LAr"); 
+  fCmdElectronLifetime->SetParameterName("electron_lifetime", false); 
+  fCmdElectronLifetime->SetUnitCategory("Time");
+  fCmdElectronLifetime->SetRange("electron_lifetime>0.0");
+
+  fCmdSetLArStepLenThreshold = 
+    new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setLArStepLenThreshold", this);
+  fCmdSetLArStepLenThreshold->SetGuidance("Set step length threshold for distributing ionization along the step");
+  fCmdSetLArStepLenThreshold->SetParameterName("step_length_threshold", false);
+  fCmdSetLArStepLenThreshold->SetUnitCategory("Length");
+  fCmdSetLArStepLenThreshold->SetRange("step_length_threshold>0.0");
+
+  fCmdSetLArSegmentLen = 
+    new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setLArSegmentLen", this);
+  fCmdSetLArSegmentLen->SetGuidance("Set length of segments for distributing ionization along the step");
+  fCmdSetLArSegmentLen->SetParameterName("segment_length", false);
+  fCmdSetLArSegmentLen->SetUnitCategory("Length");
+  fCmdSetLArSegmentLen->SetRange("segment_length>0.0");
+
+  fCmdSetLArNSegmentsLimit = 
+    new G4UIcmdWithAnInteger("/SLAr/phys/setLArNSegmentsLimit", this);
+  fCmdSetLArNSegmentsLimit->SetGuidance("Set max number of segments for distributing ionization along the step, to avoid excessive segmentation for long steps");
+  fCmdSetLArNSegmentsLimit->SetParameterName("n_segments_limit", false);
+  fCmdSetLArNSegmentsLimit->SetRange("n_segments_limit>1");
+  
   fSetAbsorptionCMD = new G4UIcmdWithABool(
       "/SLAr/phys/setAbsorption", this);
   fSetAbsorptionCMD->SetGuidance("Turn on or off absorption process");
@@ -153,16 +178,6 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
   fListCMD = new G4UIcmdWithoutParameter("/SLAr/phys/list",this);
   fListCMD->SetGuidance("Available Physics Lists");
   fListCMD->AvailableForStates(G4State_Idle);
-
-  fDecayDirectory = new G4UIdirectory("/decay/");
-  fDecayDirectory->SetGuidance("Decay chain control commands.");
-
-  fPienuCMD = new G4UIcmdWithoutParameter("/decay/pienu", this);
-  fPienuCMD->SetGuidance("Sets the pi+ to decay into e+, nu");
-
-  fPimunuCMD = new G4UIcmdWithoutParameter("/decay/pimunu", this);
-  fPimunuCMD->SetGuidance("Sets the pi+ to decay into mu+, nu");
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -171,6 +186,10 @@ SLArPhysicsListMessenger::~SLArPhysicsListMessenger()
 {
   delete fCmdTracePhotons;
   delete fCmdDriftElectrons;
+  delete fCmdElectronLifetime; 
+  delete fCmdSetLArStepLenThreshold;
+  delete fCmdSetLArSegmentLen;
+  delete fCmdSetLArNSegmentsLimit;
 
   delete fVerboseCmd;
   delete fCerenkovCmd;
@@ -188,10 +207,6 @@ SLArPhysicsListMessenger::~SLArPhysicsListMessenger()
   delete fRemovePhysicsCMD;
 
   delete fListCMD;
-
-  delete fPienuCMD;
-  delete fPimunuCMD;
-
   delete fDirectory;
 }
 
@@ -208,6 +223,37 @@ void SLArPhysicsListMessenger::SetNewValue(G4UIcommand* command,
     bool do_drift = fCmdDriftElectrons->GetNewBoolValue(newValue); 
     fPhysicsList->SetDriftElectrons(do_drift); 
   }
+  else if (command == fCmdElectronLifetime ) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetElectronLifetime( fCmdElectronLifetime->GetNewDoubleValue( newValue ) ); 
+  }
+  else if (command == fCmdSetLArStepLenThreshold) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetStepLengthThreshold( fCmdSetLArStepLenThreshold->GetNewDoubleValue( newValue ) );
+  }
+  else if (command == fCmdSetLArSegmentLen) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetSegmentLength( fCmdSetLArSegmentLen->GetNewDoubleValue( newValue ) );
+  }
+  else if (command == fCmdSetLArNSegmentsLimit) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    G4int nSegmentsLimit = fCmdSetLArNSegmentsLimit->GetNewIntValue( newValue );
+    if (nSegmentsLimit < 1) {
+      G4ExceptionDescription ed;
+      ed << "Invalid number of segments limit: " << nSegmentsLimit << ". Resetting to 1.";;
+      G4Exception("SLArPhysicsListMessenger::SetNewValue", "InvalidSegmentLimit", JustWarning, ed);
+      nSegmentsLimit = 1;
+    }
+    lar_properties.SetNSegmentsLimit( nSegmentsLimit );
+  }
   else if( command == fSetAbsorptionCMD ) {
     fPhysicsList->SetAbsorption(G4UIcmdWithABool::GetNewBoolValue(newValue));
   }
@@ -219,28 +265,6 @@ void SLArPhysicsListMessenger::SetNewValue(G4UIcommand* command,
   else if( command == fCerenkovCmd ) {
     fPhysicsList->
       SetNbOfPhotonsCerenkov(fCerenkovCmd->GetNewIntValue(newValue));
-  }
-
-  else if (command == fPienuCMD) {
-    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particleDef = particleTable->FindParticle("pi+");
-    G4VDecayChannel* mode = 
-      new G4PhaseSpaceDecayChannel("pi+",1.0,2,"e+","nu_e");
-    G4DecayTable* table = new G4DecayTable();
-    table->Insert(mode);
-    // mode = new G4PionRadiativeDecayChannel("pi+",0.000017);
-    // table->Insert(mode);
-    particleDef->SetDecayTable(table);
-  }
-
-  else if (command == fPimunuCMD) {
-    G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particleDef = particleTable->FindParticle("pi+");
-    G4VDecayChannel* mode =
-      new G4PhaseSpaceDecayChannel("pi+",1.000,2,"mu+","nu_mu");
-    G4DecayTable* table = new G4DecayTable();
-    table->Insert(mode);
-    particleDef->SetDecayTable(table);
   }
 
   else if (command == fGammaCutCMD) {

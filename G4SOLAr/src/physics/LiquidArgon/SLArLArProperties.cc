@@ -10,13 +10,16 @@
 SLArLArProperties::SLArLArProperties() :
   fElectricField(0.5), fLArTemperature(87.7), fMuElectron(1.), 
   fDiffCoefficientL(0.), fDiffCoefficientT(0.), 
-  fvDrift(1.0), fElectronLifetime(1e7)
+  fvDrift(1.0), fvDriftInverse(1.0), fElectronLifetime(1e7), fElectronLifetimeInverse(1e-7), 
+  fStepThreshold(2.0*CLHEP::mm), fLSegment(0.5*CLHEP::mm), fNSegmentsLimit(100)
 {}
 
 SLArLArProperties::SLArLArProperties(const SLArLArProperties& p) :
   fElectricField(p.fElectricField), fLArTemperature(p.fLArTemperature), fMuElectron(p.fMuElectron), 
   fDiffCoefficientL(p.fDiffCoefficientL), fDiffCoefficientT(p.fDiffCoefficientT), 
-  fvDrift(p.fvDrift), fElectronLifetime(p.fElectronLifetime)
+  fvDrift(p.fvDrift), fvDriftInverse(p.fvDriftInverse), 
+  fElectronLifetime(p.fElectronLifetime), fElectronLifetimeInverse(p.fElectronLifetimeInverse),
+  fStepThreshold(p.fStepThreshold), fLSegment(p.fLSegment), fNSegmentsLimit(p.fNSegmentsLimit)
 {}
 
 SLArLArProperties& SLArLArProperties::operator=(const SLArLArProperties& p) {
@@ -27,7 +30,12 @@ SLArLArProperties& SLArLArProperties::operator=(const SLArLArProperties& p) {
     fDiffCoefficientL = p.fDiffCoefficientL;
     fDiffCoefficientT = p.fDiffCoefficientT;
     fvDrift = p.fvDrift;
+    fvDriftInverse = p.fvDriftInverse;
     fElectronLifetime = p.fElectronLifetime;
+    fElectronLifetimeInverse = p.fElectronLifetimeInverse;
+    fStepThreshold = p.fStepThreshold;
+    fLSegment = p.fLSegment;
+    fNSegmentsLimit = p.fNSegmentsLimit;
   }
 
   return *this;
@@ -39,6 +47,15 @@ void SLArLArProperties::ComputeProperties() {
 
   fMuElectron = ComputeMobility(fElectricField, fLArTemperature);
   fvDrift     = ComputeDriftVelocity(fElectricField); 
+  if (fvDrift > 0.0) {
+    fvDriftInverse = 1.0/fvDrift;
+  } else {
+    G4ExceptionDescription ed;
+    ed << "Computed drift velocity is non-positive: " << fvDrift << " cm/ns. Resetting to 0.16 cm/μs.";
+    G4Exception("SLArLArProperties::ComputeProperties", "InvalidDriftVelocity", JustWarning, ed);
+    fvDrift = 0.16*CLHEP::cm/CLHEP::microsecond;
+  }
+  fvDriftInverse = 1.0/fvDrift;
   auto diff   = ComputeDiffusion(fElectricField, fLArTemperature); 
   fDiffCoefficientL = diff.at(0); 
   fDiffCoefficientT = diff.at(1); 
@@ -102,6 +119,9 @@ void SLArLArProperties::PrintProperties() const {
   printf("* drift velocity: %g cm/μs\n", fvDrift * 1e+2);
   printf("* diff coeff L: %g cm²/s\n", fDiffCoefficientL*1e+7);
   printf("* diff coeff T: %g cm²/s\n", fDiffCoefficientT*1e+7);
+  printf("* step length threshold: %g mm\n", fStepThreshold / CLHEP::mm);
+  printf("* segment length: %g mm\n", fLSegment / CLHEP::mm);
+  printf("* max number of segments: %u\n", fNSegmentsLimit);
   printf("**************************************************\n");
   return;
 }
