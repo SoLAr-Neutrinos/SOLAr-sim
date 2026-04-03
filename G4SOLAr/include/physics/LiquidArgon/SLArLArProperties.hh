@@ -10,6 +10,7 @@
 
 #include <array>
 #include <G4ThreeVector.hh>
+#include <G4SystemOfUnits.hh>
 
 class SLArLArProperties {
   public: 
@@ -24,11 +25,56 @@ class SLArLArProperties {
     inline double GetSegmentLength() const {return fLSegment;}
     inline unsigned int GetNSegmentsLimit() const {return fNSegmentsLimit;}
 
-    inline void SetElectricField(double _E) {fElectricField = _E;}
-    inline void SetElectronLifetime(double lt) { fElectronLifetime = lt; fElectronLifetimeInverse = 1.0/lt; }
-    inline void SetStepLengthThreshold(double step_threshold) {fStepThreshold = step_threshold;}
-    inline void SetSegmentLength(double segment_length) {fLSegment = segment_length;}
-    inline void SetNSegmentsLimit(unsigned int n_segments_limit) {fNSegmentsLimit = n_segments_limit;}
+    inline void SetElectricField(double _E)
+    {
+      if (_E <= 0.0) {
+        G4ExceptionDescription ed;
+        ed << "Invalid electric field: " << _E << " V/cm. Resetting to 0.5 kV/cm.";
+        G4Exception("SLArLArProperties::SetElectricField", "InvalidElectricField", JustWarning, ed);
+        _E = 500*CLHEP::volt/CLHEP::cm; 
+      }
+      fElectricField = _E;
+    }
+    inline void SetElectronLifetime(double lt) 
+    { 
+      if (lt <= 0.0) {
+        G4ExceptionDescription ed;
+        ed << "Invalid electron lifetime: " << lt << ". Resetting to 1e-7 s.";
+        G4Exception("SLArLArProperties::SetElectronLifetime", "InvalidElectronLifetime", JustWarning, ed);
+        lt = 1e-7; 
+      }
+      fElectronLifetime = lt; fElectronLifetimeInverse = 1.0/lt; 
+    }
+    inline void SetStepLengthThreshold(double step_threshold) 
+    {
+      if (step_threshold <= 0.0) {
+        G4ExceptionDescription ed;
+        ed << "Invalid step length threshold: " << step_threshold << ". Resetting to 1 mm.";
+        G4Exception("SLArLArProperties::SetStepLengthThreshold", "InvalidStepThreshold", JustWarning, ed);
+        step_threshold = 1.0*CLHEP::mm; 
+      }
+      fStepThreshold = step_threshold;
+    }
+    inline void SetSegmentLength(double segment_length)
+    {
+      if (segment_length <= 0.0) {
+        G4ExceptionDescription ed;
+        ed << "Invalid segment length: " << segment_length << ". Resetting to 0.5 mm.";
+        G4Exception("SLArLArProperties::SetSegmentLength", "InvalidSegmentLength", JustWarning, ed);
+        segment_length = 0.5*CLHEP::mm; 
+      }
+      fLSegment = segment_length;
+    }
+    inline void SetNSegmentsLimit(unsigned int n_segments_limit)
+    {
+      if (n_segments_limit < 1) {
+        G4ExceptionDescription ed;
+        ed << "Invalid number of segments limit: " << n_segments_limit << ". Resetting to 1.";
+        G4Exception("SLArLArProperties::SetNSegmentsLimit", "InvalidSegmentLimit", JustWarning, ed);
+        n_segments_limit = 1;
+      }
+      fNSegmentsLimit = n_segments_limit;
+    }
 
     void ComputeProperties(); 
     void PrintProperties() const; 

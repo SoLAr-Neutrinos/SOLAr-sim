@@ -47,6 +47,14 @@ void SLArLArProperties::ComputeProperties() {
 
   fMuElectron = ComputeMobility(fElectricField, fLArTemperature);
   fvDrift     = ComputeDriftVelocity(fElectricField); 
+  if (fvDrift > 0.0) {
+    fvDriftInverse = 1.0/fvDrift;
+  } else {
+    G4ExceptionDescription ed;
+    ed << "Computed drift velocity is non-positive: " << fvDrift << " cm/ns. Resetting to 0.16 cm/μs.";
+    G4Exception("SLArLArProperties::ComputeProperties", "InvalidDriftVelocity", JustWarning, ed);
+    fvDrift = 0.16*CLHEP::cm/CLHEP::microsecond;
+  }
   fvDriftInverse = 1.0/fvDrift;
   auto diff   = ComputeDiffusion(fElectricField, fLArTemperature); 
   fDiffCoefficientL = diff.at(0); 

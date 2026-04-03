@@ -35,6 +35,7 @@
 #include "physics/SLArPhysicsList.hh"
 #include "geo/detector/SLArDetectorConstruction.hh"
 
+#include "G4RunManager.hh"
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithABool.hh"
 #include "G4UIcmdWithAString.hh"
@@ -67,21 +68,28 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
     new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setElectronLifetime", this); 
   fCmdElectronLifetime->SetGuidance("Set electrons lifetime in LAr"); 
   fCmdElectronLifetime->SetParameterName("electron_lifetime", false); 
+  fCmdElectronLifetime->SetUnitCategory("Time");
+  fCmdElectronLifetime->SetRange("electron_lifetime>0.0");
 
   fCmdSetLArStepLenThreshold = 
     new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setLArStepLenThreshold", this);
   fCmdSetLArStepLenThreshold->SetGuidance("Set step length threshold for distributing ionization along the step");
   fCmdSetLArStepLenThreshold->SetParameterName("step_length_threshold", false);
+  fCmdSetLArStepLenThreshold->SetUnitCategory("Length");
+  fCmdSetLArStepLenThreshold->SetRange("step_length_threshold>0.0");
 
   fCmdSetLArSegmentLen = 
     new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setLArSegmentLen", this);
   fCmdSetLArSegmentLen->SetGuidance("Set length of segments for distributing ionization along the step");
   fCmdSetLArSegmentLen->SetParameterName("segment_length", false);
+  fCmdSetLArSegmentLen->SetUnitCategory("Length");
+  fCmdSetLArSegmentLen->SetRange("segment_length>0.0");
 
   fCmdSetLArNSegmentsLimit = 
     new G4UIcmdWithAnInteger("/SLAr/phys/setLArNSegmentsLimit", this);
   fCmdSetLArNSegmentsLimit->SetGuidance("Set max number of segments for distributing ionization along the step, to avoid excessive segmentation for long steps");
   fCmdSetLArNSegmentsLimit->SetParameterName("n_segments_limit", false);
+  fCmdSetLArNSegmentsLimit->SetRange("n_segments_limit>1");
   
   fSetAbsorptionCMD = new G4UIcmdWithABool(
       "/SLAr/phys/setAbsorption", this);
@@ -170,10 +178,6 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
   fListCMD = new G4UIcmdWithoutParameter("/SLAr/phys/list",this);
   fListCMD->SetGuidance("Available Physics Lists");
   fListCMD->AvailableForStates(G4State_Idle);
-
-  fDecayDirectory = new G4UIdirectory("/decay/");
-  fDecayDirectory->SetGuidance("Decay chain control commands.");
-
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -203,7 +207,6 @@ SLArPhysicsListMessenger::~SLArPhysicsListMessenger()
   delete fRemovePhysicsCMD;
 
   delete fListCMD;
-
   delete fDirectory;
 }
 
@@ -242,7 +245,14 @@ void SLArPhysicsListMessenger::SetNewValue(G4UIcommand* command,
     auto detector = 
       (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
     auto& lar_properties = detector->GetLArProperties(); 
-    lar_properties.SetNSegmentsLimit( fCmdSetLArNSegmentsLimit->GetNewIntValue( newValue ) );
+    G4int nSegmentsLimit = fCmdSetLArNSegmentsLimit->GetNewIntValue( newValue );
+    if (nSegmentsLimit < 1) {
+      G4ExceptionDescription ed;
+      ed << "Invalid number of segments limit: " << nSegmentsLimit << ". Resetting to 1.";;
+      G4Exception("SLArPhysicsListMessenger::SetNewValue", "InvalidSegmentLimit", JustWarning, ed);
+      nSegmentsLimit = 1;
+    }
+    lar_properties.SetNSegmentsLimit( nSegmentsLimit );
   }
   else if( command == fSetAbsorptionCMD ) {
     fPhysicsList->SetAbsorption(G4UIcmdWithABool::GetNewBoolValue(newValue));

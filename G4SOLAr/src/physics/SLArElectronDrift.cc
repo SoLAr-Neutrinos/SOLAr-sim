@@ -4,8 +4,9 @@
  * @created     Thur Nov 10, 2022 18:26:54 CET
  */
 
+#include <cmath>
+
 #include "physics/SLArElectronDrift.hh"
-#include <functional>
 #include "SLArAnalysisManager.hh"
 #include "SLArBacktrackerManager.hh"
 #include "event/SLArEventAnode.hh"
@@ -71,7 +72,7 @@ void SLArElectronDrift::Drift(const int& n,
     // Get anode position and compute drift time
     G4ThreeVector pos_local = (pos - anodePos);
     G4double driftLength = pos_local.dot(anodeNormal);
-    if (driftLength < 0) return;
+    if (driftLength < 0) continue;
 
     G4double driftTime   = driftLength * fLArProperties.fvDriftInverse;
     G4double hitTime     = time + driftTime; 
