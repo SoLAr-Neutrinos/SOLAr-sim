@@ -55,7 +55,6 @@ class SLArAnalysisManagerMsgr : public G4UImessenger
     G4UIcmdWithAString*         fCmdEnableBacktracker;
     G4UIcmdWithAString*         fCmdRegisterBacktracker;
     G4UIcmdWithAnInteger*       fCmdSetZeroSuppressionThrs;
-    G4UIcmdWithADoubleAndUnit*  fCmdElectronLifetime; 
     G4UIcmdWithADoubleAndUnit*  fCmdXSecEMin;
     G4UIcmdWithADoubleAndUnit*  fCmdXSecEMax;
     G4UIcmdWithAnInteger*       fCmdXSecNPoints;

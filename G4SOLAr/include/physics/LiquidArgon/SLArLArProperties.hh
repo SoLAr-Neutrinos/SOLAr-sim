@@ -20,9 +20,16 @@ class SLArLArProperties {
 
     inline G4double GetElectricField() const {return fElectricField;}
     inline G4double GetElectronLifetime() const {return fElectronLifetime;}
+    inline double GetStepLengthThreshold() const {return fStepThreshold;}
+    inline double GetSegmentLength() const {return fLSegment;}
+    inline unsigned int GetNSegmentsLimit() const {return fNSegmentsLimit;}
 
-    void SetElectricField(double _E) {fElectricField = _E;}
+    inline void SetElectricField(double _E) {fElectricField = _E;}
     inline void SetElectronLifetime(double lt) { fElectronLifetime = lt; fElectronLifetimeInverse = 1.0/lt; }
+    inline void SetStepLengthThreshold(double step_threshold) {fStepThreshold = step_threshold;}
+    inline void SetSegmentLength(double segment_length) {fLSegment = segment_length;}
+    inline void SetNSegmentsLimit(unsigned int n_segments_limit) {fNSegmentsLimit = n_segments_limit;}
+
     void ComputeProperties(); 
     void PrintProperties() const; 
 
@@ -36,6 +43,10 @@ class SLArLArProperties {
     double fvDriftInverse;       //!< Inverse of drift velocity, for fast computation of drift time
     double fElectronLifetime;    //!< Electron lifetime 
     double fElectronLifetimeInverse; //!< Inverse of electron lifetime, for fast computation of survival fraction
+
+    double fStepThreshold;       //!< Step length threshold for distributing ionization along the step
+    double fLSegment;            //!< Length of segments for distributing ionization along the step
+    unsigned int fNSegmentsLimit;//!< Maximum number of segments for distributing ionization along the step, to avoid excessive segmentation for long steps
 
     double ComputeMobility(double E, double larT);
     double ComputeMobility(std::array<double, 2> par); 

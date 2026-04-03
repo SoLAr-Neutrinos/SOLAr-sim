@@ -36,7 +36,6 @@ SLArAnalysisManagerMsgr::SLArAnalysisManagerMsgr() :
   fCmdEnableBacktracker(nullptr),
   fCmdRegisterBacktracker(nullptr), 
   fCmdSetZeroSuppressionThrs(nullptr), 
-  fCmdElectronLifetime(nullptr),
   fCmdXSecEMin(nullptr),
   fCmdXSecEMax(nullptr),
   fCmdXSecNPoints(nullptr),
@@ -119,11 +118,6 @@ SLArAnalysisManagerMsgr::SLArAnalysisManagerMsgr() :
   fCmdSetZeroSuppressionThrs->SetGuidance("Set charge readout zero suppression threshold");
   fCmdSetZeroSuppressionThrs->SetParameterName("threshold", false);
 
-  fCmdElectronLifetime = 
-    new G4UIcmdWithADoubleAndUnit(UIPhysPath+"setElectronLifetime", this); 
-  fCmdElectronLifetime->SetGuidance("Set electrons lifetime in LAr"); 
-  fCmdElectronLifetime->SetParameterName("electron_lifetime", false); 
-  
   fCmdGeoAnodeDepth = 
     new G4UIcmdWithAnInteger(UIGeometryPath+"setAnodeVisDepth", this);
   fCmdGeoAnodeDepth->SetGuidance("Set visualization depth for SoLAr anode");
@@ -193,7 +187,6 @@ SLArAnalysisManagerMsgr::~SLArAnalysisManagerMsgr()
   if (fCmdEnableBacktracker  ) delete fCmdEnableBacktracker  ;
   if (fCmdRegisterBacktracker) delete fCmdRegisterBacktracker;
   if (fCmdSetZeroSuppressionThrs) delete fCmdSetZeroSuppressionThrs;
-  if (fCmdElectronLifetime)    delete fCmdElectronLifetime   ; 
   if (fCmdAddExtScorer       ) delete fCmdAddExtScorer       ; 
   if (fCmdXSecEMin           ) delete fCmdXSecEMin           ;
   if (fCmdXSecEMax           ) delete fCmdXSecEMax           ;
@@ -338,13 +331,6 @@ void SLArAnalysisManagerMsgr::SetNewValue
     }
     return;
   }
-  else if ( cmd == fCmdElectronLifetime ) {
-    auto detector = 
-      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
-    auto& lar_properties = detector->GetLArProperties(); 
-    lar_properties.SetElectronLifetime( fCmdElectronLifetime->GetNewDoubleValue( newVal ) ); 
-  }
-
   else if (cmd == fCmdSetZeroSuppressionThrs) {
     int thrs = std::atoi( newVal ); 
     for (auto& anode_itr : SLArAnaMgr->GetEventAnode().GetAnodeMap()) {

@@ -10,14 +10,16 @@
 SLArLArProperties::SLArLArProperties() :
   fElectricField(0.5), fLArTemperature(87.7), fMuElectron(1.), 
   fDiffCoefficientL(0.), fDiffCoefficientT(0.), 
-  fvDrift(1.0), fvDriftInverse(1.0), fElectronLifetime(1e7), fElectronLifetimeInverse(1e-7)
+  fvDrift(1.0), fvDriftInverse(1.0), fElectronLifetime(1e7), fElectronLifetimeInverse(1e-7), 
+  fStepThreshold(2.0*CLHEP::mm), fLSegment(0.5*CLHEP::mm), fNSegmentsLimit(100)
 {}
 
 SLArLArProperties::SLArLArProperties(const SLArLArProperties& p) :
   fElectricField(p.fElectricField), fLArTemperature(p.fLArTemperature), fMuElectron(p.fMuElectron), 
   fDiffCoefficientL(p.fDiffCoefficientL), fDiffCoefficientT(p.fDiffCoefficientT), 
   fvDrift(p.fvDrift), fvDriftInverse(p.fvDriftInverse), 
-  fElectronLifetime(p.fElectronLifetime), fElectronLifetimeInverse(p.fElectronLifetimeInverse)
+  fElectronLifetime(p.fElectronLifetime), fElectronLifetimeInverse(p.fElectronLifetimeInverse),
+  fStepThreshold(p.fStepThreshold), fLSegment(p.fLSegment), fNSegmentsLimit(p.fNSegmentsLimit)
 {}
 
 SLArLArProperties& SLArLArProperties::operator=(const SLArLArProperties& p) {
@@ -31,6 +33,9 @@ SLArLArProperties& SLArLArProperties::operator=(const SLArLArProperties& p) {
     fvDriftInverse = p.fvDriftInverse;
     fElectronLifetime = p.fElectronLifetime;
     fElectronLifetimeInverse = p.fElectronLifetimeInverse;
+    fStepThreshold = p.fStepThreshold;
+    fLSegment = p.fLSegment;
+    fNSegmentsLimit = p.fNSegmentsLimit;
   }
 
   return *this;
@@ -106,6 +111,9 @@ void SLArLArProperties::PrintProperties() const {
   printf("* drift velocity: %g cm/μs\n", fvDrift * 1e+2);
   printf("* diff coeff L: %g cm²/s\n", fDiffCoefficientL*1e+7);
   printf("* diff coeff T: %g cm²/s\n", fDiffCoefficientT*1e+7);
+  printf("* step length threshold: %g mm\n", fStepThreshold / CLHEP::mm);
+  printf("* segment length: %g mm\n", fLSegment / CLHEP::mm);
+  printf("* max number of segments: %u\n", fNSegmentsLimit);
   printf("**************************************************\n");
   return;
 }

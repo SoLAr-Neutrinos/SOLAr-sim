@@ -50,9 +50,9 @@ void SLArElectronDrift::Drift(const int& n,
   double dt_step = poststep_time - prestep_time;
 
   unsigned int nSegments = 1; 
-  if (stepLen > fStepThreshold) {
-    nSegments = static_cast<unsigned int>(std::ceil(stepLen/fLSegment));
-    if (nSegments > fNSegmentsLimit) nSegments = fNSegmentsLimit;
+  if (stepLen > fLArProperties.fStepThreshold) {
+    nSegments = static_cast<unsigned int>(std::ceil(stepLen/fLArProperties.fLSegment));
+    if (nSegments > fLArProperties.fNSegmentsLimit) nSegments = fLArProperties.fNSegmentsLimit;
   }
 
   const int n_per_segment = static_cast<int>( n / nSegments );

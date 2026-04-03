@@ -31,9 +31,6 @@ class SLArElectronDrift {
 
   private: 
     const SLArLArProperties& fLArProperties;
-    const double fStepThreshold = 1.0*CLHEP::mm; 
-    const double fLSegment = 1.0*CLHEP::mm;
-    const unsigned int fNSegmentsLimit = 100;
 };
 
 

@@ -72,6 +72,10 @@ class SLArPhysicsListMessenger : public G4UImessenger
 
     G4UIcmdWithABool* fCmdTracePhotons;
     G4UIcmdWithABool* fCmdDriftElectrons;
+    G4UIcmdWithADoubleAndUnit*  fCmdElectronLifetime; 
+    G4UIcmdWithADoubleAndUnit*  fCmdSetLArStepLenThreshold;
+    G4UIcmdWithADoubleAndUnit*  fCmdSetLArSegmentLen;
+    G4UIcmdWithAnInteger*       fCmdSetLArNSegmentsLimit;
 
     G4UIdirectory* fDecayDirectory;
     G4UIcmdWithABool* fSetAbsorptionCMD;

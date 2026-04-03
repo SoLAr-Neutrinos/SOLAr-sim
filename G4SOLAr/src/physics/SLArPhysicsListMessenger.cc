@@ -31,8 +31,9 @@
 //
 #include "globals.hh"
 
-#include "SLArPhysicsListMessenger.hh"
-#include "SLArPhysicsList.hh"
+#include "physics/SLArPhysicsListMessenger.hh"
+#include "physics/SLArPhysicsList.hh"
+#include "geo/detector/SLArDetectorConstruction.hh"
 
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithABool.hh"
@@ -62,6 +63,26 @@ SLArPhysicsListMessenger::SLArPhysicsListMessenger(SLArPhysicsList* pPhys)
   fCmdDriftElectrons->SetParameterName("do_trace", false, true); 
   fCmdDriftElectrons->SetDefaultValue(true);
 
+  fCmdElectronLifetime = 
+    new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setElectronLifetime", this); 
+  fCmdElectronLifetime->SetGuidance("Set electrons lifetime in LAr"); 
+  fCmdElectronLifetime->SetParameterName("electron_lifetime", false); 
+
+  fCmdSetLArStepLenThreshold = 
+    new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setLArStepLenThreshold", this);
+  fCmdSetLArStepLenThreshold->SetGuidance("Set step length threshold for distributing ionization along the step");
+  fCmdSetLArStepLenThreshold->SetParameterName("step_length_threshold", false);
+
+  fCmdSetLArSegmentLen = 
+    new G4UIcmdWithADoubleAndUnit("/SLAr/phys/setLArSegmentLen", this);
+  fCmdSetLArSegmentLen->SetGuidance("Set length of segments for distributing ionization along the step");
+  fCmdSetLArSegmentLen->SetParameterName("segment_length", false);
+
+  fCmdSetLArNSegmentsLimit = 
+    new G4UIcmdWithAnInteger("/SLAr/phys/setLArNSegmentsLimit", this);
+  fCmdSetLArNSegmentsLimit->SetGuidance("Set max number of segments for distributing ionization along the step, to avoid excessive segmentation for long steps");
+  fCmdSetLArNSegmentsLimit->SetParameterName("n_segments_limit", false);
+  
   fSetAbsorptionCMD = new G4UIcmdWithABool(
       "/SLAr/phys/setAbsorption", this);
   fSetAbsorptionCMD->SetGuidance("Turn on or off absorption process");
@@ -161,6 +182,10 @@ SLArPhysicsListMessenger::~SLArPhysicsListMessenger()
 {
   delete fCmdTracePhotons;
   delete fCmdDriftElectrons;
+  delete fCmdElectronLifetime; 
+  delete fCmdSetLArStepLenThreshold;
+  delete fCmdSetLArSegmentLen;
+  delete fCmdSetLArNSegmentsLimit;
 
   delete fVerboseCmd;
   delete fCerenkovCmd;
@@ -194,6 +219,30 @@ void SLArPhysicsListMessenger::SetNewValue(G4UIcommand* command,
   else if (command == fCmdDriftElectrons) {
     bool do_drift = fCmdDriftElectrons->GetNewBoolValue(newValue); 
     fPhysicsList->SetDriftElectrons(do_drift); 
+  }
+  else if (command == fCmdElectronLifetime ) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetElectronLifetime( fCmdElectronLifetime->GetNewDoubleValue( newValue ) ); 
+  }
+  else if (command == fCmdSetLArStepLenThreshold) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetStepLengthThreshold( fCmdSetLArStepLenThreshold->GetNewDoubleValue( newValue ) );
+  }
+  else if (command == fCmdSetLArSegmentLen) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetSegmentLength( fCmdSetLArSegmentLen->GetNewDoubleValue( newValue ) );
+  }
+  else if (command == fCmdSetLArNSegmentsLimit) {
+    auto detector = 
+      (SLArDetectorConstruction*)G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
+    auto& lar_properties = detector->GetLArProperties(); 
+    lar_properties.SetNSegmentsLimit( fCmdSetLArNSegmentsLimit->GetNewIntValue( newValue ) );
   }
   else if( command == fSetAbsorptionCMD ) {
     fPhysicsList->SetAbsorption(G4UIcmdWithABool::GetNewBoolValue(newValue));
