@@ -26,7 +26,6 @@ SLArCryostatLayer::SLArCryostatLayer(
     G4double   thickness,
     G4String   material_name, 
     G4int      importance)
-  : fHalfSizeX(1.0), fHalfSizeY(1.0), fHalfSizeZ(1.0), fMaterial(nullptr), fModule(nullptr)
 {
 
   fName      = model_name;
@@ -69,6 +68,79 @@ SLArDetCryostat::~SLArDetCryostat()
 }
 
 void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
+  if (jcryo.HasMember("shape")) {
+    G4String shapeStr = jcryo["shape"].GetString();
+    fShape = get_cryostat_shape_code(shapeStr);
+  }
+  else {
+    fShape = ECryostatShape::kBox;
+  }
+
+  switch (fShape) {
+    case ECryostatShape::kBox: 
+      BuildCryostatBoxStructure(jcryo);
+      break;
+
+    case ECryostatShape::kCylinder:
+      BuildCryostatTubStructure(jcryo);
+      break;
+  }
+
+  return; 
+}
+
+void SLArDetCryostat::BuildCryostatTubStructure(const rapidjson::Value& jcryo) {
+  assert(jcryo.HasMember("Cryostat_structure")); 
+  assert(jcryo["Cryostat_structure"].IsArray()); 
+
+  const auto jlayers = jcryo["Cryostat_structure"].GetArray(); 
+  printf("SLArDetCryostat::BuildCryostatStructure\n");
+
+  G4double tgtZ = fGeoInfo->GetGeoPar("target_size_z");
+  G4double tgtY = fGeoInfo->GetGeoPar("target_size_y");
+  G4double tgtX = fGeoInfo->GetGeoPar("target_size_x");
+
+  G4double cryostat_tk = 0.; 
+
+  // compute total thickness
+  for (const auto &layer : jlayers) {
+    if (layer.HasMember("thickness")) 
+      cryostat_tk += unit::ParseJsonVal(layer["thickness"]); 
+  }
+
+
+  G4double currentR  = fGeoInfo->GetGeoPar("target_radius") + cryostat_tk;
+  G4double currentHz = fGeoInfo->GetGeoPar("target_size_z") * 0.5 + cryostat_tk;
+
+  for (const auto& layer : jlayers) {
+    if (!layer.HasMember("thickness")) continue;
+    G4double tk_ = unit::ParseJsonVal(layer["thickness"]);
+    if (tk_ == 0.) continue;
+
+    assert(layer.HasMember("id"));
+    assert(layer.HasMember("name"));
+    assert(layer.HasMember("material"));
+
+    currentR  -= tk_;
+    currentHz -= tk_;
+
+    G4int importance = layer.HasMember("importance")
+      ? layer["importance"].GetInt() : 1;
+
+    auto& entry = fCryostatStructure.emplace(
+        layer["id"].GetInt(),
+        SLArCryostatLayer(layer["name"].GetString(), tk_,
+          layer["material"].GetString(), importance)
+        ).first->second;
+
+    entry.fRadius     = currentR;
+    entry.fHalfLength = currentHz;
+  }
+
+  return;
+}
+
+void SLArDetCryostat::BuildCryostatBoxStructure(const rapidjson::Value& jcryo) {
   assert(jcryo.HasMember("Cryostat_structure")); 
   assert(jcryo["Cryostat_structure"].IsArray()); 
 
@@ -206,7 +278,7 @@ void SLArDetCryostat::BuildCryostatStructure(const rapidjson::Value& jcryo) {
     fAddFloorAirflow = true;
   }
 
-  return; 
+  return;
 }
 
 void SLArDetCryostat::BuildAirFlowUnit() {
@@ -704,7 +776,10 @@ void SLArDetCryostat::BuildCryostat()
   if (fBuildSupport) {
     BuildSupportStructureUnit();
   }
+
   G4cout << "SLArDetCryostat::BuildCryostat()\n";
+
+  if (fShape == ECryostatShape::kBox) {
   G4double tgtZ         = fGeoInfo->GetGeoPar("target_size_z");
   G4double tgtY         = fGeoInfo->GetGeoPar("target_size_y");
   G4double tgtX         = fGeoInfo->GetGeoPar("target_size_x");
@@ -741,6 +816,24 @@ void SLArDetCryostat::BuildCryostat()
       boxOut->GetXHalfLength(), boxOut->GetYHalfLength(), boxOut->GetZHalfLength(),
       boxInn->GetXHalfLength(), boxInn->GetYHalfLength(), boxInn->GetZHalfLength()
       ); 
+  }
+  else if (fShape == ECryostatShape::kCylinder) {
+    G4double cryo_tot_tk      = fGeoInfo->GetGeoPar("cryostat_tk"); 
+    G4double r_  = fGeoInfo->GetGeoPar("target_radius")   + cryo_tot_tk;
+    G4double hz_ = fGeoInfo->GetGeoPar("target_size_z") * 0.5 + cryo_tot_tk;
+
+    G4Tubs* tubsOut = new G4Tubs("fTubsOut_solid",
+        0., r_,            hz_,            0., CLHEP::twopi);
+    G4Tubs* tubsInn = new G4Tubs("fTubsInn_solid",
+        0., r_-cryo_tot_tk, hz_-cryo_tot_tk, 0., CLHEP::twopi);
+    fModSV = new G4SubtractionSolid("cryostat_solid", tubsOut, tubsInn,
+        0, G4ThreeVector());
+
+    fGeoInfo->SetGeoPar("cryostat_outer_radius", r_);
+    fGeoInfo->SetGeoPar("cryostat_inner_radius", r_-cryo_tot_tk);
+    fGeoInfo->SetGeoPar("cryostat_size_z", 2*hz_);
+  }
+
   fMaterial = fMatWorld->GetMaterial(); 
 
   SetLogicVolume(
@@ -765,12 +858,15 @@ void SLArDetCryostat::BuildCryostat()
     printf("size: %.0f, %.0f, %.0f - tk: %.0f\n", 
         2*layer.fHalfSizeX, 2*layer.fHalfSizeY, 2*layer.fHalfSizeZ, 
         layer.fThickness);
-    layer.fModule = BuildCryostatLayer(layer.fName, 
-        layer.fHalfSizeX, layer.fHalfSizeY, layer.fHalfSizeZ, 
-        layer.fThickness, layer.fMaterial); 
-    layer.fModule->GetModPV(
-        layer.fName, 0, G4ThreeVector(0, 0, 0), fModLV, 
-        false, ll.first);
+    if (fShape == ECryostatShape::kBox) {
+      layer.fModule = BuildCryostatBoxLayer(layer.fName, 
+          layer.fHalfSizeX, layer.fHalfSizeY, layer.fHalfSizeZ, 
+          layer.fThickness, layer.fMaterial);
+    }
+    else if (fShape == ECryostatShape::kCylinder) {
+      layer.fModule = BuildCryostatTubLayer(layer.fName, 
+          layer.fRadius, layer.fHalfLength, layer.fThickness, layer.fMaterial);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -937,7 +1033,7 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructure() {
 }
 
 
-SLArBaseDetModule* SLArDetCryostat::BuildCryostatLayer(
+SLArBaseDetModule* SLArDetCryostat::BuildCryostatBoxLayer(
     G4String name, 
     G4double x_, G4double y_, G4double z_, G4double tk_, 
     G4Material* mat) {
@@ -957,6 +1053,25 @@ SLArBaseDetModule* SLArDetCryostat::BuildCryostatLayer(
   return mod; 
 }
 
+SLArBaseDetModule* SLArDetCryostat::BuildCryostatTubLayer(
+    G4String name, 
+    G4double r_, G4double z_, G4double tk_, 
+    G4Material* mat) 
+{
+  G4Tubs* b_out = new G4Tubs("b_out_"+name, 0, r_+tk_, z_+tk_, 0, CLHEP::twopi); 
+  G4Tubs* b_in  = new G4Tubs("b_in_" +name, 0, r_    , z_    , 0, CLHEP::twopi); 
+
+  G4SubtractionSolid* solid = new G4SubtractionSolid(name+"_solid", 
+      b_out, b_in, 0, G4ThreeVector(0, 0, 0)); 
+  
+  SLArBaseDetModule* mod = new SLArBaseDetModule();
+  mod->SetMaterial(mat);
+  mod->SetSolidVolume(solid);
+  mod->SetLogicVolume(new G4LogicalVolume(
+        mod->GetModSV(), mod->GetMaterial(), name+"LV", 0, 0, 0));
+
+  return mod;
+}
 
 SLArBaseDetModule* SLArDetCryostat::BuildShieldingLayer(
     G4String name, 
