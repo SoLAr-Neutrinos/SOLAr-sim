@@ -26,8 +26,12 @@ public:
 
   void          BuildMaterial(G4String);
   void          BuildFieldCage(); 
+  void          BuildFieldCageTub(); 
+  void          BuildFieldCageBox();
   void          BuildDefalutGeoParMap();
 
+  geo::EGeoShape GetShape() const { return fShape; }
+  void SetShape(geo::EGeoShape shape) { fShape = shape; }
   const G4ThreeVector GetTPCcenter();
   const G4ThreeVector& GetElectronDriftDir() {return fElectronDriftDir;}
   const G4double& GetElectricField() {return fElectricField;}
@@ -43,11 +47,11 @@ private:
   SLArMaterial* fMatTarget;
   SLArMaterial* fMatFieldCage;
   SLArBaseDetModule* fFieldCage; 
+  geo::EGeoShape     fShape{geo::kBox};
   G4double      fElectricField; 
   G4ThreeVector fElectronDriftDir; 
   G4bool fFieldCageVisibility;
 
- 
 };
 
 

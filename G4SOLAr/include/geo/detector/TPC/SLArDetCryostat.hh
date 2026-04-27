@@ -45,25 +45,6 @@ struct SLArCryostatLayer{
 
 typedef std::map<int, SLArCryostatLayer> SLArCryostatStructure; 
 
-enum class ECryostatShape { kBox = 0, kCylinder = 1 };
-static const std::map<ECryostatShape, G4String> CryostatShapeName = {
-  {ECryostatShape::kBox, "box"},
-  {ECryostatShape::kCylinder, "cylinder"}
-};
-
-static ECryostatShape get_cryostat_shape_code(const G4String& shape_str) {
-  for (const auto& kv : CryostatShapeName) {
-    if (kv.second == shape_str) return kv.first;
-  }
-  throw std::runtime_error("Invalid cryostat shape string: " + shape_str);
-}
-
-static G4String get_cryostat_shape_str(ECryostatShape shape_code) {
-  auto it = CryostatShapeName.find(shape_code);
-  if (it != CryostatShapeName.end()) return it->second;
-  throw std::runtime_error("Invalid cryostat shape code: " + std::to_string((int)shape_code));
-}
-
 class SLArDetCryostat : public SLArBaseDetModule {
   public:
     SLArDetCryostat(); 
@@ -71,9 +52,9 @@ class SLArDetCryostat : public SLArBaseDetModule {
 
     void BuildCryostat(); 
     void BuildMaterials(G4String); 
-    void BuildCryostatStructure(const rapidjson::Value& jcryo);
+    void InitCryostatStructure(const rapidjson::Value& jcryo);
     SLArBaseDetModule* GetAirflowUnit() {return fAirFlowUnit;}
-    ECryostatShape GetShape() const {return fShape;}
+    geo::EGeoShape GetShape() const {return fShape;}
     SLArCryostatStructure& GetCryostatStructure() {return fCryostatStructure;}
     SLArCryostatStructure& GetShieldingStructure() {return fShieldingStructure;}
     inline std::map<geo::EBoxFace, SLArBaseDetModule*>& GetCryostatSupportStructureFaces() {return fSupportStructureFaces;}
@@ -84,6 +65,8 @@ class SLArDetCryostat : public SLArBaseDetModule {
     virtual void Init(const rapidjson::Value&) override {}
     bool HasSupportStructure() const {return fBuildSupport;}
     void SetWorldMaterial(SLArMaterial* mat) {fMatWorld = mat;}
+    geo::EGeoShape GetGeoShape() const {return fShape;}
+    void SetShape(geo::EGeoShape shape) {fShape = shape;}
     inline void SetSupportStructureVisibility(bool visible) {fSupportStructureVisibility = visible;}
     void SetVisAttributes();
     G4bool HasAirFlow() const {return fAddFloorAirflow;}
@@ -97,7 +80,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     SLArBaseDetModule* fWaffleEdgeUnit = {};
     SLArBaseDetModule* fAirFlowUnit = {}; 
     SLArBaseDetModule* fSupportStructure = {};
-    ECryostatShape fShape = ECryostatShape::kBox;
+    geo::EGeoShape fShape = geo::kBox;
     G4bool fBuildSupport; 
     G4bool fAddNeutronBricks; 
     G4bool fAddFloorAirflow; 

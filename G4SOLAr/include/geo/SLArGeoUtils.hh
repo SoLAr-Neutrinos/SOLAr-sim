@@ -27,6 +27,32 @@
 class G4VSolid;
 
 namespace geo {
+  enum EGeoShape {kBox = 0, kTub = 1, kSphere = 2, kUndefined = 99};
+  static const std::map<EGeoShape, G4String> GeoShapeName = {
+    {EGeoShape::kBox, "box"},
+    {EGeoShape::kTub, "tub"}, 
+    {EGeoShape::kSphere, "sphere"},
+    {EGeoShape::kUndefined, "undefined"}
+  };
+
+  static EGeoShape get_geo_shape_code(const G4String& shape_str) {
+    for (const auto& kv : GeoShapeName) {
+      if (kv.second == shape_str) return kv.first;
+    }
+    const char* valid_shapes = "Valid shapes are: box, tub, sphere";
+    G4Exception("geo::get_geo_shape_code", "GeoUtils000", FatalException,
+        ("Invalid shape string: " + shape_str + "\n" + valid_shapes).data());
+    return EGeoShape::kUndefined;
+  }
+
+  static G4String get_geo_shape_str(EGeoShape shape_code) {
+    auto it = GeoShapeName.find(shape_code);
+    if (it != GeoShapeName.end()) return it->second;
+    G4Exception("geo::get_geo_shape_str", "GeoUtils000", FatalException,
+        ("Invalid shape code: " + std::to_string(shape_code)).data());
+    return "undefined";
+  }
+
   enum EBoxFace {kXplus=0, kXminus=1, kYplus=2, kYminus=3, kZplus=4, kZminus=5}; 
 
   static EBoxFace get_face_from_name(const G4String& side_name) {
