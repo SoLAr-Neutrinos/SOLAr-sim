@@ -1,1 +1,0 @@
---macro electrons.mac --geometry msolar_geometry.json	--materials materials_db.json --output electrons.root --seed 123456
