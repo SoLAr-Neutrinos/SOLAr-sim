@@ -169,7 +169,12 @@ void SLArDetectorConstruction::Init() {
   InitTPC(d["TPC"]); 
   InitCathode(d["Cathode"]);
 
+  //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Initialize the LAr Target
   InitTarget(d); 
+
+  //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Initialize the cryostat
   fCryostat = new SLArDetCryostat(); 
   if (d.HasMember("Cryostat")) {
     if (fLArTargetShape == geo::kBox) {
@@ -483,6 +488,10 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
         fDetector->SetGeoPar("det_size_x", dim.x());
         fDetector->SetGeoPar("det_size_y", dim.y());
         fDetector->SetGeoPar("det_size_z", dim.z());
+
+        fDetector->SetGeoPar("det_rot_phi", 0.);
+        fDetector->SetGeoPar("det_rot_theta", 0.);
+        fDetector->SetGeoPar("det_rot_psi", 0.);
       }
       else if (fLArTargetShape == geo::kTub) { // kTub — only radius + axial length
         debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "radius"); 
@@ -536,6 +545,9 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
       fDetector->SetGeoPar("det_pos_z",   tpc->GetGeoPar("tpc_pos_z"));
       fDetector->SetGeoPar("det_radius",  tpc->GetGeoPar("tpc_radius") + eps);
       fDetector->SetGeoPar("det_length",  tpc->GetGeoPar("tpc_length") + 2*eps);
+      fDetector->SetGeoPar("det_rot_phi",   tpc->GetGeoPar("tpc_rot_phi"));
+      fDetector->SetGeoPar("det_rot_theta", tpc->GetGeoPar("tpc_rot_theta"));
+      fDetector->SetGeoPar("det_rot_psi",   tpc->GetGeoPar("tpc_rot_psi"));
     }
     else {
       fLArTargetShape = geo::kBox;
@@ -573,6 +585,9 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
       fDetector->SetGeoPar("det_size_x", target_max.x() - target_min.x() + 2*eps);
       fDetector->SetGeoPar("det_size_y", target_max.y() - target_min.y() + 2*eps);
       fDetector->SetGeoPar("det_size_z", target_max.z() - target_min.z() + 2*eps);
+      fDetector->SetGeoPar("det_rot_phi", 0.);
+      fDetector->SetGeoPar("det_rot_theta", 0.);
+      fDetector->SetGeoPar("det_rot_psi", 0.);
     }
   }
 
@@ -849,6 +864,8 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   G4cout << "shielding thickness: " << shielding_tk << G4endl;
   G4cout << "airflow thickness: " << airflow_tk << G4endl;
   G4cout << "target_y: " << target_pos << G4endl;
+
+  fDetector->GetGeoInfo()->DumpParMap();
 
   G4RotationMatrix* rot = new G4RotationMatrix(
       fDetector->GetGeoPar("det_rot_phi"), 

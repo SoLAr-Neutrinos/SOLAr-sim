@@ -1145,7 +1145,7 @@ void SLArDetCryostat::SetVisAttributes() {
 
   if (fSupportStructure) 
     fSupportStructure->GetModLV()->SetVisAttributes( G4VisAttributes(false) );
-  fModLV->SetVisAttributes( G4VisAttributes(true) );
+  fModLV->SetVisAttributes( G4VisAttributes(false) );
 }
 
 void SLArDetCryostat::BuildMaterials(G4String material_db) {

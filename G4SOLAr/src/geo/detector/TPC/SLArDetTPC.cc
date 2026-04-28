@@ -291,16 +291,19 @@ void SLArDetTPC::BuildTPC()
     );
 
   G4RotationMatrix* rot = new G4RotationMatrix(); 
-  const auto _fcAxis = (fShape == geo::kBox) ? 
-    G4ThreeVector(1, 0, 0) : G4ThreeVector(0, 0, 1); 
-  const auto _fieldDir   = fElectronDriftDir;
-  const auto _angle = _fieldDir.angle(_fcAxis);
-  auto rot_axis = _fieldDir.cross(_fcAxis); 
-  if (rot_axis.mag2() < 1e-6) rot_axis = _fcAxis;
-  rot->set(rot_axis, _angle); 
+  if ( fShape == geo::kTub ) {
+    const G4ThreeVector _fcAxis(0, 0, 1); 
+    const auto _fieldDir = fElectronDriftDir;
+    const auto _angle = _fieldDir.angle(_fcAxis);
+    auto rot_axis = _fieldDir.cross(_fcAxis); 
+    if (rot_axis.mag2() < 1e-6) rot_axis = _fcAxis;
+    rot->set(rot_axis, _angle); 
+  }
+
   fGeoInfo->SetGeoPar("tpc_rot_phi", rot->phi());
   fGeoInfo->SetGeoPar("tpc_rot_theta", rot->theta());
   fGeoInfo->SetGeoPar("tpc_rot_psi", rot->psi());
+
 
   if (fFieldCage) {
     if (fShape == geo::kBox) BuildFieldCageBox();
