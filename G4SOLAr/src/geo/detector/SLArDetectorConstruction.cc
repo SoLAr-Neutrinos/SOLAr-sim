@@ -527,6 +527,9 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
             "Invalid LAr target shape specified in JSON configuration! Valid options are: 'box' and 'cylinder' (or 'tub')");
       }
     }
+    else { // no dimensions specified: fall back to auto-inference from TPCs
+      ComputeTPCEnclosure(eps);
+    }
 
 
   }
@@ -550,44 +553,7 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
       fDetector->SetGeoPar("det_rot_psi",   tpc->GetGeoPar("tpc_rot_psi"));
     }
     else {
-      fLArTargetShape = geo::kBox;
-      G4ThreeVector target_min(0., 0., 0.);
-      G4ThreeVector target_max(0., 0., 0.);
-
-      for (const auto& tpc_ : fTPC) {
-        const auto& tpc = tpc_.second;
-        const G4ThreeVector center(tpc->GetGeoPar("tpc_pos_x"),
-            tpc->GetGeoPar("tpc_pos_y"),
-            tpc->GetGeoPar("tpc_pos_z"));
-        // For cylindrical TPCs use their bounding box (2R × 2R × Z)
-        G4ThreeVector dim;
-        if (tpc->GetShape() == geo::kTub) {
-          const G4double R = tpc->GetGeoPar("tpc_radius");
-          dim.set(2*R, 2*R, tpc->GetGeoPar("tpc_length"));
-        } else {
-          dim.set(tpc->GetGeoPar("tpc_x"),
-              tpc->GetGeoPar("tpc_y"),
-              tpc->GetGeoPar("tpc_z"));
-        }
-
-        const G4ThreeVector local_min = center - 0.5*dim;
-        const G4ThreeVector local_max = center + 0.5*dim;
-        for (int i = 0; i < 3; i++) {
-          if (local_min[i] < target_min[i]) target_min[i] = local_min[i];
-          if (local_max[i] > target_max[i]) target_max[i] = local_max[i];
-        }
-      }
-
-      const G4ThreeVector center = 0.5*(target_min + target_max);
-      fDetector->SetGeoPar("det_pos_x", center.x());
-      fDetector->SetGeoPar("det_pos_y", center.y());
-      fDetector->SetGeoPar("det_pos_z", center.z());
-      fDetector->SetGeoPar("det_size_x", target_max.x() - target_min.x() + 2*eps);
-      fDetector->SetGeoPar("det_size_y", target_max.y() - target_min.y() + 2*eps);
-      fDetector->SetGeoPar("det_size_z", target_max.z() - target_min.z() + 2*eps);
-      fDetector->SetGeoPar("det_rot_phi", 0.);
-      fDetector->SetGeoPar("det_rot_theta", 0.);
-      fDetector->SetGeoPar("det_rot_psi", 0.);
+      ComputeTPCEnclosure(eps);
     }
   }
 
@@ -612,6 +578,48 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
         fDetector->GetGeoPar("det_length"));
   }
   return;
+}
+
+void SLArDetectorConstruction::ComputeTPCEnclosure(const G4double eps) {
+  fLArTargetShape = geo::kBox;
+  G4ThreeVector target_min(0., 0., 0.);
+  G4ThreeVector target_max(0., 0., 0.);
+
+  for (const auto& tpc_ : fTPC) {
+    const auto& tpc = tpc_.second;
+    const G4ThreeVector center(tpc->GetGeoPar("tpc_pos_x"),
+        tpc->GetGeoPar("tpc_pos_y"),
+        tpc->GetGeoPar("tpc_pos_z"));
+    // For cylindrical TPCs use their bounding box (2R × 2R × Z)
+    G4ThreeVector dim;
+    if (tpc->GetShape() == geo::kTub) {
+      const G4double R = tpc->GetGeoPar("tpc_radius");
+      dim.set(2*R, 2*R, tpc->GetGeoPar("tpc_length"));
+    } else {
+      dim.set(tpc->GetGeoPar("tpc_x"),
+          tpc->GetGeoPar("tpc_y"),
+          tpc->GetGeoPar("tpc_z"));
+    }
+
+    const G4ThreeVector local_min = center - 0.5*dim;
+    const G4ThreeVector local_max = center + 0.5*dim;
+    for (int i = 0; i < 3; i++) {
+      if (local_min[i] < target_min[i]) target_min[i] = local_min[i];
+      if (local_max[i] > target_max[i]) target_max[i] = local_max[i];
+    }
+  }
+
+  const G4ThreeVector center = 0.5*(target_min + target_max);
+  fDetector->SetGeoPar("det_pos_x", center.x());
+  fDetector->SetGeoPar("det_pos_y", center.y());
+  fDetector->SetGeoPar("det_pos_z", center.z());
+  fDetector->SetGeoPar("det_size_x", target_max.x() - target_min.x() + 2*eps);
+  fDetector->SetGeoPar("det_size_y", target_max.y() - target_min.y() + 2*eps);
+  fDetector->SetGeoPar("det_size_z", target_max.z() - target_min.z() + 2*eps);
+  fDetector->SetGeoPar("det_rot_phi", 0.);
+  fDetector->SetGeoPar("det_rot_theta", 0.);
+  fDetector->SetGeoPar("det_rot_psi", 0.);
+
 }
 
 void SLArDetectorConstruction::BuildTarget() {

@@ -175,6 +175,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void InitCathode(const rapidjson::Value&); 
     //! Parse the description of the LAr target and set the corresponding parameters
     void InitTarget(const rapidjson::Value&);
+    //! Compute TPC enclosure dimensions and set the corresponding parameters
+    void ComputeTPCEnclosure(const G4double eps);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
