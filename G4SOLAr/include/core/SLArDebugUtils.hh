@@ -135,6 +135,21 @@ namespace debug {
     }
   }
 
+  inline void require_json_array(
+      const rapidjson::Value& obj,
+      rapidjson::SizeType expected_size = 0)
+  {
+    if (obj.IsArray() == false) {
+      G4String err_msg = G4String("Expected JSON value to be an array, got: ") + JsonTypeName(obj.GetType());
+      G4Exception("debug::require_json_array", "JsonDebug001", FatalException, err_msg);
+    }
+    if (expected_size > 0 && obj.Size() != expected_size) {
+      G4String err_msg = G4String("Expected JSON array of size ") + std::to_string(expected_size) +
+        ", got size: " + std::to_string(obj.Size());
+      G4Exception("debug::require_json_array", "JsonDebug002", FatalException, err_msg);
+    }
+  }
+
   inline void require_json_type( 
       const rapidjson::Value& obj, 
       rapidjson::Type expected_type) 
