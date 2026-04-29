@@ -1,11 +1,13 @@
 set(SLAR_GEO_TPC_HEADERS 
   "${SLAR_GEO_INCLUDE_DIR}/detector/TPC/SLArDetTPC.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/detector/TPC/SLArDetFieldCage.hh"
   "${SLAR_GEO_INCLUDE_DIR}/detector/TPC/SLArDetCathode.hh"
   "${SLAR_GEO_INCLUDE_DIR}/detector/TPC/SLArDetCryostat.hh"
 )
 
 set(SLAR_GEO_TPC_SRC
   "${SLAR_GEO_SRC_DIR}/detector/TPC/SLArDetTPC.cc"
+  "${SLAR_GEO_SRC_DIR}/detector/TPC/SLArDetFieldCage.cc"
   "${SLAR_GEO_SRC_DIR}/detector/TPC/SLArDetCathode.cc"
   "${SLAR_GEO_SRC_DIR}/detector/TPC/SLArDetCryostat.cc"
 )
