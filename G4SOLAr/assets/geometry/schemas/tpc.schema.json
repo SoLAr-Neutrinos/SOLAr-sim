@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TPC and Field Cage Configuration",
+  "$defs" : {
+    "tpc_object" : {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "string",
+          "enum": ["box", "tub", "cylinder"]
+        },
+        "copyID": {
+          "type": "integer"
+        },
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "object" }
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "xyz": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "unit": { "type": "string" }
+          },
+          "required": ["xyz"]
+        },
+        "electric_field": {
+          "type": "object",
+          "properties": {
+            "value": { "type": "number" },
+            "unit": { "type": "string" },
+            "direction": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          },
+          "required": ["value", "unit", "direction"]
+        },
+        "field_cage": {
+          "type": "object",
+          "properties": {
+            "thickness": { "type": "object" },
+            "spacing": { "type": "object" },
+            "shift": {
+              "type": "object",
+              "properties": {
+                "xyz": {
+                  "type": "array",
+                  "items": { "type": "number" },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "unit": { "type": "string" }
+              },
+              "required": ["xyz"]
+            },
+            "longitudinal_dimension": { "type": "object" },
+            "length": { "type": "object" },
+            "corner_radius": { "type": "object" },
+            "height_long_side": { "type": "object" },
+            "height_short_side": { "type": "object" },
+            "transverse_dimensions": {
+              "type": "array",
+              "items": { "type": "object" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "wall_distance": { "type": "object" },
+            "ring_height": { "type": "object" },
+            "radius": { "type": "object" }
+          },
+          "required": ["thickness", "spacing"]
+        }
+      },
+      "required": [
+        "copyID",
+        "dimensions",
+        "position",
+        "field_cage"
+      ]
+    }
+  },
+
+  "type": "object",
+  "properties": {
+    "TPC": {
+      "oneOf": [
+        { "$ref": "#/$defs/tpc_object" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/tpc_object" }
+        }
+      ]
+    }
+  }
+}
