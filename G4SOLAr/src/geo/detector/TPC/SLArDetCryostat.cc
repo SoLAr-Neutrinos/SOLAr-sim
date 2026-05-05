@@ -14,6 +14,7 @@
 
 #include "detector/TPC/SLArDetCryostat.hh"
 #include "detector/SLArPlaneParameterisation.hpp"
+#include <G4Exception.hh>
 
 SLArCryostatLayer::SLArCryostatLayer() : 
   fName("CryostatLayer"), 
@@ -83,6 +84,12 @@ void SLArDetCryostat::InitCryostatStructure(const rapidjson::Value& jcryo) {
 
     case geo::kTub:
       BuildCryostatTubStructure(jcryo);
+      break;
+
+    default:
+      G4ExceptionDescription ed;
+      ed << "SLArDetCryostat::InitCryostatStructure: Unsupported cryostat shape: " << fShape;
+      G4Exception("SLArDetCryostat::InitCryostatStructure", "InvalidSetup", FatalException, ed);
       break;
   }
 
