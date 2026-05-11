@@ -1,6 +1,7 @@
 {
   "TPC" : [
     {"copyID" : 10, 
+      "shape" : "box",
       "position": {"xyz" : [0, 110.05, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, -1, 0]},
       "dimensions" : [
@@ -18,6 +19,7 @@
       }
     },
     {"copyID" : 11, 
+      "shape" : "box",
       "position": {"xyz" : [0, -110.05, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, 1, 0]},
       "dimensions" : [

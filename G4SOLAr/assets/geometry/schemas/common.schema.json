@@ -3,7 +3,7 @@
   "$id": "common.schema.json",
 
   "$defs": {
-    "number_w_unit": {
+    "val_w_unit": {
       "description": "A scalar with a physical unit, as consumed by unit::ParseJsonVal.",
       "type": "object",
       "required": ["val", "unit"],
@@ -14,7 +14,7 @@
       }
     },
 
-    "named_number_w_unit": {
+    "named_val_w_unit": {
       "description": "A named scalar parameter, as used in dimensions arrays.",
       "type": "object",
       "required": ["name", "val", "unit"],
@@ -30,7 +30,7 @@
       "description": "Array of named geometry parameters read by fGeoInfo->ReadFromJSON.",
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/named_number_w_unit" }
+      "items": { "$ref": "#/$defs/named_val_w_unit" }
     },
 
     "vec3" : {

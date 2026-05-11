@@ -7,7 +7,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "thickness":  { "$ref": "common.schema.json#/$defs/number_w_unit" },
+        "thickness":  { "$ref": "common.schema.json#/$defs/val_w_unit" },
         "id":         { "type": "integer" },
         "name":       { "type": "string" },
         "material":   { "type": "string" },
@@ -24,7 +24,7 @@
       "properties": {
         "name":       { "type": "string" },
         "material":   { "type": "string" },
-        "thickness":  { "$ref": "common.schema.json#/$defs/number_w_unit" },
+        "thickness":  { "$ref": "common.schema.json#/$defs/val_w_unit" },
         "importance": { "type": "integer", "minimum": 1 }
       }
     },
@@ -58,10 +58,10 @@
       "required": ["steel_major_width", "steel_minor_width", "steel_thickness", "main_spacing"],
       "additionalProperties": false,
       "properties": {
-        "steel_major_width": { "$ref": "common.schema.json#/$defs/number_w_unit" },
-        "steel_minor_width": { "$ref": "common.schema.json#/$defs/number_w_unit" },
-        "steel_thickness":   { "$ref": "common.schema.json#/$defs/number_w_unit" },
-        "main_spacing":      { "$ref": "common.schema.json#/$defs/number_w_unit" },
+        "steel_major_width": { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "steel_minor_width": { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "steel_thickness":   { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "main_spacing":      { "$ref": "common.schema.json#/$defs/val_w_unit" },
         "neutron_brick":     { "$ref": "common.schema.json#/$defs/neutron_brick" }
       }
     }
@@ -104,7 +104,7 @@
         "required": ["thickness"],
         "additionalProperties": false,
         "properties": {
-          "thickness": { "$ref": "common.schema.json#/$defs/number_w_unit" }
+          "thickness": { "$ref": "common.schema.json#/$defs/val_w_unit" }
         }
       }
     }

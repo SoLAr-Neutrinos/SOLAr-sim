@@ -285,10 +285,6 @@ def main() -> int:
     registry = build_registry(schema_path, schema)
     validator = Draft7Validator(schema, registry=registry)
 
-    # print the loaded schema for debugging
-    print("Loaded schema:")
-    print(json.dumps(schema, indent=4))
-
     try:
         Draft7Validator.check_schema(schema)
         # Walk all $refs to trigger resolution errors immediately

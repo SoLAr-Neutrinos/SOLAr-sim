@@ -1,60 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$defs": {
-    "val_with_unit": {
-      "type": "object",
-      "required": ["unit", "val"],
-      "additionalProperties": true,
-      "properties": {
-        "unit": {
-          "type": "string",
-          "description": "Physical unit passed to unit::Unit2Val (e.g. 'cm', 'mm', 'm', 'deg', 'rad')"
-        },
-        "val": {
-          "type": "number"
-        }
-      }
-    },
-
-    "vec3_with_unit": {
-      "type": "object",
-      "required": ["unit", "xyz"],
-      "additionalProperties": false,
-      "properties": {
-        "unit": {
-          "type": "string",
-          "description": "Physical unit passed to unit::Unit2Val (e.g. 'cm', 'mm', 'm')"
-        },
-        "xyz": {
-          "type": "array",
-          "items": { "type": "number" },
-          "minItems": 3,
-          "maxItems": 3
-        }
-      }
-    },
-
-    "rot3_with_unit": {
-      "type": "object",
-      "required": ["unit", "val"],
-      "additionalProperties": false,
-      "properties": {
-        "unit": {
-          "type": "string",
-          "description": "Angular unit passed to unit::Unit2Val (e.g. 'deg', 'rad')"
-        },
-        "val": {
-          "type": "array",
-          "items": { "type": "number" },
-          "minItems": 3,
-          "maxItems": 3,
-          "description": "Euler angles [phi, theta, psi] passed to G4RotationMatrix"
-        }
-      }
-    }
-
-  },
-
+  "$id": "anode.schema.json",
   "type": "object",
   "required": ["copyID", "tpcID", "tile_assembly", "position", "rot", "normal", "dimensions"],
   "additionalProperties": false,
@@ -74,26 +20,30 @@
     },
 
     "position": {
-      "$ref": "#/$defs/vec3_with_unit",
+      "$ref": "common.schema.json#/$defs/vec3_with_unit",
       "description": "Anode position in the world frame"
     },
 
     "rot": {
-      "$ref": "#/$defs/rot3_with_unit",
+      "$ref": "common.schema.json#/$defs/rot3_with_unit",
       "description": "Anode orientation as three Euler angles"
     },
 
     "normal": {
-      "type": "array",
-      "items": { "type": "number" },
-      "minItems": 3,
-      "maxItems": 3,
+      "$ref": "common.schema.json#/$defs/vec3",
       "description": "Outward normal vector of the anode plane"
     },
 
     "dimensions": {
       "type": "array",
-      "items" : { "$ref" : "#/$defs/val_with_unit" }
+      "items" : { "$ref" : "common.schema.json#/$defs/named_val_w_unit" },
+      "minItems": 3,
+      "description": "Anode dimensions, require [dim_y, dim_x, dim_z]",
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "dim_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_z"}}, "required": ["name"]}}
+      ]
     }
   }
 }
