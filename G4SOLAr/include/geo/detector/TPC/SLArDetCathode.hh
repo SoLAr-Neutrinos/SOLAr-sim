@@ -11,10 +11,6 @@
 #include "detector/SLArBaseDetModule.hh"
 
 #include "G4ThreeVector.hh"
-#include "G4RotationMatrix.hh"
-#include "G4VSolid.hh"
-#include "G4LogicalVolume.hh"
-#include "G4PVPlacement.hh"
 
 class SLArDetCathode : public SLArBaseDetModule {
 
@@ -22,19 +18,24 @@ public:
   SLArDetCathode          ();
   virtual ~SLArDetCathode ();
 
-  void          BuildCathode();
+  void BuildCathode();
 
-  void          BuildMaterial(G4String);
-  void          BuildDefalutGeoParMap();
+  void BuildMaterial(G4String);
+  void BuildDefalutGeoParMap();
+  geo::EGeoShape GetGeoShape() const { return fShape; }
+  void SetGeoShape(geo::EGeoShape shape) { fShape = shape; }
 
-  G4ThreeVector GetCathodeCenter();
+  G4ThreeVector GetCathodeCenter() const;
+  G4RotationMatrix* GetRotation() const { return fRotation; }
   virtual void  Init(const rapidjson::Value&) override; 
-  void          SetVisAttributes();
+  void SetVisAttributes();
 
 private:
   // Some useful global variables
   SLArMaterial* fMatCathode;
- 
+  G4RotationMatrix* fRotation = {};
+  geo::EGeoShape fShape = geo::kBox;
+
 };
 
 

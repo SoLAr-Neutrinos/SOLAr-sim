@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cathode.schema.json",
+  "$defs" : {
+    "cathode_dim_box" : {
+      "description": "Dimensions for box geometry — requires dim_x, dim_y, dim_z.",
+      "type": "array",
+      "minItems": 3,
+      "items": { "$ref": "common.schema.json#/$defs/named_val_w_unit" },
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "dim_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_z"}}, "required": ["name"]}}
+      ]
+    }, 
+    "cathode_dim_tub" : {
+      "description": "Dimensions for tubular geometry — requires dim_r and dim_y.",
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "common.schema.json#/$defs/named_val_w_unit" },
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "dim_r"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_y"}}, "required": ["name"]}}
+      ]
+    },
+
+    "cathode_object" : {
+      "type": "object",
+      "required": ["copyID", "position", "dimensions", "shape"],
+      "additionalProperties": false,
+      "properties": {
+        "copyID": {"type": "integer"},
+        "shape": {"type": "string", "enum": ["box", "tub"]},
+        "position": {"$ref": "common.schema.json#/$defs/vec3_with_unit"},
+        "rot": {"$ref": "common.schema.json#/$defs/rot3_with_unit"},
+        "dimensions" : {"$ref": "common.schema.json#/$defs/dimensions"}
+      },
+      "if" : { "properties": { "shape": {"const": "tub"}}},
+      "then" : { "properties": { "dimensions": {"$ref": "#/$defs/cathode_dim_tub"}}},
+      "else" : { "properties": { "dimensions": {"$ref": "#/$defs/cathode_dim_box"}}}
+    }
+  },
+
+
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/cathode_object" },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cathode_object" }
+    }
+  ]
+}

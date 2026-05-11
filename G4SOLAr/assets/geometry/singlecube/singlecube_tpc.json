@@ -21,6 +21,7 @@
   ],
   "Cathode" : [
     {"copyID": 15, 
+      "shape" : "box",
       "position" : {"xyz": [14.95, 0, 0], "unit" : "cm"}, 
       "dimensions" : [
         {"name" : "dim_x", "val" : 1.00, "unit" : "mm"},

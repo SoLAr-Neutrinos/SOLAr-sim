@@ -788,7 +788,8 @@ void SLArDetectorConstruction::ConstructCathode() {
     cathode.second->BuildCathode(); 
     auto geoinfo = cathode.second->GetGeoInfo(); 
     cathode.second->GetModPV(
-        "cathode_pv_"+std::to_string(cathode.first), 0, 
+        "cathode_pv_"+std::to_string(cathode.first),
+        cathode.second->GetRotation(),
         G4ThreeVector(
           geoinfo->GetGeoPar("pos_x"), 
           geoinfo->GetGeoPar("pos_y"), 
