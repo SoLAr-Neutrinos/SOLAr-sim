@@ -1,9 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tpc.schema.json",
   "title": "TPC and Field Cage Configuration",
-  "$defs" : {
-    "tpc_object" : {
+  "$defs": {
+    "tpc_object": {
       "type": "object",
+      "required": [
+        "copyID",
+        "dimensions",
+        "position",
+        "field_cage"
+      ],
       "properties": {
         "shape": {
           "type": "string",
@@ -13,93 +20,79 @@
           "type": "integer"
         },
         "dimensions": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "type": "object" }
+          "$ref": "common.schema.json#/$defs/dimensions"
         },
         "position": {
-          "type": "object",
-          "properties": {
-            "xyz": {
-              "type": "array",
-              "items": { "type": "number" },
-              "minItems": 3,
-              "maxItems": 3
-            },
-            "unit": { "type": "string" }
-          },
-          "required": ["xyz"]
+          "$ref": "common.schema.json#/$defs/vec3_with_unit"
         },
         "electric_field": {
+          "description": "BUG FIX: property was named 'value' in the schema but 'val' in JSON and C++ reader.",
           "type": "object",
+          "additionalProperties": false,
+          "required": ["val", "unit", "direction"],
           "properties": {
-            "value": { "type": "number" },
-            "unit": { "type": "string" },
-            "direction": {
-              "type": "array",
-              "items": { "type": "number" },
-              "minItems": 3,
-              "maxItems": 3
-            }
-          },
-          "required": ["value", "unit", "direction"]
+            "val":       { "type": "number" },
+            "unit":      { "type": "string" },
+            "direction": { "$ref": "common.schema.json#/$defs/vec3" }
+          }
         },
         "field_cage": {
           "type": "object",
+          "additionalProperties": false,
+          "required": ["thickness", "spacing"],
           "properties": {
-            "thickness": { "type": "object" },
-            "spacing": { "type": "object" },
-            "shift": {
-              "type": "object",
-              "properties": {
-                "xyz": {
-                  "type": "array",
-                  "items": { "type": "number" },
-                  "minItems": 3,
-                  "maxItems": 3
-                },
-                "unit": { "type": "string" }
-              },
-              "required": ["xyz"]
+            "thickness": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
             },
-            "longitudinal_dimension": { "type": "object" },
-            "length": { "type": "object" },
-            "corner_radius": { "type": "object" },
-            "height_long_side": { "type": "object" },
-            "height_short_side": { "type": "object" },
+            "spacing": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "shift": {
+              "$ref": "common.schema.json#/$defs/vec3_with_unit"
+            },
+            "longitudinal_dimension": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "length": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "corner_radius": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "height_long_side": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "height_short_side": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
             "transverse_dimensions": {
               "type": "array",
-              "items": { "type": "object" },
+              "items": { "$ref": "common.schema.json#/$defs/number_w_unit" },
               "minItems": 2,
               "maxItems": 2
             },
-            "wall_distance": { "type": "object" },
-            "ring_height": { "type": "object" },
-            "radius": { "type": "object" }
-          },
-          "required": ["thickness", "spacing"]
+            "wall_distance": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "ring_height": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            },
+            "radius": {
+              "$ref": "common.schema.json#/$defs/number_w_unit"
+            }
+          }
         }
-      },
-      "required": [
-        "copyID",
-        "dimensions",
-        "position",
-        "field_cage"
-      ]
+      }
     }
   },
 
   "type": "object",
-  "properties": {
-    "TPC": {
-      "oneOf": [
-        { "$ref": "#/$defs/tpc_object" },
-        {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/tpc_object" }
-        }
-      ]
+  "oneOf": [
+    { "$ref": "#/$defs/tpc_object" },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/tpc_object" }
     }
-  }
+  ]
 }
