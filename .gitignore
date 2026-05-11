@@ -45,6 +45,9 @@ G4SOLAr/extern
 G4SOLAr/include/physics/cascade/
 G4SOLAr/src/physics/cascade/
 
+# External data
+/g4_extra_data
+
 
 # build files
 build*/
