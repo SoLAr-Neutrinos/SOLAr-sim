@@ -53,6 +53,10 @@ void SLArDetFieldCage::Init(const rapidjson::Value& jconf)
   const auto& jdd = jconf["drift_direction"].GetArray();
 
   fDriftDir.set(jdd[0].GetDouble(), jdd[1].GetDouble(), jdd[2].GetDouble());
+  if (fDriftDir.mag() < 1e-8) {
+    G4Exception("SLArDetFieldCage::Init()", "InvalidDriftDirection", FatalException,
+        "Invalid drift direction vector specified in JSON configuration! Vector magnitude is zero.");
+  }
   fDriftDir /= fDriftDir.mag(); // ensure unit vector
 
   int iDrift, iTrans1, iTrans2;
@@ -64,8 +68,8 @@ void SLArDetFieldCage::Init(const rapidjson::Value& jconf)
   debug::require_json_member(jconf, "tpc_z");
 
   // ---- Parameters shared by both shapes ----
-  assert(jconf.HasMember("thickness"));
-  assert(jconf.HasMember("spacing"));
+  debug::require_json_member(jconf, "thickness");
+  debug::require_json_member(jconf, "spacing");
   fGeoInfo->RegisterGeoPar("thickness", unit::ParseJsonVal(jconf["thickness"]));
   fGeoInfo->RegisterGeoPar("spacing",   unit::ParseJsonVal(jconf["spacing"]));
 

@@ -13,8 +13,6 @@
 
 #include "G4ThreeVector.hh"
 #include "G4RotationMatrix.hh"
-#include "G4VSolid.hh"
-#include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 
 class SLArDetTPC : public SLArBaseDetModule {
@@ -26,9 +24,6 @@ public:
   void          BuildTPC();
 
   void          BuildMaterial(G4String);
-  void          BuildFieldCage(); 
-  void          BuildFieldCageTub(); 
-  void          BuildFieldCageBox();
   void          BuildDefalutGeoParMap();
 
   geo::EGeoShape GetShape() const { return fShape; }
@@ -44,7 +39,6 @@ public:
     { if (fFieldCage) fFieldCage->SetVisAttributes(vis); }
 
 private:
-  // Some useful global variables
   SLArMaterial* fMatTarget;
   SLArMaterial* fMatFieldCage;
   SLArDetFieldCage* fFieldCage; 

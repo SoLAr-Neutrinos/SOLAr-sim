@@ -148,9 +148,9 @@ void SLArDetCathode::Init(const rapidjson::Value& jconf) {
       idim++; 
     }
     fRotation = new G4RotationMatrix(eulerAngles[0], eulerAngles[1], eulerAngles[2]); 
-    fGeoInfo->RegisterGeoPar("anode_phi", eulerAngles[0]); 
-    fGeoInfo->RegisterGeoPar("anode_theta", eulerAngles[1]); 
-    fGeoInfo->RegisterGeoPar("anode_psi", eulerAngles[2]); 
+    fGeoInfo->RegisterGeoPar("cathode_phi", eulerAngles[0]); 
+    fGeoInfo->RegisterGeoPar("cathode_theta", eulerAngles[1]); 
+    fGeoInfo->RegisterGeoPar("cathode_psi", eulerAngles[2]); 
   }
 
   return;

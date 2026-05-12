@@ -489,6 +489,12 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
         fDetector->SetGeoPar("det_size_y", dim.y());
         fDetector->SetGeoPar("det_size_z", dim.z());
 
+        if (fDetector->GetGeoPar("det_rot_phi") != 0 ||
+            fDetector->GetGeoPar("det_rot_theta") != 0 ||
+            fDetector->GetGeoPar("det_rot_psi") != 0) {
+          G4cerr << "Warning: rotation angles specified for box-shaped LAr target:";
+          G4cerr << " they will be ignored since they do not affect the geometry of the target" << G4endl;
+        }
         fDetector->SetGeoPar("det_rot_phi", 0.);
         fDetector->SetGeoPar("det_rot_theta", 0.);
         fDetector->SetGeoPar("det_rot_psi", 0.);
@@ -514,8 +520,7 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
         G4ThreeVector cyl_size(2*fDetector->GetGeoPar("det_radius"), 
             2*fDetector->GetGeoPar("det_radius"), 
             fDetector->GetGeoPar("det_length"));
-        G4RotationMatrix rot;
-        rot = rot.set(rot_phi, rot_theta, rot_psi);
+        G4RotationMatrix rot(rot_phi, rot_theta, rot_psi);
         cyl_size = rot * cyl_size;
         fDetector->SetGeoPar("det_size_x", std::abs(cyl_size.x()) + 2*eps);
         fDetector->SetGeoPar("det_size_y", std::abs(cyl_size.y()) + 2*eps);
@@ -874,7 +879,9 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   G4cout << "airflow thickness: " << airflow_tk << G4endl;
   G4cout << "target_y: " << target_pos << G4endl;
 
+#ifdef SLAR_DEBUG
   fDetector->GetGeoInfo()->DumpParMap();
+#endif
 
   G4RotationMatrix* rot = new G4RotationMatrix(
       fDetector->GetGeoPar("det_rot_phi"), 

@@ -27,6 +27,7 @@ public:
 
   G4ThreeVector GetCathodeCenter() const;
   G4RotationMatrix* GetRotation() const { return fRotation; }
+
   virtual void  Init(const rapidjson::Value&) override; 
   void SetVisAttributes();
 

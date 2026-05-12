@@ -19,7 +19,7 @@
 #include "G4Transform3D.hh"
 #include "G4LogicalVolume.hh"
 #include "G4RunManager.hh"
-//#include "geo/VolumeStruct.hh"
+#include "G4Exception.hh"
 
 #include "rapidjson/document.h"
 #include "rapidjson/allocators.h"

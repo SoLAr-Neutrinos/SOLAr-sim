@@ -288,7 +288,7 @@ void SLArDetTPC::BuildTPC()
   }
   else {
     G4Exception("SLArDetTPC::BuildTPC()", "InvalidTPCShape", FatalException, 
-        "Invalid TPC shape specified in JSON configuration! Valid options are: 'box' and 'cylinder' (or 'tub')");
+        "Invalid TPC shape specified in JSON configuration! Valid options are: 'box' and 'tub'");
   }
 
   SetLogicVolume(
@@ -431,7 +431,7 @@ void SLArDetTPC::InitFieldCage(const rapidjson::Value& jconf) {
   auto& alloc = jfc.GetAllocator();
   jfc.CopyFrom(jconf, alloc);
   printf("Initializing Field Cage with shape %s\n", geo::get_geo_shape_str(fShape).data());
-  jfc.AddMember("shape", rapidjson::Value().SetString(geo::get_geo_shape_str(fShape), alloc), alloc);
+  jfc.AddMember("shape", rapidjson::Value().SetString(geo::get_geo_shape_str(fShape).data(), alloc), alloc);
 
   rapidjson::Value jdd(rapidjson::kArrayType);
   for (int i = 0; i < 3; i++) {
