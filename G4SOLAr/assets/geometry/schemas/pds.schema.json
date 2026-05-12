@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PhotoDetectionSystem",
+  "$id": "pds.schema.json",
+
+  "$defs" : {
+    "pds_wall_dim" : {
+      "type": "array", 
+      "items" : {"$ref": "common.schema.json#/$defs/named_val_w_unit"},
+      "minItems" : 3,
+      "maxItems" : 3,
+      "additionalItems" : false,
+      "allOf" : [
+        {"contains" : {"properties" : {"name" : {"const" : "dim_x"}}}},
+        {"contains" : {"properties" : {"name" : {"const" : "dim_y"}}}},
+        {"contains" : {"properties" : {"name" : {"const" : "dim_z"}}}}
+      ]
+    },
+
+    "replication_axis_obj" : {
+      "type" : "object",
+      "required" : ["replica_axis", "spacing"],
+      "properties" : {
+        "replica_axis" : {"type" : "string", "enum" : ["x", "y", "z"]},
+        "spacing" : {"$ref" : "common.schema.json#/$defs/val_w_unit"}
+      }
+    },
+
+    "replication_obj" : {
+      "type" : "array", 
+      "items" : {"$ref" : "#/$defs/replication_axis_obj"}
+    }
+  },
+  
+  "type" : "object",
+  "required" : ["copyID", "tpcID", "name", "position", "normal", "rot", "photodet_model", "dimensions" ], 
+  "additionalProperties" : true,
+  "properties" : {
+    "copyID" : {"type" : "integer"},
+    "tpcID" : {"type" : "integer"},
+    "name" : {"type" : "string"},
+    "position" : {"$ref" : "common.schema.json#/$defs/vec3_w_unit"},
+    "normal" : {"$ref" : "common.schema.json#/$defs/vec3"},
+    "rot" : {"$ref" : "common.schema.json#/$defs/rot3_w_unit"},
+    "photodet_model" : {"type" : "string"},
+    "dimensions" : {"$ref" : "#/$defs/pds_wall_dim"},
+    "replication_data" : {"$ref" : "#/$defs/replication_obj"}
+  }
+
+}
