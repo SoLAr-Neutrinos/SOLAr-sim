@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Supercell",
+  "type": "object",
+  "required": ["dimensions"],
+  "properties": {
+    "dimensions": {
+      "type": "array",
+      "items" : {"$ref": "common.schema.json#/$defs/named_val_w_unit"},
+      "allOf" : [
+        {"contains" : {"properties" : {"name" : {"const" : "cell_x"}}}},
+        {"contains" : {"properties" : {"name" : {"const" : "cell_y"}}}},
+        {"contains" : {"properties" : {"name" : {"const" : "cell_z"}}}},
+        {"contains" : {"properties" : {"name" : {"const" : "coating_y"}}}}
+      ]
+    }
+  }
+}

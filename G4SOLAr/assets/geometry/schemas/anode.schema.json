@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "anode.schema.json",
+  "type": "object",
+  "required": ["copyID", "tpcID", "tile_assembly", "position", "rot", "normal", "dimensions"],
+  "additionalProperties": false,
+  "properties": {
+    "copyID": {
+      "type": "integer"
+    },
+
+    "tpcID": {
+      "type": "integer"
+    },
+
+    "tile_assembly": {
+      "type": "string",
+      "description": "Model name for the tile assembly"
+    },
+
+    "position": {
+      "$ref": "common.schema.json#/$defs/vec3_w_unit",
+      "description": "Anode position in the world frame"
+    },
+
+    "rot": {
+      "$ref": "common.schema.json#/$defs/rot3_w_unit",
+      "description": "Anode orientation as three Euler angles"
+    },
+
+    "normal": {
+      "$ref": "common.schema.json#/$defs/vec3",
+      "description": "Outward normal vector of the anode plane"
+    },
+
+    "dimensions": {
+      "type": "array",
+      "items" : { "$ref" : "common.schema.json#/$defs/named_val_w_unit" },
+      "minItems": 3,
+      "description": "Anode dimensions, require [dim_y, dim_x, dim_z]",
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "dim_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "dim_z"}}, "required": ["name"]}}
+      ]
+    }
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "readouttile.schema.json",
+
+  "$defs" : {
+    "pixel_dimensions" : {
+      "type" : "array", 
+      "minItems" : 3,
+      "maxItems" : 3,
+      "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "pix_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "pix_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "pix_z"}}, "required": ["name"]}}
+      ]
+    },
+    "sipm_dimensions" : {
+      "type" : "array", 
+      "minItems" : 3,
+      "maxItems" : 4,
+      "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "sipm_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "sipm_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "sipm_z"}}, "required": ["name"]}}
+      ]
+    },
+
+    "component_object" : {
+      "type" : "object",
+      "required" : ["name", "dimensions"],
+      "additionalProperties" : false,
+      "properties" : {
+        "name" : { "type" : "string", "enum" : ["pixel", "sipm"] },
+        "dimensions" : {"$ref" : "common.schema.json#/$defs/dimensions"}
+      },
+      "if" : {"properties" : { "name" : {"const" : "pixel"}}},
+      "then" : {"properties" : {"dimensions" : {"$ref" : "#/$defs/pixel_dimensions"}}},
+      "else" : {"properties" : {"dimensions" : {"$ref" : "#/$defs/sipm_dimensions"}}
+      }
+    },
+
+    "lineup_component_object" : {
+      "type" : "object",
+      "required" : ["component", "name", "copy", "pos_z", "pos_x"],
+      "additionalProperties" : false,
+      "properties" : {
+        "component" : {"type" : "string", "enum" : ["pixel", "sipm"]},
+        "name" : {"type" : "string"},
+        "copy" : {"type" : "integer"},
+        "pos_z" : {"$ref" : "common.schema.json#/$defs/val_w_unit"},
+        "pos_x" : {"$ref" : "common.schema.json#/$defs/val_w_unit"}
+      }
+    },
+
+    "pixelmap_item_edge_object" : {
+      "type" : "object",
+      "required" : ["z", "x"],
+      "additionalProperties" : false,
+      "properties" : {
+        "z" : {"$ref" : "common.schema.json#/$defs/val_w_unit"},
+        "x" : {"$ref" : "common.schema.json#/$defs/val_w_unit"}
+      }
+    },
+
+    "pixelmap_item_object" : {
+      "type" : "object",
+      "required" : ["name", "edges"],
+      "additionalProperties" : false,
+      "properties" : {
+        "name" : {"type" : "string"},
+        "edges" : {
+          "type" : "array",
+          "minItems" : 3,
+          "items" : {"$ref" : "#/$defs/pixelmap_item_edge_object"}
+        }
+      }
+    },
+
+    "pixelmap_object" : {
+      "type" : "array",
+      "minItems" : 1,
+      "items" : {"$ref" : "#/$defs/pixelmap_item_object"}
+    },
+
+    "unit_cell_object" : {
+      "type" : "object",
+      "required" : ["dimensions", "lineup", "pixelmap"],
+      "additionalProperties" : false,
+      "properties" : {
+        "dimensions" : {
+          "type" : "array",
+          "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
+          "allOf": [
+            {"contains": {"properties": {"name": {"const": "cell_x"}}, "required": ["name"]}},
+            {"contains": {"properties": {"name": {"const": "cell_z"}}, "required": ["name"]}}
+          ]
+        },
+        "lineup" : {
+          "type" : "array",
+          "minItems" : 1,
+          "items" : {"$ref" : "#/$defs/lineup_component_object"}
+        },
+        "pixelmap" : {"$ref" : "#/$defs/pixelmap_object"}
+      }
+    },
+
+    "tile_assembly_object": {
+      "type": "object",
+      "required": ["name", "copyID", "dimensions"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "copyID": {"type": "integer"},
+        "dimensions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
+          "allOf": [
+            {"contains": {"properties": {"name": {"const": "rdoutplane_x"}}, "required": ["name"]}},
+            {"contains": {"properties": {"name": {"const": "rdoutplane_z"}}, "required": ["name"]}}
+          ]
+        }
+      }
+    }
+  },
+
+  "type": "object",
+  "required": ["dimensions", "components", "unit_cell", "tile_assembly"],
+  "additionalProperties": false,
+  "properties": {
+    "copyID": {"type": "integer"},
+    "dimensions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "tile_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "tile_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "tile_z"}}, "required": ["name"]}}
+      ] 
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items" : {"$ref" : "#/$defs/component_object"}
+    },
+    "unit_cell": {"$ref" : "#/$defs/unit_cell_object"},
+    "tile_assembly": {
+      "type": "array",
+      "minItems": 1,
+      "items" : {"$ref" : "#/$defs/tile_assembly_object"}
+    }
+  }
+}

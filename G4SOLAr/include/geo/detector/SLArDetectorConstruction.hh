@@ -59,7 +59,10 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Construct world and place detectors
     virtual G4VPhysicalVolume* Construct();
     //! Construct Target
-    void ConstructTarget(const rapidjson::Value& d); 
+    inline void ConstructTarget(const rapidjson::Value& d) {
+      InitTarget(d);
+      BuildTarget();
+    }
     //! Construct Cathode
     void ConstructCathode();
     //! Construct Cryostat
@@ -85,6 +88,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void BuildAndPlaceSuperCells();
     //! Build the ReadoutTile object and the place the MegaTiles according to the given configuration
     void BuildAndPlaceAnode();
+    //! Build the target volume according to the given configuration 
+    void BuildTarget();
     //! Get the World's logical volume
     G4LogicalVolume* GetLogicWorld();
     //! Get the World's physical volume
@@ -126,6 +131,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     std::vector<G4VisAttributes*>   fVisAttributes; 
 
     //! TPC detector object (cryostat + LAr target)
+    geo::EGeoShape fLArTargetShape{geo::EGeoShape::kBox};
     SLArBaseDetModule* fDetector;
     SLArDetCryostat* fCryostat; 
     std::map<int, SLArDetTPC*> fTPC;
@@ -167,6 +173,10 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void InitTPC(const rapidjson::Value&); 
     //! Parse the description of the cathode elements
     void InitCathode(const rapidjson::Value&); 
+    //! Parse the description of the LAr target and set the corresponding parameters
+    void InitTarget(const rapidjson::Value&);
+    //! Compute TPC enclosure dimensions and set the corresponding parameters
+    void ComputeTPCEnclosure(const G4double eps);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

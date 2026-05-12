@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tpc.schema.json",
+  "title": "TPC and Field Cage Configuration",
+  "$defs": {
+    "tpc_dimensions_box": {
+      "description": "Dimensions for box geometry — requires tpc_x, tpc_y, tpc_z.",
+      "type": "array",
+      "minItems": 3,
+      "items": { "$ref": "common.schema.json#/$defs/named_val_w_unit" },
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "tpc_x"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "tpc_y"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "tpc_z"}}, "required": ["name"]}}
+      ]
+    },
+
+    "tpc_dimensions_tub": {
+      "description": "Dimensions for tubular geometry — requires tpc_radius and tpc_length.",
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "common.schema.json#/$defs/named_val_w_unit" },
+      "allOf": [
+        {"contains": {"properties": {"name": {"const": "tpc_radius"}}, "required": ["name"]}},
+        {"contains": {"properties": {"name": {"const": "tpc_length"}}, "required": ["name"]}}
+      ]
+    },
+
+    "tpc_object": {
+      "type": "object",
+      "required": [
+        "shape",
+        "copyID",
+        "dimensions",
+        "position",
+        "field_cage"
+      ],
+      "properties": {
+        "shape": {"type": "string", "enum": ["box", "tub"]},
+        "copyID": {"type": "integer"},
+        "position": {"$ref": "common.schema.json#/$defs/vec3_w_unit"},
+        "electric_field": {
+          "description": "BUG FIX: property was named 'value' in the schema but 'val' in JSON and C++ reader.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["val", "unit", "direction"],
+          "properties": {
+            "val":       { "type": "number" },
+            "unit":      { "type": "string" },
+            "direction": { "$ref": "common.schema.json#/$defs/vec3" }
+          }
+        },
+        "field_cage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["thickness", "spacing"],
+          "properties": {
+            "thickness": {"$ref": "common.schema.json#/$defs/val_w_unit" },
+            "spacing": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "shift": {"$ref": "common.schema.json#/$defs/vec3_w_unit"},
+            "longitudinal_dimension": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "length": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "corner_radius": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "height_long_side": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "height_short_side": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "transverse_dimensions": {
+              "type": "array",
+              "items": { "$ref": "common.schema.json#/$defs/val_w_unit" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "wall_distance": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "ring_height": {"$ref": "common.schema.json#/$defs/val_w_unit"},
+            "radius": {"$ref": "common.schema.json#/$defs/val_w_unit"}
+          }
+        }
+      },
+      "if" : {
+        "properties": { "shape": { "const": "tub" } }
+      },
+      "then": {
+        "properties": {
+          "dimensions": { "$ref": "#/$defs/tpc_dimensions_tub" }
+        }
+      },
+      "else": {
+        "properties": {
+          "dimensions": { "$ref": "#/$defs/tpc_dimensions_box" }
+        }
+      }
+    }
+  },
+
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/tpc_object" },
+    {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/tpc_object" }
+    }
+  ]
+}

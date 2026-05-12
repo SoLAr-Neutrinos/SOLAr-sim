@@ -1,0 +1,112 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "$defs": {
+    "cryostat_layer": {
+      "description": "One shell in Cryostat_structure.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "thickness":  { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "id":         { "type": "integer" },
+        "name":       { "type": "string" },
+        "material":   { "type": "string" },
+        "importance": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["thickness"]
+    },
+
+    "shielding_layer": {
+      "description": "One layer inside a neutron_brick (always fully specified).",
+      "type": "object",
+      "required": ["name", "material", "thickness"],
+      "additionalProperties": false,
+      "properties": {
+        "name":       { "type": "string" },
+        "material":   { "type": "string" },
+        "thickness":  { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "importance": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "neutron_brick": {
+      "description": "Single shielding layer or a named array of layers — mirrors the if/else branch in BuildCryostatBoxStructure.",
+      "oneOf": [
+        {
+          "description": "Single-layer brick: the object itself carries name/material/thickness.",
+          "$ref": "#/$defs/shielding_layer"
+        },
+        {
+          "description": "Multi-layer brick: a 'layers' array of shielding_layer objects.",
+          "type": "object",
+          "required": ["layers"],
+          "additionalProperties": false,
+          "properties": {
+            "layers": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/shielding_layer" }
+            }
+          }
+        }
+      ]
+    },
+
+    "cryostat_support": {
+      "description": "Waffle support structure (box geometry only). All four width/thickness fields are unconditionally read by the loader.",
+      "type": "object",
+      "required": ["steel_major_width", "steel_minor_width", "steel_thickness", "main_spacing"],
+      "additionalProperties": false,
+      "properties": {
+        "steel_major_width": { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "steel_minor_width": { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "steel_thickness":   { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "main_spacing":      { "$ref": "common.schema.json#/$defs/val_w_unit" },
+        "neutron_brick":     { "$ref": "common.schema.json#/$defs/neutron_brick" }
+      }
+    }
+
+  },
+
+  "type": "object",
+  "required": ["Cryostat_structure"],
+
+  "properties": {
+    "shape": {
+      "type": "string",
+      "description": "Geometry shape code passed to geo::get_geo_shape_code. Omit to default to box.",
+      "enum": ["box", "tub"]
+    },
+    "Cryostat_structure": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cryostat_layer" }
+    }
+  },
+
+  "if": {
+    "properties": { "shape": { "const": "tub" } },
+    "required": ["shape"]
+  },
+  "then": {
+    "description": "Tubular geometry: support structure and floor airflow are not read by the loader.",
+    "properties": {
+      "Cryostat_support": false,
+      "floor_airflow":    false
+    }
+  },
+  "else": {
+    "description": "Box geometry (default): optional support structure and floor airflow are allowed.",
+    "properties": {
+      "Cryostat_support": { "$ref": "#/$defs/cryostat_support" },
+      "floor_airflow": {
+        "type": "object",
+        "required": ["thickness"],
+        "additionalProperties": false,
+        "properties": {
+          "thickness": { "$ref": "common.schema.json#/$defs/val_w_unit" }
+        }
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@
 #define SLARDETTPC_HH
 
 #include "detector/SLArBaseDetModule.hh"
+#include "detector/TPC/SLArDetFieldCage.hh"
 
 #include "G4ThreeVector.hh"
 #include "G4RotationMatrix.hh"
@@ -26,28 +27,32 @@ public:
 
   void          BuildMaterial(G4String);
   void          BuildFieldCage(); 
+  void          BuildFieldCageTub(); 
+  void          BuildFieldCageBox();
   void          BuildDefalutGeoParMap();
 
+  geo::EGeoShape GetShape() const { return fShape; }
+  void SetShape(geo::EGeoShape shape) { fShape = shape; }
   const G4ThreeVector GetTPCcenter();
-  const G4ThreeVector& GetElectronDriftDir() {return fElectronDriftDir;}
-  const G4double& GetElectricField() {return fElectricField;}
-  SLArBaseDetModule* GetFieldCage() {return fFieldCage;}
+  inline const G4ThreeVector& GetElectronDriftDir() {return fElectronDriftDir;}
+  inline const G4double& GetElectricField() {return fElectricField;}
+  inline SLArDetFieldCage* GetFieldCage() {return fFieldCage;}
   virtual void  Init(const rapidjson::Value& jconf) override; 
   void  InitFieldCage(const rapidjson::Value& jcon); 
   void  SetVisAttributes();
-  void  SetFieldCageVisibility(const G4bool); 
-
+  inline void  SetFieldCageVisibility(const G4bool vis) 
+    { if (fFieldCage) fFieldCage->SetVisAttributes(vis); }
 
 private:
   // Some useful global variables
   SLArMaterial* fMatTarget;
   SLArMaterial* fMatFieldCage;
-  SLArBaseDetModule* fFieldCage; 
+  SLArDetFieldCage* fFieldCage; 
+  geo::EGeoShape fShape{geo::kBox};
   G4double      fElectricField; 
   G4ThreeVector fElectronDriftDir; 
   G4bool fFieldCageVisibility;
 
- 
 };
 
 

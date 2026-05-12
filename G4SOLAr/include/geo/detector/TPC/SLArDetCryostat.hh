@@ -10,6 +10,7 @@
 
 #include "detector/SLArBaseDetModule.hh"
 #include "G4VPVParameterisation.hh"
+#include <G4Types.hh>
 
 struct SLArCryostatLayer{
   public:
@@ -28,14 +29,16 @@ struct SLArCryostatLayer{
 
     ~SLArCryostatLayer() {}
 
-    G4String  fName;
-    G4double  fHalfSizeX;
-    G4double  fHalfSizeY; 
-    G4double  fHalfSizeZ; 
-    G4double  fThickness;
-    G4int     fImportance; 
+    G4String  fName = {};
+    G4double  fHalfSizeX = {};
+    G4double  fHalfSizeY = {}; 
+    G4double  fHalfSizeZ = {}; 
+    G4double  fRadius = {}; 
+    G4double  fHalfLength = {};
+    G4double  fThickness = {};
+    G4int     fImportance = 1; 
 
-    G4String  fMaterialName;
+    G4String  fMaterialName = {};
     G4Material* fMaterial = nullptr;
     SLArBaseDetModule* fModule = nullptr; 
 };
@@ -49,8 +52,9 @@ class SLArDetCryostat : public SLArBaseDetModule {
 
     void BuildCryostat(); 
     void BuildMaterials(G4String); 
-    void BuildCryostatStructure(const rapidjson::Value& jcryo);
+    void InitCryostatStructure(const rapidjson::Value& jcryo);
     SLArBaseDetModule* GetAirflowUnit() {return fAirFlowUnit;}
+    geo::EGeoShape GetShape() const {return fShape;}
     SLArCryostatStructure& GetCryostatStructure() {return fCryostatStructure;}
     SLArCryostatStructure& GetShieldingStructure() {return fShieldingStructure;}
     inline std::map<geo::EBoxFace, SLArBaseDetModule*>& GetCryostatSupportStructureFaces() {return fSupportStructureFaces;}
@@ -61,6 +65,8 @@ class SLArDetCryostat : public SLArBaseDetModule {
     virtual void Init(const rapidjson::Value&) override {}
     bool HasSupportStructure() const {return fBuildSupport;}
     void SetWorldMaterial(SLArMaterial* mat) {fMatWorld = mat;}
+    geo::EGeoShape GetGeoShape() const {return fShape;}
+    void SetShape(geo::EGeoShape shape) {fShape = shape;}
     inline void SetSupportStructureVisibility(bool visible) {fSupportStructureVisibility = visible;}
     void SetVisAttributes();
     G4bool HasAirFlow() const {return fAddFloorAirflow;}
@@ -74,6 +80,7 @@ class SLArDetCryostat : public SLArBaseDetModule {
     SLArBaseDetModule* fWaffleEdgeUnit = {};
     SLArBaseDetModule* fAirFlowUnit = {}; 
     SLArBaseDetModule* fSupportStructure = {};
+    geo::EGeoShape fShape = geo::kBox;
     G4bool fBuildSupport; 
     G4bool fAddNeutronBricks; 
     G4bool fAddFloorAirflow; 
@@ -85,9 +92,14 @@ class SLArDetCryostat : public SLArBaseDetModule {
     SLArCryostatStructure fCryostatStructure; 
     SLArCryostatStructure fShieldingStructure;
 
-    SLArBaseDetModule* BuildCryostatLayer(
+    SLArBaseDetModule* BuildCryostatBoxLayer(
         G4String name, 
         G4double x_, G4double y_, G4double z_, G4double tk_, 
+        G4Material* mat);
+
+    SLArBaseDetModule* BuildCryostatTubLayer(
+        G4String name,
+        G4double r_, G4double hz_, G4double tk_,
         G4Material* mat);
 
     SLArBaseDetModule* BuildShieldingLayer(
@@ -95,6 +107,8 @@ class SLArDetCryostat : public SLArBaseDetModule {
         G4double x_, G4double z_, G4double tk_, 
         G4Material* mat);
 
+    void BuildCryostatBoxStructure(const rapidjson::Value& jcryo);
+    void BuildCryostatTubStructure(const rapidjson::Value& jcryo);
     void BuildSupportStructureUnit(); 
     void BuildSupportStructureEdgeUnit(); 
     void BuildAirFlowUnit();

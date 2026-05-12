@@ -8,6 +8,7 @@
 #include "detector/SLArDetectorConstruction.hh"
 #include "detector/TPC/SLArDetTPC.hh"
 #include "detector/SLArPlaneParameterisation.hpp"
+#include "SLArDebugUtils.hh"
 
 #include "SLArAnalysisManager.hh"
 
@@ -28,6 +29,11 @@
 #include "G4VisAttributes.hh"
 #include "G4PVParameterised.hh"
 
+#ifdef SLAR_DEBUG
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/prettywriter.h"
+#endif // SLAR_DEBUG
+
 
 SLArDetTPC::SLArDetTPC() : SLArBaseDetModule(),
   fMatTarget(nullptr), fMatFieldCage(nullptr), fFieldCage(nullptr), fFieldCageVisibility(true)
@@ -43,7 +49,6 @@ SLArDetTPC::~SLArDetTPC() {
 
 void SLArDetTPC::BuildMaterial(G4String db_file) 
 {
-  // TODO: IMPLEMENT PROPER MATERIALS IN /materials
   fMatTarget = new SLArMaterial();
   fMatFieldCage = new SLArMaterial(); 
 
@@ -54,154 +59,209 @@ void SLArDetTPC::BuildMaterial(G4String db_file)
   fMatFieldCage->BuildMaterialFromDB(db_file); 
 }
 
-void SLArDetTPC::BuildDefalutGeoParMap() 
-{
-  G4cerr << "SLArDetTPC::BuildGeoParMap()" << G4endl;
-  fGeoInfo->RegisterGeoPar("tpc_y"       , 150.0*CLHEP::cm);
-  fGeoInfo->RegisterGeoPar("tpc_z"       , 200.0*CLHEP::cm);
-  fGeoInfo->RegisterGeoPar("tpc_x"       ,  60.0*CLHEP::cm); 
-  G4cerr << "Exit method\n" << G4endl;
-}
+void SLArDetTPC::BuildDefalutGeoParMap() {}
 
-void SLArDetTPC::BuildFieldCage() {
-  const G4ThreeVector axis[3] = {
-    G4ThreeVector(1, 0, 0), 
-    G4ThreeVector(0, 1, 0), 
-    G4ThreeVector(0, 0, 1)};
-  const G4String axis_label[3] = {"x", "y", "z"};
+/*
+ *void SLArDetTPC::BuildFieldCageTub() {
+ *  auto fcGeoInfo = fFieldCage->GetGeoInfo();
+ *  const G4double tk  = fcGeoInfo->GetGeoPar("thickness");
+ *  const G4double wd  = fcGeoInfo->GetGeoPar("wall_distance");
+ *  const G4double sp  = fcGeoInfo->GetGeoPar("spacing");
+ *  const G4double rh  = fcGeoInfo->GetGeoPar("ring_height");
+ *
+ *  const G4double tpcR = fGeoInfo->GetGeoPar("tpc_radius");
+ *  const G4String axis_label[3] = {"x", "y", "z"};
+ *  const G4ThreeVector axis[3] = {
+ *    G4ThreeVector(1, 0, 0), 
+ *    G4ThreeVector(0, 1, 0),
+ *    G4ThreeVector(0, 0, 1)};
+ *
+ *  G4double DDriftLength = 0.;
+ *  for (int i = 0; i < 3; i++) {
+ *    if (std::abs(fElectronDriftDir.dot(axis[i])) > 0.5) {
+ *      DDriftLength = fGeoInfo->GetGeoPar("tpc_" + axis_label[i]) - 2*CLHEP::cm;
+ *      break;
+ *    }
+ *  }
+ *  
+ *  const G4double R_fc = tpcR - wd;
+ *  // ---- Single ring (one field-cage electrode) ----
+ *  auto fc_ring_sv = new G4Tubs("fc_ring_sv",
+ *      R_fc - tk, R_fc, 0.5*rh, 0., CLHEP::twopi);
+ *  auto fc_ring_lv = new G4LogicalVolume(fc_ring_sv,
+ *      fMatFieldCage->GetMaterial(), "fc_ring_lv");
+ *
+ *  // ---- Container: cylindrical shell spanning the drift length ----
+ *  // rMin/rMax bracket the ring so the parameterised placement is valid.
+ *  auto fc_volume_sv = new G4Tubs("fc_volume_sv",
+ *      R_fc - tk, R_fc, 0.5*DDriftLength, 0., CLHEP::twopi);
+ *  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv,
+ *      fMatTarget->GetMaterial(), "fc_volume_lv");
+ *  fc_volume_lv->SetVisAttributes(G4VisAttributes(false));
+ *
+ *  fFieldCage->SetSolidVolume(fc_volume_sv);
+ *  fFieldCage->SetLogicVolume(fc_volume_lv);
+ *
+ *  // ---- Compute number of ring replicas (same logic as box cage) ----
+ *  G4double len = rh;
+ *  G4double len_tmp = len;
+ *  G4int n_replica = 0;
+ *  while (len_tmp <= DDriftLength) {
+ *    len = len_tmp;
+ *    n_replica++;
+ *    len_tmp += sp;
+ *  }
+ *
+ *  // Parameterise along Z (natural tubs axis; BuildTPC() will rotate to fElectronDriftDir)
+ *  auto parameterisation = new SLArPlaneParameterisation(kZAxis,
+ *      G4ThreeVector(0, 0, -0.5*(len - sp + rh)), sp);
+ *
+ *  fFieldCage->SetModPV(new G4PVParameterised("fieldCage_ppv",
+ *      fc_ring_lv, fc_volume_lv,
+ *      parameterisation->GetReplicationAxis(), n_replica - 1, parameterisation));
+ *  fFieldCage->GetModPV()->SetCopyNo(20);
+ *}
+ */
 
-  auto fcGeoInfo = fFieldCage->GetGeoInfo(); 
-  const G4double R = fcGeoInfo->GetGeoPar("corner_radius"); 
-  const G4double tk = fcGeoInfo->GetGeoPar("thickness");
-  const G4double hl = fcGeoInfo->GetGeoPar("height_long_side"); 
-  const G4double hs = fcGeoInfo->GetGeoPar("height_short_side"); 
-  const G4double wd = fcGeoInfo->GetGeoPar("wall_distance"); 
-  const G4double sp = fcGeoInfo->GetGeoPar("spacing"); 
-  // field cage dimensions: in this (arbitrary) frame x = drift direction
-  G4ThreeVector Dfc(0., 0., 0.); 
-  G4double DDriftLength = 0; 
-  Dfc.setX( fFieldCage->GetGeoPar("height_short_side") ); 
-  G4int idim = 1;
-  for (int i=0; i<3; i++) {
-    if (fElectronDriftDir.dot(axis[i]) == 0) {
-      Dfc[idim] = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - wd; 
-      idim++;
-    } else {
-      DDriftLength = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - 2*CLHEP::cm; 
-    }
-  }
-  
-  G4double hy = 0.; 
-  G4double hz = 0.; 
-  if ( Dfc[1] > Dfc[2] ) {hy = hl; hz = hs;} else {hy = hs; hz = hl;}
-  
-
-  // build solid and logical volumes
-  auto fc_corner_tub = new G4Tubs("fc_corner_sv", 
-      R-tk, R, 0.5*std::max(hl, hs), 0, 90*CLHEP::deg); 
-  auto fc_corner_lv = new G4LogicalVolume(fc_corner_tub, fMatFieldCage->GetMaterial(), 
-      "fc_corner_lv"); 
-  G4double dly = R; G4double dlz = R; 
-  auto fc_yside_box = new G4Box("fc_lside_box", 
-      0.5*hy, 0.5*tk, 0.5*Dfc[1] - dly); 
-  auto fc_zside_box = new G4Box("fc_sside_box", 
-      0.5*hz, 0.5*tk, 0.5*Dfc[2] - dlz);
-  auto fc_zside_lv = new G4LogicalVolume(fc_zside_box, fMatFieldCage->GetMaterial(), 
-      "fc_lside_lv"); 
-  auto fc_yside_lv = new G4LogicalVolume(fc_yside_box, fMatFieldCage->GetMaterial(), 
-      "fc_sside_lv"); 
-
-  G4ThreeVector _cornerTubAxis = G4ThreeVector(0, 0, 1); 
-
-  fFieldCage->GetGeoInfo()->DumpParMap(); 
-  G4Box* layer_outer_box = new G4Box("fc_layer_outerBox", 
-      0.5*Dfc[0], 0.5*Dfc[1], 0.5*Dfc[2]); 
-  G4double deltaDim = R-(R-tk)*cos( 45*CLHEP::deg ) + 1*CLHEP::mm; 
-  G4Box* layer_inner_box = new G4Box("fc_layer_innerBox", 
-      0.5*Dfc[0], 0.5*Dfc[1]-deltaDim, 0.5*Dfc[2]-deltaDim); 
-
-  auto fc_layer_sv = 
-    new G4SubtractionSolid("fc_layer_sv", layer_outer_box, layer_inner_box);  
-  auto fc_layer_lv = new G4LogicalVolume(fc_layer_sv, fMatTarget->GetMaterial(), 
-      "fieldCage_layer_lv"); 
-  fc_layer_lv->SetVisAttributes( G4VisAttributes(false) ); 
-  // place the corners
-  G4double delta = _cornerTubAxis.angle( G4ThreeVector(1, 0, 0) ); 
-  G4RotationMatrix* rot_common = 
-    new G4RotationMatrix(_cornerTubAxis.cross(G4ThreeVector(1, 0, 0)), delta); 
-  G4RotationMatrix* rot0 = new G4RotationMatrix(*rot_common); 
-  G4RotationMatrix* rot1 = new G4RotationMatrix(*rot_common); 
-  rot1->rotateZ(-0.5*CLHEP::pi); 
-  G4RotationMatrix* rot2 = new G4RotationMatrix(*rot_common); 
-  rot2->rotateZ(-1.0*CLHEP::pi); 
-  G4RotationMatrix* rot3 = new G4RotationMatrix(*rot_common); 
-  rot3->rotateZ(-1.5*CLHEP::pi); 
-  /*auto corner_0 = */
-  new G4PVPlacement(rot0, G4ThreeVector(0, 0.5*Dfc[1]-R, 0.5*Dfc[2]-R),
-      fc_corner_lv, "fc_corner0_pv", fc_layer_lv, false, 10); 
-  /*auto corner_1 = */
-  new G4PVPlacement(rot1, G4ThreeVector(0, 0.5*Dfc[1]-R, -(0.5*Dfc[2]-R)),
-      fc_corner_lv, "fc_corner1_pv", fc_layer_lv, false, 11); 
-  /*auto corner_2 = */
-  new G4PVPlacement(rot2, G4ThreeVector(0, -(0.5*Dfc[1]-R), -(0.5*Dfc[2]-R)),
-      fc_corner_lv, "fc_corner2_pv", fc_layer_lv, false, 12);   
-  /*auto corner_3 = */
-  new G4PVPlacement(rot3, G4ThreeVector(0, -(0.5*Dfc[1]-R), +(0.5*Dfc[2]-R)),
-      fc_corner_lv, "fc_corner3_pv", fc_layer_lv, false, 13);   
-
-  // place the sides
-  /*auto yside_0 = */
-  new G4PVPlacement(new G4RotationMatrix(axis[0], 0.5*CLHEP::pi), 
-      G4ThreeVector(0, 0, -0.5*(Dfc[2]-tk)),
-      fc_yside_lv, "fc_yside0_pv", fc_layer_lv, false, 14);   
-  /*auto yside_1 = */
-  new G4PVPlacement(new G4RotationMatrix(axis[0], 0.5*CLHEP::pi), 
-      G4ThreeVector(0, 0, +0.5*(Dfc[2]-tk)),
-      fc_yside_lv, "fc_yside1_pv", fc_layer_lv, false, 15);   
-  /*auto zside_0 = */
-  new G4PVPlacement(nullptr, 
-      G4ThreeVector(0, -0.5*(Dfc[1]-tk), 0.),
-      fc_zside_lv, "fc_zside0_pv", fc_layer_lv, false, 16);   
-  /*auto zside_1 = */
-  new G4PVPlacement(0, 
-      G4ThreeVector(0, +0.5*(Dfc[1]-tk), 0.),
-      fc_zside_lv, "fc_zside1_pv", fc_layer_lv, false, 17);   
-
-  auto fcvolume_outer_box = new G4Box("fcvolume_outer_box", 
-      0.5*DDriftLength, 0.5*Dfc[1], 0.5*Dfc[2] ); 
-  auto fcvolume_inner_box = new G4Box("fcvolume_inner_box", 
-      0.5*DDriftLength, 0.5*Dfc[1]-deltaDim, 0.5*Dfc[2]-deltaDim ); 
-  auto fc_volume_sv = new G4SubtractionSolid("fc_volume_sv", 
-      fcvolume_outer_box, fcvolume_inner_box); 
-  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv, fMatTarget->GetMaterial(), 
-      "fc_volume_lv"); 
-  fc_volume_lv->SetVisAttributes( G4VisAttributes(false) ); 
-  fFieldCage->SetSolidVolume(fc_volume_sv); 
-  fFieldCage->SetLogicVolume(fc_volume_lv); 
-
-
-  // compute field cage true length
-  G4double len = hs;
-  G4double len_tmp = len;
-  G4int n_replica = 0; 
-  while (len_tmp <= DDriftLength) {
-    len = len_tmp; 
-    n_replica++;
-    len_tmp += sp; 
-  } 
-
-  auto parameterisation = new SLArPlaneParameterisation(kXAxis, 
-      G4ThreeVector(-0.5*(len - sp + hl) , 0, 0), sp); 
-
-  fFieldCage->SetModPV( new G4PVParameterised("fieldCage_ppv", 
-      fc_layer_lv, fc_volume_lv, 
-      parameterisation->GetReplicationAxis(), n_replica - 1, parameterisation) 
-      );
-  fFieldCage->GetModPV()->SetCopyNo(20);
-
-  return;
-}
-
+/*
+ *void SLArDetTPC::BuildFieldCageBox() {
+ *  const G4ThreeVector axis[3] = {
+ *    G4ThreeVector(1, 0, 0), 
+ *    G4ThreeVector(0, 1, 0), 
+ *    G4ThreeVector(0, 0, 1)};
+ *  const G4String axis_label[3] = {"x", "y", "z"};
+ *
+ *  auto fcGeoInfo = fFieldCage->GetGeoInfo(); 
+ *  const G4double R = fcGeoInfo->GetGeoPar("corner_radius"); 
+ *  const G4double tk = fcGeoInfo->GetGeoPar("thickness");
+ *  const G4double hl = fcGeoInfo->GetGeoPar("height_long_side"); 
+ *  const G4double hs = fcGeoInfo->GetGeoPar("height_short_side"); 
+ *  const G4double wd = fcGeoInfo->GetGeoPar("wall_distance"); 
+ *  const G4double sp = fcGeoInfo->GetGeoPar("spacing"); 
+ *  // field cage dimensions: in this (arbitrary) frame x = drift direction
+ *  G4ThreeVector Dfc(0., 0., 0.); 
+ *  G4double DDriftLength = 0; 
+ *  Dfc.setX( fFieldCage->GetGeoPar("height_short_side") ); 
+ *  G4int idim = 1;
+ *  for (int i=0; i<3; i++) {
+ *    if (fElectronDriftDir.dot(axis[i]) == 0) {
+ *      Dfc[idim] = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - wd; 
+ *      idim++;
+ *    } else {
+ *      DDriftLength = fGeoInfo->GetGeoPar("tpc_"+axis_label[i]) - 2*CLHEP::cm; 
+ *    }
+ *  }
+ *  
+ *  G4double hy = 0.; 
+ *  G4double hz = 0.; 
+ *  if ( Dfc[1] > Dfc[2] ) {hy = hl; hz = hs;} else {hy = hs; hz = hl;}
+ *  
+ *
+ *  // build solid and logical volumes
+ *  auto fc_corner_tub = new G4Tubs("fc_corner_sv", 
+ *      R-tk, R, 0.5*std::max(hl, hs), 0, 90*CLHEP::deg); 
+ *  auto fc_corner_lv = new G4LogicalVolume(fc_corner_tub, fMatFieldCage->GetMaterial(), 
+ *      "fc_corner_lv"); 
+ *  G4double dly = R; G4double dlz = R; 
+ *  auto fc_yside_box = new G4Box("fc_lside_box", 
+ *      0.5*hy, 0.5*tk, 0.5*Dfc[1] - dly); 
+ *  auto fc_zside_box = new G4Box("fc_sside_box", 
+ *      0.5*hz, 0.5*tk, 0.5*Dfc[2] - dlz);
+ *  auto fc_zside_lv = new G4LogicalVolume(fc_zside_box, fMatFieldCage->GetMaterial(), 
+ *      "fc_lside_lv"); 
+ *  auto fc_yside_lv = new G4LogicalVolume(fc_yside_box, fMatFieldCage->GetMaterial(), 
+ *      "fc_sside_lv"); 
+ *
+ *  G4ThreeVector _cornerTubAxis = G4ThreeVector(0, 0, 1); 
+ *
+ *  G4Box* layer_outer_box = new G4Box("fc_layer_outerBox", 
+ *      0.5*Dfc[0], 0.5*Dfc[1], 0.5*Dfc[2]); 
+ *  G4double deltaDim = R-(R-tk)*cos( 45*CLHEP::deg ) + 1*CLHEP::mm; 
+ *  G4Box* layer_inner_box = new G4Box("fc_layer_innerBox", 
+ *      0.5*Dfc[0], 0.5*Dfc[1]-deltaDim, 0.5*Dfc[2]-deltaDim); 
+ *
+ *  auto fc_layer_sv = 
+ *    new G4SubtractionSolid("fc_layer_sv", layer_outer_box, layer_inner_box);  
+ *  auto fc_layer_lv = new G4LogicalVolume(fc_layer_sv, fMatTarget->GetMaterial(), 
+ *      "fieldCage_layer_lv"); 
+ *  fc_layer_lv->SetVisAttributes( G4VisAttributes(false) ); 
+ *  // place the corners
+ *  G4double delta = _cornerTubAxis.angle( G4ThreeVector(1, 0, 0) ); 
+ *  G4RotationMatrix* rot_common = 
+ *    new G4RotationMatrix(_cornerTubAxis.cross(G4ThreeVector(1, 0, 0)), delta); 
+ *  G4RotationMatrix* rot0 = new G4RotationMatrix(*rot_common); 
+ *  G4RotationMatrix* rot1 = new G4RotationMatrix(*rot_common); 
+ *  rot1->rotateZ(-0.5*CLHEP::pi); 
+ *  G4RotationMatrix* rot2 = new G4RotationMatrix(*rot_common); 
+ *  rot2->rotateZ(-1.0*CLHEP::pi); 
+ *  G4RotationMatrix* rot3 = new G4RotationMatrix(*rot_common); 
+ *  rot3->rotateZ(-1.5*CLHEP::pi); 
+ *  [>auto corner_0 = <]
+ *  new G4PVPlacement(rot0, G4ThreeVector(0, 0.5*Dfc[1]-R, 0.5*Dfc[2]-R),
+ *      fc_corner_lv, "fc_corner0_pv", fc_layer_lv, false, 10); 
+ *  [>auto corner_1 = <]
+ *  new G4PVPlacement(rot1, G4ThreeVector(0, 0.5*Dfc[1]-R, -(0.5*Dfc[2]-R)),
+ *      fc_corner_lv, "fc_corner1_pv", fc_layer_lv, false, 11); 
+ *  [>auto corner_2 = <]
+ *  new G4PVPlacement(rot2, G4ThreeVector(0, -(0.5*Dfc[1]-R), -(0.5*Dfc[2]-R)),
+ *      fc_corner_lv, "fc_corner2_pv", fc_layer_lv, false, 12);   
+ *  [>auto corner_3 = <]
+ *  new G4PVPlacement(rot3, G4ThreeVector(0, -(0.5*Dfc[1]-R), +(0.5*Dfc[2]-R)),
+ *      fc_corner_lv, "fc_corner3_pv", fc_layer_lv, false, 13);   
+ *
+ *  // place the sides
+ *  [>auto yside_0 = <]
+ *  new G4PVPlacement(new G4RotationMatrix(axis[0], 0.5*CLHEP::pi), 
+ *      G4ThreeVector(0, 0, -0.5*(Dfc[2]-tk)),
+ *      fc_yside_lv, "fc_yside0_pv", fc_layer_lv, false, 14);   
+ *  [>auto yside_1 = <]
+ *  new G4PVPlacement(new G4RotationMatrix(axis[0], 0.5*CLHEP::pi), 
+ *      G4ThreeVector(0, 0, +0.5*(Dfc[2]-tk)),
+ *      fc_yside_lv, "fc_yside1_pv", fc_layer_lv, false, 15);   
+ *  [>auto zside_0 = <]
+ *  new G4PVPlacement(nullptr, 
+ *      G4ThreeVector(0, -0.5*(Dfc[1]-tk), 0.),
+ *      fc_zside_lv, "fc_zside0_pv", fc_layer_lv, false, 16);   
+ *  [>auto zside_1 = <]
+ *  new G4PVPlacement(0, 
+ *      G4ThreeVector(0, +0.5*(Dfc[1]-tk), 0.),
+ *      fc_zside_lv, "fc_zside1_pv", fc_layer_lv, false, 17);   
+ *
+ *  auto fcvolume_outer_box = new G4Box("fcvolume_outer_box", 
+ *      0.5*DDriftLength, 0.5*Dfc[1], 0.5*Dfc[2] ); 
+ *  auto fcvolume_inner_box = new G4Box("fcvolume_inner_box", 
+ *      0.5*DDriftLength, 0.5*Dfc[1]-deltaDim, 0.5*Dfc[2]-deltaDim ); 
+ *  auto fc_volume_sv = new G4SubtractionSolid("fc_volume_sv", 
+ *      fcvolume_outer_box, fcvolume_inner_box); 
+ *  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv, fMatTarget->GetMaterial(), 
+ *      "fc_volume_lv"); 
+ *  fc_volume_lv->SetVisAttributes( G4VisAttributes(false) ); 
+ *  fFieldCage->SetSolidVolume(fc_volume_sv); 
+ *  fFieldCage->SetLogicVolume(fc_volume_lv); 
+ *
+ *
+ *  // compute field cage true length
+ *  G4double len = hs;
+ *  G4double len_tmp = len;
+ *  G4int n_replica = 0; 
+ *  while (len_tmp <= DDriftLength) {
+ *    len = len_tmp; 
+ *    n_replica++;
+ *    len_tmp += sp; 
+ *  } 
+ *
+ *  auto parameterisation = new SLArPlaneParameterisation(kXAxis, 
+ *      G4ThreeVector(-0.5*(len - sp + hl) , 0, 0), sp); 
+ *
+ *  fFieldCage->SetModPV( new G4PVParameterised("fieldCage_ppv", 
+ *      fc_layer_lv, fc_volume_lv, 
+ *      parameterisation->GetReplicationAxis(), n_replica - 1, parameterisation) 
+ *      );
+ *  fFieldCage->GetModPV()->SetCopyNo(20);
+ *
+ *  return;
+ *}
+ */
 void SLArDetTPC::BuildTPC() 
 {
 
@@ -209,16 +269,27 @@ void SLArDetTPC::BuildTPC()
   //* * * * * * * * * * * * * * * * * * * * * * * * * * *//
   // Building the Target                                 //
   G4cerr << "\tBuilding TPC LAr volume" << G4endl;
-  G4double tpcX= fGeoInfo->GetGeoPar("tpc_x");
-  G4double tpcY= fGeoInfo->GetGeoPar("tpc_y");
-  G4double tpcZ= fGeoInfo->GetGeoPar("tpc_z");
-  
-  // Create and fill fTarget
-  G4double x_ = tpcX*0.5;
-  G4double y_ = tpcY*0.5;
-  G4double z_ = tpcZ*0.5;
+  if (fShape == geo::kBox) {
+    G4double tpcX= fGeoInfo->GetGeoPar("tpc_x");
+    G4double tpcY= fGeoInfo->GetGeoPar("tpc_y");
+    G4double tpcZ= fGeoInfo->GetGeoPar("tpc_z");
 
-  fModSV = new G4Box("TPC", x_, y_, z_);
+    // Create and fill fTarget
+    G4double x_ = tpcX*0.5;
+    G4double y_ = tpcY*0.5;
+    G4double z_ = tpcZ*0.5;
+
+    fModSV = new G4Box("TPC", x_, y_, z_);
+  }
+  else if (fShape == geo::kTub) {
+    G4double tpcR = fGeoInfo->GetGeoPar("tpc_radius");
+    G4double tpcZ = fGeoInfo->GetGeoPar("tpc_length");
+    fModSV = new G4Tubs("TPC", 0., tpcR, 0.5*tpcZ, 0., CLHEP::twopi);
+  }
+  else {
+    G4Exception("SLArDetTPC::BuildTPC()", "InvalidTPCShape", FatalException, 
+        "Invalid TPC shape specified in JSON configuration! Valid options are: 'box' and 'cylinder' (or 'tub')");
+  }
 
   SetLogicVolume(
     new G4LogicalVolume(fModSV, 
@@ -226,17 +297,24 @@ void SLArDetTPC::BuildTPC()
       "TPC"+std::to_string(fID)+"_lv", 0, 0, 0)
     );
 
-  if (fFieldCage) {
-    BuildFieldCage(); 
+  G4RotationMatrix* rot = new G4RotationMatrix(); 
+  
+  const auto _fcAxis = (fShape == geo::kBox) ? 
+    G4ThreeVector(1, 0, 0) : G4ThreeVector(0, 0, 1); 
+  const auto _fieldDir = fElectronDriftDir;
+  const auto _angle = _fieldDir.angle(_fcAxis);
+  auto rot_axis = _fieldDir.cross(_fcAxis); 
+  if (rot_axis.mag2() < 1e-6) rot_axis = _fcAxis;
+  rot->set(rot_axis, _angle); 
 
-    G4RotationMatrix* rot = new G4RotationMatrix(); 
-    const auto _fcAxis = G4ThreeVector(1, 0, 0); 
-    const auto _fieldDir   = fElectronDriftDir;
-    const auto _angle = _fieldDir.angle(_fcAxis);
-    auto rot_axis = _fieldDir.cross(_fcAxis); 
-    if (rot_axis.mag2() < 1e-6) rot_axis = _fcAxis;
-    rot->set(rot_axis, _angle); 
-    fFieldCage->GetModPV("field_cage", rot, G4ThreeVector(0, 0, 0), this->GetModLV(), 0, 99); 
+  fGeoInfo->SetGeoPar("tpc_rot_phi", rot->phi());
+  fGeoInfo->SetGeoPar("tpc_rot_theta", rot->theta());
+  fGeoInfo->SetGeoPar("tpc_rot_psi", rot->psi());
+
+
+  if (fFieldCage) {
+    fFieldCage->Build(fMatFieldCage->GetMaterial(), fMatTarget->GetMaterial());
+    fFieldCage->GetModPV("field_cage", rot, fFieldCage->GetShift(), this->GetModLV(), false, 99); 
   }
 }
 
@@ -265,45 +343,56 @@ void SLArDetTPC::SetVisAttributes()
   return;
 }
 
-void SLArDetTPC::SetFieldCageVisibility(const G4bool val) {
-  G4Colour col(0.3, 0.3, 0.3, 0.45);
-  G4VisAttributes vis;
-
-  fFieldCageVisibility = val;
-
-  (fFieldCageVisibility) ? vis.SetColor( col ) : vis.SetVisibility( false );
-
-  const size_t ndaughters = fFieldCage->GetModLV()->GetNoDaughters();
-  for (size_t i = 0; i < ndaughters; i++) {
-    G4LogicalVolume* lv = fFieldCage->GetModLV()->GetDaughter(i)->GetLogicalVolume(); 
-    const size_t lv_nd = lv->GetNoDaughters();
-    for (size_t j = 0; j < lv_nd; j++) {
-      G4LogicalVolume* llv = lv->GetDaughter(j)->GetLogicalVolume();
-      llv->SetVisAttributes( vis ); 
-    }
-  }
-
-  return;
-}
+/*
+ *void SLArDetTPC::SetFieldCageVisibility(const G4bool val) {
+ *  G4Colour col(0.3, 0.3, 0.3, 0.45);
+ *  G4VisAttributes vis;
+ *
+ *  fFieldCageVisibility = val;
+ *
+ *  (fFieldCageVisibility) ? vis.SetColor( col ) : vis.SetVisibility( false );
+ *
+ *  const size_t ndaughters = fFieldCage->GetModLV()->GetNoDaughters();
+ *  for (size_t i = 0; i < ndaughters; i++) {
+ *    G4LogicalVolume* lv = fFieldCage->GetModLV()->GetDaughter(i)->GetLogicalVolume(); 
+ *    const size_t lv_nd = lv->GetNoDaughters();
+ *    for (size_t j = 0; j < lv_nd; j++) {
+ *      G4LogicalVolume* llv = lv->GetDaughter(j)->GetLogicalVolume();
+ *      llv->SetVisAttributes( vis ); 
+ *    }
+ *  }
+ *
+ *  return;
+ *}
+ */
 
 void SLArDetTPC::Init(const rapidjson::Value& jconf) {
   assert(jconf.IsObject()); 
   auto jtpc = jconf.GetObject(); 
-  assert(jtpc.HasMember("dimensions")); 
-  assert(jtpc.HasMember("position"  )); 
-  assert(jtpc.HasMember("copyID"    )); 
+  
+  if (jtpc.HasMember("shape")) {
+    fShape = geo::get_geo_shape_code(jtpc["shape"].GetString());
+    if (fShape != geo::kBox && fShape != geo::kTub) {
+      G4Exception("SLArDetTPC::Init()", "InvalidTPCShape", FatalException, 
+          "Invalid TPC shape specified in JSON configuration! Valid options are: 'box' and 'tub' (or 'tub')");
+    }
+  }
 
+  debug::require_json_member(jtpc, "copyID");
   SetID(jtpc["copyID"].GetInt()); 
 
+  debug::require_json_member(jtpc, "dimensions");
+  debug::require_json_type(jtpc["dimensions"], rapidjson::kArrayType);
   fGeoInfo->ReadFromJSON(jtpc["dimensions"].GetArray()); 
 
-  const auto jposition = jtpc["position"].GetObj(); 
+  debug::require_json_member(jtpc, "position");
+  const auto& jposition = jtpc["position"].GetObj(); 
   G4double vunit = 1.0; 
   if (jposition.HasMember("unit")) {
     vunit = G4UIcommand::ValueOf(jposition["unit"].GetString());
   }
   G4String xvar[3] = {"x", "y", "z"}; 
-  assert(jposition.HasMember("xyz")); 
+  debug::require_json_member(jposition, "xyz");
   int ii=0; 
   for (const auto &v : jposition["xyz"].GetArray()) {
     G4double tmp = v.GetDouble() * vunit; 
@@ -336,14 +425,45 @@ void SLArDetTPC::Init(const rapidjson::Value& jconf) {
 }
 
 void SLArDetTPC::InitFieldCage(const rapidjson::Value& jconf) {
-  fFieldCage = new SLArBaseDetModule(); 
-  auto fc_geoInfo = fFieldCage->GetGeoInfo(); 
-  fc_geoInfo->RegisterGeoPar("corner_radius", unit::ParseJsonVal(jconf["corner_radius"]));
-  fc_geoInfo->RegisterGeoPar("thickness", unit::ParseJsonVal(jconf["thickness"]));
-  fc_geoInfo->RegisterGeoPar("wall_distance", unit::ParseJsonVal(jconf["wall_distance"])); 
-  fc_geoInfo->RegisterGeoPar("spacing", unit::ParseJsonVal(jconf["spacing"])); 
-  fc_geoInfo->RegisterGeoPar("height_long_side", unit::ParseJsonVal(jconf["height_long_side"])); 
-  fc_geoInfo->RegisterGeoPar("height_short_side", unit::ParseJsonVal(jconf["height_short_side"]));
-  
+  fFieldCage = new SLArDetFieldCage(); 
+
+  rapidjson::Document jfc;
+  auto& alloc = jfc.GetAllocator();
+  jfc.CopyFrom(jconf, alloc);
+  printf("Initializing Field Cage with shape %s\n", geo::get_geo_shape_str(fShape).data());
+  jfc.AddMember("shape", rapidjson::Value().SetString(geo::get_geo_shape_str(fShape), alloc), alloc);
+
+  rapidjson::Value jdd(rapidjson::kArrayType);
+  for (int i = 0; i < 3; i++) {
+    jdd.PushBack(fElectronDriftDir[i], alloc);
+  }
+  jfc.AddMember("drift_direction", jdd, alloc);
+
+  jfc.AddMember("tpc_x", fGeoInfo->GetGeoPar("tpc_x"), alloc);
+  jfc.AddMember("tpc_y", fGeoInfo->GetGeoPar("tpc_y"), alloc);
+  jfc.AddMember("tpc_z", fGeoInfo->GetGeoPar("tpc_z"), alloc);
+
+  if (fGeoInfo->Contains("wall_distance"))
+    jfc.AddMember("wall_distance", fGeoInfo->GetGeoPar("wall_distance"), alloc);
+
+  if (fShape == geo::kTub) {
+    if (fGeoInfo->Contains("tpc_radius"))
+      jfc.AddMember("tpc_radius", fGeoInfo->GetGeoPar("tpc_radius"), alloc);
+    
+    if (fGeoInfo->Contains("tpc_length"))
+      jfc.AddMember("tpc_length", fGeoInfo->GetGeoPar("tpc_length"), alloc);
+  }
+
+#ifdef SLAR_DEBUG
+  rapidjson::StringBuffer buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+  jfc.Accept(writer);
+  std::cout << "jfc JSON configuration:\n" << buffer.GetString() << std::endl;
+  std::cout << "Press Enter to continue..." << std::endl;
+  getchar();
+#endif
+
+  fFieldCage->Init(jfc);
+
   return;
 }
