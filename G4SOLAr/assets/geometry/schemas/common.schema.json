@@ -17,8 +17,8 @@
     "named_val_w_unit": {
       "description": "A named scalar parameter, as used in dimensions arrays.",
       "type": "object",
-      "required": ["name", "val", "unit"],
-      "additionalProperties": false,
+      "required": ["name", "val"],
+      "additionalProperties": true,
       "properties": {
         "name": { "type": "string" },
         "val":  { "type": "number" },
@@ -41,7 +41,7 @@
       "maxItems": 3
     },
 
-    "vec3_with_unit": {
+    "vec3_w_unit": {
       "type": "object",
       "required": ["unit", "xyz"],
       "additionalProperties": false,
@@ -56,7 +56,7 @@
       }
     },
 
-    "rot3_with_unit": {
+    "rot3_w_unit": {
       "type": "object",
       "required": ["unit", "val"],
       "additionalProperties": false,

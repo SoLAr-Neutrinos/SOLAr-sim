@@ -5,7 +5,6 @@
   "required": ["copyID", "tpcID", "tile_assembly", "position", "rot", "normal", "dimensions"],
   "additionalProperties": false,
   "properties": {
-
     "copyID": {
       "type": "integer"
     },
@@ -20,12 +19,12 @@
     },
 
     "position": {
-      "$ref": "common.schema.json#/$defs/vec3_with_unit",
+      "$ref": "common.schema.json#/$defs/vec3_w_unit",
       "description": "Anode position in the world frame"
     },
 
     "rot": {
-      "$ref": "common.schema.json#/$defs/rot3_with_unit",
+      "$ref": "common.schema.json#/$defs/rot3_w_unit",
       "description": "Anode orientation as three Euler angles"
     },
 

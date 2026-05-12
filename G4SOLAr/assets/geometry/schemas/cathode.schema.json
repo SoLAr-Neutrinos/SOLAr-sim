@@ -31,8 +31,8 @@
       "properties": {
         "copyID": {"type": "integer"},
         "shape": {"type": "string", "enum": ["box", "tub"]},
-        "position": {"$ref": "common.schema.json#/$defs/vec3_with_unit"},
-        "rot": {"$ref": "common.schema.json#/$defs/rot3_with_unit"},
+        "position": {"$ref": "common.schema.json#/$defs/vec3_w_unit"},
+        "rot": {"$ref": "common.schema.json#/$defs/rot3_w_unit"},
         "dimensions" : {"$ref": "common.schema.json#/$defs/dimensions"}
       },
       "if" : { "properties": { "shape": {"const": "tub"}}},
