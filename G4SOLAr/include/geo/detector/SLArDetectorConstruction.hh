@@ -13,8 +13,8 @@
 #include "detector/TPC/SLArDetTPC.hh"
 #include "detector/TPC/SLArDetCryostat.hh"
 #include "detector/TPC/SLArDetCathode.hh"
-#include "detector/SuperCell/SLArDetSuperCell.hh"
-#include "detector/SuperCell/SLArDetSuperCellArray.hh"
+#include "detector/OpDet/SLArDetSuperCell.hh"
+#include "detector/OpDet/SLArDetOpDetArray.hh"
 #include "detector/Anode/SLArDetReadoutTile.hh"
 #include "detector/Anode/SLArDetReadoutTileAssembly.hh"
 #include "detector/Anode/SLArDetAnodeAssembly.hh"
@@ -85,7 +85,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Return Cryostat detector object
     inline SLArDetCryostat* GetCryostat() const {return fCryostat;}
     //! Build SuperCell object and place the SuperCells according to the given configuration
-    void BuildAndPlaceSuperCells();
+    void BuildAndPlaceOpDets();
     //! Build the ReadoutTile object and the place the MegaTiles according to the given configuration
     void BuildAndPlaceAnode();
     //! Build the target volume according to the given configuration 
@@ -128,29 +128,30 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     G4String fMaterialDBFile;  //!< Material table file
     SLArLArProperties fLArProperties; //!< Liquid Argon Properties
     //! vector of visualization attributes
-    std::vector<G4VisAttributes*>   fVisAttributes; 
+    std::vector<G4VisAttributes*>   fVisAttributes = {}; 
 
     //! TPC detector object (cryostat + LAr target)
     geo::EGeoShape fLArTargetShape{geo::EGeoShape::kBox};
-    SLArBaseDetModule* fDetector;
-    SLArDetCryostat* fCryostat; 
-    std::map<int, SLArDetTPC*> fTPC;
-    std::map<int, SLArDetCathode*> fCathode; 
+    SLArBaseDetModule* fDetector = {};
+    SLArDetCryostat* fCryostat = {}; 
+    std::map<int, SLArDetTPC*> fTPC = {};
+    std::map<int, SLArDetCathode*> fCathode = {}; 
 
-    SLArGeoInfo fWorldGeoPars;//!< World volume geometry parameters
-    SLArGeoInfo fCavernGeoPars; //!< Cavern volume geometry attributes
-    SLArDetExpHall* fExpHall; //!< Experimental Hall detector object
-    std::vector<SLArDetShielding*> fShielding; //!< Shielding detector objects
-    SLArDetSuperCell* fSuperCell; //!< SuperCell detector object
-    std::map<int, SLArDetSuperCellArray*> fSCArray;
-    SLArDetReadoutTile* fReadoutTile; //!< ReadoutTile detector object
-    std::map<int, SLArDetAnodeAssembly*> fAnodes; 
-    std::map<G4String, SLArDetReadoutTileAssembly*> fReadoutMegaTile; 
+    SLArGeoInfo fWorldGeoPars = {};//!< World volume geometry parameters
+    SLArGeoInfo fCavernGeoPars = {}; //!< Cavern volume geometry attributes
+    SLArDetExpHall* fExpHall = {}; //!< Experimental Hall detector object
+    std::vector<SLArDetShielding*> fShielding = {}; //!< Shielding detector objects
+    SLArDetSuperCell* fSuperCell = {}; //!< SuperCell detector object
+    SLArDetSiPM* fSiPM = {}; //!< SiPM detector object
+    std::map<int, SLArDetOpDetArray*> fOpDetArray = {};
+    SLArDetReadoutTile* fReadoutTile = {}; //!< ReadoutTile detector object
+    std::map<int, SLArDetAnodeAssembly*> fAnodes = {}; 
+    std::map<G4String, SLArDetReadoutTileAssembly*> fReadoutMegaTile = {}; 
 
-    G4LogicalVolume* fWorldLog; //!< World logical volume
-    G4VPhysicalVolume* fWorldPhys; //!< World physical volume
-    std::vector<G4VPhysicalVolume*> fSuperCellsPV;
-    std::vector<G4VPhysicalVolume*> fExtScorerPV;
+    G4LogicalVolume* fWorldLog = {}; //!< World logical volume
+    G4VPhysicalVolume* fWorldPhys = {}; //!< World physical volume
+    std::vector<G4VPhysicalVolume*> fSuperCellsPV = {};
+    std::vector<G4VPhysicalVolume*> fExtScorerPV = {};
     G4String GetFirstChar(G4String line);
     
     //! Construct Experimental Hall
@@ -163,6 +164,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void InitShielding(const rapidjson::Value&);
     //! Parse the description of the supercell detector system
     void InitSuperCell(const rapidjson::Value&); 
+    //! Parse the description of the sipm detector system
+    void InitSiPM(const rapidjson::Value&); 
     //! Parse the description of the SC PDS
     void InitPDS(const rapidjson::Value&);
     //! Parse the description of the ReadoutTile detector system

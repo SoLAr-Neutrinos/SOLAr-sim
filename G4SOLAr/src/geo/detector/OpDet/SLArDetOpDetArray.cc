@@ -1,49 +1,49 @@
 /**
  * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        SLArDetSuperCellArray.cc
+ * @file        SLArDetOpDetArray.cc
  * @created     Fri Mar 24, 2023 16:08:29 CET
  */
 
-#include "detector/SuperCell/SLArDetSuperCellArray.hh"
+#include "detector/OpDet/SLArDetOpDetArray.hh"
 #include "config/SLArCfgSuperCellArray.hh"
 #include "config/SLArCfgSuperCell.hh"
+#include "core/SLArDebugUtils.hh"
 #include "G4PVParameterised.hh"
 #include "G4Box.hh"
 #include "G4VisAttributes.hh"
+#include "G4Exception.hh"
 
-SLArDetSuperCellArray::SLArDetSuperCellArray() : 
+SLArDetOpDetArray::SLArDetOpDetArray() : 
   SLArBaseDetModule(), 
   fTPCID(0), 
-  fMaterialBase(nullptr), fSuperCell(nullptr),  
+  fMaterialBase(nullptr), fOpDetModuleBase(nullptr),  
   fPosition(0, 0, 0), fGlobalPosition(0, 0, 0), fNormal(0, 1, 0),
   fRotation(nullptr), fPhotoDetModel("")
-{
-  fGeoInfo = new SLArGeoInfo(); 
-}
+{}
 
-SLArDetSuperCellArray::~SLArDetSuperCellArray() {}
+SLArDetOpDetArray::~SLArDetOpDetArray() {}
 
-void SLArDetSuperCellArray::BuildMaterial(G4String materials_db) {
+void SLArDetOpDetArray::BuildMaterial(G4String materials_db) {
   fMaterialBase = new SLArMaterial("LAr"); 
   fMaterialBase->BuildMaterialFromDB(materials_db); 
   return;
 }
 
-void SLArDetSuperCellArray::Init(const rapidjson::Value& jconf) {
+void SLArDetOpDetArray::Init(const rapidjson::Value& jconf) {
   G4String xyz_suffix[3] = {"x", "y", "z"}; 
   G4String ang_suffix[3] = {"phi", "theta", "psi"}; 
 
-  assert(jconf.IsObject()); 
-  auto jarray = jconf.GetObject(); 
+  debug::require_json_type(jconf, rapidjson::kObjectType);
+  const auto& jarray = jconf.GetObject(); 
 
-  assert(jarray.HasMember("name"));
-  assert(jarray.HasMember("copyID")); 
-  assert(jarray.HasMember("position")); 
-  assert(jarray.HasMember("dimensions")); 
-  assert(jarray.HasMember("rot")); 
-  assert(jarray.HasMember("normal")); 
-  assert(jarray.HasMember("tpcID")); 
-  assert(jarray.HasMember("photodet_model"));
+  debug::require_json_member(jarray, "name");
+  debug::require_json_member(jarray, "copyID"); 
+  debug::require_json_member(jarray, "position"); 
+  debug::require_json_member(jarray, "dimensions"); 
+  debug::require_json_member(jarray, "rot"); 
+  debug::require_json_member(jarray, "normal"); 
+  debug::require_json_member(jarray, "tpcID"); 
+  debug::require_json_member(jarray, "photodet_model");
 
   fName = jarray["name"].GetString();
 
@@ -71,7 +71,7 @@ void SLArDetSuperCellArray::Init(const rapidjson::Value& jconf) {
   idim = 0; 
   for (const auto &v : jrot["val"].GetArray()) {
      eulerAngles[idim] = v.GetDouble()*vunit; 
-     fGeoInfo->RegisterGeoPar("scarray_"+ang_suffix[idim], eulerAngles[idim]); 
+     fGeoInfo->RegisterGeoPar("opdetarray_"+ang_suffix[idim], eulerAngles[idim]); 
      idim++; 
   }
   fRotation = new G4RotationMatrix(eulerAngles[0], eulerAngles[1], eulerAngles[2]); 
@@ -95,19 +95,22 @@ void SLArDetSuperCellArray::Init(const rapidjson::Value& jconf) {
         fParameterisation.push_back(parameterisation);         
       }
     } else {
-      printf("WARNING: CANNOT PARSE SUPERCELL ARRAY REPLICATION DATA\n");
+      G4Exception("SLArDetOpDetArray::Init", "ConfigError001", JustWarning,
+          "Invalid format for replication_data in OpDetArray configuration! Expected an object or an array of objects.");
     }
   }
   
   return; 
 }
 
-void SLArDetSuperCellArray::BuildSuperCellArray(SLArDetSuperCell* superCell) {
-  G4ThreeVector max_dim; 
-  fSuperCell = superCell;
-  max_dim[0] = fGeoInfo->GetGeoPar("dim_x");
-  max_dim[1] = superCell->GetTotalHeight();
-  max_dim[2] = fGeoInfo->GetGeoPar("dim_z");
+void SLArDetOpDetArray::BuildOpDetArray(SLArOpticalDetector* opdet) {
+  fOpDetModuleBase = opdet;
+
+  G4ThreeVector max_dim( 
+      fGeoInfo->GetGeoPar("dim_x"), 
+      fGeoInfo->GetGeoPar("dim_y"),
+      fGeoInfo->GetGeoPar("dim_z")
+      ) ;
 
   G4ThreeVector localNormal = G4ThreeVector(0, 1, 0); 
 
@@ -130,7 +133,6 @@ void SLArDetSuperCellArray::BuildSuperCellArray(SLArDetSuperCell* superCell) {
 
     G4ThreeVector perp_ax = localNormal.cross(rpars->GetReplicationAxisVector()); 
     G4double module_wdt = 0.; 
-    printf("tmp_dim: %g, %g, %g\n", tmp_dim[0], tmp_dim[1], tmp_dim[2]);
     for (int i=0; i<3; i++) {
       if ( fabs(perp_ax[i] * origin_dim[i] ) > 0 ) {
         tmp_dim[i] = origin_dim[i]; 
@@ -171,13 +173,13 @@ void SLArDetSuperCellArray::BuildSuperCellArray(SLArDetSuperCell* superCell) {
     if (rpars == fParameterisation.back()) {
       target = this; 
       origin = fSubModules.back();
-      target_prefix = "SC_row";
+      target_prefix = "opdet_plane";
     } 
     else if (rpars == fParameterisation.front()) {
       fSubModules.push_back( new SLArBaseDetModule() ); 
       target = fSubModules.back();
-      origin = superCell;
-      target_prefix = "SC_module";
+      origin = opdet;
+      target_prefix = "opdet_row";
     }
     else {
       G4cout << "SLArDetSuperCellArray::BuildSuperCellArray() WARNING: " << G4endl;
@@ -202,7 +204,7 @@ void SLArDetSuperCellArray::BuildSuperCellArray(SLArDetSuperCell* superCell) {
   fModLV->SetVisAttributes( G4VisAttributes(false) ); 
 }
 
-std::pair<int, G4double> SLArDetSuperCellArray::ComputeArrayTrueLength(
+std::pair<int, G4double> SLArDetOpDetArray::ComputeArrayTrueLength(
     G4double sc_dim, G4double spacing, G4double max_len) {
   G4double len = sc_dim;
   G4double len_tmp = len;
@@ -216,15 +218,15 @@ std::pair<int, G4double> SLArDetSuperCellArray::ComputeArrayTrueLength(
   return std::make_pair(n_replica, fabs(len));
 };
 
-SLArCfgSuperCellArray SLArDetSuperCellArray::BuildSuperCellArrayCfg() {
-  SLArCfgSuperCellArray arrayCfg("SC_array_"+std::to_string(fID), fID); 
+SLArCfgSuperCellArray SLArDetOpDetArray::BuildSuperCellArrayCfg() {
+  SLArCfgSuperCellArray arrayCfg("OpDet_array_"+std::to_string(fID), fID); 
 
   arrayCfg.SetIdx( fID ); 
   arrayCfg.SetNormal( fNormal.x(), fNormal.y(), fNormal.z() ); 
   arrayCfg.SetupAxes(); 
-  arrayCfg.SetPhi  ( fGeoInfo->GetGeoPar("scarray_phi") ); 
-  arrayCfg.SetTheta( fGeoInfo->GetGeoPar("scarray_theta") ); 
-  arrayCfg.SetPsi  ( fGeoInfo->GetGeoPar("scarray_psi") ); 
+  arrayCfg.SetPhi  ( fGeoInfo->GetGeoPar("opdetarray_phi") ); 
+  arrayCfg.SetTheta( fGeoInfo->GetGeoPar("opdetarray_theta") ); 
+  arrayCfg.SetPsi  ( fGeoInfo->GetGeoPar("opdetarray_psi") ); 
 
   auto sc_array = (G4PVParameterised*)fModLV->GetDaughter(0); 
   auto sc_row   = (G4PVParameterised*)fSubModules.front()->GetModLV()->GetDaughter(0);  
@@ -275,7 +277,7 @@ SLArCfgSuperCellArray SLArDetSuperCellArray::BuildSuperCellArrayCfg() {
       scCfg.SetNormal( arrayCfg.GetNormal() ); 
       scCfg.SetupAxes(); 
 
-      const auto scBox = (G4Box*)fSuperCell->GetModSV();
+      const auto scBox = (G4Box*)fOpDetModuleBase->GetModSV();
       scCfg.SetSize( 2*scBox->GetXHalfLength(),
                      2*scBox->GetYHalfLength(), 
                      2*scBox->GetZHalfLength() ); 

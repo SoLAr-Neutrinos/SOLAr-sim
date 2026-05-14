@@ -23,7 +23,6 @@
 #include "detector/Anode/SLArDetReadoutTile.hh"
 #include "SensitiveDetectors/SLArReadoutTileSD.hh"
 
-#include "detector/SuperCell/SLArDetSuperCellArray.hh"
 #include "SensitiveDetectors/SLArSuperCellSD.hh"
 
 #include "config/SLArCfgAnode.hh"
@@ -189,10 +188,38 @@ void SLArDetectorConstruction::Init() {
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   // Initialize Photodetectors
-  if (d.HasMember("SuperCell") && d.HasMember("PhotoDetectionSystem")) {
+  if (d.HasMember("OpDetModules")) {
+    debug::require_json_type(d["OpDetModules"], rapidjson::kArrayType);
+    for (const auto &jopdet : d["OpDetModules"].GetArray()) {
+      debug::require_json_type(jopdet, rapidjson::kObjectType);
+      debug::require_json_member(jopdet, "module_type");
+      G4String mod_type = jopdet["module_type"].GetString();
+      if (mod_type == "SuperCell") {
+        G4cout << "SLArDetectorConstruction::Init SuperCells" << G4endl;
+        InitSuperCell(jopdet);
+        G4cout << "SLArDetectorConstruction::Init SuperCells DONE" << G4endl;
+      }
+      else if (mod_type == "SiPM") {
+        G4cout << "SLArDetectorConstruction::Init SiPMs" << G4endl;
+        InitSiPM(jopdet);
+        G4cout << "SLArDetectorConstruction::Init SiPMs DONE" << G4endl;
+      }
+      else {
+        G4String err_msg = "Invalid optical detector module type specified in JSON configuration!";
+        err_msg += " Valid options are: 'SuperCell' and 'SiPM'. Found: " + mod_type;
+        G4Exception("SLArDetectorConstruction::Init()", 
+            "InvalidOpDetModuleType", FatalException, 
+            err_msg.data());
+      }
+    }
+  }
+  else if (d.HasMember("SuperCell")) {
     G4cout << "SLArDetectorConstruction::Init SuperCells" << G4endl;
     InitSuperCell( d["SuperCell"].GetObj() ); 
     G4cout << "SLArDetectorConstruction::Init SuperCells DONE" << G4endl;
+  }
+
+  if (d.HasMember("PhotoDetectionSystem")) {
     InitPDS(d["PhotoDetectionSystem"]); 
     G4cout << "SLArDetectorConstruction::Init PDS DONE" << G4endl;
   }
@@ -259,10 +286,20 @@ void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
 
 void SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell) {
   fSuperCell = new SLArDetSuperCell(); 
-  assert(jsupercell.HasMember("dimensions")); 
+  debug::require_json_member(jsupercell, "dimensions");
+  debug::require_json_type(jsupercell["dimensions"], rapidjson::kArrayType);
   fSuperCell->GetGeoInfo()->ReadFromJSON(jsupercell["dimensions"].GetArray()); 
   return;
 }
+
+void SLArDetectorConstruction::InitSiPM(const rapidjson::Value& jsipm) {
+  fSiPM = new SLArDetSiPM(); 
+  debug::require_json_member(jsipm, "dimensions");
+  debug::require_json_type(jsipm["dimensions"], rapidjson::kArrayType);
+  fSiPM->GetGeoInfo()->ReadFromJSON(jsipm["dimensions"].GetArray()); 
+  return;
+}
+
 
 /**
  * @details Construct the fSuperCell object and parse the supercell 
@@ -973,11 +1010,12 @@ void SLArDetectorConstruction::ConstructSDandField()
 
   //Set ReadoutTile SD
   if (fReadoutTile) {
-    G4VSensitiveDetector* sipmSD
-      = new SLArReadoutTileSD(SDname="/tile/sipm");
-    SDman->AddNewDetector(sipmSD);
-    SetSensitiveDetector(
-        fReadoutTile->GetSiPMActive()->GetModLV(), sipmSD );
+    if (fReadoutTile->GetSiPM()) {
+      SLArBaseDetModule* sipm_active = fReadoutTile->GetSiPM()->GetActiveVolume();
+      G4VSensitiveDetector* sipmSD = new SLArReadoutTileSiPMSD(SDname="/tile/sipm");
+      SDman->AddNewDetector(sipmSD);
+      SetSensitiveDetector( sipm_active->GetModLV(), sipmSD );
+    }
   }
 
   //Set SuperCell SD
@@ -1093,40 +1131,41 @@ G4String SLArDetectorConstruction::GetFirstChar(G4String line)
  * Then place the individual SuperCell according to the configuration 
  * stored in the analysis manager. 
  */
-void SLArDetectorConstruction::BuildAndPlaceSuperCells()
+void SLArDetectorConstruction::BuildAndPlaceOpDets()
 {
   fSuperCell->BuildMaterial(fMaterialDBFile);
-  fSuperCell->BuildSuperCell();
+  fSuperCell->BuildOpticalDetector();
   fSuperCell->BuildLogicalSkinSurface(); 
 
   // Get PMTSystem Configuration
   SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
   SLArCfgSystemSuperCell&  pdsCfg = SLArAnaMgr->GetPDSCfg();
 
-  printf("-- Building SuperCell arrays\n");
-  for (auto &array_ : fSCArray) {
-    auto scarray = array_.second; 
-    auto scarray_id = array_.first; 
-    scarray->BuildMaterial(fMaterialDBFile); 
-    printf("---- Building SC array volume\n");
-    scarray->BuildSuperCellArray( fSuperCell );
-    auto pos = scarray->GetPosition(); 
-    auto rot = scarray->GetRotation();
+  printf("-- Building OpDet arrays\n");
+  for (auto &array_ : fOpDetArray) {
+    auto opdetarray = array_.second; 
+    auto opdetarray_id = array_.first; 
+    opdetarray->BuildMaterial(fMaterialDBFile); 
+    printf("---- Building OpDet array volume\n");
+    opdetarray->BuildOpDetArray( fSuperCell );
+    auto pos = opdetarray->GetPosition(); 
+    auto rot = opdetarray->GetRotation();
 
-    auto tpc = fTPC.find(scarray->GetTPCID())->second; 
+    auto tpc = fTPC.find(opdetarray->GetTPCID())->second; 
     auto glb_pos = tpc->GetTPCcenter() + pos; 
-    scarray->SetGlobalPos( glb_pos ); 
+    opdetarray->SetGlobalPos( glb_pos ); 
 
-    printf("---- Placing SC Array %i in TPC %i\n", scarray_id, tpc->GetID());
-    scarray->GetModPV("pds_"+std::to_string(scarray_id), 
-        rot, pos, tpc->GetModLV(), 0, scarray_id); 
+    printf("---- Placing OpDet Array %i in TPC %i\n", opdetarray_id, tpc->GetID());
+    opdetarray->BuildAndPlacePV("pds_"+std::to_string(opdetarray_id), 
+        rot, pos, tpc->GetModLV(), 0, opdetarray_id); 
 
-    auto array_cfg = scarray->BuildSuperCellArrayCfg(); 
+    auto array_cfg = opdetarray->BuildSuperCellArrayCfg(); 
     array_cfg.SetX( pos.x() ); array_cfg.SetPhysX( glb_pos.x() );
     array_cfg.SetY( pos.y() ); array_cfg.SetPhysY( glb_pos.y() );
     array_cfg.SetZ( pos.z() ); array_cfg.SetPhysZ( glb_pos.z() );
 
-    TH2Poly* h2 = array_cfg.BuildPolyBinHist(SLArCfgSuperCellArray::ESubModuleReferenceFrame::kWorld, true);
+    TH2Poly* h2 = array_cfg.BuildPolyBinHist(
+        SLArCfgSuperCellArray::ESubModuleReferenceFrame::kWorld, true);
 
     delete h2;
 
@@ -1149,7 +1188,6 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
   printf("SLArDetectorConstruction::BuildAndPlaceAnode()...\n");
   printf("-- Building readout tile\n");
   fReadoutTile->BuildReadoutTile(); 
-  fReadoutTile->BuildLogicalSkinSurface(); 
 
   printf("-- Building readout tile assemblies\n");
   for (auto &mt : fReadoutMegaTile) {
@@ -1661,7 +1699,7 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   }
 
   printf("\nPhoton Detection System -------------------------\n");
-  for (const auto &pdsplane_ : fSCArray) {
+  for (const auto &pdsplane_ : fOpDetArray) {
     const auto pdsplane = pdsplane_.second; 
     printf("pdsplane name: %s - parameterised %i\n",
         pdsplane->GetModPV()->GetName().data(), 

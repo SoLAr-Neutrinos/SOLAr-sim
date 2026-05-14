@@ -1,0 +1,65 @@
+/**
+ * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @file        : SLArOpticalDetector.hh
+ * @created     : Tuesday May 12, 2026 19:43:30 CEST
+ */
+
+#ifndef SLAROPTICALDETECTOR_HH
+
+#define SLAROPTICALDETECTOR_HH
+
+#include "geo/detector/SLArBaseDetModule.hh"
+#include "G4LogicalSkinSurface.hh"
+
+/**
+ * @class SLArOpticalDetector
+ * @brief Base abstract class for optical detectors in SOLAr-sim
+ *
+ */
+class SLArOpticalDetector : public SLArBaseDetModule
+{
+  public: 
+    enum class EOpDetType {kSuperCell, kSiPM, kUndefined};
+    inline SLArOpticalDetector() = default;
+    inline SLArOpticalDetector(const G4String& name) : SLArOpticalDetector() {
+      fOpDetName = name;
+    }
+    inline SLArOpticalDetector(const SLArOpticalDetector& base) : SLArBaseDetModule(base) {
+      fOpDetName = base.fOpDetName;
+      fPerfectEfficiency = base.fPerfectEfficiency;
+      fOpDetType = base.fOpDetType;
+    }
+    inline virtual ~SLArOpticalDetector() = default;
+
+    EOpDetType GetOpDetType() const { return fOpDetType; }
+    virtual void BuildMaterial(G4String materials_db) = 0;
+    virtual void BuildOpticalDetector() = 0;
+    virtual void Init(const rapidjson::Value& config) override {}
+    G4LogicalSkinSurface* GetOpDetSkinSurface() const { return fOpDetSkinSurface; }
+    G4LogicalSkinSurface* GetOpDetSkinSurface() { return fOpDetSkinSurface; }
+    inline void SetPerfectEfficiency(G4bool kQE) { 
+      if (fPerfectEfficiency==kQE) return;
+      else {     
+        fPerfectEfficiency = kQE;
+        G4cout << "SLArDetSuperCell::SetPerfectQE: Setting 100% QE between 2 and 12 eV" << G4endl;
+        G4double phEne[2] = {2*CLHEP::eV, 12*CLHEP::eV};
+        G4double eff  [2] = {1.0 , 1.0 };
+        G4Material* active_material = fOpDetSkinSurface->GetLogicalVolume()->GetMaterial();
+        active_material->GetMaterialPropertiesTable()->AddProperty("EFFICIENCY", phEne, eff, 2);  
+      }
+    }
+    inline G4bool IsPerfectEfficiency() const { return fPerfectEfficiency; }
+    virtual void SetVisAttributes(const int&) = 0;
+
+
+  protected:
+    G4String fOpDetName = "UndefinedOpticalDetector";
+    G4bool fPerfectEfficiency = false;
+    EOpDetType fOpDetType = EOpDetType::kUndefined;
+    G4LogicalSkinSurface* fOpDetSkinSurface = {};
+};
+
+
+
+#endif /* end of include guard SLAROPTICALDETECTOR_HH */
+

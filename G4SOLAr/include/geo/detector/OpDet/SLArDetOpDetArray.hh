@@ -1,6 +1,6 @@
 /**
  * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        SLArDetSuperCellArray.hh
+ * @file        SLArDetOpDetArray.hh
  * @created     Fri Mar 24, 2023 15:57:35 CET
  */
 
@@ -9,19 +9,20 @@
 #define SLARDETSUPERCELLARRAY_HH
 
 #include "detector/SLArBaseDetModule.hh"
-#include "detector/SuperCell/SLArDetSuperCell.hh"
+#include "detector/OpDet/SLArDetSuperCell.hh"
+#include "detector/OpDet/SLArOpticalDetector.hh"
 #include "detector/SLArPlaneParameterisation.hpp"
 
 class SLArCfgSuperCellArray;
 
-class SLArDetSuperCellArray : public SLArBaseDetModule {
+class SLArDetOpDetArray : public SLArBaseDetModule {
   public:
-    SLArDetSuperCellArray(); 
-    ~SLArDetSuperCellArray(); 
+    SLArDetOpDetArray(); 
+    ~SLArDetOpDetArray(); 
     
     SLArCfgSuperCellArray BuildSuperCellArrayCfg(); 
     void BuildMaterial(G4String materials_db); 
-    void BuildSuperCellArray(SLArDetSuperCell*); 
+    void BuildOpDetArray(SLArOpticalDetector*); 
 
     const G4ThreeVector& GetNormal() {return fNormal;}
     const G4ThreeVector& GetPosition() {return fPosition;}
@@ -38,7 +39,7 @@ class SLArDetSuperCellArray : public SLArBaseDetModule {
 
     G4int fTPCID; 
     SLArMaterial* fMaterialBase;
-    SLArBaseDetModule* fSuperCell; 
+    SLArBaseDetModule* fOpDetModuleBase; 
     G4ThreeVector fPosition; 
     G4ThreeVector fGlobalPosition; 
     G4ThreeVector fNormal;

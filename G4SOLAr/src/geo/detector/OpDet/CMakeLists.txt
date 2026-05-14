@@ -1,0 +1,15 @@
+set(SLAR_GEO_SUPERCELL_HEADERS
+  "${SLAR_GEO_INCLUDE_DIR}/detector/OpDet/SLArOpticalDetector.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/detector/OpDet/SLArDetSuperCell.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/detector/OpDet/SLArDetSiPM.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/detector/OpDet/SLArDetOpDetArray.hh"
+)
+
+set(SLAR_GEO_SUPERCELL_SRC
+  "${SLAR_GEO_SRC_DIR}/detector/OpDet/SLArDetSuperCell.cc"
+  "${SLAR_GEO_SRC_DIR}/detector/OpDet/SLArDetSiPM.cc"
+  "${SLAR_GEO_SRC_DIR}/detector/OpDet/SLArDetOpDetArray.cc"
+)
+
+set(SLAR_GEO_DETECTOR_HEADERS ${SLAR_GEO_DETECTOR_HEADERS} ${SLAR_GEO_SUPERCELL_HEADERS} PARENT_SCOPE)
+set(SLAR_GEO_DETECTOR_SRC ${SLAR_GEO_DETECTOR_SRC} ${SLAR_GEO_SUPERCELL_SRC} PARENT_SCOPE)
