@@ -1,7 +1,7 @@
 /**
  * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
  * @file        : SLArMaterialInfo.hh
- * @created     : lunedì ago 08, 2022 17:45:44 CEST
+ * @created     : Monday Aug 08, 2022 17:45:44 CEST
  */
 
 #ifndef SLARMATERIALINFO_H
@@ -18,7 +18,7 @@ class SLArMaterial {
     SLArMaterial();
     SLArMaterial(const SLArMaterial &mat);
     SLArMaterial(G4String matID);
-    ~SLArMaterial();
+    ~SLArMaterial() = default;
 
     void                BuildMaterialFromDB(const G4String db_file, G4String mat_id = "");
     G4Material*         GetMaterial();
@@ -39,11 +39,10 @@ class SLArMaterial {
     G4Material*         BuildFromAtoms(const rapidjson::Value& jptable); 
     G4Material*         BuildFromMixture(const rapidjson::Value& jptable); 
 
-  private:
-    G4String            fDBFile     ; 
-    G4String            fMaterialID ;
-    G4Material*         fMaterial   ;
-    G4OpticalSurface*   fOpticalSurf;
+    G4String            fDBFile      = {}; 
+    G4String            fMaterialID;
+    G4Material*         fMaterial    = {};
+    G4OpticalSurface*   fOpticalSurf = {};
 };
 
 

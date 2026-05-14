@@ -39,19 +39,15 @@
 
 SLArOpticalPhysics::SLArOpticalPhysics(G4bool abs_toggle, G4bool cerenkov_toggle)
   : G4VPhysicsConstructor("Optical")
-{
-  //fWLSProcess                = NULL;
-  fScintProcess              = NULL;
-  fCerenkovProcess           = NULL;
-  fBoundaryProcess           = NULL;
-  fAbsorptionProcess         = NULL;
-  fRayleighScattering        = NULL;
-  fMieHGScatteringProcess    = NULL;
-
-  fAbsorptionOn              = abs_toggle;
-  fCerenkovOn                = cerenkov_toggle;
-
-}
+    , fCerenkovProcess(nullptr)
+    , fScintProcess(nullptr)
+    , fAbsorptionProcess(nullptr)
+    , fRayleighScattering(nullptr)
+    , fMieHGScatteringProcess(nullptr)
+    , fBoundaryProcess(nullptr)
+    , fAbsorptionOn(abs_toggle)
+    , fCerenkovOn(cerenkov_toggle)
+{ }
 
 SLArOpticalPhysics::~SLArOpticalPhysics() { }
 
@@ -141,7 +137,9 @@ void SLArOpticalPhysics::ConstructProcess()
       }
     }
     if(fScintProcess->IsApplicable(*particle)){
+#ifdef SLAR_DEBUG
       printf("Add scintillation process to %s\n", particle->GetParticleName().c_str());
+#endif
       pManager->AddProcess(fScintProcess);
       pManager->SetProcessOrderingToLast(fScintProcess,idxAtRest);
       pManager->SetProcessOrderingToLast(fScintProcess,idxPostStep);

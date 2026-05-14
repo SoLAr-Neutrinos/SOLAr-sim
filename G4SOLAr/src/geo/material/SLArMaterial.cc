@@ -21,9 +21,7 @@
 #include <iterator>
 
 
-SLArMaterial::SLArMaterial() : 
-  fDBFile(""), fMaterialID(""), fMaterial(nullptr), fOpticalSurf(nullptr)
-{}
+SLArMaterial::SLArMaterial() : fMaterialID{} {}
 
 SLArMaterial::SLArMaterial(const SLArMaterial &mat)
 {
@@ -33,13 +31,10 @@ SLArMaterial::SLArMaterial(const SLArMaterial &mat)
   fOpticalSurf   = mat.fOpticalSurf; 
 }
 
-SLArMaterial::SLArMaterial(G4String matID)
+SLArMaterial::SLArMaterial(G4String matID) : SLArMaterial()
 {
   SetMaterialID(matID);
 }
-
-SLArMaterial::~SLArMaterial()
-{}
 
 G4Material* SLArMaterial::GetMaterial() 
 {
