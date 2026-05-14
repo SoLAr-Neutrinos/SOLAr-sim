@@ -9,6 +9,7 @@
 #define SLARDETREADOUTTILE_HH
 
 #include "geo/detector/SLArBaseDetModule.hh"
+#include "geo/detector/OpDet/SLArDetSiPM.hh"
 #include "G4LogicalSkinSurface.hh"
 
 class TH2Poly; 
@@ -37,16 +38,12 @@ public:
   SLArDetReadoutTile(const SLArDetReadoutTile &detReadoutTile);
   ~SLArDetReadoutTile();
   
-  void SetPerfectQE(G4bool kQE);
-
   void BuildMaterial(G4String materials_db);
   void BuildComponentsDefinition(const rapidjson::Value&); 
   void BuildUnitCellPixMap(const rapidjson::Value&); 
   void BuildUnitCellStructure(const rapidjson::Value&); 
-  G4LogicalSkinSurface* BuildLogicalSkinSurface(); 
   void BuildReadoutTile();
   void BuildPCB();
-  void BuildSiPM();
   TH2Poly* BuildTileChgPixelMap(const G4ThreeVector& xAxis, const G4ThreeVector& yAxis, 
       const G4ThreeVector* _shift = nullptr, const G4RotationMatrix* _rot = nullptr); 
   void BuildChargePix();
@@ -54,11 +51,9 @@ public:
 
   void SetVisAttributes(const int depth = 0);
 
-  SLArBaseDetModule* GetSiPMActive();
   SLArBaseDetModule* GetUnitCell() {return fUnitCell;}
-  SLArMaterial* GetSiPMActiveMaterial();
   SLArBaseDetModule* GetChargePixel() {return fChargePix;}
-  G4LogicalSkinSurface* GetSiPMLgSkin() {return fSkinSurface;}
+  SLArDetSiPM* GetSiPM() {return fSiPM;}
   virtual void Init(const rapidjson::Value&) override {}
   const std::vector<SUnitCellComponent>& GetUnitCellStructure() {return fCellStructure;}
   const std::vector<SUnitCellPixelArea>& GetUnitCellPixelMap() {return fCellPixelMap;}
@@ -67,25 +62,20 @@ public:
 protected:
 
 private:
-  G4double                fhTot;
-  G4double                fSize;
+  G4double fhTot = {};
+  G4double fSize = {};
 
-  G4bool             fPerfectQE;
+  SLArBaseDetModule* fBasePCB = {};
+  SLArBaseDetModule* fBaseTile = {};
+  SLArBaseDetModule* fChargePix = {};
+  SLArDetSiPM* fSiPM = {};
+  SLArBaseDetModule* fUnitCell = {}; 
 
-  SLArBaseDetModule* fBasePCB;
-  SLArBaseDetModule* fBaseTile;
-  SLArBaseDetModule* fChargePix;
-  SLArBaseDetModule* fSiPM;
-  SLArBaseDetModule* fSiPMActive; 
-  SLArBaseDetModule* fUnitCell; 
-
-  SLArMaterial*  fMatReadoutTile; 
-  SLArMaterial*  fMatPCB;
-  SLArMaterial*  fMatCopper; 
-  SLArMaterial*  fMatChargePix;
-  SLArMaterial*  fMatSiPM; 
-  SLArMaterial*  fMatSiPMCapsule;
-  G4LogicalSkinSurface* fSkinSurface;
+  G4String fMaterialDBPath = {};
+  SLArMaterial*  fMatReadoutTile = {}; 
+  SLArMaterial*  fMatPCB = {};
+  SLArMaterial*  fMatCopper = {}; 
+  SLArMaterial*  fMatChargePix = {};
 
   std::vector<SUnitCellComponent> fCellStructure; 
   std::vector<SUnitCellPixelArea> fCellPixelMap; 

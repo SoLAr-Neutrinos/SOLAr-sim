@@ -258,7 +258,7 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
     G4int n_hit = hHC1->entries();
 
     for (G4int i=0;i<n_hit;i++) {
-      SLArReadoutTileHit* hit = (*hHC1)[i];
+      SLArReadoutTileSiPMHit* hit = (*hHC1)[i];
       if (!hit) { 
 #ifdef SLAR_DEBUG
         G4cout << "SLArEventAction::RecordEventReadoutTile(): "

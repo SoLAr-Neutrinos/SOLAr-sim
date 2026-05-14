@@ -1,7 +1,7 @@
 /**
  * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        : SLArReadoutTileHit
- * @created     : mercoledì ago 10, 2022 08:58:05 CEST
+ * @file        : SLArReadoutTileHit.cc
+ * @created     : Wed Aug 10, 2022 08:58:05 CEST
  */
 
 #include "SensitiveDetectors/SLArReadoutTileHit.hh"
@@ -19,11 +19,11 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4ThreadLocal G4Allocator<SLArReadoutTileHit>* SLArReadoutTileHitAllocator;
+G4ThreadLocal G4Allocator<SLArReadoutTileSiPMHit>* SLArReadoutTileHitAllocator;
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileHit::SLArReadoutTileHit()
+SLArReadoutTileSiPMHit::SLArReadoutTileSiPMHit()
 : G4VHit(), fAnodeIdx(0), fMegaTileReplicaNr(0), fRowTileReplicaNr(0), fTileReplicaNr(0), 
   fRowCellNr(0), fCellNr(0),
   fWavelength(-1), fTime(0.), fPhType(-1), fPhProducerID(-1),
@@ -32,7 +32,7 @@ SLArReadoutTileHit::SLArReadoutTileHit()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileHit::SLArReadoutTileHit(G4double z)
+SLArReadoutTileSiPMHit::SLArReadoutTileSiPMHit(G4double z)
 : G4VHit(), fAnodeIdx(0), fMegaTileReplicaNr(0), fRowTileReplicaNr(0), fTileReplicaNr(0), 
   fRowCellNr(0), fCellNr(0),
   fWavelength(z), fTime(0.), fPhType(-1), fPhProducerID(-1),
@@ -41,12 +41,12 @@ SLArReadoutTileHit::SLArReadoutTileHit(G4double z)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileHit::~SLArReadoutTileHit()
+SLArReadoutTileSiPMHit::~SLArReadoutTileSiPMHit()
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileHit::SLArReadoutTileHit(const SLArReadoutTileHit &right)
+SLArReadoutTileSiPMHit::SLArReadoutTileSiPMHit(const SLArReadoutTileSiPMHit &right)
 : G4VHit() {
     fWavelength   = right.fWavelength;
     fWorldPos     = right.fWorldPos;
@@ -64,7 +64,7 @@ SLArReadoutTileHit::SLArReadoutTileHit(const SLArReadoutTileHit &right)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-const SLArReadoutTileHit& SLArReadoutTileHit::operator=(const SLArReadoutTileHit &right)
+const SLArReadoutTileSiPMHit& SLArReadoutTileSiPMHit::operator=(const SLArReadoutTileSiPMHit &right)
 {
     fWavelength   = right.fWavelength;
     fWorldPos     = right.fWorldPos;
@@ -83,14 +83,14 @@ const SLArReadoutTileHit& SLArReadoutTileHit::operator=(const SLArReadoutTileHit
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-int SLArReadoutTileHit::operator==(const SLArReadoutTileHit &/*right*/) const
+int SLArReadoutTileSiPMHit::operator==(const SLArReadoutTileSiPMHit &/*right*/) const
 {
     return 0;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SLArReadoutTileHit::Draw()
+void SLArReadoutTileSiPMHit::Draw()
 {
     G4VVisManager* pVVisManager = G4VVisManager::GetConcreteInstance();
     if(pVVisManager)
@@ -107,7 +107,7 @@ void SLArReadoutTileHit::Draw()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-const std::map<G4String,G4AttDef>* SLArReadoutTileHit::GetAttDefs() const
+const std::map<G4String,G4AttDef>* SLArReadoutTileSiPMHit::GetAttDefs() const
 {
     G4bool isNew;
     std::map<G4String,G4AttDef>* store
@@ -155,7 +155,7 @@ const std::map<G4String,G4AttDef>* SLArReadoutTileHit::GetAttDefs() const
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-std::vector<G4AttValue>* SLArReadoutTileHit::CreateAttValues() const
+std::vector<G4AttValue>* SLArReadoutTileSiPMHit::CreateAttValues() const
 {
     std::vector<G4AttValue>* values = new std::vector<G4AttValue>;
     
@@ -190,7 +190,7 @@ std::vector<G4AttValue>* SLArReadoutTileHit::CreateAttValues() const
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SLArReadoutTileHit::Print()
+void SLArReadoutTileSiPMHit::Print()
 {
 
     G4cout << " Tile: "<<fAnodeIdx<<"/"<<fMegaTileReplicaNr<<"/"<<fRowTileReplicaNr<<"/"<<fTileReplicaNr<< "\n"
@@ -203,7 +203,7 @@ void SLArReadoutTileHit::Print()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SLArReadoutTileHit::SetPhotonProcess(G4String prname)
+void SLArReadoutTileSiPMHit::SetPhotonProcess(G4String prname)
 {
   if       (G4StrUtil::contains(prname, "Cerenkov")) fPhType = 1;
   else if  (G4StrUtil::contains(prname, "Scint"   )) fPhType = 2;
@@ -211,12 +211,12 @@ void SLArReadoutTileHit::SetPhotonProcess(G4String prname)
   else                                   fPhType = 4;
 }
 
-G4int SLArReadoutTileHit::GetPhotonProcessId() const
+G4int SLArReadoutTileSiPMHit::GetPhotonProcessId() const
 {
   return fPhType;
 }
 
-G4String SLArReadoutTileHit::GetPhotonProcessName() const
+G4String SLArReadoutTileSiPMHit::GetPhotonProcessName() const
 {
   G4String prname;
   if      (fPhType == 1) prname = "Cerenkov";

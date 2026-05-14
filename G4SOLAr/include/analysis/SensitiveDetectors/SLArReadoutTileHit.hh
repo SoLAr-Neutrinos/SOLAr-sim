@@ -27,16 +27,16 @@ class G4AttValue;
 /// - the particle local and global positions
 
 
-class SLArReadoutTileHit : public G4VHit
+class SLArReadoutTileSiPMHit : public G4VHit
 {
 public:
-    SLArReadoutTileHit();
-    SLArReadoutTileHit(G4double z);
-    SLArReadoutTileHit(const SLArReadoutTileHit &right);
-    virtual ~SLArReadoutTileHit();
+    SLArReadoutTileSiPMHit();
+    SLArReadoutTileSiPMHit(G4double z);
+    SLArReadoutTileSiPMHit(const SLArReadoutTileSiPMHit &right);
+    virtual ~SLArReadoutTileSiPMHit();
 
-    const SLArReadoutTileHit& operator=(const SLArReadoutTileHit &right);
-    int operator==(const SLArReadoutTileHit &right) const;
+    const SLArReadoutTileSiPMHit& operator=(const SLArReadoutTileSiPMHit &right);
+    int operator==(const SLArReadoutTileSiPMHit &right) const;
     
     inline void *operator new(size_t);
     inline void operator delete(void *aHit);
@@ -97,20 +97,20 @@ private:
     G4ThreeVector fWorldPos;
 };
 
-typedef G4THitsCollection<SLArReadoutTileHit> SLArReadoutTileHitsCollection;
+typedef G4THitsCollection<SLArReadoutTileSiPMHit> SLArReadoutTileHitsCollection;
 
-extern G4ThreadLocal G4Allocator<SLArReadoutTileHit>* SLArReadoutTileHitAllocator;
+extern G4ThreadLocal G4Allocator<SLArReadoutTileSiPMHit>* SLArReadoutTileHitAllocator;
 
-inline void* SLArReadoutTileHit::operator new(size_t)
+inline void* SLArReadoutTileSiPMHit::operator new(size_t)
 {
     if (!SLArReadoutTileHitAllocator)
-        SLArReadoutTileHitAllocator = new G4Allocator<SLArReadoutTileHit>;
+        SLArReadoutTileHitAllocator = new G4Allocator<SLArReadoutTileSiPMHit>;
     return (void*)SLArReadoutTileHitAllocator->MallocSingle();
 }
 
-inline void SLArReadoutTileHit::operator delete(void* aHit)
+inline void SLArReadoutTileSiPMHit::operator delete(void* aHit)
 {
-    SLArReadoutTileHitAllocator->FreeSingle((SLArReadoutTileHit*) aHit);
+    SLArReadoutTileHitAllocator->FreeSingle((SLArReadoutTileSiPMHit*) aHit);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

@@ -21,7 +21,7 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileSD::SLArReadoutTileSD(G4String name)
+SLArReadoutTileSiPMSD::SLArReadoutTileSiPMSD(G4String name)
 : G4VSensitiveDetector(name), fHitsCollection(0), fHCID(-2)
 {
     collectionName.insert("ReadoutTileColl");
@@ -29,12 +29,12 @@ SLArReadoutTileSD::SLArReadoutTileSD(G4String name)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileSD::~SLArReadoutTileSD()
+SLArReadoutTileSiPMSD::~SLArReadoutTileSiPMSD()
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SLArReadoutTileSD::Initialize(G4HCofThisEvent* hce)
+void SLArReadoutTileSiPMSD::Initialize(G4HCofThisEvent* hce)
 {
     fHitsCollection 
       = new SLArReadoutTileHitsCollection(SensitiveDetectorName,collectionName[0]);
@@ -47,7 +47,7 @@ void SLArReadoutTileSD::Initialize(G4HCofThisEvent* hce)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4bool SLArReadoutTileSD::ProcessHits(G4Step* step, G4TouchableHistory*)
+G4bool SLArReadoutTileSiPMSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
 
   auto particleDef = step->GetTrack()->GetDynamicParticle()->GetParticleDefinition(); 
@@ -67,7 +67,7 @@ G4bool SLArReadoutTileSD::ProcessHits(G4Step* step, G4TouchableHistory*)
   return true;
 }
 
-G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
+G4bool SLArReadoutTileSiPMSD::ProcessHits_constStep(const G4Step* step,
                                        G4TouchableHistory* ){
 
   G4Track* track = step->GetTrack();
@@ -95,7 +95,7 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
     = touchable->GetHistory()
       ->GetTopTransform().TransformPoint(worldPos);
  
-  SLArReadoutTileHit* hit = nullptr;
+  SLArReadoutTileSiPMHit* hit = nullptr;
   // Get the creation process of optical photon
   G4String procName = "";
   
@@ -106,7 +106,7 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
   }
   phEne = track->GetTotalEnergy();
 
-  hit = new SLArReadoutTileHit(); //so create new hit
+  hit = new SLArReadoutTileSiPMHit(); //so create new hit
   hit->SetPhotonWavelength( CLHEP::h_Planck * CLHEP::c_light / phEne * 1e6);
   hit->SetWorldPos(worldPos);
   hit->SetLocalPos(localPos);

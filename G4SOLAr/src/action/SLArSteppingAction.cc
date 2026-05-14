@@ -357,7 +357,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
             G4String sdNameSiPM  ="/tile/sipm";
             G4String sdNameSC    ="/supercell";
 
-            SLArReadoutTileSD* sipmSD = nullptr;
+            SLArReadoutTileSiPMSD* sipmSD = nullptr;
             SLArSuperCellSD* supercellSD = nullptr; 
 
 #ifdef SLAR_DEBUG
@@ -387,7 +387,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
 
               //getchar(); 
 //#endif
-              sipmSD = (SLArReadoutTileSD*)SDman->FindSensitiveDetector(sdNameSiPM);
+              sipmSD = (SLArReadoutTileSiPMSD*)SDman->FindSensitiveDetector(sdNameSiPM);
               if(sipmSD) { 
                 fEventAction->IncReadoutTileHitCount(); 
                 sipmSD->ProcessHits_constStep(step, nullptr);
