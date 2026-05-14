@@ -58,6 +58,17 @@ namespace geo {
     }
   }
 
+  G4ThreeVector get_bounding_volume_size(const G4VSolid* solid) {
+    G4ThreeVector lo; 
+    G4ThreeVector hi;
+    G4ThreeVector dim; 
+    solid->BoundingLimits(lo, hi);
+
+    for (int i=0; i<3; i++) dim[i] = fabs(hi[i] - lo[i]); 
+
+    return dim; 
+  }
+
   bool track_crosses_volume(const G4ThreeVector& vtx, const G4ThreeVector& momentum_dir, const G4String& pv_name) {
     G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
 

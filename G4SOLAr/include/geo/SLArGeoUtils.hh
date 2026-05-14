@@ -95,6 +95,8 @@ namespace geo {
 
   double get_bounding_volume_surface(const G4VSolid* solid);
 
+  G4ThreeVector get_bounding_volume_size(const G4VSolid* solid);
+
   inline std::vector<G4VPhysicalVolume*> GetPhysicalVolumes(const G4LogicalVolume* lv) 
   {
     G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
