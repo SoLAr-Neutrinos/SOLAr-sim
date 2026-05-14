@@ -21,8 +21,6 @@
 #include "G4RotationMatrix.hh"
 
 
-enum EPhotoDetPosition {kTop=0, kBottom=1};
-
 class SLArBaseDetModule 
 {
   public:
@@ -46,14 +44,15 @@ class SLArBaseDetModule
     inline G4LogicalVolume*   GetModLV() {return fModLV;}
     inline const G4LogicalVolume* GetModLV() const {return fModLV;}
 
-    void               SetRotation(G4RotationMatrix* rot);
-    void               SetTranslation(G4ThreeVector* vec);
+    void               SetRotation(G4RotationMatrix* rot) {fRot = rot;}
+    void               SetTranslation(G4ThreeVector* vec) {fTranslation = *vec;}
 
     void               SetMaterial(G4Material* mat);
     G4Material*        GetMaterial();
 
-    G4RotationMatrix*  GetRotation();
-    G4ThreeVector*     GetTranslation();
+    G4RotationMatrix*  GetRotation() const {return fRot;}
+    G4RotationMatrix*  GetRotation() {return fRot;}
+    G4ThreeVector*     GetTranslation() {return &fTranslation;}
     
     void               SetID(const int id) {fID = id;}
     G4int              GetID() {return fID;}
@@ -63,7 +62,7 @@ class SLArBaseDetModule
     void SetModPV(G4VPhysicalVolume* pv) {fModPV = pv;}
     inline G4VPhysicalVolume* GetModPV() {return fModPV;}
     inline const G4VPhysicalVolume* GetModPV() const {return fModPV;}
-    G4VPhysicalVolume* GetModPV(
+    G4VPhysicalVolume* BuildAndPlacePV(
         G4String                          name, 
         G4RotationMatrix*                 rot,
         const G4ThreeVector               &vec,
@@ -72,17 +71,17 @@ class SLArBaseDetModule
         G4int                             pCopyNo = 0);
 
   protected:
-    G4Material*        fMaterial;
-    SLArGeoInfo*       fGeoInfo ;
+    G4Material*        fMaterial    = {};
+    SLArGeoInfo*       fGeoInfo     = {};
 
-    G4LogicalVolume*   fModLV   ;
-    G4VSolid*          fModSV   ;
-    G4VPhysicalVolume* fModPV   ;
+    G4LogicalVolume*   fModLV       = {};
+    G4VSolid*          fModSV       = {};
+    G4VPhysicalVolume* fModPV       = {};
 
-    G4RotationMatrix*  fRot     ;
-    G4ThreeVector      fVec     ;
-    G4String           fName    ;
-    G4int              fID      ; 
+    G4RotationMatrix*  fRot         = {};
+    G4ThreeVector      fTranslation = {};
+    G4String           fName        = {};
+    G4int              fID          = {-999}; 
 };
 
 

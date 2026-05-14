@@ -69,17 +69,11 @@
 SLArDetectorConstruction::SLArDetectorConstruction(
     G4String geometry_cfg_file, G4String material_db_file)
   : G4VUserDetectorConstruction(),
-  fGeometryCfgFile(""), 
-  fMaterialDBFile(""),
-  fExpHall(nullptr),
-  fSuperCell(nullptr),
-  fWorldLog(nullptr), 
-  fWorldPhys(nullptr) 
+  fGeometryCfgFile(geometry_cfg_file), 
+  fMaterialDBFile(material_db_file)
 { 
   fDetectorMsgr = new SLArDetectorConstructionMsgr(this);
 
-  fGeometryCfgFile = geometry_cfg_file; 
-  fMaterialDBFile  = material_db_file; 
 #ifdef SLAR_DEBUG
   printf("SLArDetectorConstruction Build with\ngeometry %s\nmaterials %s\n",
       fGeometryCfgFile.c_str(), fMaterialDBFile.c_str());
@@ -243,8 +237,7 @@ void SLArDetectorConstruction::InitShielding(const rapidjson::Value& jshield) {
 }
 
 void SLArDetectorConstruction::InitTPC(const rapidjson::Value& jtpc) {
-  assert(jtpc.IsArray()); 
-
+  debug::require_json_type(jtpc, rapidjson::kArrayType);
   //loop over TPC modules
   for (auto &tpc : jtpc.GetArray()) {
     SLArDetTPC* detTPC = new SLArDetTPC(); 
@@ -282,13 +275,12 @@ void SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell)
  * @param pds supercell system description
  */
 void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
-
-  assert(jconf.IsArray()); 
+  debug::require_json_type(jconf, rapidjson::kArrayType);
 
   for (const auto &jarray : jconf.GetArray()) {
-    SLArDetSuperCellArray* detSCArray = new SLArDetSuperCellArray(); 
+    SLArDetOpDetArray* detSCArray = new SLArDetOpDetArray(); 
     detSCArray->Init(jarray); 
-    fSCArray.insert( std::make_pair(detSCArray->GetID(), detSCArray) ); 
+    fOpDetArray.insert( std::make_pair(detSCArray->GetID(), detSCArray) ); 
   }
 
   return;
@@ -363,9 +355,9 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
 void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
   fReadoutTile = new SLArDetReadoutTile();
 
-  assert(pixsys.HasMember("dimensions")); 
-  assert(pixsys.HasMember("components")); 
-  assert(pixsys.HasMember("unit_cell")); 
+  debug::require_json_member(pixsys,"dimensions"); 
+  debug::require_json_member(pixsys, "components"); 
+  debug::require_json_member(pixsys, "unit_cell"); 
 
   fReadoutTile->GetGeoInfo()->ReadFromJSON(pixsys["dimensions"].GetArray()); 
   fReadoutTile->BuildComponentsDefinition(pixsys["components"]); 
@@ -373,7 +365,7 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
   fReadoutTile->BuildMaterial(fMaterialDBFile);
 
   if (pixsys.HasMember("tile_assembly")) {
-    assert(pixsys["tile_assembly"].IsArray()); 
+    debug::require_json_type(pixsys["tile_assembly"], rapidjson::kArrayType); 
 
     for (const auto &mtile : pixsys["tile_assembly"].GetArray()) {
       // Setup megatile
@@ -776,11 +768,11 @@ void SLArDetectorConstruction::ConstructCryostat() {
       fDetector->GetModPV()->GetTranslation() 
       - G4ThreeVector(0, 0.5*target_size_y + cryostat_tk + waffle_tk + 0.5*airflow_tk, 0);
 
-    fCryostat->GetAirflowUnit()->GetModPV("airflow_pv", 0, 
+    fCryostat->GetAirflowUnit()->BuildAndPlacePV("airflow_pv", 0, 
         airflow_pos, fWorldLog, 0) ;
   }
 
-  fCryostat->GetModPV("cryostat_pv", fDetector->GetModPV()->GetRotation(), 
+  fCryostat->BuildAndPlacePV("cryostat_pv", fDetector->GetModPV()->GetRotation(), 
       fDetector->GetModPV()->GetTranslation(), 
       fWorldLog, 0) ; 
 
@@ -792,7 +784,7 @@ void SLArDetectorConstruction::ConstructCathode() {
     cathode.second->BuildMaterial(fMaterialDBFile); 
     cathode.second->BuildCathode(); 
     auto geoinfo = cathode.second->GetGeoInfo(); 
-    cathode.second->GetModPV(
+    cathode.second->BuildAndPlacePV(
         "cathode_pv_"+std::to_string(cathode.first),
         cathode.second->GetRotation(),
         G4ThreeVector(
@@ -905,14 +897,14 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   for (auto &tpc : fTPC) {
     tpc.second->BuildMaterial(fMaterialDBFile); 
     tpc.second->BuildTPC();
-    tpc.second->GetModPV("TPC"+std::to_string(tpc.first), 0,
+    tpc.second->BuildAndPlacePV("TPC"+std::to_string(tpc.first), 0,
         tpc.second->GetTPCcenter(), 
         fDetector->GetModLV(), false, tpc.first);
     tpc.second->SetVisAttributes(); 
   }
 
   // 6. Build and place the "conventional" Photon Detection System 
-  if (fSuperCell) BuildAndPlaceSuperCells();
+  if (fSuperCell) BuildAndPlaceOpDets();
 
   // 7. Build and place the "pixel-based" readout system 
   BuildAndPlaceAnode(); 
@@ -1182,7 +1174,7 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
     auto glb_pos = fDetector->GetModPV()->GetTranslation() + tpc->GetTPCcenter() + pos; 
 
     printf("---- Placing Anode %i in TPC %i\n", anode_id, tpc->GetID());
-    anode->GetModPV("anode"+std::to_string(anode_id), 
+    anode->BuildAndPlacePV("anode"+std::to_string(anode_id), 
         rot, pos, tpc->GetModLV(), 0, anode_id); 
 
     auto anode_cfg = anode->BuildAnodeConfig(); 
@@ -1779,7 +1771,7 @@ void SLArDetectorConstruction::ConstructCryostatScorer() {
 void SLArDetectorConstruction::ConstructExperimentalHall() {
   fExpHall->BuildMaterials(fMaterialDBFile); 
   fExpHall->BuildLayers( fWorldPhys ); 
-  fExpHall->GetModPV("exp_hall_pv", nullptr, G4ThreeVector(0, 0, 0), fWorldLog, false, 88800);
+  fExpHall->BuildAndPlacePV("exp_hall_pv", nullptr, G4ThreeVector(0, 0, 0), fWorldLog, false, 88800);
 
   return;
 }
@@ -1901,7 +1893,7 @@ void SLArDetectorConstruction::ConstructShielding() {
     shield->BuildShielding();
     shield->SetVisAttributes();
 
-    shield->GetModPV(face_name+"_shielding_pv", shield_rot, shield_pos, 
+    shield->BuildAndPlacePV(face_name+"_shielding_pv", shield_rot, shield_pos, 
         fWorldLog, false, static_cast<int>(face) );
 
     printf("Shielding face %s constructed with effective thickness %g cm (airgap included) \n", 

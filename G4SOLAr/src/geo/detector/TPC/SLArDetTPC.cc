@@ -35,17 +35,13 @@
 #endif // SLAR_DEBUG
 
 
-SLArDetTPC::SLArDetTPC() : SLArBaseDetModule(),
-  fMatTarget(nullptr), fMatFieldCage(nullptr), fFieldCage(nullptr), fFieldCageVisibility(true)
-{
-  fGeoInfo = new SLArGeoInfo();
-}
+SLArDetTPC::SLArDetTPC() : SLArBaseDetModule() {}
 
 
-SLArDetTPC::~SLArDetTPC() {
-  std::cerr << "Deleting SLArDetTPC..." << std::endl;
-  std::cerr << "SLArDetTPC DONE" << std::endl;
-}
+//SLArDetTPC::~SLArDetTPC() {
+  //std::cerr << "Deleting SLArDetTPC..." << std::endl;
+  //std::cerr << "SLArDetTPC DONE" << std::endl;
+//}
 
 void SLArDetTPC::BuildMaterial(G4String db_file) 
 {
@@ -314,7 +310,7 @@ void SLArDetTPC::BuildTPC()
 
   if (fFieldCage) {
     fFieldCage->Build(fMatFieldCage->GetMaterial(), fMatTarget->GetMaterial());
-    fFieldCage->GetModPV("field_cage", rot, fFieldCage->GetShift(), this->GetModLV(), false, 99); 
+    fFieldCage->BuildAndPlacePV("field_cage", rot, fFieldCage->GetShift(), this->GetModLV(), false, 99); 
   }
 }
 
@@ -403,7 +399,10 @@ void SLArDetTPC::Init(const rapidjson::Value& jconf) {
   if (jtpc.HasMember("electric_field")) {
     fElectricField = unit::ParseJsonVal( jtpc["electric_field"] ); 
     printf("electric_field is %g kV/cm\n", fElectricField/(CLHEP::kilovolt/CLHEP::cm)); 
+    debug::require_json_type(jtpc["electric_field"], rapidjson::kObjectType);
     auto jfield = jtpc["electric_field"].GetObj(); 
+    debug::require_json_member(jfield, "direction");
+    debug::require_json_type(jfield["direction"], rapidjson::kArrayType);
     auto jdir   = jfield["direction"].GetArray(); 
     assert(jdir.Size() == 3); 
     int idim = 0; 
@@ -459,8 +458,6 @@ void SLArDetTPC::InitFieldCage(const rapidjson::Value& jconf) {
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
   jfc.Accept(writer);
   std::cout << "jfc JSON configuration:\n" << buffer.GetString() << std::endl;
-  std::cout << "Press Enter to continue..." << std::endl;
-  getchar();
 #endif
 
   fFieldCage->Init(jfc);

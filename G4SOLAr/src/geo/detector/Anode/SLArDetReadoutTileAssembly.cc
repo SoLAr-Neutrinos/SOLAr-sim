@@ -20,9 +20,8 @@
 
 SLArDetReadoutTileAssembly::SLArDetReadoutTileAssembly() 
   : SLArBaseDetModule(), fMatReadoutPlane(nullptr), fTileRow(nullptr)
-{
-  fGeoInfo = new SLArGeoInfo();  
-}
+{}
+  
 
 SLArDetReadoutTileAssembly::SLArDetReadoutTileAssembly(const SLArDetReadoutTileAssembly& detReadoutPlane) 
   : SLArBaseDetModule(detReadoutPlane), fMatReadoutPlane(nullptr), fTileRow(nullptr) 

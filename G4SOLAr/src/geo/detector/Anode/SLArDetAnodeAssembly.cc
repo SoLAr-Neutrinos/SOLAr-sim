@@ -21,9 +21,7 @@ SLArDetAnodeAssembly::SLArDetAnodeAssembly() :
   fMatAnode(nullptr), fAnodeRow(nullptr), 
   fPosition(0, 0, 0), fNormal(1, 0, 0),
   fRotation(0), fTileAssemblyModel("")
-{
-  fGeoInfo = new SLArGeoInfo();     
-}
+{ }
 
 SLArDetAnodeAssembly::~SLArDetAnodeAssembly() {}
 

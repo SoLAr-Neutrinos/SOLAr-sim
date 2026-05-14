@@ -14,7 +14,7 @@
 #include "detector/Hall/SLArDetExpHall.hh"
 #include "TMath.h"
 
-SLArDetExpHall::SLArDetExpHall()
+SLArDetExpHall::SLArDetExpHall() : SLArBaseDetModule()
 {
     
 }

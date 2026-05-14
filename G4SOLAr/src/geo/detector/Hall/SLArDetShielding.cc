@@ -10,7 +10,7 @@
 #include "detector/SLArBaseDetModule.hh"
 #include "detector/Hall/SLArDetShielding.hh"
 
-SLArDetShielding::SLArDetShielding()
+SLArDetShielding::SLArDetShielding() : SLArBaseDetModule()
 {}
 
 SLArDetShielding::~SLArDetShielding()

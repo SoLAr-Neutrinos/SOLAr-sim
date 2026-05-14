@@ -18,14 +18,12 @@
 
 SLArDetCathode::SLArDetCathode() : SLArBaseDetModule(),
   fMatCathode(nullptr)
-{
-  fGeoInfo = new SLArGeoInfo();
-}
+{}
 
 
 SLArDetCathode::~SLArDetCathode() {
-  std::cerr << "Deleting SLArDetCathode..." << std::endl;
-  std::cerr << "SLArDetCathode DONE" << std::endl;
+  std::cout << "Deleting SLArDetCathode..." << std::endl;
+  std::cout << "SLArDetCathode DONE" << std::endl;
 }
 
 void SLArDetCathode::BuildMaterial(G4String db_file) 

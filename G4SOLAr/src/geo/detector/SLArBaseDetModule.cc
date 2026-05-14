@@ -13,30 +13,24 @@
 
 
 SLArBaseDetModule::SLArBaseDetModule() 
-  : fMaterial(nullptr), fModLV(nullptr), fModSV(nullptr), 
-  fRot(nullptr), fVec(0., 0., 0.), fName(""), fID(999)
 {
   fGeoInfo = new SLArGeoInfo();
 }
 
-SLArBaseDetModule::SLArBaseDetModule(const SLArBaseDetModule &base)
-{
-  fMaterial = base.fMaterial;
-  fGeoInfo  = base.fGeoInfo ;
-  fModLV    = base.fModLV   ;
-  fModSV    = base.fModSV   ;
-  fModPV    = base.fModPV   ;
-  fRot      = base.fRot     ;
-  fVec      = base.fVec     ;
-  fName     = base.fName    ;
-  fID       = base.fID      ; 
-}
+SLArBaseDetModule::SLArBaseDetModule(const SLArBaseDetModule &base) : 
+  fMaterial( base.fMaterial ),
+  fGeoInfo( new SLArGeoInfo(*base.fGeoInfo) ),
+  fModLV( base.fModLV ? base.fModLV : nullptr ),
+  fModSV( base.fModSV ? base.fModSV : nullptr ),
+  fModPV( base.fModPV ? base.fModPV : nullptr ),
+  fRot( base.fRot ? new G4RotationMatrix(*base.fRot) : nullptr ),
+  fTranslation( base.fTranslation ),
+  fName( base.fName ),
+  fID( base.fID )
+{ }
 
 SLArBaseDetModule::~SLArBaseDetModule() {
   if (fGeoInfo) {delete fGeoInfo; fGeoInfo = nullptr;}
-  //if (fModPV )  {delete fModPV  ; fModPV   = nullptr;}
-  if (fModLV )  {delete fModLV  ; fModLV   = nullptr;}
-  if (fModSV )  {delete fModSV  ; fModSV   = nullptr;}
 }
 
 void SLArBaseDetModule::SetSolidVolume(G4VSolid* sol_vol)
@@ -49,7 +43,7 @@ void SLArBaseDetModule::SetLogicVolume(G4LogicalVolume* log_vol)
   fModLV = log_vol;
 }
   
-G4VPhysicalVolume* SLArBaseDetModule::GetModPV(
+G4VPhysicalVolume* SLArBaseDetModule::BuildAndPlacePV(
         G4String                          name,
         G4RotationMatrix*                 rot,
         const G4ThreeVector               &vec,
@@ -59,11 +53,11 @@ G4VPhysicalVolume* SLArBaseDetModule::GetModPV(
 {
   fRot  = rot;
   fName = name;
-  fVec  = vec;
+  fTranslation  = vec;
   if (pCopyNo == 0) pCopyNo = fID;
   else fID = pCopyNo;
 
-  fModPV = new G4PVPlacement(fRot,fVec, 
+  fModPV = new G4PVPlacement(fRot,fTranslation, 
       fModLV, fName, mlv, pMany, pCopyNo, true);
   return fModPV;
 }

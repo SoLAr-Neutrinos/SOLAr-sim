@@ -19,7 +19,7 @@ class SLArDetTPC : public SLArBaseDetModule {
 
 public:
   SLArDetTPC          ();
-  virtual ~SLArDetTPC ();
+  virtual ~SLArDetTPC () = default;
 
   void          BuildTPC();
 
@@ -39,13 +39,13 @@ public:
     { if (fFieldCage) fFieldCage->SetVisAttributes(vis); }
 
 private:
-  SLArMaterial* fMatTarget;
-  SLArMaterial* fMatFieldCage;
-  SLArDetFieldCage* fFieldCage; 
-  geo::EGeoShape fShape{geo::kBox};
-  G4double      fElectricField; 
-  G4ThreeVector fElectronDriftDir; 
-  G4bool fFieldCageVisibility;
+  SLArMaterial* fMatTarget = {};
+  SLArMaterial* fMatFieldCage = {};
+  SLArDetFieldCage* fFieldCage = {}; 
+  geo::EGeoShape fShape = geo::kBox;
+  G4double      fElectricField = {}; 
+  G4ThreeVector fElectronDriftDir = {}; 
+  G4bool fFieldCageVisibility = true;
 
 };
 
