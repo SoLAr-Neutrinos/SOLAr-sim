@@ -241,10 +241,10 @@ void SLArDetFieldCage::BuildBox(G4Material* matConductor, G4Material* matFill)
   while (len_tmp <= DDriftLength) { len = len_tmp; n_replica++; len_tmp += sp; }
 
   auto param = new SLArPlaneParameterisation(kXAxis,
-      G4ThreeVector(-0.5*(len - sp + hl), 0., 0.), sp);
+      G4ThreeVector(-0.5*(len - sp), 0., 0.), sp);
   SetModPV(new G4PVParameterised("fieldCage_ppv",
         fc_layer_lv, fc_volume_lv,
-        param->GetReplicationAxis(), n_replica-1, param));
+        param->GetReplicationAxis(), n_replica, param));
   GetModPV()->SetCopyNo(20);
 }
 
