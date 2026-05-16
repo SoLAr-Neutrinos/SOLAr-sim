@@ -128,6 +128,7 @@ void SLArDetReadoutTile::BuildUnitCell() {
   if (fSiPM) {
     fSiPM->BuildMaterial( fMaterialDBPath );
     fSiPM->BuildOpticalDetector();
+    fSiPM->BuildLogicalSkinSurface();
   }
 
   G4double hl = 0, hq = 0;
