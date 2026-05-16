@@ -14,12 +14,12 @@
 #include "globals.hh"
 
 
-enum SLArTrackStatus { active=1, hitPMT=2, absorbed=4, boundaryAbsorbed=8,
+enum SLArOpTrackStatus { active=1, hitOpDet=2, absorbed=4, boundaryAbsorbed=8,
                     inactive=14};
 
 /*SLArTrackStatus:
   active: still being tracked
-  hitPMT: stopped by being detected in a PMT
+  hitOpDet: stopped by being detected in an Optical Detector
   absorbed: stopped by being absorbed with G4OpAbsorbtion
   boundaryAbsorbed: stopped by being aborbed with G4OpAbsorbtion
   inactive: track is stopped for some reason

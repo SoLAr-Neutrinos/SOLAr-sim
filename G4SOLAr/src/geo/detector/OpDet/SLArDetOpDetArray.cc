@@ -173,20 +173,19 @@ void SLArDetOpDetArray::BuildOpDetArray(SLArOpticalDetector* opdet) {
     if (rpars == fParameterisation.back()) {
       target = this; 
       origin = fSubModules.back();
-      target_prefix = "opdet_plane";
+      target_prefix = "opdet_row";
     } 
     else if (rpars == fParameterisation.front()) {
       fSubModules.push_back( new SLArBaseDetModule() ); 
       target = fSubModules.back();
       origin = opdet;
-      target_prefix = "opdet_row";
+      target_prefix = "opdet";
     }
     else {
-      G4cout << "SLArDetSuperCellArray::BuildSuperCellArray() WARNING: " << G4endl;
-      G4cout << "I should not be here!" << G4endl;
-      fSubModules.push_back( new SLArBaseDetModule() ); 
-      target = fSubModules.back(); 
-      origin = fSubModules.rbegin()[1];
+      G4ExceptionDescription ed;
+      ed << "Unexpected parameterisation in SLArDetOpDetArray::BuildOpDetArray! ";
+      ed << "Only two parameterisations are expected (for rows and columns), but found more.";
+      G4Exception("SLArDetOpDetArray::BuildOpDetArray", "ConfigError002", FatalException, ed);
     }
 
     build_parameterised_vol(origin, target, target_prefix, rpars);
@@ -218,7 +217,7 @@ std::pair<int, G4double> SLArDetOpDetArray::ComputeArrayTrueLength(
   return std::make_pair(n_replica, fabs(len));
 };
 
-SLArCfgSuperCellArray SLArDetOpDetArray::BuildSuperCellArrayCfg() {
+SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg() {
   SLArCfgSuperCellArray arrayCfg("OpDet_array_"+std::to_string(fID), fID); 
 
   arrayCfg.SetIdx( fID ); 

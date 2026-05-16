@@ -14,9 +14,10 @@ class SLArDetSuperCell : public SLArOpticalDetector
 {
 
 public:
-  inline SLArDetSuperCell() : SLArOpticalDetector() {  
+  inline SLArDetSuperCell() : 
+    SLArOpticalDetector()  {  
     fOpDetType = EOpDetType::kSuperCell;
-    fOpDetName = "SuperCell";
+    fOpDetTypeName = "SuperCell";
   }
 
   inline SLArDetSuperCell(const G4String& name) : SLArOpticalDetector(name) {
@@ -25,7 +26,6 @@ public:
 
   inline SLArDetSuperCell(const SLArDetSuperCell &detSuperCell) : SLArOpticalDetector(detSuperCell)
   {
-    fOpDetType = EOpDetType::kSuperCell;
     fMatSuperCell = new SLArMaterial(*detSuperCell.fMatSuperCell); 
     fMatLightGuide = new SLArMaterial(*detSuperCell.fMatLightGuide);
     fMatCoating   = new SLArMaterial(*detSuperCell.fMatCoating);
@@ -45,13 +45,12 @@ public:
 
   inline G4double GetTotalHeight() { return fhTot; }
   inline G4double GetSize() { return fSize; }
-  virtual void Init(const rapidjson::Value&) override {}
 
 protected:
 
 private:
-  G4double  fhTot;
-  G4double  fSize;
+  G4double  fhTot = {};
+  G4double  fSize = {};
 
   SLArBaseDetModule* fLightGuide = {};
   SLArBaseDetModule* fCoating = {}; 

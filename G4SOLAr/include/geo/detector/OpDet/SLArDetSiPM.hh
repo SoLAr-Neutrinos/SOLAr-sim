@@ -15,7 +15,7 @@ class SLArDetSiPM : public SLArOpticalDetector
   public: 
     inline SLArDetSiPM() : SLArOpticalDetector() {
       fOpDetType = EOpDetType::kSiPM;
-      fOpDetName = "SiPM";
+      fOpDetTypeName = "SiPM";
     }
 
     inline SLArDetSiPM(const G4String& name) : SLArOpticalDetector(name) {
@@ -23,7 +23,6 @@ class SLArDetSiPM : public SLArOpticalDetector
     }
 
     inline SLArDetSiPM(const SLArDetSiPM& detSiPM) : SLArOpticalDetector(detSiPM) {
-      fOpDetType = EOpDetType::kSiPM;
       fMatSiPM = new SLArMaterial(*detSiPM.fMatSiPM); 
       fMatSiPMCapsule = new SLArMaterial(*detSiPM.fMatSiPMCapsule);
       fBaseMaterial = new SLArMaterial(*detSiPM.fBaseMaterial);

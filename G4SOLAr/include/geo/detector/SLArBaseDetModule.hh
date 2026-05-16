@@ -80,8 +80,9 @@ class SLArBaseDetModule
 
     G4RotationMatrix*  fRot         = {};
     G4ThreeVector      fTranslation = {};
-    G4String           fName        = {};
     G4int              fID          = {-999}; 
+    G4String           fName;
+
 };
 
 

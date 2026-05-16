@@ -116,7 +116,7 @@ public:
     
 private:
     G4int fTileHCollID;
-    G4int fSuperCellHCollID;
+    std::vector<G4int> fSuperCellHCollID;
     std::vector<G4int> fLArHCollID;
     std::vector<G4int> fExtScorerHCollID;
 
@@ -134,7 +134,7 @@ private:
     std::map<TrackIdHelpInfo_t, G4String> fExtraProcessInfo;
 
     G4int RecordEventReadoutTile (const G4Event* ev, const G4int& verbose = 0);
-    G4int RecordEventSuperCell( const G4Event* ev, const G4int& verbose = 0); 
+    G4int RecordEventPDS( const G4Event* ev, const G4int& verbose = 0); 
     G4int RecordEventLAr(const G4Event* ev, const G4int& verbose = 0);
     G4int RecordEventExtScorer(const G4Event* ev, const G4int& verbose = 0); 
 };

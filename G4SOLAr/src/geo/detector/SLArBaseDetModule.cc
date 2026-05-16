@@ -12,7 +12,7 @@
 #include "G4RotationMatrix.hh"
 
 
-SLArBaseDetModule::SLArBaseDetModule() 
+SLArBaseDetModule::SLArBaseDetModule() : fName{}
 {
   fGeoInfo = new SLArGeoInfo();
 }
@@ -25,8 +25,8 @@ SLArBaseDetModule::SLArBaseDetModule(const SLArBaseDetModule &base) :
   fModPV( base.fModPV ? base.fModPV : nullptr ),
   fRot( base.fRot ? new G4RotationMatrix(*base.fRot) : nullptr ),
   fTranslation( base.fTranslation ),
-  fName( base.fName ),
-  fID( base.fID )
+  fID( base.fID ),
+  fName( base.fName )
 { }
 
 SLArBaseDetModule::~SLArBaseDetModule() {
@@ -52,13 +52,12 @@ G4VPhysicalVolume* SLArBaseDetModule::BuildAndPlacePV(
         G4int                             pCopyNo)
 {
   fRot  = rot;
-  fName = name;
   fTranslation  = vec;
   if (pCopyNo == 0) pCopyNo = fID;
   else fID = pCopyNo;
 
   fModPV = new G4PVPlacement(fRot,fTranslation, 
-      fModLV, fName, mlv, pMany, pCopyNo, true);
+      fModLV, name, mlv, pMany, pCopyNo, true);
   return fModPV;
 }
 

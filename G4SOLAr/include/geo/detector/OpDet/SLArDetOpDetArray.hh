@@ -20,7 +20,7 @@ class SLArDetOpDetArray : public SLArBaseDetModule {
     SLArDetOpDetArray(); 
     ~SLArDetOpDetArray(); 
     
-    SLArCfgSuperCellArray BuildSuperCellArrayCfg(); 
+    SLArCfgSuperCellArray BuildOpDetArrayCfg(); 
     void BuildMaterial(G4String materials_db); 
     void BuildOpDetArray(SLArOpticalDetector*); 
 

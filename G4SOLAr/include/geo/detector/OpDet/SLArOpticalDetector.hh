@@ -10,6 +10,7 @@
 
 #include "geo/detector/SLArBaseDetModule.hh"
 #include "G4LogicalSkinSurface.hh"
+#include "core/SLArDebugUtils.hh"
 
 /**
  * @class SLArOpticalDetector
@@ -21,20 +22,32 @@ class SLArOpticalDetector : public SLArBaseDetModule
   public: 
     enum class EOpDetType {kSuperCell, kSiPM, kUndefined};
     inline SLArOpticalDetector() = default;
-    inline SLArOpticalDetector(const G4String& name) : SLArOpticalDetector() {
-      fOpDetName = name;
+    inline SLArOpticalDetector(const G4String& model_name) : SLArOpticalDetector() {
+      fOpDetModelName = model_name;
+      fName = model_name;
     }
     inline SLArOpticalDetector(const SLArOpticalDetector& base) : SLArBaseDetModule(base) {
-      fOpDetName = base.fOpDetName;
-      fPerfectEfficiency = base.fPerfectEfficiency;
       fOpDetType = base.fOpDetType;
+      fOpDetTypeName = base.fOpDetTypeName;
+      fOpDetModelName = base.fOpDetModelName;
+      fPerfectEfficiency = base.fPerfectEfficiency;
     }
     inline virtual ~SLArOpticalDetector() = default;
 
-    EOpDetType GetOpDetType() const { return fOpDetType; }
+    inline EOpDetType GetOpDetType() const { return fOpDetType; }
+    inline G4String GetOpDetTypeName() const { return fOpDetTypeName; }
+    inline G4String GetOpDetModelName() const { return fOpDetModelName; }
     virtual void BuildMaterial(G4String materials_db) = 0;
     virtual void BuildOpticalDetector() = 0;
-    virtual void Init(const rapidjson::Value& config) override {}
+    inline virtual void Init(const rapidjson::Value& config) override {
+      debug::require_json_type(config, rapidjson::kObjectType);
+      debug::require_json_member(config, "module_type");
+      debug::require_json_member(config, "name");
+
+      fOpDetTypeName = config["module_type"].GetString();
+      fName = config["name"].GetString();
+      fOpDetModelName = fName;
+    }
     G4LogicalSkinSurface* GetOpDetSkinSurface() const { return fOpDetSkinSurface; }
     G4LogicalSkinSurface* GetOpDetSkinSurface() { return fOpDetSkinSurface; }
     inline void SetPerfectEfficiency(G4bool kQE) { 
@@ -53,9 +66,10 @@ class SLArOpticalDetector : public SLArBaseDetModule
 
 
   protected:
-    G4String fOpDetName = "UndefinedOpticalDetector";
-    G4bool fPerfectEfficiency = false;
     EOpDetType fOpDetType = EOpDetType::kUndefined;
+    G4String fOpDetTypeName = "UndefinedOpticalDetector";
+    G4String fOpDetModelName;
+    G4bool fPerfectEfficiency = false;
     G4LogicalSkinSurface* fOpDetSkinSurface = {};
 };
 

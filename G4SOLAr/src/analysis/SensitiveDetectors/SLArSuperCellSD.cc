@@ -120,7 +120,7 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
   if(track->GetDefinition()
      != G4OpticalPhoton::OpticalPhotonDefinition()) return false;
 #ifdef SLAR_DEBUG
-  printf("SLArSuperCellSD::ProcessHits_constStep(): processing %s [%i] TPC hit\n", 
+  printf("SLArSuperCellSD::ProcessHits_constStep(): processing %s [%i] PDS photon hit\n", 
       step->GetTrack()->GetParticleDefinition()->GetParticleName().data(), 
       step->GetTrack()->GetTrackID());
   //getchar(); 
