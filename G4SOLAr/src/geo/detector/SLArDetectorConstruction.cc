@@ -1011,20 +1011,24 @@ void SLArDetectorConstruction::ConstructSDandField()
   //Set ReadoutTile SD
   if (fReadoutTile) {
     if (fReadoutTile->GetSiPM()) {
-      SLArBaseDetModule* sipm_active = fReadoutTile->GetSiPM()->GetActiveVolume();
-      G4VSensitiveDetector* sipmSD = new SLArReadoutTileSiPMSD(SDname="/tile/sipm");
-      SDman->AddNewDetector(sipmSD);
-      SetSensitiveDetector( sipm_active->GetModLV(), sipmSD );
+      G4VSensitiveDetector* sipmTileSD = new SLArReadoutTileSiPMSD(SDname="/tile/sipm");
+      SDman->AddNewDetector(sipmTileSD);
     }
   }
 
   //Set SuperCell SD
   if (fSuperCell) {
     G4VSensitiveDetector* superCellSD
-      = new SLArSuperCellSD(SDname="/supercell"); 
+      = new SLArSuperCellSD(SDname="/pds/supercell", "pds_xa_coll"); 
     SDman->AddNewDetector(superCellSD); 
     SetSensitiveDetector(
         fSuperCell->GetCoating()->GetModLV(), superCellSD );
+  }
+
+  if (fSiPM) {
+    G4VSensitiveDetector* sipm_pdsSD
+      = new SLArSuperCellSD(SDname="/pds/sipm", "pds_sipm_coll");
+    SDman->AddNewDetector(sipm_pdsSD);
   }
 
   // Set LAr-volume SD
@@ -1133,9 +1137,17 @@ G4String SLArDetectorConstruction::GetFirstChar(G4String line)
  */
 void SLArDetectorConstruction::BuildAndPlaceOpDets()
 {
-  fSuperCell->BuildMaterial(fMaterialDBFile);
-  fSuperCell->BuildOpticalDetector();
-  fSuperCell->BuildLogicalSkinSurface(); 
+  if (fSuperCell) {
+    fSuperCell->BuildMaterial(fMaterialDBFile);
+    fSuperCell->BuildOpticalDetector();
+    fSuperCell->BuildLogicalSkinSurface(); 
+  }
+
+  if (fSiPM) {
+    fSiPM->BuildMaterial( fMaterialDBFile );
+    fSiPM->BuildOpticalDetector();
+    fSiPM->BuildLogicalSkinSurface();
+  }
 
   // Get PMTSystem Configuration
   SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();

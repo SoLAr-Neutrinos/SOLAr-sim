@@ -44,10 +44,10 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArSuperCellSD::SLArSuperCellSD(G4String name)
+SLArSuperCellSD::SLArSuperCellSD(G4String name, G4String hitsCollectionName)
 : G4VSensitiveDetector(name), fHitsCollection(0), fHCID(-1)
 {
-    collectionName.insert("SuperCellColl");
+    collectionName.insert(hitsCollectionName);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

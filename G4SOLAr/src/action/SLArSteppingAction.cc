@@ -332,12 +332,12 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
             break;
           }
         case NoRINDEX:
-#ifdef SLAR_DEBUG
-          printf("SLArSteppingAction::UserSteppingAction NoRINDEX\n");
-          printf("ph E = %.2f eV; pre/post step point volume: %s/%s\n", 
-              track->GetTotalEnergy()*1e6,
-              thePrePV->GetName().c_str(), thePostPV->GetName().c_str()); 
-#endif
+//#ifdef SLAR_DEBUG
+//          printf("SLArSteppingAction::UserSteppingAction NoRINDEX\n");
+//          printf("ph E = %.2f eV; pre/post step point volume: %s/%s\n", 
+//              track->GetTotalEnergy()*1e6,
+//              thePrePV->GetName().c_str(), thePostPV->GetName().c_str()); 
+//#endif
           break;
         case Detection: 
           //Note, this assumes that the volume causing detection
@@ -354,11 +354,12 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
             G4SDManager* SDman = G4SDManager::GetSDMpointer();
             G4String volName = touchable->GetVolume()->GetName();
 
-            G4String sdNameSiPM  ="/tile/sipm";
-            G4String sdNameSC    ="/supercell";
+            G4String sdNameTileSiPM  ="/tile/sipm";
+            G4String sdNamePdsSiPM   ="/pds/sipm";
+            G4String sdNameSC    ="/pds/supercell";
 
             SLArReadoutTileSiPMSD* sipmSD = nullptr;
-            SLArSuperCellSD* supercellSD = nullptr; 
+            SLArSuperCellSD* pdsSD = nullptr; 
 
 #ifdef SLAR_DEBUG
              printf("Detection in %s - copy id [%i]\n", 
@@ -366,53 +367,65 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
              //getchar(); 
 #endif
 
-            if (phInfo) phInfo->AddTrackStatusFlag(hitPMT);
+            if (phInfo) phInfo->AddTrackStatusFlag(hitOpDet);
             if (volName=="SiPMActivePV") {
+              const G4String parentName = touchable->GetVolume(1)->GetName();
+              printf("Parent volume: %s\n", parentName.c_str());
+              if ( G4StrUtil::contains(parentName, "sipm") ) { // readout tile SiPM
+                sipmSD = (SLArReadoutTileSiPMSD*)SDman->FindSensitiveDetector(sdNameTileSiPM);
+                if(sipmSD) { 
+                  fEventAction->IncReadoutTileHitCount(); 
+                  sipmSD->ProcessHits_constStep(step, nullptr);
+                } else {
+                  G4ExceptionDescription ed;
+                  ed << "SLArSteppingAction::UserSteppingAction::Detection WARNING\n";
+                  ed << "Volume " << parentName << " is not recognized ";
+                  ed << "as a valid parent volume for SiPMActivePV. Check geometry configuration and SD assignment.\n";
+                  G4Exception("SLArSteppingAction::UserSteppingAction::Detection", 
+                      "UnrecognizedParentVolume", FatalException, ed);
+
+                }
+              }
+              else if ( G4StrUtil::contains(parentName, "opdet") ) { // PDS SiPM
+                pdsSD = (SLArSuperCellSD*)SDman->FindSensitiveDetector(sdNamePdsSiPM);
+                if(pdsSD) { 
+                  fEventAction->IncSuperCellHitCount(); 
+                  pdsSD->ProcessHits_constStep(step, nullptr);
+                }
+                else {
+                  G4ExceptionDescription ed;
+                  ed << "SLArSteppingAction::UserSteppingAction::Detection WARNING\n";
+                  ed << "Volume " << parentName << " is not recognized as a valid parent volume for SiPMActivePV. Check geometry configuration and SD assignment.\n";
+                  G4Exception("SLArSteppingAction::UserSteppingAction::Detection", 
+                      "UnrecognizedParentVolume", FatalException, ed);
+                }
+              }
+              else {
+                G4ExceptionDescription ed;
+                ed << "SLArSteppingAction::UserSteppingAction::Detection WARNING\n";
+                ed << "Volume " << parentName << " is not recognized as a valid parent volume for SiPMActivePV. Check geometry configuration and SD assignment.\n";
+
+                G4Exception("SLArSteppingAction::UserSteppingAction::Detection", 
+                    "UnrecognizedParentVolume", FatalException, ed);
+              }
+
+              getchar();
+            } else if (volName == "SuperCellCoating") {
 //#ifdef SLAR_DEBUG
-              //printf("Copy No hierarchy: [%i, %i, %i, %i, %i, %i, %i, %i, %i, %i]\n", 
+              //printf("Copy No hierarchy: [%i, %i, %i, %i, %i]\n", 
                   //touchable->GetCopyNumber(0), 
                   //touchable->GetCopyNumber(1),
                   //touchable->GetCopyNumber(2),
                   //touchable->GetCopyNumber(3),
-                  //touchable->GetCopyNumber(4),
-                  //touchable->GetCopyNumber(5), 
-                  //touchable->GetCopyNumber(6), 
-                  //touchable->GetCopyNumber(7), 
-                  //touchable->GetCopyNumber(8),
-                  //touchable->GetCopyNumber(9)
+                  //touchable->GetCopyNumber(4)
                   //);
-              //for (int i=0; i<10; i++) {
-                //printf("depth %i: %s\n", i, touchable->GetVolume(i)->GetName().c_str());   
-              //}
-
-              //getchar(); 
+              ////getchar(); 
 //#endif
-              sipmSD = (SLArReadoutTileSiPMSD*)SDman->FindSensitiveDetector(sdNameSiPM);
-              if(sipmSD) { 
-                fEventAction->IncReadoutTileHitCount(); 
-                sipmSD->ProcessHits_constStep(step, nullptr);
-              } else {
-#ifdef SLAR_DEBUG
-                printf("SLArSteppingAction::UserSteppingAction::Detection WARNING\n"); 
-                printf("%s is not recognized as SD\n", volName.c_str());
-#endif
-              }
-            } else if (volName == "SuperCellCoating") {
-#ifdef SLAR_DEBUG
-              printf("Copy No hierarchy: [%i, %i, %i, %i, %i]\n", 
-                  touchable->GetCopyNumber(0), 
-                  touchable->GetCopyNumber(1),
-                  touchable->GetCopyNumber(2),
-                  touchable->GetCopyNumber(3),
-                  touchable->GetCopyNumber(4)
-                  );
-              //getchar(); 
-#endif
 
-              supercellSD = (SLArSuperCellSD*)SDman->FindSensitiveDetector(sdNameSC);
-              if(supercellSD) { 
+              pdsSD = (SLArSuperCellSD*)SDman->FindSensitiveDetector(sdNameSC);
+              if(pdsSD) { 
                 fEventAction->IncSuperCellHitCount(); 
-                supercellSD->ProcessHits_constStep(step, nullptr);
+                pdsSD->ProcessHits_constStep(step, nullptr);
               } else {
 #ifdef SLAR_DEBUG
                 printf("SLArSteppingAction::UserSteppingAction::Detection WARNING\n"); 

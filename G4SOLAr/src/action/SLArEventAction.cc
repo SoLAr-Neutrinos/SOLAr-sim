@@ -33,8 +33,7 @@
 
 SLArEventAction::SLArEventAction()
 : G4UserEventAction(), 
-  fTileHCollID  (-2), 
-  fSuperCellHCollID(-5)
+  fTileHCollID(-2)
 {
   // set printing per each event
   G4int verbose = G4EventManager::GetEventManager()->GetVerboseLevel(); 
@@ -58,7 +57,7 @@ SLArEventAction::~SLArEventAction()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SLArEventAction::BeginOfEventAction(const G4Event*)
+void SLArEventAction::BeginOfEventAction(const G4Event* event)
 {
 
 #ifdef SLAR_DEBUG
@@ -69,10 +68,22 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
   auto detConstruction = (SLArDetectorConstruction*)
     G4RunManager::GetRunManager()->GetUserDetectorConstruction(); 
 
+  G4HCofThisEvent* hce = event->GetHCofThisEvent();
+    if (!hce) return;
+  G4int nCollections = hce->GetNumberOfCollections();
+
   if (fTileHCollID == -2) 
-    fTileHCollID  = sdManager->GetCollectionID("ReadoutTileColl"  );
-  if (fSuperCellHCollID == -5) 
-    fSuperCellHCollID = sdManager->GetCollectionID("SuperCellColl"); 
+    fTileHCollID  = sdManager->GetCollectionID("ReadoutTileColl");
+  if (fSuperCellHCollID.empty()) {
+    for (G4int ic = 0; ic < nCollections; ic++) {
+      auto hc = hce->GetHC(ic);
+      if (!hc) continue;
+      if ( dynamic_cast<SLArSuperCellHitsCollection*>(hc) ) {
+        fSuperCellHCollID.push_back( hc->GetColID() ); 
+      }
+    }
+  }
+    //fSuperCellHCollID = sdManager->GetCollectionID("SuperCellColl"); 
   if (fLArHCollID.empty()) {
     for (const auto &tpc : detConstruction->GetDetTPCs() ) {
       auto coll_id = 
@@ -100,7 +111,9 @@ void SLArEventAction::BeginOfEventAction(const G4Event*)
 #ifdef SLAR_DEBUG
     G4cout << "SLArEventAction::BeginOfEventAction():" << G4endl;
     G4cout << "ReadoutTile ID = " << fTileHCollID   << G4endl;
-    G4cout << "SuperCell ID   = " << fSuperCellHCollID << G4endl;
+    G4cout << "SuperCell ID   = "; 
+    for (const auto &id : fSuperCellHCollID) G4cout << id << " "; 
+    G4cout << G4endl;
     G4cout << "LAr volume ID  = "; 
     for (const auto &id : fLArHCollID) G4cout << id << " "; 
     G4cout << G4endl;
@@ -177,7 +190,7 @@ void SLArEventAction::EndOfEventAction(const G4Event* event)
     }
 
     if (SLArAnaMgr->IsPDSOutputEnabled()) {
-      RecordEventSuperCell( event, verbose );
+      RecordEventPDS( event, verbose );
     }
      
     // apply zero suppression to charge signal
@@ -333,15 +346,16 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
   return n_hits;
 }
 
-G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verbose)
+G4int SLArEventAction::RecordEventPDS(const G4Event* ev, const G4int& verbose)
 {
   G4int n_hits = 0; 
   G4HCofThisEvent* hce = ev->GetHCofThisEvent();
-  if (fSuperCellHCollID != -5) 
-  {
+  if (fSuperCellHCollID.empty()) return 0; 
+
+  for (const auto& cid : fSuperCellHCollID) {
     // Get hits collections 
     SLArSuperCellHitsCollection* hHC1 
-      = static_cast<SLArSuperCellHitsCollection*>(hce->GetHC(fSuperCellHCollID));
+      = dynamic_cast<SLArSuperCellHitsCollection*>(hce->GetHC(cid));
 
     if ( (!hHC1) ) 
     {
@@ -380,10 +394,10 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
       G4cout << "SLArEventAction::RecordEventSuperCell()" << G4endl;
       printf("SuperCell id [%i, %i, %i]\n", cell_nr, cellrow_nr, array_nr);
       G4cout << "x    = " << G4BestUnit(worldPos.x(), "Length") << "; "
-             << "y    = " << G4BestUnit(worldPos.y(), "Length") << "; "
-             << "time = " << G4BestUnit(time, "Time") << G4endl;
+        << "y    = " << G4BestUnit(worldPos.y(), "Length") << "; "
+        << "time = " << G4BestUnit(time, "Time") << G4endl;
 #endif
-      
+
       SLArEventPhotonHit dstHit(
           time, 
           hit->GetPhotonProcessId(), 
@@ -408,23 +422,24 @@ G4int SLArEventAction::RecordEventSuperCell(const G4Event* ev, const G4int& verb
           }
         }
       }
-      
+
       n_hits++;
       //delete dstHit;
     }
-    
+
 
     // Sort hits on PMTs
     //printf("Sorting hits...\n"); 
     //for (auto &evSCArray : SLArAnaMgr->GetEvent()->GetEventSuperCellArray()) {
-      //evSCArray.second->SortHits(); 
+    //evSCArray.second->SortHits(); 
     //}
 
     // Print diagnostics
     //G4int printModulo = 
-      //G4RunManager::GetRunManager()->GetPrintProgress();
+    //G4RunManager::GetRunManager()->GetPrintProgress();
     //if ( printModulo==0 || ev->GetEventID() % printModulo != 0) return;
   }
+
 
   if (verbose > 2) printf("SLArEventAction::RecordEventSuperCell() DONE\n");
   return n_hits;

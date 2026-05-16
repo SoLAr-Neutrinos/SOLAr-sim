@@ -44,7 +44,7 @@ class G4TouchableHistory;
 class SLArSuperCellSD : public G4VSensitiveDetector
 {
 public:
-    SLArSuperCellSD(G4String name);
+    SLArSuperCellSD(G4String name, G4String hitsCollectionName);
     virtual ~SLArSuperCellSD();
     
     virtual void Initialize(G4HCofThisEvent*HCE);
