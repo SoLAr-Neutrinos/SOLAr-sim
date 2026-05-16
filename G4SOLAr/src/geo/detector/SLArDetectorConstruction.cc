@@ -54,6 +54,7 @@
 #include "G4SDParticleWithEnergyFilter.hh"
 #include "G4UnitsTable.hh"
 
+#include <G4Exception.hh>
 #include <fstream>
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -193,16 +194,18 @@ void SLArDetectorConstruction::Init() {
     for (const auto &jopdet : d["OpDetModules"].GetArray()) {
       debug::require_json_type(jopdet, rapidjson::kObjectType);
       debug::require_json_member(jopdet, "module_type");
+      debug::require_json_member(jopdet, "name");
       G4String mod_type = jopdet["module_type"].GetString();
+      SLArOpticalDetector* opdet = nullptr;
       if (mod_type == "SuperCell") {
         G4cout << "SLArDetectorConstruction::Init SuperCells" << G4endl;
-        InitSuperCell(jopdet);
-        G4cout << "SLArDetectorConstruction::Init SuperCells DONE" << G4endl;
+        opdet = InitSuperCell(jopdet);
+        G4cout << "SuperCell model " << opdet->GetOpDetModelName() << " initialized" << G4endl;
       }
       else if (mod_type == "SiPM") {
         G4cout << "SLArDetectorConstruction::Init SiPMs" << G4endl;
-        InitSiPM(jopdet);
-        G4cout << "SLArDetectorConstruction::Init SiPMs DONE" << G4endl;
+        opdet = InitSiPM(jopdet);
+        G4cout << "SiPM model " << opdet->GetOpDetModelName() << " initialized" << G4endl;
       }
       else {
         G4String err_msg = "Invalid optical detector module type specified in JSON configuration!";
@@ -211,6 +214,8 @@ void SLArDetectorConstruction::Init() {
             "InvalidOpDetModuleType", FatalException, 
             err_msg.data());
       }
+      fOpDetCatalog.insert( std::make_pair(opdet->GetOpDetModelName(), opdet) );
+      G4cout << "OpDet model " << opdet->GetOpDetModelName() << " initialized and added to catalog" << G4endl;
     }
   }
   else if (d.HasMember("SuperCell")) {
@@ -284,20 +289,22 @@ void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
   }
 } 
 
-void SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell) {
+SLArDetSuperCell* SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell) {
   fSuperCell = new SLArDetSuperCell(); 
   debug::require_json_member(jsupercell, "dimensions");
   debug::require_json_type(jsupercell["dimensions"], rapidjson::kArrayType);
+  fSuperCell->Init(jsupercell);
   fSuperCell->GetGeoInfo()->ReadFromJSON(jsupercell["dimensions"].GetArray()); 
-  return;
+  return fSuperCell;
 }
 
-void SLArDetectorConstruction::InitSiPM(const rapidjson::Value& jsipm) {
+SLArDetSiPM* SLArDetectorConstruction::InitSiPM(const rapidjson::Value& jsipm) {
   fSiPM = new SLArDetSiPM(); 
   debug::require_json_member(jsipm, "dimensions");
   debug::require_json_type(jsipm["dimensions"], rapidjson::kArrayType);
+  fSiPM->Init(jsipm);
   fSiPM->GetGeoInfo()->ReadFromJSON(jsipm["dimensions"].GetArray()); 
-  return;
+  return fSiPM;
 }
 
 
@@ -315,9 +322,9 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
   debug::require_json_type(jconf, rapidjson::kArrayType);
 
   for (const auto &jarray : jconf.GetArray()) {
-    SLArDetOpDetArray* detSCArray = new SLArDetOpDetArray(); 
-    detSCArray->Init(jarray); 
-    fOpDetArray.insert( std::make_pair(detSCArray->GetID(), detSCArray) ); 
+    SLArDetOpDetArray* opdetArrray = new SLArDetOpDetArray(); 
+    opdetArrray->Init(jarray); 
+    fOpDetArray.insert( std::make_pair(opdetArrray->GetID(), opdetArrray) ); 
   }
 
   return;
@@ -410,11 +417,14 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
         printf("SLArDetectorConstruction::InitReadoutTile: Setting up %s tile assembly\n", 
             mtile["name"].GetString()); 
       } 
+      debug::require_json_member(mtile, "name");
+      debug::require_json_member(mtile, "dimensions");
+      debug::require_json_type(mtile["dimensions"], rapidjson::kArrayType);
+
       SLArDetReadoutTileAssembly* megatile = new SLArDetReadoutTileAssembly(); 
-      assert(mtile.HasMember("dimensions")); 
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
       megatile->BuildMaterial(fMaterialDBFile); 
-      fReadoutMegaTile.insert(std::make_pair(mtile["name"].GetString(),megatile)); 
+      fReadoutMegaTile.insert(std::make_pair(mtile["name"].GetString(), megatile)); 
     } // end of Megatile models loop
   } // endif pixsys.HasMember("tile_assembly")
 }
@@ -1159,7 +1169,25 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
     auto opdetarray_id = array_.first; 
     opdetarray->BuildMaterial(fMaterialDBFile); 
     printf("---- Building OpDet array volume\n");
-    opdetarray->BuildOpDetArray( fSuperCell );
+    const auto& opdet_model_itr =  fOpDetCatalog.find( opdetarray->GetPhotoDetModel() );
+    if ( opdet_model_itr == fOpDetCatalog.end() ) {
+      G4String err_msg = "SLArDetectorConstruction::BuildAndPlaceOpDets() ERROR: ";
+      err_msg += "Unable to find optical detector model " + opdetarray->GetPhotoDetModel() 
+        + " in the optical detector catalog. "
+        + "Check that the model name is correct and that the corresponding optical detector "
+        + "is properly defined in the geometry configuration file.";
+      err_msg += " Available models are: ";
+      for (const auto& opdet_model : fOpDetCatalog) {
+        err_msg += opdet_model.first + " ";
+      }
+      err_msg += "\n"; 
+
+      G4Exception("SLArDetectorConstruction::BuildAndPlaceOpDets()",
+          "OpDetModelNotFound", FatalException, err_msg.c_str());
+    }
+
+    opdetarray->BuildOpDetArray( opdet_model_itr->second );
+
     auto pos = opdetarray->GetPosition(); 
     auto rot = opdetarray->GetRotation();
 
@@ -1171,7 +1199,7 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
     opdetarray->BuildAndPlacePV("pds_"+std::to_string(opdetarray_id), 
         rot, pos, tpc->GetModLV(), 0, opdetarray_id); 
 
-    auto array_cfg = opdetarray->BuildSuperCellArrayCfg(); 
+    auto array_cfg = opdetarray->BuildOpDetArrayCfg(); 
     array_cfg.SetX( pos.x() ); array_cfg.SetPhysX( glb_pos.x() );
     array_cfg.SetY( pos.y() ); array_cfg.SetPhysY( glb_pos.y() );
     array_cfg.SetZ( pos.z() ); array_cfg.SetPhysZ( glb_pos.z() );

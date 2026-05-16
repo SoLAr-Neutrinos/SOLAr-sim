@@ -143,6 +143,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     std::vector<SLArDetShielding*> fShielding = {}; //!< Shielding detector objects
     SLArDetSuperCell* fSuperCell = {}; //!< SuperCell detector object
     SLArDetSiPM* fSiPM = {}; //!< SiPM detector object
+    std::map<std::string, SLArOpticalDetector*> fOpDetCatalog = {}; //!< Map of optical detector models
     std::map<int, SLArDetOpDetArray*> fOpDetArray = {};
     SLArDetReadoutTile* fReadoutTile = {}; //!< ReadoutTile detector object
     std::map<int, SLArDetAnodeAssembly*> fAnodes = {}; 
@@ -163,9 +164,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Parse the description of the shielding 
     void InitShielding(const rapidjson::Value&);
     //! Parse the description of the supercell detector system
-    void InitSuperCell(const rapidjson::Value&); 
+    SLArDetSuperCell* InitSuperCell(const rapidjson::Value&); 
     //! Parse the description of the sipm detector system
-    void InitSiPM(const rapidjson::Value&); 
+    SLArDetSiPM* InitSiPM(const rapidjson::Value&); 
     //! Parse the description of the SC PDS
     void InitPDS(const rapidjson::Value&);
     //! Parse the description of the ReadoutTile detector system
