@@ -41,7 +41,7 @@ ClassImp(display::SLArEveDisplay)
 namespace display {
 
   SLArEveDisplay::SLArEveDisplay() 
-    : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fLastEvent(1), fCurEvent(0)
+    : TGMainFrame(nullptr, 800, 800), fHitFile(nullptr), fHitTree(nullptr), fCurEvent(0), fLastEvent(1)
   {
     //gStyle->SetPalette(kSunset);
     fTimer = std::make_unique<TTimer>("gSystem->ProcessEvents();", 50, kFALSE);

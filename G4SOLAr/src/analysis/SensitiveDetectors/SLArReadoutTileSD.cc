@@ -106,6 +106,15 @@ G4bool SLArReadoutTileSiPMSD::ProcessHits_constStep(const G4Step* step,
   }
   phEne = track->GetTotalEnergy();
 
+#ifdef SLAR_DEBUG
+  printf("SLArReadoutTileSD::ProcessHits_constStep(): photon energy = %g eV\n", phEne/CLHEP::eV);
+  printf("Touchable depth scan:\n");
+  for (G4int i=0; i<touchable->GetHistoryDepth(); ++i) {
+    G4String vol_name = touchable->GetVolume(i)->GetName();
+    printf("[%i]: CopyID %i - %s\n", i, touchable->GetCopyNumber(i), vol_name.data());
+  }
+#endif
+
   hit = new SLArReadoutTileSiPMHit(); //so create new hit
   hit->SetPhotonWavelength( CLHEP::h_Planck * CLHEP::c_light / phEne * 1e6);
   hit->SetWorldPos(worldPos);
