@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : dump_th2_to_txt
  * @created     : Thursday Sep 05, 2024 13:36:28 CEST
  */

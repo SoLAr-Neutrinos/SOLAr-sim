@@ -1,5 +1,5 @@
 ######################################################################
-# @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+# @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
 # @file        : CMakeLists
 # @created     : Wed Jun 22, 2022 15:14:17 CEST
 ######################################################################

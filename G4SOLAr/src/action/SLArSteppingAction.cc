@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArSteppingAction.cc
  * @created     Sat Apr 15, 2023 15:26:19 CEST
  * @brief       Implementation of the SLArSteppingAction class

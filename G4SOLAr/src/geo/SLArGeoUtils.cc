@@ -1,9 +1,10 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArGeoUtils
  * @created     : Monday Feb 12, 2024 12:27:48 CET
  */
 
+#include <G4Exception.hh>
 #include <cstdio>
 #include <cstdlib>
 #include <utility>

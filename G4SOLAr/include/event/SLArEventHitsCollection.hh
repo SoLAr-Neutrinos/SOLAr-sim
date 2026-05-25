@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArEventHitsCollection.hh
  * @created     Fri Nov 11, 2022 14:21:29 CET
  */

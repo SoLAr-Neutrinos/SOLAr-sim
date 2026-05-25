@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArPGunGeneratorAction.cc
  * @created     Mon Jan 02, 2023 15:52:56 CET
  */

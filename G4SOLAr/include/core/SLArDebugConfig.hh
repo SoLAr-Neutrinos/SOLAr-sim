@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArDebugConfig.hh
  * @created     : Thursday Oct 23, 2025 16:36:36 CEST
  */

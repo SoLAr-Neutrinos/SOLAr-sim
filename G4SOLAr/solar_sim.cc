@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        solar_sim.cc
  * @created     Mon Jun 19, 2023 18:11:25 CEST
  */

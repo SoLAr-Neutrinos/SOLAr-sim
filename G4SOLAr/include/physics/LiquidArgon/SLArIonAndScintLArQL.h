@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it), 
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca), 
  *              Till Dieminger (UoM), Nicholas Lane (UoM) 
  * @file        SLArIonAndScintLArQL.h
  * @created     Tue Feb 21, 2023 17:22:25 CET

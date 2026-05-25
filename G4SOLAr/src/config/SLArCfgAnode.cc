@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArCfgAnode.cc
  * @created     Thursday Nov 10, 2022 16:24:26 CET
  */

@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArTrackingAction.cc
  * @created     : Tue Aug 09, 2022 22:04:56 CEST
  */

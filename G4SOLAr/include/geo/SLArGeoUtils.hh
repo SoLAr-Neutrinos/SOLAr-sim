@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArGeoUtils.hpp
  * @created     Wed Apr 19, 2023 08:08:00 CEST
  */

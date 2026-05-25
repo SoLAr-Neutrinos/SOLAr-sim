@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArReadoutTileSD
  * @created     : mercoledì ago 10, 2022 08:54:48 CEST
  */

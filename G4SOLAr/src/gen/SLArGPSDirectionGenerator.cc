@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArGPSDirectionGenerator
  * @created     : Thursday Feb 13, 2025 15:43:05 CET
  */

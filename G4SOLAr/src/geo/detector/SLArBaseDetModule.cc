@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * *  
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArBaseModule
- * @created     : mercoledì ago 07, 2019 13:24:21 CEST
+ * @author      : Daniele Guffanti (Univerity and INFN Milano-Bicocca)
+ * @file        : SLArBaseModule.cc
+ * @created     : Wed Aug 07, 2019 13:24:21 CEST
  */
 
 #include "detector/SLArBaseDetModule.hh"

@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArBulkVertexGenerator.hh
  * @created     Thur Jun 23, 2022 15:31:58 CEST
  */

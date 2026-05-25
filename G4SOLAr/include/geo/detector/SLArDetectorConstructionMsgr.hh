@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArDetectorConstructionMsgr.hh
  * @created     : Wednesday Nov 12, 2025 11:43:28 CET
  */

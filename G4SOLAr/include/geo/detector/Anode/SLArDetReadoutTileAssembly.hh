@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArDetReadoutTileAssemblyAssembly.hh
  * @created     : Mon Jul 18, 2022 11:09:54 CEST
  */

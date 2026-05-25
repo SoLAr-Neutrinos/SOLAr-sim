@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArMaterialInfo.hh
  * @created     : Monday Aug 08, 2022 17:45:44 CEST
  */

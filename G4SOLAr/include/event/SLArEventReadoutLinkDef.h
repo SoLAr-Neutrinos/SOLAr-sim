@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArEventReadoutLinkDef.h
  * @created     : Wed Aug 10, 2022 15:24:11 CEST
  */

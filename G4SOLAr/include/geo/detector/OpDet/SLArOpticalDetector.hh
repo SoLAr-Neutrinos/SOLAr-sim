@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArOpticalDetector.hh
  * @created     : Tuesday May 12, 2026 19:43:30 CEST
  */

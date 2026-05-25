@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArBacktrackerManager.cc
  * @created     Friday Sep 29, 2023 12:56:18 CEST
  */

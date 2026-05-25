@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArPointVertexGenerator.cc
  * @created     : Monday Jun 23, 2025 16:28:52 CEST
  */

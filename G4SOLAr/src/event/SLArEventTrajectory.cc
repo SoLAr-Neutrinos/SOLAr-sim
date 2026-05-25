@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArEvTrajectory.cc
  * @created     Mon Aug 31, 2020 17:39:33 CEST
  */
