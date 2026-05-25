@@ -102,16 +102,16 @@ namespace geo {
   }
 
   std::vector<G4Transform3D> get_volume_transforms(const G4String& target_pv_name,
-                                                   const G4String& mother_pv_name)
+                                                   const G4String& reference_pv_name)
   {
     std::vector<G4Transform3D> transforms;
     G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
-    const auto mother_pv = pvs->GetVolume(mother_pv_name);
+    const auto reference_pv = pvs->GetVolume(reference_pv_name);
     const auto target_pv = pvs->GetVolume(target_pv_name);
-    if (!mother_pv) {
-      G4cout << "Error: Mother physical volume " << mother_pv_name << " not found." << G4endl;
-      throw std::runtime_error("Mother physical volume " + 
-          mother_pv_name + " not found");
+    if (!reference_pv) {
+      G4cout << "Error: Reference physical volume " << reference_pv_name << " not found." << G4endl;
+      throw std::runtime_error("Reference physical volume " + 
+          reference_pv_name + " not found");
     }
     if (!target_pv) {
       G4cout << "Error: Target physical volume " << target_pv_name << " not found." << G4endl;
@@ -119,32 +119,35 @@ namespace geo {
           target_pv_name + " not found");
     }
 
-    const auto mother_lv = mother_pv->GetLogicalVolume();
+    const auto reference_lv = reference_pv->GetLogicalVolume();
 
     std::vector<volume_navigation_info> navigation;
     
-    bool gotcha = search_in_logical_volume(target_pv_name, mother_lv, navigation);
+    bool gotcha = search_in_logical_volume(target_pv_name, reference_lv, navigation);
     if (!gotcha) {
       G4cout << "Error: Target physical volume " << target_pv_name << 
         " not found in logical volume " 
-        << mother_lv->GetName() << G4endl;
+        << reference_lv->GetName() << G4endl;
       throw std::runtime_error("Target physical volume " +
           target_pv_name + " not found in logical volume " + 
-          mother_lv->GetName());
+          reference_lv->GetName());
     }
 
     // now loop through the navigation info to build the transformations
-    G4Transform3D mother_transform = GetTransformToGlobal(mother_pv);
-    collect_volume_transforms(mother_lv, navigation, transforms, mother_transform); 
+    const G4Transform3D reference_transform( CLHEP::HepRotation(), CLHEP::Hep3Vector(0, 0, 0) );
+    collect_volume_transforms(reference_lv, navigation, transforms, reference_transform); 
 
 #ifdef SLAR_DEBUG
     printf("Found %ld replicas of %s\n", transforms.size(), target_pv_name.data()); 
     int ii = 0; 
     for (const auto& tt : transforms) {
-      printf("[%i]: (%g, %g, %g)\n", ii, 
-          tt.getTranslation().x()*0.1, 
-          tt.getTranslation().y()*0.1, 
-          tt.getTranslation().z()*0.1);
+      printf("[%i]: (%g, %g, %g) cm - rot: (%g, %g, %g) deg\n", ii, 
+          tt.getTranslation().x()*0.1,
+          tt.getTranslation().y()*0.1,
+          tt.getTranslation().z()*0.1,
+          tt.getRotation().getPhi()*CLHEP::rad, 
+          tt.getRotation().getTheta()*CLHEP::rad, 
+          tt.getRotation().getPsi()*CLHEP::rad);
     }
 #endif  
 
@@ -216,9 +219,9 @@ namespace geo {
     if (volume_info.is_parametrised) {
       const G4PVParameterised* ppv = dynamic_cast<const G4PVParameterised*>(daughter_pv); 
       if (!ppv) {
-        fprintf(stderr, "ERROR: Unable to cast %s in a G4PVParameterisedVolume\n", 
-            daughter_pv->GetName().data()); 
-        throw std::runtime_error("Unable to cast daughter_pv in G4PVParameterisedVolume");
+        G4ExceptionDescription ed; 
+        ed << "Error: Unable to cast " << daughter_pv->GetName() << " in a G4PVParameterisedVolume\n";
+        G4Exception("geo::collect_volume_transforms()", "InvalidVolumeType", FatalException, ed);
       }
 
       const SLArPlaneParameterisation* plane_prmt = 
@@ -234,9 +237,10 @@ namespace geo {
         }
       }
       else {
-        fprintf(stderr, "Error: collect_volume_transforms only treats parameterised volumes"); 
-        fprintf(stderr, "using SLArPlaneParameterisation.\n"); 
-        throw std::runtime_error("Error: collect_volume_transforms only treats parameterised volumes using SLArPlaneParameterisation.");
+        G4ExceptionDescription ed;
+        ed << "Eorror: collect_volume_transforms only treats parameterised volumes using SLArPlaneParameterisation.\n";
+        ed << "Volume " << daughter_pv->GetName() << " is not parameterised with SLArPlaneParameterisation.\n";
+        G4Exception("geo::collect_volume_transforms()", "InvalidParameterisation", FatalException, ed);
       }
     }
     else {

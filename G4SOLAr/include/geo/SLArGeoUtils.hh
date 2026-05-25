@@ -126,7 +126,7 @@ namespace geo {
 
   std::vector<G4Transform3D> get_volume_transforms(
       const G4String& target_pv_name,
-      const G4String& mother_pv_name);
+      const G4String& reference_pv_name);
 
   void collect_volume_transforms(
       const G4LogicalVolume* logicalVolume,
