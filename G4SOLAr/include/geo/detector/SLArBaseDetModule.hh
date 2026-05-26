@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArAbsModule
- * @created     : mercoledì ago 07, 2019 13:08:35 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArBaseDetModule.hh
+ * @created     : Wed Aug 07, 2019 13:08:35 CEST
  */
 
 #ifndef SLArABSMODULE_HH

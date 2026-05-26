@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : BCCfgArrayPMT
- * @created     : giovedì giu 04, 2020 11:47:56 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArCfgSuperCellArray.cc
+ * @created     : Thur Jun 04, 2020 11:47:56 CEST
  */
 
 #include "config/SLArCfgSuperCellArray.hh"

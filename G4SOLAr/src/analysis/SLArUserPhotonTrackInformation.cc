@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArUserPhotonTrackInformation
- * @created     : lunedì ago 31, 2020 18:39:43 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArUserPhotonTrackInformation.hh
+ * @created     : Mon Aug 31, 2020 18:39:43 CEST
  */
 
 #include "SLArUserPhotonTrackInformation.hh"

@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArUserPhotonTrackInformation
- * @created     : lunedì ago 31, 2020 18:39:16 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArUserPhotonTrackInformation.hh
+ * @created     : Mon Aug 31, 2020 18:39:16 CEST
  *
  * Reimplemented from optical/LXe/include/LXeUserTrackInformation.hh
  */

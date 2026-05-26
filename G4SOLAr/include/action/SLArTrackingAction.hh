@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArTrackingAction
- * @created     : lunedì ago 31, 2020 18:35:29 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArTrackingAction.hh
+ * @created     : Mon Aug 31, 2020 18:35:29 CEST
  *
  * Reimplemented from optical/LXe/include/LXeTrackingAction.hh
  */
