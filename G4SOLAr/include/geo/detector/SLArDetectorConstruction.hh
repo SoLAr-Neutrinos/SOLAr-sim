@@ -63,6 +63,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
       InitTarget(d);
       BuildTarget();
     }
+    //! Export the LAr target configuration as a JSON document
+    rapidjson::Document ExportLArTargetConfig() const;
     //! Construct Cathode
     void ConstructCathode();
     //! Construct Cryostat
@@ -99,9 +101,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Get the vector containing the Physical Volumes of volumes set as ExtScorer
     inline std::vector<G4VPhysicalVolume*>&GetVecExtScorerPV() {return fExtScorerPV;}
     //! Get the LAr target volume
-    inline SLArBaseDetModule* GetLArTargetVolume() {return fDetector;}
+    inline SLArBaseDetModule* GetLArTargetVolume() {return fLArTarget;}
     //! Get the LAr target volume 
-    inline const SLArBaseDetModule* GetLArTargetVolume() const {return fDetector;}
+    inline const SLArBaseDetModule* GetLArTargetVolume() const {return fLArTarget;}
     //!  Return the geometry configuration file
     G4String                        GetGeometryCfgFile() {return fGeometryCfgFile;}
     //!  Return the material configuration file
@@ -132,7 +134,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
 
     //! TPC detector object (cryostat + LAr target)
     geo::EGeoShape fLArTargetShape{geo::EGeoShape::kBox};
-    SLArBaseDetModule* fDetector = {};
+    SLArBaseDetModule* fLArTarget = {};
     SLArDetCryostat* fCryostat = {}; 
     std::map<int, SLArDetTPC*> fTPC = {};
     std::map<int, SLArDetCathode*> fCathode = {}; 

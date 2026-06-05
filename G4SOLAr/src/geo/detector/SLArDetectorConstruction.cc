@@ -1301,12 +1301,17 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
     auto rot = anode->GetRotation();
 
     auto tpc = fTPC.find(anode->GetTPCID())->second; 
-    auto glb_pos = fDetector->GetModPV()->GetTranslation() + tpc->GetTPCcenter() + pos; 
+    auto glb_pos = fLArTarget->GetModPV()->GetTranslation() + tpc->GetTPCcenter() + pos; 
 
     printf("---- Placing Anode %i in TPC %i\n", anode_id, tpc->GetID());
     anode->BuildAndPlacePV("anode"+std::to_string(anode_id), 
         rot, pos, tpc->GetModLV(), 0, anode_id); 
 
+    auto target_rot = new G4RotationMatrix(); 
+    target_rot->set( 
+        fLArTarget->GetGeoPar("det_rot_phi"), 
+        fLArTarget->GetGeoPar("det_rot_theta"), 
+        fLArTarget->GetGeoPar("det_rot_psi") );
     auto anode_cfg = anode->BuildAnodeConfig(); 
     anode_cfg.SetX( pos.x() ); anode_cfg.SetPhysX( glb_pos.x() ); 
     anode_cfg.SetY( pos.y() ); anode_cfg.SetPhysY( glb_pos.y() ); 
@@ -1616,9 +1621,9 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
   //
   printf("\nActive volume -----------------------------------\n");
   istore->AddImportanceGeometryCell(
-      imp,*fDetector->GetModPV(), fDetector->GetModPV()->GetCopyNo());
-  for (int i=0; i<fDetector->GetModLV()->GetNoDaughters(); i++) {
-    auto vol = fDetector->GetModLV()->GetDaughter(i); 
+      imp,*fLArTarget->GetModPV(), fLArTarget->GetModPV()->GetCopyNo());
+  for (int i=0; i<fLArTarget->GetModLV()->GetNoDaughters(); i++) {
+    auto vol = fLArTarget->GetModLV()->GetDaughter(i); 
     auto cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
     if (istore->IsKnown(cell) == false) {
       printf("Adding %s (replica nr %i) to istore with importance %g\n", 
@@ -1913,12 +1918,12 @@ void SLArDetectorConstruction::ConstructShielding() {
   G4cout << "\nSLArDetectorConstruction: Building the Shielding" << G4endl;
   const G4ThreeVector hall_center = fExpHall->GetBoxCenter();
   const G4ThreeVector hall_halfsize = fExpHall->GetBoxHalfSize();
-  const G4double target_dim_x = fDetector->GetGeoPar("det_size_x");
-  const G4double target_dim_y = fDetector->GetGeoPar("det_size_y");
-  const G4double target_dim_z = fDetector->GetGeoPar("det_size_z");
-  const G4double target_pos_x = fDetector->GetGeoPar("det_pos_x");
-  const G4double target_pos_y = fDetector->GetGeoPar("det_pos_y");
-  const G4double target_pos_z = fDetector->GetGeoPar("det_pos_z");
+  const G4double target_dim_x = fLArTarget->GetGeoPar("det_size_x");
+  const G4double target_dim_y = fLArTarget->GetGeoPar("det_size_y");
+  const G4double target_dim_z = fLArTarget->GetGeoPar("det_size_z");
+  const G4double target_pos_x = fLArTarget->GetGeoPar("det_pos_x");
+  const G4double target_pos_y = fLArTarget->GetGeoPar("det_pos_y");
+  const G4double target_pos_z = fLArTarget->GetGeoPar("det_pos_z");
   G4double cryostat_tk  = fCryostat->GetGeoPar("cryostat_tk");
   if (fCryostat->HasSupportStructure()) {
     cryostat_tk += fCryostat->GetGeoPar("waffle_total_width");
