@@ -69,6 +69,7 @@ void SLArRunAction::BeginOfRunAction(const G4Run* aRun)
   const G4Transform3D transform(*r, t);
   fTransformWorld2Det = transform.inverse();
   stepping->SetPointTransformation(fTransformWorld2Det);
+  fElectronDrift->SetLArTargetTransform(fTransformWorld2Det);
 
   // dump cross sections
   for (const auto& xsec : SLArAnaMgr->GetXSecDumpVector()) {
