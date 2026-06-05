@@ -4,6 +4,7 @@
  * @created     : Wed Feb 12, 2020 18:26:02 CET
  */
 
+#include <G4Exception.hh>
 #include <cstdio>
 #include <sys/stat.h>
 #include <fstream>
@@ -320,9 +321,10 @@ int SLArAnalysisManager::WriteCfgFile(G4String name, const char* path)
   std::ifstream ifile; 
   ifile.open(path); 
   if (!ifile.is_open()) {
-    printf("SLArAnalysisManager::WriteCfgFile WARNING ");
-    printf("Unable to open file %s\n", path);
-    return 4; 
+    G4ExceptionDescription ed; 
+      ed << "SLArAnalysisManager::WriteCfgFile WARNING\n"; 
+      ed << "Unable to open file " << path << "\n";
+    G4Exception("SLArAnalysisManager::WriteCfgFile()", "CfgFileNotFound", FatalException, ed);
   }
 
   std::stringstream strm; 

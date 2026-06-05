@@ -173,14 +173,14 @@ void SLArDetectorConstruction::Init() {
   if (d.HasMember("Cryostat")) {
     if (fLArTargetShape == geo::kBox) {
       fCryostat->SetShape(geo::kBox);
-      fCryostat->SetGeoPar( "target_size_x", fDetector->GetGeoPar("det_size_x") ); 
-      fCryostat->SetGeoPar( "target_size_y", fDetector->GetGeoPar("det_size_y") ); 
-      fCryostat->SetGeoPar( "target_size_z", fDetector->GetGeoPar("det_size_z") ); 
+      fCryostat->SetGeoPar( "target_size_x", fLArTarget->GetGeoPar("det_size_x") ); 
+      fCryostat->SetGeoPar( "target_size_y", fLArTarget->GetGeoPar("det_size_y") ); 
+      fCryostat->SetGeoPar( "target_size_z", fLArTarget->GetGeoPar("det_size_z") ); 
     }
     else if (fLArTargetShape == geo::kTub) {
       fCryostat->SetShape(geo::kTub);
-      fCryostat->SetGeoPar( "target_radius", fDetector->GetGeoPar("det_radius") );
-      fCryostat->SetGeoPar( "target_length", fDetector->GetGeoPar("det_length") );
+      fCryostat->SetGeoPar( "target_radius", fLArTarget->GetGeoPar("det_radius") );
+      fCryostat->SetGeoPar( "target_length", fLArTarget->GetGeoPar("det_length") );
     }
     fCryostat->InitCryostatStructure(d["Cryostat"]);
 
@@ -442,7 +442,7 @@ void SLArDetectorConstruction::InitAnode(const rapidjson::Value& jconf) {
 
 void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
   const G4double eps = 1*CLHEP::mm;
-  fDetector = new SLArBaseDetModule();
+  fLArTarget = new SLArBaseDetModule();
   fLArTargetShape = geo::kBox; // default: preserves existing behaviour
 
   if (d.HasMember("LArTarget")) {
@@ -472,9 +472,9 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
               jxyz[1].GetDouble()*uval,
               jxyz[2].GetDouble()*uval);
     }
-    fDetector->SetGeoPar("det_pos_x", pos.x());
-    fDetector->SetGeoPar("det_pos_y", pos.y());
-    fDetector->SetGeoPar("det_pos_z", pos.z());
+    fLArTarget->SetGeoPar("det_pos_x", pos.x());
+    fLArTarget->SetGeoPar("det_pos_y", pos.y());
+    fLArTarget->SetGeoPar("det_pos_z", pos.z());
 
     // --- Rotation ---
     if ( jlar_target.HasMember("rot") ) {
@@ -491,14 +491,14 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
         idim++; 
       }
    
-      fDetector->SetGeoPar("det_rot_phi",   eulerAngles[0]);
-      fDetector->SetGeoPar("det_rot_theta", eulerAngles[1]);
-      fDetector->SetGeoPar("det_rot_psi",   eulerAngles[2]);
+      fLArTarget->SetGeoPar("det_rot_phi",   eulerAngles[0]);
+      fLArTarget->SetGeoPar("det_rot_theta", eulerAngles[1]);
+      fLArTarget->SetGeoPar("det_rot_psi",   eulerAngles[2]);
     }
     else {
-      fDetector->SetGeoPar("det_rot_phi", 0.);
-      fDetector->SetGeoPar("det_rot_theta", 0.);
-      fDetector->SetGeoPar("det_rot_psi", 0.);
+      fLArTarget->SetGeoPar("det_rot_phi", 0.);
+      fLArTarget->SetGeoPar("det_rot_theta", 0.);
+      fLArTarget->SetGeoPar("det_rot_psi", 0.);
     }
 
     // --- Dimensions ---
@@ -524,19 +524,19 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
             exit(EXIT_FAILURE);
           }
         }
-        fDetector->SetGeoPar("det_size_x", dim.x());
-        fDetector->SetGeoPar("det_size_y", dim.y());
-        fDetector->SetGeoPar("det_size_z", dim.z());
+        fLArTarget->SetGeoPar("det_size_x", dim.x());
+        fLArTarget->SetGeoPar("det_size_y", dim.y());
+        fLArTarget->SetGeoPar("det_size_z", dim.z());
 
-        if (fDetector->GetGeoPar("det_rot_phi") != 0 ||
-            fDetector->GetGeoPar("det_rot_theta") != 0 ||
-            fDetector->GetGeoPar("det_rot_psi") != 0) {
+        if (fLArTarget->GetGeoPar("det_rot_phi") != 0 ||
+            fLArTarget->GetGeoPar("det_rot_theta") != 0 ||
+            fLArTarget->GetGeoPar("det_rot_psi") != 0) {
           G4cerr << "Warning: rotation angles specified for box-shaped LAr target:";
           G4cerr << " they will be ignored since they do not affect the geometry of the target" << G4endl;
         }
-        fDetector->SetGeoPar("det_rot_phi", 0.);
-        fDetector->SetGeoPar("det_rot_theta", 0.);
-        fDetector->SetGeoPar("det_rot_psi", 0.);
+        fLArTarget->SetGeoPar("det_rot_phi", 0.);
+        fLArTarget->SetGeoPar("det_rot_theta", 0.);
+        fLArTarget->SetGeoPar("det_rot_psi", 0.);
       }
       else if (fLArTargetShape == geo::kTub) { // kTub — only radius + axial length
         debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "radius"); 
@@ -546,24 +546,24 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
           assert(entry.IsObject() && entry.HasMember("name"));
           const G4String name = entry["name"].GetString();
           if (name == "radius") 
-            fDetector->SetGeoPar("det_radius",  unit::ParseJsonVal(entry));
+            fLArTarget->SetGeoPar("det_radius",  unit::ParseJsonVal(entry));
           else if (name == "length") 
-            fDetector->SetGeoPar("det_length",  unit::ParseJsonVal(entry));
+            fLArTarget->SetGeoPar("det_length",  unit::ParseJsonVal(entry));
         }
 
         // compute dimension along y accouting for the rotation of the target (if any)
-        const double rot_phi   = fDetector->GetGeoPar("det_rot_phi");
-        const double rot_theta = fDetector->GetGeoPar("det_rot_theta");
-        const double rot_psi   = fDetector->GetGeoPar("det_rot_psi");
+        const double rot_phi   = fLArTarget->GetGeoPar("det_rot_phi");
+        const double rot_theta = fLArTarget->GetGeoPar("det_rot_theta");
+        const double rot_psi   = fLArTarget->GetGeoPar("det_rot_psi");
         
-        G4ThreeVector cyl_size(2*fDetector->GetGeoPar("det_radius"), 
-            2*fDetector->GetGeoPar("det_radius"), 
-            fDetector->GetGeoPar("det_length"));
+        G4ThreeVector cyl_size(2*fLArTarget->GetGeoPar("det_radius"), 
+            2*fLArTarget->GetGeoPar("det_radius"), 
+            fLArTarget->GetGeoPar("det_length"));
         G4RotationMatrix rot(rot_phi, rot_theta, rot_psi);
         cyl_size = rot * cyl_size;
-        fDetector->SetGeoPar("det_size_x", std::abs(cyl_size.x()) + 2*eps);
-        fDetector->SetGeoPar("det_size_y", std::abs(cyl_size.y()) + 2*eps);
-        fDetector->SetGeoPar("det_size_z", std::abs(cyl_size.z()) + 2*eps);
+        fLArTarget->SetGeoPar("det_size_x", std::abs(cyl_size.x()) + 2*eps);
+        fLArTarget->SetGeoPar("det_size_y", std::abs(cyl_size.y()) + 2*eps);
+        fLArTarget->SetGeoPar("det_size_z", std::abs(cyl_size.z()) + 2*eps);
       }
       else {
         G4Exception("SLArDetectorConstruction::InitTarget()",
@@ -587,14 +587,14 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
     if (singleCylTPC) {
       fLArTargetShape = geo::kTub;
       const auto& tpc = fTPC.begin()->second;
-      fDetector->SetGeoPar("det_pos_x",   tpc->GetGeoPar("tpc_pos_x"));
-      fDetector->SetGeoPar("det_pos_y",   tpc->GetGeoPar("tpc_pos_y"));
-      fDetector->SetGeoPar("det_pos_z",   tpc->GetGeoPar("tpc_pos_z"));
-      fDetector->SetGeoPar("det_radius",  tpc->GetGeoPar("tpc_radius") + eps);
-      fDetector->SetGeoPar("det_length",  tpc->GetGeoPar("tpc_length") + 2*eps);
-      fDetector->SetGeoPar("det_rot_phi",   tpc->GetGeoPar("tpc_rot_phi"));
-      fDetector->SetGeoPar("det_rot_theta", tpc->GetGeoPar("tpc_rot_theta"));
-      fDetector->SetGeoPar("det_rot_psi",   tpc->GetGeoPar("tpc_rot_psi"));
+      fLArTarget->SetGeoPar("det_pos_x",   tpc->GetGeoPar("tpc_pos_x"));
+      fLArTarget->SetGeoPar("det_pos_y",   tpc->GetGeoPar("tpc_pos_y"));
+      fLArTarget->SetGeoPar("det_pos_z",   tpc->GetGeoPar("tpc_pos_z"));
+      fLArTarget->SetGeoPar("det_radius",  tpc->GetGeoPar("tpc_radius") + eps);
+      fLArTarget->SetGeoPar("det_length",  tpc->GetGeoPar("tpc_length") + 2*eps);
+      fLArTarget->SetGeoPar("det_rot_phi",   tpc->GetGeoPar("tpc_rot_phi"));
+      fLArTarget->SetGeoPar("det_rot_theta", tpc->GetGeoPar("tpc_rot_theta"));
+      fLArTarget->SetGeoPar("det_rot_psi",   tpc->GetGeoPar("tpc_rot_psi"));
     }
     else {
       ComputeTPCEnclosure(eps);
@@ -605,23 +605,75 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
   if (fLArTargetShape == geo::kBox) {
     printf("LAr target [box]:      pos (%.1f, %.1f, %.1f) mm  "
         "size %.1f x %.1f x %.1f mm\n",
-        fDetector->GetGeoPar("det_pos_x"),
-        fDetector->GetGeoPar("det_pos_y"),
-        fDetector->GetGeoPar("det_pos_z"),
-        fDetector->GetGeoPar("det_size_x"),
-        fDetector->GetGeoPar("det_size_y"),
-        fDetector->GetGeoPar("det_size_z"));
+        fLArTarget->GetGeoPar("det_pos_x"),
+        fLArTarget->GetGeoPar("det_pos_y"),
+        fLArTarget->GetGeoPar("det_pos_z"),
+        fLArTarget->GetGeoPar("det_size_x"),
+        fLArTarget->GetGeoPar("det_size_y"),
+        fLArTarget->GetGeoPar("det_size_z"));
   } 
   else if (fLArTargetShape == geo::kTub) {
     printf("LAr target [cylinder]: pos (%.1f, %.1f, %.1f) mm  "
         "R = %.1f mm  Z = %.1f mm\n",
-        fDetector->GetGeoPar("det_pos_x"),
-        fDetector->GetGeoPar("det_pos_y"),
-        fDetector->GetGeoPar("det_pos_z"),
-        fDetector->GetGeoPar("det_radius"),
-        fDetector->GetGeoPar("det_length"));
+        fLArTarget->GetGeoPar("det_pos_x"),
+        fLArTarget->GetGeoPar("det_pos_y"),
+        fLArTarget->GetGeoPar("det_pos_z"),
+        fLArTarget->GetGeoPar("det_radius"),
+        fLArTarget->GetGeoPar("det_length"));
   }
   return;
+}
+
+rapidjson::Document SLArDetectorConstruction::ExportLArTargetConfig() const {
+  rapidjson::Document dt;
+  dt.SetObject();
+  auto& alloc = dt.GetAllocator();
+  dt.AddMember("shape", 
+      rapidjson::Value().SetString(geo::get_geo_shape_str(fLArTargetShape).data(), alloc), alloc);
+  rapidjson::Value pos(rapidjson::kObjectType);
+  rapidjson::Value pos_xyz(rapidjson::kArrayType);
+  pos_xyz.PushBack(fLArTarget->GetGeoPar("det_pos_x"), alloc);
+  pos_xyz.PushBack(fLArTarget->GetGeoPar("det_pos_y"), alloc);
+  pos_xyz.PushBack(fLArTarget->GetGeoPar("det_pos_z"), alloc);
+  pos.AddMember("xyz", pos_xyz, alloc);
+  dt.AddMember("position", pos, alloc);
+
+  rapidjson::Value rot(rapidjson::kObjectType);
+  rapidjson::Value rot_val(rapidjson::kArrayType);
+  rot_val.PushBack(fLArTarget->GetGeoPar("det_rot_phi"), alloc);
+  rot_val.PushBack(fLArTarget->GetGeoPar("det_rot_theta"), alloc);
+  rot_val.PushBack(fLArTarget->GetGeoPar("det_rot_psi"), alloc);
+  rot.AddMember("val", rot_val, alloc);
+  dt.AddMember("rot", rot, alloc);
+  
+  rapidjson::Value dims(rapidjson::kArrayType);
+  if (fLArTargetShape == geo::kBox) {
+    rapidjson::Value dim_x(rapidjson::kObjectType);
+    dim_x.AddMember("name", "size_x", alloc);
+    dim_x.AddMember("value", fLArTarget->GetGeoPar("det_size_x"), alloc);
+    dims.PushBack(dim_x, alloc);
+    rapidjson::Value dim_y(rapidjson::kObjectType);
+    dim_y.AddMember("name", "size_y", alloc);
+    dim_y.AddMember("value", fLArTarget->GetGeoPar("det_size_y"), alloc);
+    dims.PushBack(dim_y, alloc);
+    rapidjson::Value dim_z(rapidjson::kObjectType);
+    dim_z.AddMember("name", "size_z", alloc);
+    dim_z.AddMember("value", fLArTarget->GetGeoPar("det_size_z"), alloc);
+    dims.PushBack(dim_z, alloc);
+  }
+  else if (fLArTargetShape == geo::kTub) {
+    rapidjson::Value dim_r(rapidjson::kObjectType);
+    dim_r.AddMember("name", "radius", alloc);
+    dim_r.AddMember("value", fLArTarget->GetGeoPar("det_radius"), alloc);
+    dims.PushBack(dim_r, alloc);
+    rapidjson::Value dim_z(rapidjson::kObjectType);
+    dim_z.AddMember("name", "length", alloc);
+    dim_z.AddMember("value", fLArTarget->GetGeoPar("det_length"), alloc);
+    dims.PushBack(dim_z, alloc);
+  }
+  dt.AddMember("dimensions", dims, alloc);
+
+  return dt;
 }
 
 void SLArDetectorConstruction::ComputeTPCEnclosure(const G4double eps) {
@@ -654,15 +706,15 @@ void SLArDetectorConstruction::ComputeTPCEnclosure(const G4double eps) {
   }
 
   const G4ThreeVector center = 0.5*(target_min + target_max);
-  fDetector->SetGeoPar("det_pos_x", center.x());
-  fDetector->SetGeoPar("det_pos_y", center.y());
-  fDetector->SetGeoPar("det_pos_z", center.z());
-  fDetector->SetGeoPar("det_size_x", target_max.x() - target_min.x() + 2*eps);
-  fDetector->SetGeoPar("det_size_y", target_max.y() - target_min.y() + 2*eps);
-  fDetector->SetGeoPar("det_size_z", target_max.z() - target_min.z() + 2*eps);
-  fDetector->SetGeoPar("det_rot_phi", 0.);
-  fDetector->SetGeoPar("det_rot_theta", 0.);
-  fDetector->SetGeoPar("det_rot_psi", 0.);
+  fLArTarget->SetGeoPar("det_pos_x", center.x());
+  fLArTarget->SetGeoPar("det_pos_y", center.y());
+  fLArTarget->SetGeoPar("det_pos_z", center.z());
+  fLArTarget->SetGeoPar("det_size_x", target_max.x() - target_min.x() + 2*eps);
+  fLArTarget->SetGeoPar("det_size_y", target_max.y() - target_min.y() + 2*eps);
+  fLArTarget->SetGeoPar("det_size_z", target_max.z() - target_min.z() + 2*eps);
+  fLArTarget->SetGeoPar("det_rot_phi", 0.);
+  fLArTarget->SetGeoPar("det_rot_theta", 0.);
+  fLArTarget->SetGeoPar("det_rot_psi", 0.);
 
 }
 
@@ -671,24 +723,24 @@ void SLArDetectorConstruction::BuildTarget() {
   matTarget->BuildMaterialFromDB(fMaterialDBFile);
 
   if (fLArTargetShape == geo::kBox) {
-    fDetector->SetSolidVolume(new G4Box("target_lar_solid",
-        0.5*fDetector->GetGeoPar("det_size_x"),
-        0.5*fDetector->GetGeoPar("det_size_y"),
-        0.5*fDetector->GetGeoPar("det_size_z")));
+    fLArTarget->SetSolidVolume(new G4Box("target_lar_solid",
+        0.5*fLArTarget->GetGeoPar("det_size_x"),
+        0.5*fLArTarget->GetGeoPar("det_size_y"),
+        0.5*fLArTarget->GetGeoPar("det_size_z")));
   }
   else { // kCylinder
-    fDetector->SetSolidVolume(new G4Tubs("target_lar_solid",
+    fLArTarget->SetSolidVolume(new G4Tubs("target_lar_solid",
         0.,
-        fDetector->GetGeoPar("det_radius"),
-        0.5*fDetector->GetGeoPar("det_length"),
+        fLArTarget->GetGeoPar("det_radius"),
+        0.5*fLArTarget->GetGeoPar("det_length"),
         0., CLHEP::twopi));
   }
 
-  fDetector->SetLogicVolume(new G4LogicalVolume(
-      fDetector->GetModSV(),
+  fLArTarget->SetLogicVolume(new G4LogicalVolume(
+      fLArTarget->GetModSV(),
       matTarget->GetMaterial(),
       "target_lar_lv"));
-  fDetector->GetModLV()->SetVisAttributes(G4VisAttributes(false));
+  fLArTarget->GetModLV()->SetVisAttributes(G4VisAttributes(false));
 
   return;
 }
@@ -805,22 +857,22 @@ void SLArDetectorConstruction::ConstructCryostat() {
   fCryostat->BuildCryostat(); 
 
   if (fCryostat->HasAirFlow()) {
-    G4double target_size_y = fDetector->GetGeoPar("det_size_y");
+    G4double target_size_y = fLArTarget->GetGeoPar("det_size_y");
     G4double cryostat_tk = fCryostat->GetGeoPar("cryostat_tk");
     G4double waffle_tk = (fCryostat->HasSupportStructure()) ? 
       fCryostat->GetGeoPar("waffle_total_width") : 0.0;
     G4double airflow_tk = fCryostat->GetAirflowUnit()->GetGeoPar("thickness");
 
     G4ThreeVector airflow_pos = 
-      fDetector->GetModPV()->GetTranslation() 
+      fLArTarget->GetModPV()->GetTranslation() 
       - G4ThreeVector(0, 0.5*target_size_y + cryostat_tk + waffle_tk + 0.5*airflow_tk, 0);
 
     fCryostat->GetAirflowUnit()->BuildAndPlacePV("airflow_pv", 0, 
         airflow_pos, fWorldLog, 0) ;
   }
 
-  fCryostat->BuildAndPlacePV("cryostat_pv", fDetector->GetModPV()->GetRotation(), 
-      fDetector->GetModPV()->GetTranslation(), 
+  fCryostat->BuildAndPlacePV("cryostat_pv", fLArTarget->GetModPV()->GetRotation(), 
+      fLArTarget->GetModPV()->GetTranslation(), 
       fWorldLog, 0) ; 
 
   fCryostat->SetVisAttributes(); 
@@ -838,7 +890,7 @@ void SLArDetectorConstruction::ConstructCathode() {
           geoinfo->GetGeoPar("pos_x"), 
           geoinfo->GetGeoPar("pos_y"), 
           geoinfo->GetGeoPar("pos_z")), 
-        fDetector->GetModLV(), 0, cathode.first); 
+        fLArTarget->GetModLV(), 0, cathode.first); 
   }
 }
 
@@ -882,7 +934,7 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   ConstructShielding();
 
   // Compute the position of the TPCs including cryostat dimensions
-  const G4double target_size_y = fDetector->GetGeoPar("det_size_y"); 
+  const G4double target_size_y = fLArTarget->GetGeoPar("det_size_y"); 
   G4double cryostat_tk = fCryostat->GetGeoPar("cryostat_tk");
   G4double shielding_tk = 0.0; 
   for (const auto &shield : fShielding) {
@@ -899,9 +951,9 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   G4cout << "\nSLArDetectorConstruction: Building the Detector Volume" << G4endl;
   BuildTarget();
   G4ThreeVector target_center( 
-      fDetector->GetGeoPar("det_pos_x"), 
-      fDetector->GetGeoPar("det_pos_y"), 
-      fDetector->GetGeoPar("det_pos_z") );
+      fLArTarget->GetGeoPar("det_pos_x"), 
+      fLArTarget->GetGeoPar("det_pos_y"), 
+      fLArTarget->GetGeoPar("det_pos_z") );
 
   G4ThreeVector hall_center = fExpHall->GetBoxCenter();
   G4ThreeVector hall_halfsize = fExpHall->GetBoxHalfSize();
@@ -919,18 +971,18 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   G4cout << "target_y: " << target_pos << G4endl;
 
 #ifdef SLAR_DEBUG
-  fDetector->GetGeoInfo()->DumpParMap();
+  fLArTarget->GetGeoInfo()->DumpParMap();
 #endif
 
   G4RotationMatrix* rot = new G4RotationMatrix(
-      fDetector->GetGeoPar("det_rot_phi"), 
-      fDetector->GetGeoPar("det_rot_theta"), 
-      fDetector->GetGeoPar("det_rot_psi"));
+      fLArTarget->GetGeoPar("det_rot_phi"), 
+      fLArTarget->GetGeoPar("det_rot_theta"), 
+      fLArTarget->GetGeoPar("det_rot_psi"));
 
-  fDetector->SetModPV( new G4PVPlacement(
+  fLArTarget->SetModPV( new G4PVPlacement(
         rot, 
         target_pos,
-        fDetector->GetModLV(), "target_lar_pv", fWorldLog, 0, 9) ); 
+        fLArTarget->GetModLV(), "target_lar_pv", fWorldLog, 0, 9) ); 
 
   // 5. Build and place the Cryostat
   G4cout << "\nSLArDetectorConstruction: Building the Cryostat" << G4endl;
@@ -946,7 +998,7 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
     tpc.second->BuildTPC();
     tpc.second->BuildAndPlacePV("TPC"+std::to_string(tpc.first), 0,
         tpc.second->GetTPCcenter(), 
-        fDetector->GetModLV(), false, tpc.first);
+        fLArTarget->GetModLV(), false, tpc.first);
     tpc.second->SetVisAttributes(); 
   }
 

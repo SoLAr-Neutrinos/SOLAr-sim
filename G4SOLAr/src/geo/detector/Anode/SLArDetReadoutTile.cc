@@ -503,9 +503,10 @@ TH2Poly* SLArDetReadoutTile::BuildTileChgPixelMap(
       }
     }
   } else {
-    printf("SLArDetReadoutTile::BuildTileChgPixelMap WARNING\n");
-    printf("Selected physical volume (%s) is not parameterised!\n", tilesens_pv->GetName().c_str());
-    getchar();
+    G4ExceptionDescription ed;
+    ed << "SLArDetReadoutTil::BuildTileChgPixelMap WARNING\n";
+    ed << "Selected physical volume (" << tilesens_pv->GetName() << " is not parameterised!\n";
+    G4Exception("SLArDetReadoutTile::BuildTileChgPixelMap()", "SLAR01", JustWarning, ed);
   }
 
   return h2;

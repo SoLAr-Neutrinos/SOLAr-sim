@@ -34,10 +34,6 @@ SLArDetReadoutTileAssembly::~SLArDetReadoutTileAssembly()
 
 void SLArDetReadoutTileAssembly::BuildDefalutGeoParMap() 
 {
-  G4cout  << "SLArDetReadoutTileAssembly::BuildGeoParMap()" << G4endl;
-  
-  fGeoInfo->RegisterGeoPar("rdoutplane_z"   ,  1.0*CLHEP::m);
-  fGeoInfo->RegisterGeoPar("rdoutplane_x"   ,  2.0*CLHEP::m);
 }
 
 void SLArDetReadoutTileAssembly::BuildMaterial(G4String materials_db)
