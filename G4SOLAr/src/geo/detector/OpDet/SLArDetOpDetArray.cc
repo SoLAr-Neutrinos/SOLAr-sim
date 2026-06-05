@@ -85,25 +85,73 @@ void SLArDetOpDetArray::Init(const rapidjson::Value& jconf) {
     idim++; 
   }
 
-  if (jarray.HasMember("replication_data")) {
+  const bool has_replication = jarray.HasMember("replication_data");
+  const bool has_explicit    = jarray.HasMember("opdet_positions");
+ 
+  if (has_replication && has_explicit) {
+    G4Exception("SLArDetOpDetArray::Init", "ConfigError001", FatalException,
+        "OpDetArray config contains both 'replication_data' and 'opdet_positions'. "
+        "Only one placement mode may be specified.");
+  }
+ 
+  if (has_replication) {
+    fPlacementMode = EPlacementMode::kParameterised;
     if (jarray["replication_data"].IsObject()) {
-      auto parameterisation = new SLArPlaneParameterisation(jarray["replication_data"]); 
-      fParameterisation.push_back(parameterisation); 
+      fParameterisation.push_back(
+          new SLArPlaneParameterisation(jarray["replication_data"]));
     } else if (jarray["replication_data"].IsArray()) {
-      for (const auto &rdata : jarray["replication_data"].GetArray()) {
-        auto parameterisation = new SLArPlaneParameterisation(rdata); 
-        fParameterisation.push_back(parameterisation);         
+      for (const auto& rdata : jarray["replication_data"].GetArray()) {
+        fParameterisation.push_back(new SLArPlaneParameterisation(rdata));
       }
     } else {
-      G4Exception("SLArDetOpDetArray::Init", "ConfigError001", JustWarning,
-          "Invalid format for replication_data in OpDetArray configuration! Expected an object or an array of objects.");
+      G4Exception("SLArDetOpDetArray::Init", "ConfigError002", FatalException,
+          "Invalid format for 'replication_data': expected an object or array of objects.");
     }
+  } else if (has_explicit) {
+    fPlacementMode = EPlacementMode::kExplicit;
+    debug::require_json_array(jarray["opdet_positions"]);
+ 
+    for (const auto& jentry : jarray["opdet_positions"].GetArray()) {
+      debug::require_json_type(jentry, rapidjson::kObjectType);
+      debug::require_json_member(jentry, "id");
+      debug::require_json_member(jentry, "xyz");
+      debug::require_json_array(jentry["xyz"], 3);
+ 
+      SExplicitOpDetPos entry;
+      entry.id = jentry["id"].GetInt();
+ 
+      // Optional per-entry unit; falls back to 1.0 (== mm in G4 units) if absent
+      const G4double pos_unit = unit::GetJSONunit(jentry);
+      const auto& jxyz = jentry["xyz"].GetArray();
+      entry.position.set(
+          jxyz[0].GetDouble() * pos_unit,
+          jxyz[1].GetDouble() * pos_unit,
+          jxyz[2].GetDouble() * pos_unit);
+ 
+      fExplicitPositions.push_back(entry);
+    }
+ 
+    if (fExplicitPositions.empty()) {
+      G4Exception("SLArDetOpDetArray::Init", "ConfigError003", JustWarning,
+          "OpDetArray 'opdet_positions' list is empty. No detectors will be placed.");
+    }
+  } else {
+    G4Exception("SLArDetOpDetArray::Init", "ConfigError004", FatalException,
+        "OpDetArray configuration must contain either 'replication_data' or 'opdet_positions'.");
   }
-  
-  return; 
+ 
+  return;
 }
 
 void SLArDetOpDetArray::BuildOpDetArray(SLArOpticalDetector* opdet) {
+  if (fPlacementMode == EPlacementMode::kExplicit) {
+    BuildOpDetArrayExplicit(opdet);
+  } else {
+    BuildOpDetArrayParameterised(opdet);
+  }
+}
+
+void SLArDetOpDetArray::BuildOpDetArrayParameterised(SLArOpticalDetector* opdet) {
   fOpDetModuleBase = opdet;
 
   G4ThreeVector max_dim( 
@@ -203,6 +251,45 @@ void SLArDetOpDetArray::BuildOpDetArray(SLArOpticalDetector* opdet) {
   fModLV->SetVisAttributes( G4VisAttributes(false) ); 
 }
 
+void SLArDetOpDetArray::BuildOpDetArrayExplicit(SLArOpticalDetector* opdet) {
+  // Build a bounding-box volume for the whole array using the dimensions
+  // declared in the JSON configuration.
+  const G4ThreeVector max_dim(
+      fGeoInfo->GetGeoPar("dim_x"),
+      fGeoInfo->GetGeoPar("dim_y"),
+      fGeoInfo->GetGeoPar("dim_z"));
+ 
+  SetSolidVolume(new G4Box(
+      fName + "_sv",
+      0.5 * max_dim.x(), 0.5 * max_dim.y(), 0.5 * max_dim.z()));
+  SetLogicVolume(new G4LogicalVolume(
+      fModSV, fMaterialBase->GetMaterial(), fName + "_lv"));
+ 
+  // Place each detector at its explicitly specified local position.
+  for (const SExplicitOpDetPos& entry : fExplicitPositions) {
+    const G4String pv_name =
+        Form("%s_%i_%i_pv", fPhotoDetModel.data(), fID, entry.id);
+ 
+    new G4PVPlacement(
+        nullptr,          // inherit array rotation — no additional rotation
+        entry.position,   // position in array-local frame
+        opdet->GetModLV(),
+        pv_name,
+        fModLV,
+        false,            // pMany
+        entry.id,         // copy number
+        true);            // check overlaps
+  }
+ 
+#ifdef SLAR_DEBUG
+  printf("SLArDetOpDetArray::BuildOpDetArrayExplicit: "
+         "placed %zu detector(s) in array %s (id %i)\n",
+         fExplicitPositions.size(), fName.data(), fID);
+#endif // SLAR_DEBUG
+
+  fModLV->SetVisAttributes(G4VisAttributes(false));
+}
+
 std::pair<int, G4double> SLArDetOpDetArray::ComputeArrayTrueLength(
     G4double sc_dim, G4double spacing, G4double max_len) {
   G4double len = sc_dim;
@@ -218,72 +305,197 @@ std::pair<int, G4double> SLArDetOpDetArray::ComputeArrayTrueLength(
 };
 
 SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg() {
-  SLArCfgSuperCellArray arrayCfg("OpDet_array_"+std::to_string(fID), fID); 
+  SLArCfgSuperCellArray arrayCfg("OpDet_array_" + std::to_string(fID), fID);
+ 
+  arrayCfg.SetIdx(fID);
+  arrayCfg.SetNormal(fNormal.x(), fNormal.y(), fNormal.z());
+  arrayCfg.SetupAxes();
+  arrayCfg.SetPhi  (fGeoInfo->GetGeoPar("opdetarray_phi"));
+  arrayCfg.SetTheta(fGeoInfo->GetGeoPar("opdetarray_theta"));
+  arrayCfg.SetPsi  (fGeoInfo->GetGeoPar("opdetarray_psi"));
+ 
+  if (fPlacementMode == EPlacementMode::kExplicit) {
+    FillCfgExplicit(arrayCfg);
+  } else {
+    FillCfgParameterised(arrayCfg);
+  }
+ 
+  return arrayCfg;
+}
 
-  arrayCfg.SetIdx( fID ); 
-  arrayCfg.SetNormal( fNormal.x(), fNormal.y(), fNormal.z() ); 
-  arrayCfg.SetupAxes(); 
-  arrayCfg.SetPhi  ( fGeoInfo->GetGeoPar("opdetarray_phi") ); 
-  arrayCfg.SetTheta( fGeoInfo->GetGeoPar("opdetarray_theta") ); 
-  arrayCfg.SetPsi  ( fGeoInfo->GetGeoPar("opdetarray_psi") ); 
+/*
+ *SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg() {
+ *  SLArCfgSuperCellArray arrayCfg("OpDet_array_"+std::to_string(fID), fID); 
+ *
+ *  arrayCfg.SetIdx( fID ); 
+ *  arrayCfg.SetNormal( fNormal.x(), fNormal.y(), fNormal.z() ); 
+ *  arrayCfg.SetupAxes(); 
+ *  arrayCfg.SetPhi  ( fGeoInfo->GetGeoPar("opdetarray_phi") ); 
+ *  arrayCfg.SetTheta( fGeoInfo->GetGeoPar("opdetarray_theta") ); 
+ *  arrayCfg.SetPsi  ( fGeoInfo->GetGeoPar("opdetarray_psi") ); 
+ *
+ *  auto sc_array = (G4PVParameterised*)fModLV->GetDaughter(0); 
+ *  auto sc_row   = (G4PVParameterised*)fSubModules.front()->GetModLV()->GetDaughter(0);  
+ *
+ *  auto get_replication_data = [](G4PVParameterised* pv) {
+ *    SLArPlaneParameterisation::PlaneReplicationData_t data; 
+ *    pv->GetReplicationData(data.fReplicaAxis, data.fNreplica, 
+ *        data.fWidth, data.fOffset, data.fConsuming); 
+ *    auto parameterisation = (SLArPlaneParameterisation*)pv->GetParameterisation(); 
+ *    data.fReplicaAxisVec = parameterisation->GetReplicationAxisVector(); 
+ *    data.fStartingPos = parameterisation->GetStartPos(); 
+ *    data.fWidth = parameterisation->GetSpacing(); 
+ *    return data;
+ *  };
+ *
+ *  auto rpl_sc_row = get_replication_data(sc_array); 
+ *  auto rpl_sc_clm = get_replication_data(sc_row); 
+ *  auto rot_inv = new G4RotationMatrix(*fRotation); 
+ *  rot_inv->invert(); 
+ *
+ *  for (int i_sc_row = 0; i_sc_row<rpl_sc_row.fNreplica; i_sc_row++) {
+ *    G4ThreeVector pos_sc_row = 
+ *      rpl_sc_row.fStartingPos + rpl_sc_row.fWidth*i_sc_row*rpl_sc_row.fReplicaAxisVec;
+ *
+ *    for (int i_sc_clm = 0; i_sc_clm < rpl_sc_clm.fNreplica; i_sc_clm++) {
+ *      G4int sc_id = (i_sc_row+1)*100 + i_sc_clm;
+ *      G4String scName = Form("%s_%i_%i", 
+ *          fPhotoDetModel.data(), arrayCfg.GetIdx(), sc_id); 
+ *      SLArCfgSuperCell scCfg(sc_id);
+ *      scCfg.SetName(scName);
+ *
+ *      G4ThreeVector sc_local_pos = pos_sc_row + 
+ *        rpl_sc_clm.fStartingPos + rpl_sc_clm.fWidth*i_sc_clm*rpl_sc_clm.fReplicaAxisVec;
+ *      scCfg.SetX(sc_local_pos.x()); 
+ *      scCfg.SetY(sc_local_pos.y()); 
+ *      scCfg.SetZ(sc_local_pos.z()); 
+ *
+ *      G4ThreeVector sc_abs_pos = fGlobalPosition + sc_local_pos.transform(*rot_inv); 
+ *
+ *      scCfg.SetPhysX( sc_abs_pos.x() ); 
+ *      scCfg.SetPhysY( sc_abs_pos.y() ); 
+ *      scCfg.SetPhysZ( sc_abs_pos.z() ); 
+ *
+ *      scCfg.SetPhi( arrayCfg.GetPhi() ); 
+ *      scCfg.SetTheta( arrayCfg.GetTheta() ); 
+ *      scCfg.SetPsi( arrayCfg.GetPsi() ); 
+ *
+ *      scCfg.SetNormal( arrayCfg.GetNormal() ); 
+ *      scCfg.SetupAxes(); 
+ *
+ *      const auto scBox = (G4Box*)fOpDetModuleBase->GetModSV();
+ *      scCfg.SetSize( 2*scBox->GetXHalfLength(),
+ *                     2*scBox->GetYHalfLength(), 
+ *                     2*scBox->GetZHalfLength() ); 
+ *
+ *      arrayCfg.RegisterElement( scCfg );
+ *    }
+ *  }
+ *
+ *  return arrayCfg;
+ *}
+ */
 
-  auto sc_array = (G4PVParameterised*)fModLV->GetDaughter(0); 
-  auto sc_row   = (G4PVParameterised*)fSubModules.front()->GetModLV()->GetDaughter(0);  
 
-  auto get_replication_data = [](G4PVParameterised* pv) {
-    SLArPlaneParameterisation::PlaneReplicationData_t data; 
-    pv->GetReplicationData(data.fReplicaAxis, data.fNreplica, 
-        data.fWidth, data.fOffset, data.fConsuming); 
-    auto parameterisation = (SLArPlaneParameterisation*)pv->GetParameterisation(); 
-    data.fReplicaAxisVec = parameterisation->GetReplicationAxisVector(); 
-    data.fStartingPos = parameterisation->GetStartPos(); 
-    data.fWidth = parameterisation->GetSpacing(); 
-    return data;
-  };
+void SLArDetOpDetArray::FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) const {
+  auto sc_array = static_cast<G4PVParameterised*>(fModLV->GetDaughter(0));
+  auto sc_row   = static_cast<G4PVParameterised*>(
+      fSubModules.front()->GetModLV()->GetDaughter(0));
 
-  auto rpl_sc_row = get_replication_data(sc_array); 
-  auto rpl_sc_clm = get_replication_data(sc_row); 
-  auto rot_inv = new G4RotationMatrix(*fRotation); 
-  rot_inv->invert(); 
+  auto rpl_sc_row = get_plane_replication_data(sc_array);
+  auto rpl_sc_clm = get_plane_replication_data(sc_row);
 
-  for (int i_sc_row = 0; i_sc_row<rpl_sc_row.fNreplica; i_sc_row++) {
-    G4ThreeVector pos_sc_row = 
-      rpl_sc_row.fStartingPos + rpl_sc_row.fWidth*i_sc_row*rpl_sc_row.fReplicaAxisVec;
+  auto rot_inv = new G4RotationMatrix(*fRotation);
+  rot_inv->invert();
 
-    for (int i_sc_clm = 0; i_sc_clm < rpl_sc_clm.fNreplica; i_sc_clm++) {
-      G4int sc_id = (i_sc_row+1)*100 + i_sc_clm;
-      G4String scName = Form("%s_%i_%i", 
-          fPhotoDetModel.data(), arrayCfg.GetIdx(), sc_id); 
+  for (int i_sc_row = 0; i_sc_row < rpl_sc_row.fNreplica; ++i_sc_row) {
+    const G4ThreeVector pos_sc_row =
+        rpl_sc_row.fStartingPos
+        + rpl_sc_row.fWidth * i_sc_row * rpl_sc_row.fReplicaAxisVec;
+
+    for (int i_sc_clm = 0; i_sc_clm < rpl_sc_clm.fNreplica; ++i_sc_clm) {
+      const G4int sc_id = (i_sc_row + 1) * 100 + i_sc_clm;
+      const G4String scName =
+          Form("%s_%i_%i", fPhotoDetModel.data(), arrayCfg.GetIdx(), sc_id);
+
       SLArCfgSuperCell scCfg(sc_id);
       scCfg.SetName(scName);
 
-      G4ThreeVector sc_local_pos = pos_sc_row + 
-        rpl_sc_clm.fStartingPos + rpl_sc_clm.fWidth*i_sc_clm*rpl_sc_clm.fReplicaAxisVec;
-      scCfg.SetX(sc_local_pos.x()); 
-      scCfg.SetY(sc_local_pos.y()); 
-      scCfg.SetZ(sc_local_pos.z()); 
+      G4ThreeVector sc_local_pos =
+          pos_sc_row
+          + rpl_sc_clm.fStartingPos
+          + rpl_sc_clm.fWidth * i_sc_clm * rpl_sc_clm.fReplicaAxisVec;
 
-      G4ThreeVector sc_abs_pos = fGlobalPosition + sc_local_pos.transform(*rot_inv); 
+      scCfg.SetX(sc_local_pos.x());
+      scCfg.SetY(sc_local_pos.y());
+      scCfg.SetZ(sc_local_pos.z());
+ 
+      G4ThreeVector sc_abs_pos = fGlobalPosition + sc_local_pos.transform(*rot_inv);
+      scCfg.SetPhysX(sc_abs_pos.x());
+      scCfg.SetPhysY(sc_abs_pos.y());
+      scCfg.SetPhysZ(sc_abs_pos.z());
+ 
+      scCfg.SetPhi  (arrayCfg.GetPhi());
+      scCfg.SetTheta(arrayCfg.GetTheta());
+      scCfg.SetPsi  (arrayCfg.GetPsi());
+      scCfg.SetNormal(arrayCfg.GetNormal());
+      scCfg.SetupAxes();
 
-      scCfg.SetPhysX( sc_abs_pos.x() ); 
-      scCfg.SetPhysY( sc_abs_pos.y() ); 
-      scCfg.SetPhysZ( sc_abs_pos.z() ); 
+      const auto* scBox = static_cast<const G4Box*>(fOpDetModuleBase->GetModSV());
+      scCfg.SetSize(2 * scBox->GetXHalfLength(),
+                    2 * scBox->GetYHalfLength(),
+                    2 * scBox->GetZHalfLength());
 
-      scCfg.SetPhi( arrayCfg.GetPhi() ); 
-      scCfg.SetTheta( arrayCfg.GetTheta() ); 
-      scCfg.SetPsi( arrayCfg.GetPsi() ); 
-
-      scCfg.SetNormal( arrayCfg.GetNormal() ); 
-      scCfg.SetupAxes(); 
-
-      const auto scBox = (G4Box*)fOpDetModuleBase->GetModSV();
-      scCfg.SetSize( 2*scBox->GetXHalfLength(),
-                     2*scBox->GetYHalfLength(), 
-                     2*scBox->GetZHalfLength() ); 
-
-      arrayCfg.RegisterElement( scCfg );
+      arrayCfg.RegisterElement(scCfg);
     }
   }
+}
 
-  return arrayCfg;
+ 
+
+void SLArDetOpDetArray::FillCfgExplicit(SLArCfgSuperCellArray& arrayCfg) const {
+  if (!fOpDetModuleBase) {
+    G4Exception("SLArDetOpDetArray::FillCfgExplicit", "ConfigError010",
+        FatalException,
+        "fOpDetModuleBase is null. Call BuildOpDetArray() before BuildOpDetArrayCfg().");
+  }
+
+  auto rot_inv = new G4RotationMatrix(*fRotation);
+  rot_inv->invert();
+
+  const auto* scBox = static_cast<const G4Box*>(fOpDetModuleBase->GetModSV());
+  const G4double sx = 2 * scBox->GetXHalfLength();
+  const G4double sy = 2 * scBox->GetYHalfLength();
+  const G4double sz = 2 * scBox->GetZHalfLength();
+
+  for (const SExplicitOpDetPos& entry : fExplicitPositions) {
+    const G4String scName =
+        Form("%s_%i_%i", fPhotoDetModel.data(), arrayCfg.GetIdx(), entry.id);
+
+    SLArCfgSuperCell scCfg(entry.id);
+    scCfg.SetName(scName);
+ 
+    // Local position (in the array frame)
+    scCfg.SetX(entry.position.x());
+    scCfg.SetY(entry.position.y());
+    scCfg.SetZ(entry.position.z());
+
+    // Absolute (world-frame) position: rotate local → world, then offset by
+    // the array's global anchor point
+    G4ThreeVector local_copy = entry.position;
+    const G4ThreeVector sc_abs_pos = fGlobalPosition + local_copy.transform(*rot_inv);
+    scCfg.SetPhysX(sc_abs_pos.x());
+    scCfg.SetPhysY(sc_abs_pos.y());
+    scCfg.SetPhysZ(sc_abs_pos.z());
+
+    // All detectors in one array share the same orientation and normal
+    scCfg.SetPhi  (arrayCfg.GetPhi());
+    scCfg.SetTheta(arrayCfg.GetTheta());
+    scCfg.SetPsi  (arrayCfg.GetPsi());
+    scCfg.SetNormal(arrayCfg.GetNormal());
+    scCfg.SetupAxes();
+    scCfg.SetSize(sx, sy, sz);
+
+    arrayCfg.RegisterElement(scCfg);
+  }
 }

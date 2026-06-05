@@ -17,6 +17,19 @@ class SLArCfgSuperCellArray;
 
 class SLArDetOpDetArray : public SLArBaseDetModule {
   public:
+    /// Selects how optical detectors are placed inside the array volume.
+    /// kParameterised: uses G4PVParameterised driven by SLArPlaneParameterisation
+    ///                 objects read from the "replication_data" JSON field.
+    /// kExplicit:      places each detector individually via G4PVPlacement at
+    ///                 coordinates provided in the "opdet_positions" JSON field.
+    enum class EPlacementMode { kParameterised = 0, kExplicit = 1 };
+    //! Single entry of the explicit-position list parsed from JSON.
+    struct SExplicitOpDetPos {
+      G4int         id;       //!< Copy number / detector identifier
+      G4ThreeVector position; //!< Position in the array-local frame [Geant4 length units]
+    };
+
+
     SLArDetOpDetArray(); 
     ~SLArDetOpDetArray(); 
     
@@ -36,6 +49,19 @@ class SLArDetOpDetArray : public SLArBaseDetModule {
 
   private:
     std::pair<int, G4double> ComputeArrayTrueLength(G4double width, G4double spacing, G4double max_len);
+    //! Build the array by placing each optical detector individually at the
+    //! coordinates stored in fExplicitPositions.
+    void BuildOpDetArrayExplicit(SLArOpticalDetector* opdet);
+
+    //! Build the array using G4PVParameterised, with replication parameters 
+    //! stored in SLArPlaneParameterisation objects in fParameterisation.
+    void BuildOpDetArrayParameterised(SLArOpticalDetector* opdet);
+
+    //! Fill the SLArCfgSuperCellArray for the parameterised placement mode.
+    void FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) const;
+
+    //! Fill the SLArCfgSuperCellArray for the explicit placement mode.
+    void FillCfgExplicit(SLArCfgSuperCellArray& arrayCfg) const;
 
     G4int fTPCID; 
     SLArMaterial* fMaterialBase;
@@ -45,8 +71,10 @@ class SLArDetOpDetArray : public SLArBaseDetModule {
     G4ThreeVector fNormal;
     G4RotationMatrix* fRotation;
     G4String fPhotoDetModel;
+    EPlacementMode fPlacementMode = EPlacementMode::kParameterised;
     std::vector<SLArPlaneParameterisation*> fParameterisation; 
     std::vector<SLArBaseDetModule*> fSubModules;
+    std::vector<SExplicitOpDetPos> fExplicitPositions;
 
 }; 
 
