@@ -16,6 +16,10 @@
 #include "G4RunManager.hh"
 #include "G4ProductionCutsTable.hh"
 
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/prettywriter.h"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -95,7 +99,7 @@ void SLArRunAction::BeginOfRunAction(const G4Run* aRun)
          << ", Y: " << volume_found->dimension->y() 
          << ", Z: " << volume_found->dimension->z() 
          << G4endl;
-  /*G4cout << "Volume position: "
+  G4cout << "Volume position: "
          << "X: " << volume_found->position->x() 
          << ", Y: " << volume_found->position->y() 
          << ", Z: " << volume_found->position->z() 
@@ -173,7 +177,41 @@ void SLArRunAction::EndOfRunAction(const G4Run* aRun)
   auto RunMngr = G4RunManager::GetRunManager(); 
   auto SLArDetConstr = 
     (SLArDetectorConstruction*)RunMngr->GetUserDetectorConstruction(); 
-  SLArAnaMgr->WriteCfgFile("geometry", SLArDetConstr->GetGeometryCfgFile().c_str());
+  
+  // open geometry configuration file
+  FILE* geo_cfg_file = std::fopen(SLArDetConstr->GetGeometryCfgFile(), "r");
+  if (geo_cfg_file == nullptr) {
+    G4ExceptionDescription ed;
+    ed  << "Unable to open geometry configuration file " 
+        << SLArDetConstr->GetGeometryCfgFile() << " for reading.";
+    G4Exception("SLArRunAction::EndOfRunAction()", "SLArRunAction001", JustWarning, ed);
+  }
+  char readBuffer[65536];
+  rapidjson::FileReadStream is(geo_cfg_file, readBuffer, sizeof(readBuffer));
+
+  rapidjson::Document d;
+  d.ParseStream<rapidjson::kParseCommentsFlag>(is);
+
+  rapidjson::Document d_target = SLArDetConstr->ExportLArTargetConfig(); 
+
+  if (d.HasMember("LArTarget")) {
+    auto& lar_target = d["LArTarget"];
+    lar_target.GetObject().RemoveAllMembers();
+    for (auto& m : d_target.GetObject()) {
+      lar_target.AddMember(m.name, m.value, d.GetAllocator());
+    }
+  }
+  else {
+    d.AddMember("LArTarget", d_target, d.GetAllocator());
+  }
+
+  rapidjson::StringBuffer buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+  d.Accept(writer);
+
+  SLArAnaMgr->WriteCfg("geometry", buffer.GetString());
+  fclose(geo_cfg_file);
+
   SLArAnaMgr->WriteCfgFile("materials", SLArDetConstr->GetMaterialCfgFile().c_str());
 
   auto SLArGen = (gen::SLArPrimaryGeneratorAction*)RunMngr->GetUserPrimaryGeneratorAction(); 
