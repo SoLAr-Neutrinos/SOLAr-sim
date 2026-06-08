@@ -95,15 +95,21 @@ int TChannelAnalyzer::record_hit(const Int_t& pix_bin, const UInt_t& q, const UI
     TVector3 hit_phys = pad_anode_phys ;
     TVector3 drift_coordinate = fDriftVelocity * hit.time * (*fDriftDirection);
     TVector3 hit_coordinates = hit_phys + drift_coordinate;
+    TVector3 hit_coordinates_rot = hit_coordinates.Transform(*fRotInv);
+
+    //printf("rotation: %.2f, %.2f, %.2f\n", fRotInv->GetXPhi(), fRotInv->GetXTheta(), fRotInv->GetXPsi());
+    //printf("hit_coordinates: %.2f, %.2f, %.2f mm\n", hit_coordinates.x(), hit_coordinates.y(), hit_coordinates.z());
+    //printf("hit_coordinates_rot: %.2f, %.2f, %.2f mm\n", hit_coordinates_rot.x(), hit_coordinates_rot.y(), hit_coordinates_rot.z());
+    //getchar();
     
     //printf("trigger_t: %i -> drift coordinates: (%g, %g, %g) mm\n", 
         //trigger_t*fClockUnit, drift_coordinate.x(), drift_coordinate.y(), drift_coordinate.z());
     //printf("hit coordinates: %.2f, %.2f, %.2f mm\n\n", hit_coordinates.x(), hit_coordinates.y(), hit_coordinates.z()); 
     //getchar();
 
-    hit.x = hit_coordinates.x(); 
-    hit.y = hit_coordinates.y(); 
-    hit.z = hit_coordinates.z(); 
+    hit.x = hit_coordinates_rot.x(); 
+    hit.y = hit_coordinates_rot.y(); 
+    hit.z = hit_coordinates_rot.z(); 
     hit.charge_true = q;
     hit.charge_reco = q + gRandom->Gaus(0, fChannelPedestalRMS); 
     hit.tpc_id = fTPCID;

@@ -21,9 +21,13 @@
 #include "TEveEventManager.h"
 #include "TEveViewer.h"
 #include "TEveFrameBox.h"
+#include "TEveGeoShape.h"
 #include "TEveTrack.h"
 #include "Math/Vector3D.h"
+#include "Math/Point3D.h"
+#include "Math/EulerAngles.h"
 #include "TTimer.h"
+#include "TGeoManager.h"
 
 #include "memory"
 #include "rapidjson/document.h"
@@ -39,16 +43,51 @@
 #include "config/SLArCfgBaseSystem.hh"
 
 namespace display {
+  enum class EVolShape { kBox, kTub };
+
+  inline EVolShape string_to_vol_shape(const std::string& shape_str) {
+    if (shape_str == "box") {
+      return EVolShape::kBox;
+    } else if (shape_str == "tub") {
+      return EVolShape::kTub;
+    } else {
+      throw std::invalid_argument("Unknown volume shape: " + shape_str);
+    }
+  }
+
+  inline TString vol_shape_to_string(const EVolShape shape) {
+    switch (shape) {
+      case EVolShape::kBox: return "box";
+      case EVolShape::kTub: return "tub";
+      default: return "unknown";
+    }
+  }
 
   /**
    * @class GeoTPC_t
    * @brief Basic geometry attributes of TPC volume
    */
   struct GeoTPC_t {
-    std::unique_ptr<TEveFrameBox> fVolume;
+    std::unique_ptr<TEveGeoShape> fVolume = {};
     ROOT::Math::XYZVectorD fPosition = {};
     ROOT::Math::XYZVectorD fDimension = {};
+    EVolShape fShape = EVolShape::kBox;
+    Double_t fRadius = 0; // for cylindrical TPCs
+    Double_t fHeight = 0; // for cylindrical TPCs
     Int_t fID = {};
+    TGeoCombiTrans* fTransform = nullptr; // for hierarchical placement
+  };
+
+
+  struct GeoLArTarget_t {
+    std::unique_ptr<TEveGeoShape> fVolume;
+    ROOT::Math::XYZVectorD fPosition = {};
+    ROOT::Math::XYZVectorD fDimension = {};
+    ROOT::Math::EulerAngles fRotation = {};
+    EVolShape fShape = EVolShape::kBox;
+    double fRadius = 0; // for cylinder
+    double fHeight = 0; // for cylinder
+    TGeoCombiTrans* fTransform = nullptr; // for hierarchical placement
   };
 
   struct MCParticleSelector_t {
@@ -157,6 +196,7 @@ namespace display {
       std::unique_ptr<TEveRGBAPalette> fPaletteQHits = {};
       std::unique_ptr<TEveRGBAPalette> fPaletteOpHits = {};
       std::vector<GeoTPC_t> fTPCs;
+      GeoLArTarget_t fLArTarget;
 
       Long64_t  fCurEvent = {};
       Long64_t  fLastEvent = {};
@@ -180,6 +220,12 @@ namespace display {
       std::map<TString, MCParticleSelector_t> fParticleSelector; 
 
       void ConfigureTPC(const rapidjson::Value& tpc_config);
+
+      void MakeTPCBox(const rapidjson::Value& tpc_config, GeoTPC_t& geo_tpc);
+
+      void MakeTPCTub(const rapidjson::Value& tpc_config, GeoTPC_t& geo_tpc);
+
+      void ConfigureLArTarget(const rapidjson::Value& target_config);
 
       inline Int_t GetTPCindex(const Int_t itpc) {
         Int_t index = 0;

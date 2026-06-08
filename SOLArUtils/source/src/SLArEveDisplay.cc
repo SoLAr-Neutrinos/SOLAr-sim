@@ -11,6 +11,7 @@
 #include "geo/SLArUnit.hpp"
 #include "event/SLArMCPrimaryInfo.hh"
 #include "event/SLArEventTrajectory.hh"
+#include "core/SLArDebugUtils.hh"
 
 #include "Math/EulerAngles.h"
 
@@ -21,10 +22,13 @@
 #include "TEveTrackPropagator.h"
 #include "TEvePathMark.h"
 #include "TEveVector.h"
+#include "TEveTrans.h"
 #include "TEveFrameBox.h"
 #include "TEveRGBAPalette.h"
 #include "TRootBrowser.h"
 #include "TEveBrowser.h"
+#include "TGeoBBox.h"
+#include "TGeoTube.h"
 
 #include "TGTab.h"
 #include "TGButton.h"
@@ -35,6 +39,7 @@
 #include "TSystem.h"
 
 #include "TStyle.h"
+#include <RtypesCore.h>
 
 ClassImp(display::SLArEveDisplay)
 
@@ -168,6 +173,7 @@ namespace display {
 
         fPhotonDetectors.emplace( tpc_id, std::make_unique<TEveBoxSet>(name, titl) );
         fPhotonDetectors.at(tpc_id)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+        fLArTarget.fVolume->AddElement( fPhotonDetectors.at(tpc_id).get() );
         printf("addbing box set with key %i\n", tpc_id);
       }
       else if ( strcmp(key->GetClassName(), "SLArCfgBaseSystem<SLArCfgSuperCellArray>") == 0) 
@@ -181,6 +187,7 @@ namespace display {
           const TString titl = Form("XA wall %i optical hits", wall_cfg_itr.first);
           fPhotonDetectors.emplace(wall_cfg_itr.first, std::make_unique<TEveBoxSet>(name, titl));
           fPhotonDetectors.at(wall_cfg_itr.first)->Reset(TEveBoxSet::kBT_AABox, false, 100);
+          fLArTarget.fVolume->AddElement( fPhotonDetectors.at(wall_cfg_itr.first).get() );
           printf("addbing box set with key %i\n", wall_cfg_itr.first);
         }
       }
@@ -190,36 +197,127 @@ namespace display {
   }
 
   void SLArEveDisplay::Configure(const rapidjson::Value& config) {
+    if ( config.HasMember("LArTarget") && config["LArTarget"].IsObject() ) {
+      try { ConfigureLArTarget( config["LArTarget"] ); }
+      catch (const std::exception& e) {
+        printf("Error configuring LAr target: %s\n", e.what());
+        exit( EXIT_FAILURE );
+      }
+    }
 
-    assert( config.HasMember("TPC") ); 
+    debug::require_json_member(config, "TPC");
     if ( config["TPC"].IsObject() ) {
-      ConfigureTPC( config["TPC"] );
+      try {ConfigureTPC( config["TPC"] );} 
+      catch (const std::exception& e) {
+        printf("Error configuring TPC: %s\n", e.what());
+        exit( EXIT_FAILURE );
+      }
     }
     else if (config["TPC"].IsArray()) {
       for (const auto& jtpc : config["TPC"].GetArray()) {
-        ConfigureTPC( jtpc );
+        try { ConfigureTPC( jtpc ); }
+        catch (const std::exception& e) {
+          printf("Error configuring TPC: %s\n", e.what());
+          exit( EXIT_FAILURE );
+        }
       }
     }
 
     return;
   }
 
-  void SLArEveDisplay::ConfigureTPC(const rapidjson::Value& tpc_config) {
+  void SLArEveDisplay::ConfigureLArTarget(const rapidjson::Value& lar_config) {
+    debug::require_json_member(lar_config, "shape");
+    debug::require_json_member(lar_config, "dimensions");
+    debug::require_json_member(lar_config, "position");
+    debug::require_json_member(lar_config, "rot");
 
-    assert( tpc_config.HasMember("copyID") );
-    assert( tpc_config.HasMember("position") ); 
-    assert( tpc_config.HasMember("dimensions") ); 
+    fLArTarget.fShape = string_to_vol_shape(lar_config["shape"].GetString());
 
-    GeoTPC_t geo_tpc;
+    // Position
+    const auto& jpos = lar_config["position"].GetObj();
+    double pos_unit = (jpos.HasMember("unit")) ? unit::Unit2Val(jpos["unit"]) : 1.0;
+    fLArTarget.fPosition.SetX(jpos["xyz"].GetArray()[0].GetDouble() * pos_unit);
+    fLArTarget.fPosition.SetY(jpos["xyz"].GetArray()[1].GetDouble() * pos_unit);
+    fLArTarget.fPosition.SetZ(jpos["xyz"].GetArray()[2].GetDouble() * pos_unit);
 
-    geo_tpc.fID = tpc_config["copyID"].GetInt();
+    // Dimensions
+    const auto& jdims = lar_config["dimensions"];
+    debug::require_json_type(jdims, rapidjson::kArrayType);
+    if (fLArTarget.fShape == EVolShape::kBox) {
+      debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "size_x");
+      debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "size_y");
+      debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "size_z");
+      for (const auto& jdim : jdims.GetArray()) {
+        Double_t d = unit::ParseJsonVal(jdim); 
+        TString var_name = jdim["name"].GetString();
+        if      ( var_name == "size_x")  fLArTarget.fDimension.SetX( d ); 
+        else if ( var_name == "size_y")  fLArTarget.fDimension.SetY( d ); 
+        else if ( var_name == "size_z")  fLArTarget.fDimension.SetZ( d ); 
+      }
+    } else if (fLArTarget.fShape == EVolShape::kTub) {
+      debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "radius");
+      debug::require_json_object_in_array(jdims, "name", rapidjson::kStringType, "length");
+      for (const auto& jdim : jdims.GetArray()) {
+        Double_t d = unit::ParseJsonVal(jdim);
+        TString var_name = jdim["name"].GetString();
+        if      ( var_name == "radius")  fLArTarget.fRadius = d; 
+        else if ( var_name == "length")  fLArTarget.fHeight = d;
+      }
+    }
 
-    const auto& jpos = tpc_config["position"].GetObj(); 
-    double pos_unit = unit::Unit2Val( jpos["unit"] );
-    geo_tpc.fPosition.SetX( jpos["xyz"].GetArray()[0].GetDouble() * pos_unit ); 
-    geo_tpc.fPosition.SetY( jpos["xyz"].GetArray()[1].GetDouble() * pos_unit ); 
-    geo_tpc.fPosition.SetZ( jpos["xyz"].GetArray()[2].GetDouble() * pos_unit ); 
+    // Rotation
+    const auto& jrot = lar_config["rot"].GetObj();
+    debug::require_json_member(jrot, "val");
+    debug::require_json_type(jrot["val"], rapidjson::kArrayType);
+    double rot_unit = (jrot.HasMember("unit")) ? unit::Unit2Val(jrot["unit"]) : 1.0;
+    auto euler = jrot["val"].GetArray();
+    fLArTarget.fRotation = ROOT::Math::EulerAngles(
+        euler[0].GetDouble() * rot_unit,
+        euler[1].GetDouble() * rot_unit,
+        euler[2].GetDouble() * rot_unit
+        );
 
+    // Create TGeo shape and transformation
+    TGeoShape* shape = nullptr;
+    if (fLArTarget.fShape == EVolShape::kBox) {
+      shape = new TGeoBBox("lar_box",
+          0.5 * fLArTarget.fDimension.x(),
+          0.5 * fLArTarget.fDimension.y(),
+          0.5 * fLArTarget.fDimension.z());
+    } else if (fLArTarget.fShape == EVolShape::kTub) {
+      shape = new TGeoTube("lar_cyl", 0, fLArTarget.fRadius, 0.5 * fLArTarget.fHeight);
+    }
+
+    // Euler angles to rotation matrix
+    TGeoRotation* rot = new TGeoRotation();
+    rot->SetAngles(
+        fLArTarget.fRotation.Phi() * TMath::RadToDeg(),
+        fLArTarget.fRotation.Theta() * TMath::RadToDeg(),
+        fLArTarget.fRotation.Psi() * TMath::RadToDeg()
+        );
+    fLArTarget.fTransform = new TGeoCombiTrans(
+        fLArTarget.fPosition.x(), fLArTarget.fPosition.y(), fLArTarget.fPosition.z(), rot);
+
+    // Create TEveGeoShape and apply transformation
+    fLArTarget.fVolume = std::make_unique<TEveGeoShape>("LArTarget");
+    fLArTarget.fVolume->SetShape(shape);
+    fLArTarget.fVolume->SetMainColor(kGray+1);
+    fLArTarget.fVolume->SetTransMatrix( *fLArTarget.fTransform );
+    fLArTarget.fVolume->SetPickable(kTRUE);
+    fLArTarget.fVolume->SetDrawFrame(kTRUE);
+    fLArTarget.fVolume->SetMainTransparency( 80 );
+    fEveManager->AddElement(fLArTarget.fVolume.get());
+
+    fXmin = fLArTarget.fPosition.x() - 0.7*fLArTarget.fDimension.x();
+    fXmax = fLArTarget.fPosition.x() + 0.7*fLArTarget.fDimension.x();
+    fYmin = fLArTarget.fPosition.y() - 0.7*fLArTarget.fDimension.y();
+    fYmax = fLArTarget.fPosition.y() + 0.7*fLArTarget.fDimension.y();
+    fZmin = fLArTarget.fPosition.z() - 0.7*fLArTarget.fDimension.z();
+    fZmax = fLArTarget.fPosition.z() + 0.7*fLArTarget.fDimension.z();
+  }
+
+  void SLArEveDisplay::MakeTPCBox(const rapidjson::Value& tpc_config, GeoTPC_t& geo_tpc) {
     const auto& jdims = tpc_config["dimensions"].GetArray(); 
     for (const auto& jdim : jdims) {
       TString var_name = jdim["name"].GetString();
@@ -228,51 +326,80 @@ namespace display {
       else if ( var_name == "tpc_z") geo_tpc.fDimension.SetZ(unit::ParseJsonVal( jdim )); 
     }
 
-    geo_tpc.fVolume = std::make_unique<TEveFrameBox>();
-    geo_tpc.fVolume->SetAABoxCenterHalfSize( 
-        geo_tpc.fPosition.x(), geo_tpc.fPosition.y(), geo_tpc.fPosition.z(), 
-        0.5*geo_tpc.fDimension.x(), 0.5*geo_tpc.fDimension.y(), 0.5*geo_tpc.fDimension.z()); 
-    geo_tpc.fVolume->SetFrameColor( kGray+2 ); 
+    geo_tpc.fVolume = std::make_unique<TEveGeoShape>( Form("TPC%i", geo_tpc.fID) );
+    geo_tpc.fVolume->SetShape( new TGeoBBox(
+          0.5*geo_tpc.fDimension.x(), 0.5*geo_tpc.fDimension.y(), 0.5*geo_tpc.fDimension.z()) );
+
+    return;
+  }
+
+  void SLArEveDisplay::MakeTPCTub(const rapidjson::Value& tpc_config, GeoTPC_t& geo_tpc) {
+    const auto& jdims = tpc_config["dimensions"].GetArray();
+    for (const auto& jdim : jdims) {
+      TString var_name = jdim["name"].GetString();
+      if ( var_name == "tpc_radius" ) geo_tpc.fRadius = unit::ParseJsonVal( jdim ); 
+      else if ( var_name == "tpc_height" ) geo_tpc.fHeight = unit::ParseJsonVal( jdim );
+    }
+
+    geo_tpc.fVolume = std::make_unique<TEveGeoShape>( Form("TPC%i", geo_tpc.fID) );
+    geo_tpc.fVolume->SetShape( new TGeoTube(0, geo_tpc.fRadius, 0.5*geo_tpc.fHeight) );
+    return;
+  }
+
+  void SLArEveDisplay::ConfigureTPC(const rapidjson::Value& tpc_config) {
+
+    debug::require_json_member(tpc_config, "copyID");
+    debug::require_json_member(tpc_config, "position"); 
+    debug::require_json_member(tpc_config, "dimensions"); 
+    debug::require_json_type( tpc_config["dimensions"], rapidjson::kArrayType );
+
+    GeoTPC_t geo_tpc;
+
+    if ( tpc_config.HasMember("shape") ) {
+      geo_tpc.fShape = string_to_vol_shape( tpc_config["shape"].GetString() );
+    }
+    geo_tpc.fID = tpc_config["copyID"].GetInt();
+
+    if (geo_tpc.fShape == EVolShape::kBox) {
+      MakeTPCBox( tpc_config, geo_tpc );
+    }
+    else if (geo_tpc.fShape == EVolShape::kTub) {
+      MakeTPCTub( tpc_config, geo_tpc );
+    }
+    else {
+      throw std::invalid_argument( 
+          Form("Unknown TPC shape: %s", tpc_config["shape"].GetString()) );
+    }
+
+    const auto& jpos = tpc_config["position"].GetObj(); 
+    double pos_unit = unit::Unit2Val( jpos["unit"] );
+    geo_tpc.fPosition.SetX( jpos["xyz"].GetArray()[0].GetDouble() * pos_unit ); 
+    geo_tpc.fPosition.SetY( jpos["xyz"].GetArray()[1].GetDouble() * pos_unit ); 
+    geo_tpc.fPosition.SetZ( jpos["xyz"].GetArray()[2].GetDouble() * pos_unit ); 
+
+    geo_tpc.fVolume->SetMainColor( kGray+2 ); 
+    geo_tpc.fVolume->SetMainTransparency( 90 ); 
+  
     //printf("Adding TPC at (%.2f %.2f, %.2f) with size (%.2f %.2f, %.2f)\n\n", 
         //geo_tpc.fPosition.x(), geo_tpc.fPosition.y(), geo_tpc.fPosition.z(), 
         //0.5*geo_tpc.fDimension.x(), 0.5*geo_tpc.fDimension.y(), 0.5*geo_tpc.fDimension.z()); 
 
-    auto diff = geo_tpc.fPosition - 0.5*geo_tpc.fDimension;
-    auto sum  = geo_tpc.fPosition + 0.5*geo_tpc.fDimension;
 
-    if (diff.x() < fXmin) {
-      if (diff.x() < 0 ) fXmin = 1.3*(diff.x());
-      else               fXmin = 0.7*(diff.x());
-    } 
-    if (diff.y() < fYmin) {
-      if (diff.y() < 0 ) fYmin = 1.3*(diff.y());
-      else               fYmin = 0.7*(diff.y());
-    } 
-    if (diff.z() < fZmin) {
-      if (diff.z() < 0 ) fZmin = 1.3*(diff.z());
-      else               fZmin = 0.7*(diff.z());
-    } 
-
-    if (sum.x() < fXmax) {
-      if (sum.x() < 0 ) fXmax = 1.3*(sum.x());
-      else              fXmax = 0.7*(sum.x());
-    } 
-    if (sum.y() < fYmax) {
-      if (sum.y() < 0 ) fYmax = 1.3*(sum.y());
-      else              fYmax = 0.7*(sum.y());
-    } 
-    if (sum.z() < fZmax) {
-      if (sum.z() < 0 ) fZmax = 1.3*(sum.z());
-      else              fZmax = 0.7*(sum.z());
-    } 
-
-    fTPCs.push_back( std::move(geo_tpc) ); 
+    // Create a TGeoCombiTrans for the TPC position (relative to detector)
+    geo_tpc.fTransform = new TGeoCombiTrans(
+        geo_tpc.fPosition.x(), geo_tpc.fPosition.y(), geo_tpc.fPosition.z(), fLArTarget.fTransform->GetRotation() );
 
     auto hit_set = std::make_unique<TEveBoxSet>();
     hit_set->SetNameTitle(Form("hitsTPC%i", geo_tpc.fID), Form("TPC %i hits", geo_tpc.fID));
 
-    fEveManager->AddElement( hit_set.get() ); 
     fHitSet.push_back( std::move(hit_set) ); 
+    geo_tpc.fVolume->SetTransMatrix( *geo_tpc.fTransform );
+    geo_tpc.fVolume->AddElement( fHitSet.back().get() );
+
+    // Add TPC as child of detector volume
+    fLArTarget.fVolume->AddElement(geo_tpc.fVolume.get());
+
+    fTPCs.push_back( std::move(geo_tpc) ); 
 
     return;
   }
@@ -281,20 +408,23 @@ namespace display {
     auto top = fEveManager->GetCurrentEvent();
 
     size_t i = 0; 
-    for (auto& hitset : fHitSet) {
-      hitset->SetFrame( fTPCs.at(i).fVolume.get() );
-      i++;
-    }
-
-    for (auto& track_list : fTrackLists) {
-      fEveManager->AddElement( track_list.get() );
-    }
-
-    for (auto& ophit_set : fPhotonDetectors) {
-      fEveManager->AddElement( ophit_set.second.get() ); 
-    }
-
-    fEveManager->GetEditor(); 
+/*
+ *    for (auto& hitset : fHitSet) {
+ *      hitset->SetFrame( fTPCs.at(i).fVolume.get() );
+ *      i++;
+ *    }
+ *
+ *    for (auto& track_list : fTrackLists) {
+ *      fEveManager->AddElement( track_list.get() );
+ *    }
+ *
+ *    for (auto& ophit_set : fPhotonDetectors) {
+ *      fEveManager->AddElement( ophit_set.second.get() ); 
+ *    }
+ *    
+ *    fEveManager->GetEditor(); 
+ *
+ */
 
     fEveManager->Redraw3D( false, true ); 
 
@@ -303,14 +433,29 @@ namespace display {
 
   int SLArEveDisplay::ReadHits() {
     fHitTree->GetEntry( fCurEvent );
-
     float q_max = 0;
-    
+    Double_t xtpc[3] = {};
+    Double_t xlar[3] = {};
+    Double_t xglob[3] = {};
+
     for (size_t ihit = 0; ihit < fHitVars.hit_tpc->size(); ihit++) {
       int tpc_idx = GetTPCindex( fHitVars.hit_tpc->at(ihit) ); 
-      fHitSet.at(tpc_idx)->AddBox( 
-          fHitVars.hit_x->at(ihit), fHitVars.hit_y->at(ihit), fHitVars.hit_z->at(ihit) ); 
+      xtpc[0] = fHitVars.hit_x->at(ihit);
+      xtpc[1] = fHitVars.hit_y->at(ihit);
+      xtpc[2] = fHitVars.hit_z->at(ihit);
+      const double* tpc_pos = fTPCs.at(tpc_idx).fTransform->GetTranslation();
+      xlar[0] = xtpc[0] - tpc_pos[0];
+      xlar[1] = xtpc[1] - tpc_pos[1];
+      xlar[2] = xtpc[2] - tpc_pos[2];
+
+      fLArTarget.fTransform->LocalToMaster(xlar, xglob);
+      fHitSet.at(tpc_idx)->AddBox( xglob[0], xglob[1], xglob[2] ); 
       fHitSet.at(tpc_idx)->DigitValue( fHitVars.hit_q->at(ihit) ); 
+      printf("xtpc: (%.2f, %.2f, %.2f) -> xlar: (%.2f, %.2f, %.2f) -> xglob: (%.2f, %.2f, %.2f) with q = %g\n", 
+          xtpc[0], xtpc[1], xtpc[2], 
+          xlar[0], xlar[1], xlar[2], 
+          xglob[0], xglob[1], xglob[2], 
+          fHitVars.hit_q->at(ihit));
       //printf("adding hit at (%.2f, %.2f, %.2f mm) with q = %g\n", 
           //fHitVars.hit_x->at(ihit), fHitVars.hit_y->at(ihit), fHitVars.hit_z->at(ihit), 
           //fHitVars.hit_q->at(ihit));
@@ -327,7 +472,6 @@ namespace display {
       hitset->SetDefHeight(4.0); 
       hitset->SetPalette( fPaletteQHits.get() ); 
     }
-
 
     return 0;
   }
@@ -356,6 +500,9 @@ namespace display {
     const auto& cfg_wall = fCfgPDS->GetBaseElement(idx_array); 
     const ROOT::Math::EulerAngles rot( cfg_wall.GetPhi(), cfg_wall.GetTheta(), cfg_wall.GetPsi() ); 
     const ROOT::Math::EulerAngles rrot = rot.Inverse();
+    Double_t xlar[3] = {};
+    Double_t xglob[3] = {};
+    Double_t xsize[3] = {};
 
     auto& hitset = fPhotonDetectors.at(idx_array);
 
@@ -374,16 +521,21 @@ namespace display {
       const ROOT::Math::XYZVectorD size = {cfg_xa.GetSizeX(), cfg_xa.GetSizeY(), cfg_xa.GetSizeZ()}; 
       ROOT::Math::XYZVectorD size_rot = rrot*size;
       size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) ); 
+      size_rot.GetCoordinates( xlar ); 
+      fLArTarget.fTransform->LocalToMaster(xlar, xsize);
       const ROOT::Math::XYZVectorD pos_center = pos - 0.5*size_rot;
+      pos_center.GetCoordinates( xlar );
+      fLArTarget.fTransform->LocalToMaster(xlar, xglob);
       printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", idx_array,
-          pos.x(), pos.y(), pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
+          xglob[0], xglob[1], xglob[2], xsize[0], xsize[1], xsize[2], nhit);
 
-      hitset->AddBox(pos_center.x(), pos_center.y(), pos_center.z(), size_rot.x(), size_rot.y(), size_rot.z());
+      hitset->AddBox(xglob[0], xglob[1], xglob[2], xsize[0], xsize[1], xsize[2] );
       hitset->DigitValue( nhit );
     }
     hitset->RefitPlex(); 
     hitset->SetPickable(1);
     hitset->SetAlwaysSecSelect(1);
+
 
     return nhit_max;
   }
@@ -396,6 +548,11 @@ namespace display {
 
     const ROOT::Math::EulerAngles rot(cfg_anode->GetPhi(), cfg_anode->GetTheta(), cfg_anode->GetPsi()); 
     const ROOT::Math::EulerAngles rrot = rot.Inverse();
+
+    const ROOT::Math::EulerAngles lar_rot = fLArTarget.fRotation.Inverse();
+
+    Double_t xlar[3] = {};
+    Double_t xglob[3] = {};
 
     for (const auto& ev_mt_itr : ev_anode.GetConstMegaTilesMap()) {
       const auto& idx_mt = ev_mt_itr.first;
@@ -418,16 +575,30 @@ namespace display {
         int nhit = ev_t.GetNhits();
         if (nhit > nhit_max) nhit_max = nhit;
 
-        const ROOT::Math::XYZVectorD t_pos = {cfg_t.GetPhysX(), cfg_t.GetPhysY(), cfg_t.GetPhysZ() }; 
-        const ROOT::Math::XYZVectorD& tpc_pos = fTPCs[tpc_index].fPosition;
         const ROOT::Math::XYZVectorD t_size = {cfg_t.GetSizeX(), cfg_t.GetSizeY(), cfg_t.GetSizeZ()}; 
         ROOT::Math::XYZVectorD size_rot = rrot*t_size;
-        size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) ); 
-        const ROOT::Math::XYZVectorD world_pos = tpc_pos + t_pos - 0.5*size_rot;
-        //printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", tpc_id,
-            //world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), size_rot.y(), size_rot.z(), nhit);
+        size_rot.SetXYZ( fabs(size_rot.x()), fabs(size_rot.y()), fabs(size_rot.z()) );
+        ROOT::Math::XYZVectorD size_rot_lar = lar_rot*size_rot;
+        size_rot_lar.SetXYZ( fabs(size_rot_lar.x()), fabs(size_rot_lar.y()), fabs(size_rot_lar.z()) );
+
+        const ROOT::Math::XYZVectorD t_pos = {cfg_t.GetPhysX(), cfg_t.GetPhysY(), cfg_t.GetPhysZ() }; 
+        const ROOT::Math::XYZVectorD& tpc_pos = fTPCs[tpc_index].fPosition;
+        const ROOT::Math::XYZVectorD t_pos_lar = lar_rot*t_pos;
+
+        //printf("t_pos: (%.1f, %.1f, %.1f), tpc_pos: (%.1f, %.1f, %.1f)\n", 
+            //t_pos.x(), t_pos.y(), t_pos.z(), tpc_pos.x(), tpc_pos.y(), tpc_pos.z());
+        //printf("t_size: (%.1f, %.1f, %.1f), size_rot: (%.1f, %.1f, %.1f), size_lar: (%.2f, %.2f, %.2f)\n", 
+            //t_size.x(), t_size.y(), t_size.z(), size_rot.x(), size_rot.y(), size_rot.z(), 
+            //size_rot_lar.x(), size_rot_lar.y(), size_rot_lar.z() );
+
+        const ROOT::Math::XYZVectorD lar_pos = t_pos_lar - 0.5*size_rot_lar;
         size_rot *= 0.95;
-        hitset->AddBox(world_pos.x(), world_pos.y(), world_pos.z(), size_rot.x(), size_rot.y(), size_rot.z() );
+        //printf("xlar: (%.1f, %.1f, %.1f), xglob: (%.1f, %.1f, %.1f)\n", 
+             //xlar[0], xlar[1], xlar[2], xglob[0], xglob[1], xglob[2]);
+        //printf("[%i] Adding box at (%.0f, %.0f, %.0f) with size [%.0f, %.0f, %.0f]: digi val: %i\n", tpc_id,
+            //xglob[0], xglob[1], xglob[2], size_rot.x(), size_rot.y(), size_rot.z(), nhit);
+
+        hitset->AddBox(lar_pos.x(), lar_pos.y(), lar_pos.z(), size_rot_lar.x(), size_rot_lar.y(), size_rot_lar.z() );
         hitset->DigitValue( nhit); 
       }
       hitset->RefitPlex(); 
@@ -472,6 +643,8 @@ namespace display {
     const auto& primaries = fEvMCTruth->GetPrimaries();
     printf("SLArEveDisplay::ReadTracks - found %zu primaries\n", primaries.size());
 
+    TGeoCombiTrans trans( *fLArTarget.fTransform );
+
     for (const auto& p : primaries) {
       auto track_list = std::unique_ptr<TEveTrackList>( 
           new TEveTrackList(Form("%s_%i", p.GetName(), p.GetTrackID())) ); 
@@ -497,13 +670,18 @@ namespace display {
 
         const auto& points = t->GetConstPoints();
         const auto& vertex = points.front();
+        double vlar[3] = { vertex.fX, vertex.fY, vertex.fZ };
+        double vglob[3] = {}; 
+        trans.LocalToMaster(vlar, vglob);
+        
+        TEveVectorF v(vglob);
         
         auto pdgDB = TDatabasePDG::Instance(); 
         TParticlePDG* pdgP = pdgDB->GetParticle( pdg_code );
 
         TParticle* particle = new TParticle(); 
         if (pdgP) particle->SetPdgCode( pdg_code ); 
-        particle->SetProductionVertex( vertex.fX, vertex.fY, vertex.fZ, t->GetTime() );
+        particle->SetProductionVertex( v.fX, v.fY, v.fZ, t->GetTime() );
         if (t->GetParentID() == t->GetTrackID() ) {
           particle->SetFirstMother(-1);
         }
@@ -517,10 +695,12 @@ namespace display {
         Long64_t istep = 0;
         for (auto it = points.begin(); it != points.end(); ++it) {
           const auto& step = *it;
-          TEveVectorF v( step.fX, step.fY, step.fZ );
-          //printf("adding steppoint at [%.2f, %.2f, %.2f] mm - t %g ns\n", v.fX, v.fY, v.fZ, t->GetTime()); 
+          vlar[0] = step.fX; 
+          vlar[1] = step.fY;
+          vlar[2] = step.fZ;
+          trans.LocalToMaster(vlar, vglob);
           if (istep%10 == 0 || (it == points.end()-1) ) {
-            auto pm = new TEvePathMarkF(TEvePathMarkF::kReference, v, t->GetTime());
+            auto pm = new TEvePathMarkF(TEvePathMarkF::kReference, TEveVectorF(vglob[0], vglob[1], vglob[2]), t->GetTime());
             track->AddPathMark( *pm );
           }
         }
@@ -537,6 +717,7 @@ namespace display {
 
       track_list->MakeTracks();
       fTrackLists.push_back( std::move(track_list) ); 
+      fLArTarget.fVolume->AddElement( fTrackLists.back().get() );
     } //-- primaries loop
     return 0;
   }
