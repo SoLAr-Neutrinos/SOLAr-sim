@@ -14,6 +14,7 @@
 
 #include "G4ThreeVector.hh"
 #include "G4RotationMatrix.hh"
+#include "G4Transform3D.hh"
 #include "G4VSolid.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
@@ -63,12 +64,18 @@ class SLArBaseDetModule
     inline G4VPhysicalVolume* GetModPV() {return fModPV;}
     inline const G4VPhysicalVolume* GetModPV() const {return fModPV;}
     G4VPhysicalVolume* BuildAndPlacePV(
-        G4String                          name, 
-        G4RotationMatrix*                 rot,
-        const G4ThreeVector               &vec,
-        G4LogicalVolume*                  mlv,
-        G4bool                            pMany = false,
-        G4int                             pCopyNo = 0);
+        G4String                    name, 
+        G4RotationMatrix*           rot,
+        const G4ThreeVector         &vec,
+        G4LogicalVolume*            mlv,
+        G4bool                      pMany = false,
+        G4int                       pCopyNo = 0);
+    G4VPhysicalVolume* BuildAndPlacePV(
+        G4String                    name, 
+        const G4Transform3D         tr,
+        G4LogicalVolume*            mlv,
+        G4bool                      pMany = false,
+        G4int                       pCopyNo = 0);
 
   protected:
     G4Material*        fMaterial    = {};

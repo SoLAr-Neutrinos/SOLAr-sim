@@ -10,6 +10,7 @@
 
 #include "detector/SLArBaseDetModule.hh"
 #include "G4ThreeVector.hh"
+#include "G4Transform3D.hh"
 
 class SLArDetFieldCage : public SLArBaseDetModule {
   public:
@@ -38,12 +39,14 @@ class SLArDetFieldCage : public SLArBaseDetModule {
 
     geo::EGeoShape        GetShape()    const { return fShape; }
     const G4ThreeVector&  GetShift()    const { return fShift; }
+    const G4Transform3D&  GetLocalToTPC() const { return fLocalToTPC; }
     void SetVisAttributes(G4bool visible);
 
   private:
     geo::EGeoShape    fShape;
     G4ThreeVector     fShift;        // offset from TPC centre at placement
     G4ThreeVector     fDriftDir;     // cached from Init(), used in Build()
+    G4Transform3D     fLocalToTPC;   // cached from Init(), used in Build()
 
     void BuildBox(G4Material* matConductor, G4Material* matFill);
     void BuildTub(G4Material* matConductor, G4Material* matFill);

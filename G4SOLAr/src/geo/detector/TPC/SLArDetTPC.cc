@@ -293,24 +293,16 @@ void SLArDetTPC::BuildTPC()
       "TPC"+std::to_string(fID)+"_lv", 0, 0, 0)
     );
 
-  G4RotationMatrix* rot = new G4RotationMatrix(); 
-  
-  const auto _fcAxis = (fShape == geo::kBox) ? 
-    G4ThreeVector(1, 0, 0) : G4ThreeVector(0, 0, 1); 
-  const auto _fieldDir = fElectronDriftDir;
-  const auto _angle = _fieldDir.angle(_fcAxis);
-  auto rot_axis = _fieldDir.cross(_fcAxis); 
-  if (rot_axis.mag2() < 1e-6) rot_axis = _fcAxis;
-  rot->set(rot_axis, _angle); 
-
-  fGeoInfo->SetGeoPar("tpc_rot_phi", rot->phi());
-  fGeoInfo->SetGeoPar("tpc_rot_theta", rot->theta());
-  fGeoInfo->SetGeoPar("tpc_rot_psi", rot->psi());
+  fRot = new G4RotationMatrix(
+      fGeoInfo->GetGeoPar("tpc_rot_phi"),
+      fGeoInfo->GetGeoPar("tpc_rot_theta"),
+      fGeoInfo->GetGeoPar("tpc_rot_psi")
+      ); 
 
 
   if (fFieldCage) {
     fFieldCage->Build(fMatFieldCage->GetMaterial(), fMatTarget->GetMaterial());
-    fFieldCage->BuildAndPlacePV("field_cage", rot, fFieldCage->GetShift(), this->GetModLV(), false, 99); 
+    fFieldCage->BuildAndPlacePV("field_cage", fFieldCage->GetLocalToTPC(), this->GetModLV(), false, 99); 
   }
 }
 
@@ -394,6 +386,31 @@ void SLArDetTPC::Init(const rapidjson::Value& jconf) {
     G4double tmp = v.GetDouble() * vunit; 
     fGeoInfo->RegisterGeoPar("tpc_pos_"+xvar[ii], tmp); 
     ++ii; 
+  }
+
+  if ( jtpc.HasMember("rotation") ) {
+    const auto& jrot = jtpc["rotation"].GetObj(); 
+    G4double runit = 1.0; 
+    if (jrot.HasMember("unit")) {
+      runit = unit::Unit2Val( jrot["unit"].GetString() );
+    }
+    debug::require_json_member(jrot, "val");
+    debug::require_json_type(jrot["val"], rapidjson::kArrayType);
+
+    const auto& euler = jrot["val"].GetArray();
+    if (euler.Size() != 3) {
+      G4Exception("SLArDetTPC::Init()", "InvalidRotationConfig", FatalException, 
+          "Rotation angles must be specified as an array of 3 values (phi, theta, psi)");
+    }
+
+    fGeoInfo->RegisterGeoPar("tpc_rot_phi", euler[0].GetDouble() * runit);
+    fGeoInfo->RegisterGeoPar("tpc_rot_theta", euler[1].GetDouble() * runit);
+    fGeoInfo->RegisterGeoPar("tpc_rot_psi", euler[2].GetDouble() * runit);
+  }
+  else {
+    fGeoInfo->RegisterGeoPar("tpc_rot_phi", 0.);
+    fGeoInfo->RegisterGeoPar("tpc_rot_theta", 0.);
+    fGeoInfo->RegisterGeoPar("tpc_rot_psi", 0.);
   }
 
   if (jtpc.HasMember("electric_field")) {
