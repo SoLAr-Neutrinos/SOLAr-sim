@@ -22,6 +22,6 @@
   "Cathode" : {"@include" : "singlecube_tpc.json::.Cathode"},
   "Anode" : {"@include" : "singlecube_tpc.json::.Anode"},
   "ReadoutTile" : {"@include" : "tile_bern_v2_full_pixel_unitcell4x4.json::.ReadoutTile"},
-  "SuperCell" : {"@include" : "singlecube_pds.json::.SuperCell"},
+  "OpDetModules" : {"@include" : "singlecube_pds.json::.OpDetModules"},
   "PhotoDetectionSystem" : {"@include" : "singlecube_pds.json::.PhotoDetectionSystem"}
 }
