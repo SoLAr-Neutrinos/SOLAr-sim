@@ -370,7 +370,6 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
             if (phInfo) phInfo->AddTrackStatusFlag(hitOpDet);
             if (volName=="SiPMActivePV") {
               const G4String parentName = touchable->GetVolume(1)->GetName();
-              printf("Parent volume: %s\n", parentName.c_str());
               if ( G4StrUtil::contains(parentName, "sipm") ) { // readout tile SiPM
                 sipmSD = (SLArReadoutTileSiPMSD*)SDman->FindSensitiveDetector(sdNameTileSiPM);
                 if(sipmSD) { 
@@ -408,8 +407,6 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
                 G4Exception("SLArSteppingAction::UserSteppingAction::Detection", 
                     "UnrecognizedParentVolume", FatalException, ed);
               }
-
-              getchar();
             } else if (volName == "SuperCellCoating") {
 //#ifdef SLAR_DEBUG
               //printf("Copy No hierarchy: [%i, %i, %i, %i, %i]\n", 
