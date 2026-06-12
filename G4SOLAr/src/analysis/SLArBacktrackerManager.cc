@@ -58,6 +58,13 @@ G4bool SLArBacktrackerManager::RegisterBacktracker(const EBacktracker id, const 
         status = true;
         break;
       }
+    case kOriginVolID:
+      {
+        if (name.empty()) bkt_name = BacktrackerLabel[id];
+        fBacktrackers.push_back( new SLArBacktrackerOriginVolID( bkt_name ));
+        status = true;
+        break;
+      }
     default:
       {
         break;

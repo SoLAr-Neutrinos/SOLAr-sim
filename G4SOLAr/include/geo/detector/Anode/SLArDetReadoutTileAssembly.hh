@@ -22,6 +22,8 @@ class SLArDetReadoutTileAssembly : public SLArBaseDetModule
     void BuildMaterial(G4String materials_db); 
     void BuildDefalutGeoParMap(); 
     void BuildReadoutPlane(SLArDetReadoutTile*); 
+    void SetBaseTileModel(G4String model) {fTileModel = model;}
+    G4String GetBaseTileModel() const {return fTileModel;}
     SLArBaseDetModule* GetTileRow() {return fTileRow;}
     virtual void Init(const rapidjson::Value&) override {}
     void SetVisAttributes(const int depth = 0);
@@ -31,6 +33,7 @@ class SLArDetReadoutTileAssembly : public SLArBaseDetModule
     SLArMaterial* fMatReadoutPlane; 
     SLArBaseDetModule* fTileRow;
     void BuildTileRow(SLArDetReadoutTile*);
+    G4String fTileModel; //!< Base tile model name
 };
 
 #endif /* end of include guard SLArDetReadoutTileAssembly_HH */

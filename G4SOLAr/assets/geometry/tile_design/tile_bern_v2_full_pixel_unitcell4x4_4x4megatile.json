@@ -1,110 +1,116 @@
 {
   "ReadoutTile" : {
-    "dimensions" : [
-      {"name" : "tile_x", "val" :256.0, "unit" : "mm" },
-      {"name" : "tile_y", "val" : 2.5, "unit" : "mm" },
-      {"name" : "tile_z", "val" :256.0, "unit" : "mm" }
-    ], 
-    "components" : [
+    "tile_model" : [
       {
-        "name" : "pixel", 
+        "name" : "Bern_v2_full_pixel_unitcell4x4",
         "dimensions" : [
-          {"name" : "pix_x" , "val" : 2.3, "unit" : "mm" },
-          {"name" : "pix_y" , "val" : 0.5, "unit" : "mm" },
-          {"name" : "pix_z" , "val" : 2.3, "unit" : "mm" }
-        ]
-      }, 
-      {
-        "name" : "sipm", 
-        "dimensions" : [
-          {"name" : "sipm_fill_factor",    "val"  : 0.85 }, 
-          {"name" : "sipm_x", "val" : 6.8, "unit" : "mm" },
-          {"name" : "sipm_y", "val" : 1.2, "unit" : "mm" },
-          {"name" : "sipm_z", "val" : 6.8, "unit" : "mm" }
-        ]
+          {"name" : "tile_x", "val" :256.0, "unit" : "mm" },
+          {"name" : "tile_y", "val" : 2.5, "unit" : "mm" },
+          {"name" : "tile_z", "val" :256.0, "unit" : "mm" }
+        ], 
+        "components" : [
+          {
+            "name" : "pixel", 
+            "dimensions" : [
+              {"name" : "pix_x" , "val" : 2.3, "unit" : "mm" },
+              {"name" : "pix_y" , "val" : 0.5, "unit" : "mm" },
+              {"name" : "pix_z" , "val" : 2.3, "unit" : "mm" }
+            ]
+          }, 
+          {
+            "name" : "sipm", 
+            "dimensions" : [
+              {"name" : "sipm_fill_factor",    "val"  : 0.85 }, 
+              {"name" : "sipm_x", "val" : 6.8, "unit" : "mm" },
+              {"name" : "sipm_y", "val" : 1.2, "unit" : "mm" },
+              {"name" : "sipm_z", "val" : 6.8, "unit" : "mm" }
+            ]
+          }
+        ],
+        "unit_cell" : {
+          "dimensions" : [{"name" : "cell_x", "val" : 32, "unit" : "mm"}, {"name" : "cell_z", "val" : 32, "unit" : "mm"}], 
+          "lineup" : [
+            {"component" : "sipm"  , "name" : "sipm"  , "copy" : 0, "pos_z" : {"val" :  0.0, "unit" : "mm"}, "pos_x" : {"val" :  0.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix1"  , "copy" : 1, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix2"  , "copy" : 2, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix3"  , "copy" : 3, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix4"  , "copy" : 4, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix5"  , "copy" : 5, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix6"  , "copy" : 6, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix7"  , "copy" : 7, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix8"  , "copy" : 8, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix9"  , "copy" : 9, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix10" , "copy" :10, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix11" , "copy" :11, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix12" , "copy" :12, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix13" , "copy" :13, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix14" , "copy" :14, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix15" , "copy" :15, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix16" , "copy" :16, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix17" , "copy" :17, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix18" , "copy" :18, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix19" , "copy" :19, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix20" , "copy" :20, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix21" , "copy" :21, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix22" , "copy" :22, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix23" , "copy" :23, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix24" , "copy" :24, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix25" , "copy" :25, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix26" , "copy" :26, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix27" , "copy" :27, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix20" , "copy" :28, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix21" , "copy" :29, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix28" , "copy" :30, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix29" , "copy" :31, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix30" , "copy" :32, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix31" , "copy" :33, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix32" , "copy" :34, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix33" , "copy" :35, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix20" , "copy" :36, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix21" , "copy" :37, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix34" , "copy" :38, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix35" , "copy" :39, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix36" , "copy" :40, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix37" , "copy" :41, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix38" , "copy" :42, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix39" , "copy" :43, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix40" , "copy" :44, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix41" , "copy" :45, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix42" , "copy" :46, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix43" , "copy" :47, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix44" , "copy" :48, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix45" , "copy" :48, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix46" , "copy" :49, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix47" , "copy" :51, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix48" , "copy" :52, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix49" , "copy" :53, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix50" , "copy" :54, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix51" , "copy" :55, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix52" , "copy" :56, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
+
+            {"component" : "pixel" , "name" : "pix53" , "copy" :57, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix54" , "copy" :58, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix55" , "copy" :59, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix56" , "copy" :60, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix57" , "copy" :61, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix58" , "copy" :62, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix59" , "copy" :63, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
+            {"component" : "pixel" , "name" : "pix60" , "copy" :64, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}}
+          ], 
+          "pixelmap" : {"@include" : "pixelmap_unitcell_32x32mm_pix_4x4mm.json::.pixelmap"}
+        }
       }
     ],
-    "unit_cell" : {
-      "dimensions" : [{"name" : "cell_x", "val" : 32, "unit" : "mm"}, {"name" : "cell_z", "val" : 32, "unit" : "mm"}], 
-      "lineup" : [
-        {"component" : "sipm"  , "name" : "sipm"  , "copy" : 0, "pos_z" : {"val" :  0.0, "unit" : "mm"}, "pos_x" : {"val" :  0.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix1"  , "copy" : 1, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix2"  , "copy" : 2, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix3"  , "copy" : 3, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix4"  , "copy" : 4, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix5"  , "copy" : 5, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix6"  , "copy" : 6, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix7"  , "copy" : 7, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix8"  , "copy" : 8, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : 14.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix9"  , "copy" : 9, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix10" , "copy" :10, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix11" , "copy" :11, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix12" , "copy" :12, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix13" , "copy" :13, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix14" , "copy" :14, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix15" , "copy" :15, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix16" , "copy" :16, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : 10.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix17" , "copy" :17, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix18" , "copy" :18, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix19" , "copy" :19, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix20" , "copy" :20, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix21" , "copy" :21, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix22" , "copy" :22, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix23" , "copy" :23, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix24" , "copy" :24, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix25" , "copy" :25, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix26" , "copy" :26, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix27" , "copy" :27, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix20" , "copy" :28, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix21" , "copy" :29, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix28" , "copy" :30, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix29" , "copy" :31, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix30" , "copy" :32, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :  2.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix31" , "copy" :33, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix32" , "copy" :34, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix33" , "copy" :35, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix20" , "copy" :36, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix21" , "copy" :37, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :  6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix34" , "copy" :38, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix35" , "copy" :39, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix36" , "copy" :40, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : -2.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix37" , "copy" :41, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix38" , "copy" :42, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix39" , "copy" :43, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix40" , "copy" :44, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix41" , "copy" :45, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix42" , "copy" :46, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix43" , "copy" :47, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix44" , "copy" :48, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" : -6.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix45" , "copy" :48, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix46" , "copy" :49, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix47" , "copy" :51, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix48" , "copy" :52, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix49" , "copy" :53, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix50" , "copy" :54, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix51" , "copy" :55, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix52" , "copy" :56, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :-10.0, "unit" : "mm"}},
-
-        {"component" : "pixel" , "name" : "pix53" , "copy" :57, "pos_z" : {"val" :-14.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix54" , "copy" :58, "pos_z" : {"val" :-10.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix55" , "copy" :59, "pos_z" : {"val" : -6.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix56" , "copy" :60, "pos_z" : {"val" : -2.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix57" , "copy" :61, "pos_z" : {"val" :  2.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix58" , "copy" :62, "pos_z" : {"val" :  6.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix59" , "copy" :63, "pos_z" : {"val" : 10.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}},
-        {"component" : "pixel" , "name" : "pix60" , "copy" :64, "pos_z" : {"val" : 14.0, "unit" : "mm"}, "pos_x" : {"val" :-14.0, "unit" : "mm"}}
-      ], 
-      "pixelmap" : {"@include" : "pixelmap_unitcell_32x32mm_pix_4x4mm.json::.pixelmap"}
-    },
     "tile_assembly" : [
       {
         "name" : "StdReadoutPlane", 
+        "tile_model" : "Bern_v2_full_pixel_unitcell4x4",
         "copyID" : 2000, 
         "dimensions" : [
           {"name" : "rdoutplane_x", "val" : 1024.0, "unit" : "mm"}, 

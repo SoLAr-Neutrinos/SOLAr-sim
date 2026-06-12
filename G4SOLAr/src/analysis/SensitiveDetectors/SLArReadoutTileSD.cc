@@ -7,6 +7,7 @@
 
 #include "SensitiveDetectors/SLArReadoutTileSD.hh"
 #include "SensitiveDetectors/SLArReadoutTileHit.hh"
+#include "SLArUserPhotonTrackInformation.hh"
 
 #include "G4HCofThisEvent.hh"
 #include "G4TouchableHistory.hh"
@@ -94,16 +95,17 @@ G4bool SLArReadoutTileSiPMSD::ProcessHits_constStep(const G4Step* step,
   G4ThreeVector localPos
     = touchable->GetHistory()
       ->GetTopTransform().TransformPoint(worldPos);
+
+  // access photon user track information
+  const auto photonInfo = 
+    dynamic_cast<const SLArUserPhotonTrackInformation*>
+    (track->GetUserInformation());
+  G4int procID = (photonInfo) ? 
+    static_cast<G4int>(photonInfo->GetCreator()) : 
+    static_cast<G4int>(optical::EPhotonCreator::kOther);
+  G4int origin_vol_id = (photonInfo) ? photonInfo->GetOriginVolumID() : -1;
  
   SLArReadoutTileSiPMHit* hit = nullptr;
-  // Get the creation process of optical photon
-  G4String procName = "";
-  
-  if (track->GetTrackID() != 1) // make sure consider only secondaries
-  {
-    auto creator = track->GetCreatorProcess(); 
-    if (creator) procName = creator->GetProcessName();
-  }
   phEne = track->GetTotalEnergy();
 
 #ifdef SLAR_DEBUG
@@ -127,12 +129,14 @@ G4bool SLArReadoutTileSiPMSD::ProcessHits_constStep(const G4Step* step,
   hit->SetTileReplicaNr(touchable->GetCopyNumber(5));
   hit->SetRowCellNr(touchable->GetCopyNumber(3)); 
   hit->SetCellNr(touchable->GetCopyNumber(2)); 
-  hit->SetPhotonProcess(procName);
+  hit->SetPhotonProcess( procID );
   hit->SetProducerID( track->GetParentID() ); 
+  hit->SetOriginVolumeID( origin_vol_id );
 
 
 #ifdef SLAR_DEBUG
   printf("SLArReadoutTileSD::ProcessHits_constStep\n");
+  G4String procName = optical::EPhProcName[procID];
   printf("%s photon hit at t = %g ns\n", procName.c_str(), hit->GetTime());
   //if (hit->GetTime() < 1*CLHEP::ns) getchar(); 
 #endif

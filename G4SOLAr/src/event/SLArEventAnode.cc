@@ -78,18 +78,13 @@ SLArEventMegatile& SLArEventAnode::GetOrCreateEventMegatile(const int mtIdx) {
   }
 }
 
-SLArEventTile& SLArEventAnode::RegisterHit(const SLArEventPhotonHit& hit, int mgtile_idx, int tile_idx) {
+SLArEventSiPM& SLArEventAnode::RegisterHit(const SLArEventPhotonHit& hit, int mgtile_idx, int tile_idx) {
   if (mgtile_idx < 0) mgtile_idx = hit.GetMegaTileID(); 
   if (tile_idx < 0) tile_idx = hit.GetTileID(); 
   auto& mt_event = GetOrCreateEventMegatile(mgtile_idx);
-  auto& t_event = mt_event.RegisterHit(hit, tile_idx);
-  return t_event;
-  //} else {
-    //printf("SLArEventAnode::RegisterHit WARNING\n"); 
-    //printf("Megatile with ID %i is not in store\n", mgtile_idx); 
-    //CreateEventMegatile(hit->GetMegaTileIdx());
-    //return 0; 
-  //}
+  auto& t_event = mt_event.GetOrCreateEventTile(tile_idx);
+  auto& sipm_event = t_event.RegisterSiPMHit(hit);
+  return sipm_event;
 }
 
 SLArEventChargePixel& SLArEventAnode::RegisterChargeHit(const SLArCfgAnode::SLArPixIdx& pixIdx, const SLArEventChargeHit& hit) {

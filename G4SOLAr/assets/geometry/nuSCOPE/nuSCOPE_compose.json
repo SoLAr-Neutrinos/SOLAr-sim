@@ -5,7 +5,14 @@
   "TPC" : {"@include" : "nuSCOPE_tpc_vd.json::.TPC"},
   "Cathode" : {"@include" : "nuSCOPE_tpc_vd.json::.Cathode"},
   "Anode" : {"@include" : "nuSCOPE_tpc_vd.json::.Anode"},
-  "ReadoutTile" : {"@include" : "tile_bern_v2_full_pixel_unitcell4x4_4x4megatile.json::.ReadoutTile"},
+  "ReadoutTile" : {
+    "tile_model" : [
+      {"@include" : "tile_bern_v2_full_pixel_unitcell4x4_4x4megatile.json::.ReadoutTile.tile_model[0]"}
+    ],
+    "tile_assembly" : [
+      {"@include" : "tile_bern_v2_full_pixel_unitcell4x4_4x4megatile.json::.ReadoutTile.tile_assembly[0]"}
+    ]
+  },
   "OpDetModules" : {"@include" : "nuSCOPE_pds_vd.json::.OpDetModules"},
   "PhotoDetectionSystem" : {"@include" : "nuSCOPE_pds_vd.json::.PhotoDetectionSystem"}
 }

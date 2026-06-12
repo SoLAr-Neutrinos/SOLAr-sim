@@ -9,6 +9,7 @@
 #define SLARDETSUPERCELL_HH
 
 #include "detector/OpDet/SLArOpticalDetector.hh"
+#include "G4LogicalBorderSurface.hh"
 
 class SLArDetSuperCell : public SLArOpticalDetector
 {
@@ -29,6 +30,7 @@ public:
     fMatSuperCell = new SLArMaterial(*detSuperCell.fMatSuperCell); 
     fMatLightGuide = new SLArMaterial(*detSuperCell.fMatLightGuide);
     fMatCoating   = new SLArMaterial(*detSuperCell.fMatCoating);
+    fMatWLSCoating = new SLArMaterial(*detSuperCell.fMatWLSCoating);
   }
 
   ~SLArDetSuperCell();
@@ -37,7 +39,9 @@ public:
   void BuildOpticalDetector() override;
   void BuildLightGuide();
   void BuildCoating();
+  void BuildWLSCoating();
   G4LogicalSkinSurface* BuildLogicalSkinSurface();
+  G4LogicalBorderSurface* BuildWLSLogicalBorderSurface();
   void SetVisAttributes(const int& level = 1) override;
 
   inline SLArBaseDetModule* GetCoating() { return fCoating; }
@@ -54,10 +58,12 @@ private:
 
   SLArBaseDetModule* fLightGuide = {};
   SLArBaseDetModule* fCoating = {}; 
+  SLArBaseDetModule* fWLSCoating = {};
 
   SLArMaterial* fMatSuperCell = {};
   SLArMaterial* fMatLightGuide = {};
   SLArMaterial* fMatCoating = {}; 
+  SLArMaterial* fMatWLSCoating = {};
 };
 
 #endif /* end of include guard SLARDETSUPERCELL_HH */

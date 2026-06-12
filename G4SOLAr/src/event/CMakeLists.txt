@@ -43,6 +43,7 @@ set(SLAR_EVT_HITS_HEADERS
   "${SLAR_EVT_INCLUDE_DIR}/SLArEventBacktrackerRecord.hh"
   "${SLAR_EVT_INCLUDE_DIR}/SLArEventHitsCollection.hh"
   "${SLAR_EVT_INCLUDE_DIR}/SLArEventChargePixel.hh"
+  "${SLAR_EVT_INCLUDE_DIR}/SLArEventSiPM.hh"
   "${SLAR_EVT_INCLUDE_DIR}/SLArEventTile.hh"
   "${SLAR_EVT_INCLUDE_DIR}/SLArEventMegatile.hh"
   "${SLAR_EVT_INCLUDE_DIR}/SLArEventAnode.hh"

@@ -504,7 +504,7 @@ TH2Poly* SLArDetReadoutTile::BuildTileChgPixelMap(
     }
   } else {
     G4ExceptionDescription ed;
-    ed << "SLArDetReadoutTil::BuildTileChgPixelMap WARNING\n";
+    ed << "SLArDetReadoutTile::BuildTileChgPixelMap WARNING\n";
     ed << "Selected physical volume (" << tilesens_pv->GetName() << " is not parameterised!\n";
     G4Exception("SLArDetReadoutTile::BuildTileChgPixelMap()", "SLAR01", JustWarning, ed);
   }

@@ -133,8 +133,15 @@ int main (int argc, char *argv[]) {
   std::map<Int_t, SLArCfgAnode*> anodeConfig; 
   std::map<Int_t, TVector3> tpcCenterPos;
   std::map<Int_t, TRotation> tpcRotation;
-  anodeConfig.insert( {10, input_file->Get<SLArCfgAnode>("AnodeCfg50")} );
-  anodeConfig.insert( {11, input_file->Get<SLArCfgAnode>("AnodeCfg51")} );
+
+  for (const auto& key : *input_file->GetListOfKeys()) {
+    TString obj_name = key->GetName();
+    if (obj_name.Contains("AnodeCfg")) {
+      SLArCfgAnode* anode_cfg = input_file->Get<SLArCfgAnode>(key->GetName()); 
+      anodeConfig.insert( {anode_cfg->GetTPCID(), anode_cfg} ); 
+      printf("Found anode configuration for TPC %i\n", anode_cfg->GetTPCID()); 
+    }
+  }
 
   auto geometry_str = input_file->Get<TObjString>("geometry"); 
   rapidjson::Document d; 

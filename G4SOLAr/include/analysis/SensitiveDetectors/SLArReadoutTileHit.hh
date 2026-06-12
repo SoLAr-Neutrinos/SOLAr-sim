@@ -58,7 +58,8 @@ public:
     void SetWorldPos(G4ThreeVector xyz) { fWorldPos = xyz; }
     G4ThreeVector GetWorldPos() const { return fWorldPos; }
 
-    void      SetPhotonProcess(G4String prname);
+    void SetPhotonProcess(G4String prname);
+    inline void SetPhotonProcess(const int prid) { fPhType = prid; }
     G4int     GetPhotonProcessId() const;
     G4String  GetPhotonProcessName() const;
 
@@ -76,6 +77,8 @@ public:
     inline G4int GetCellNr() const {return fCellNr;}
     inline void SetProducerID(const int trk_id) {fPhProducerID = trk_id;}
     inline G4int GetProducerID() const {return fPhProducerID;}
+    inline void SetOriginVolumeID(const int vol_id) {fPhOriginVolumeID = vol_id;}
+    inline G4int GetOriginVolumeID() const {return fPhOriginVolumeID;}
     void SetRowCellNr(G4int n) {fRowCellNr = n;}
     G4int GetRowCellNr() {return fRowCellNr;}
 
@@ -93,6 +96,7 @@ private:
     G4float       fTime;
     G4int         fPhType;
     G4int         fPhProducerID;
+    G4int         fPhOriginVolumeID;
     G4ThreeVector fLocalPos;
     G4ThreeVector fWorldPos;
 };

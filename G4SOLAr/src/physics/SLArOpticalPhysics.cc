@@ -39,15 +39,19 @@
 
 SLArOpticalPhysics::SLArOpticalPhysics(G4bool abs_toggle, G4bool cerenkov_toggle)
   : G4VPhysicsConstructor("Optical")
-    , fCerenkovProcess(nullptr)
-    , fScintProcess(nullptr)
-    , fAbsorptionProcess(nullptr)
-    , fRayleighScattering(nullptr)
-    , fMieHGScatteringProcess(nullptr)
-    , fBoundaryProcess(nullptr)
-    , fAbsorptionOn(abs_toggle)
-    , fCerenkovOn(cerenkov_toggle)
-{ }
+{
+  fWLSProcess                = NULL;
+  fScintProcess              = NULL;
+  fCerenkovProcess           = NULL;
+  fBoundaryProcess           = NULL;
+  fAbsorptionProcess         = NULL;
+  fRayleighScattering        = NULL;
+  fMieHGScatteringProcess    = NULL;
+
+  fAbsorptionOn              = abs_toggle;
+  fCerenkovOn                = cerenkov_toggle;
+
+}
 
 SLArOpticalPhysics::~SLArOpticalPhysics() { }
 
@@ -65,16 +69,16 @@ void SLArOpticalPhysics::ConstructProcess()
   G4cout << "SLArOpticalPhysics:: Add Optical Physics Processes"
     << G4endl;
 
-  //fWLSProcess = new G4OpWLS("WLS");
+  fWLSProcess = new SLArOpWLS();
 
   fScintProcess = new SLArScintillation("Scintillation", fOptical);
-  //fScintProcess = new G4Scintillation("Scintillation");
 
   if (fCerenkovOn) {
     fCerenkovProcess = new G4Cerenkov("Cerenkov");
     fCerenkovProcess->SetMaxNumPhotonsPerStep(300);
     fCerenkovProcess->SetTrackSecondariesFirst(true);
   }
+
   fAbsorptionProcess      = new G4OpAbsorption();
   fRayleighScattering     = new G4OpRayleigh();
   fMieHGScatteringProcess = new G4OpMieHG();
@@ -98,9 +102,9 @@ void SLArOpticalPhysics::ConstructProcess()
   pManager->AddDiscreteProcess(fBoundaryProcess);
 
   //fWLSProcess->UseTimeProfile("delta");
-  //fWLSProcess->UseTimeProfile("exponential");
+  fWLSProcess->UseTimeProfile("exponential");
 
-  //pManager->AddDiscreteProcess(fWLSProcess);
+  pManager->AddDiscreteProcess(fWLSProcess);
 
   //fScintProcess->SetScintillationYieldFactor(1.);
   //fScintProcess->SetScintillationExcitationRatio(0.0);
@@ -144,7 +148,6 @@ void SLArOpticalPhysics::ConstructProcess()
       pManager->SetProcessOrderingToLast(fScintProcess,idxAtRest);
       pManager->SetProcessOrderingToLast(fScintProcess,idxPostStep);
     }
-
   }
 }
 

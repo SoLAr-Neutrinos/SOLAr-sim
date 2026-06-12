@@ -1,0 +1,38 @@
+"ReadoutTile" : 
+{
+  "model" : 
+  [  
+    #include "tile_model_30x48_full_coverage.json"
+    ,
+    #include "tile_model_30x18_full_coverage.json"
+  ],
+  "tile_assembly" : [
+    {
+      "name" : "CRU", 
+      "copyID" : 2000, 
+      "tile_model" : "StandardTile30x48",
+      "dimensions" : [
+        {"name" : "rdoutplane_x", "val" : 1500.0, "unit" : "mm"}, 
+        {"name" : "rdoutplane_z", "val" : 2880.0, "unit" : "mm"}
+      ]
+    },
+    {
+      "name" : "CRUEdge", 
+      "copyID" : 3000, 
+      "tile_model" : "EdgeTile30x18",
+      "dimensions" : [
+        {"name" : "rdoutplane_x", "val" : 3000.0, "unit" : "mm"}, 
+        {"name" : "rdoutplane_z", "val" :  180.0, "unit" : "mm"}
+      ]
+    },
+    {
+      "name" : "single", 
+      "copyID" : 2000,
+      "tile_model" : "StandardTile30x48",
+      "dimensions" : [
+        {"name" : "rdoutplane_x", "val" : 300.0, "unit" : "mm"}, 
+        {"name" : "rdoutplane_z", "val" : 480.0, "unit" : "mm"}
+      ]
+    }
+  ]
+}

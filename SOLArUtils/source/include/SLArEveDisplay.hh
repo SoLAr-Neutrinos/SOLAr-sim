@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <iostream>
 #include "TFile.h"
+#include "TH1F.h"
 #include "TTree.h"
 
 #include "TGLabel.h"
@@ -23,6 +24,7 @@
 #include "TEveFrameBox.h"
 #include "TEveGeoShape.h"
 #include "TEveTrack.h"
+#include "TRootEmbeddedCanvas.h"
 #include "Math/Vector3D.h"
 #include "Math/Point3D.h"
 #include "Math/EulerAngles.h"
@@ -154,8 +156,8 @@ namespace display {
       int  ReadMCTruth();
       int  ReadTracks();
       int  ReadOpHits();
-      int  ReadOpHitsFromOpDetArray(const int idx_array, const SLArEventSuperCellArray& ev_opdet_array); 
-      int  ReadOpHitsFromAnode(const int tpc_id, const SLArEventAnode& ev_anode);
+      std::vector<int>  ReadOpHitsFromOpDetArray(const int idx_array, const SLArEventSuperCellArray& ev_opdet_array); 
+      std::vector<int>  ReadOpHitsFromAnode(const int tpc_id, const SLArEventAnode& ev_anode);
       void ResetHits();  
       int  ReDraw(); 
       void NextEvent();
@@ -172,6 +174,14 @@ namespace display {
         ProcessEvent();
       }
 
+      inline void ToggleModeNHitsTime() {
+        for (auto& itr : fPhotonDetectorsNHits) {
+          bool showHits = !itr.second->GetRnrSelf();
+          itr.second->SetRnrSelf(showHits);
+          fPhotonDetectorsTHits.at(itr.first)->SetRnrSelf(!showHits);
+        }
+        gEve->Redraw3D();
+      }
 
     private: 
       TFile* fHitFile = {};
@@ -191,10 +201,13 @@ namespace display {
       std::unique_ptr<TEveManager> fEveManager = {};
       std::vector<std::unique_ptr<TEveBoxSet>> fHitSet = {};
       std::vector<std::unique_ptr<TEveTrackList>> fTrackLists = {}; 
-      std::map<int, std::unique_ptr<TEveBoxSet>> fPhotonDetectors = {}; 
+      std::map<int, std::unique_ptr<TEveBoxSet>> fPhotonDetectorsNHits = {}; 
+      std::map<int, std::unique_ptr<TEveBoxSet>> fPhotonDetectorsTHits = {}; 
+      std::map<int, std::vector<TH1F>> fPhotonDetectorsHitTimeHists = {};
       TEveTrackPropagator* fPropagator = {};
       std::unique_ptr<TEveRGBAPalette> fPaletteQHits = {};
       std::unique_ptr<TEveRGBAPalette> fPaletteOpHits = {};
+      std::unique_ptr<TEveRGBAPalette> fPaletteOpHitsTime = {};
       std::vector<GeoTPC_t> fTPCs;
       GeoLArTarget_t fLArTarget;
 
@@ -209,13 +222,15 @@ namespace display {
       Float_t fZmax = {}; 
 
       TGNumberEntry* fEnterEntry = {};
+      TRootEmbeddedCanvas* fTimeHistCanvas = {};
       TGGroupFrame*  fGgroupframeParticleSelection = {};
       TGVerticalFrame*  fGframeParticleSelection = {};
       TGHorizontalFrame* fGframeParticleSetting[9] = {};
       TGCheckButton* fGParticleSelectionButton[9] = {};
       TGNumberEntry* fGParticleEnergyThreshold[9] = {};
-
+      TGTextButton* fNhitsTimeToggleButton = nullptr;
       IDList fIDs = {}; 
+
 
       std::map<TString, MCParticleSelector_t> fParticleSelector; 
 
@@ -236,9 +251,13 @@ namespace display {
         return -1;
       }
 
+      void setup_time_hist(); 
+
       void set_track_style(TEveTrack* track); 
 
       const MCParticleSelector_t& get_particle_selection(const int pdg);
+
+      void update_time_histograms();
 
       inline void update_entry_label() {
         fEnterEntry->SetIntNumber( fCurEvent );

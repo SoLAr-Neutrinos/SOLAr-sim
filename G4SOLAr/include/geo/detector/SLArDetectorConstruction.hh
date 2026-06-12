@@ -76,10 +76,30 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     G4VIStore* CreateImportanceStore();
     //! Return SLArDetectorConstruction::fTPCs map
     inline std::map<G4int, SLArDetTPC*>& GetDetTPCs() {return fTPC;}
+    //! Return SLArDetectorConstruction::fTPCs map
+    inline const std::map<G4int, SLArDetTPC*>& GetDetTPCs() const {return fTPC;}
     //! Return ReadoutTile detector object
-    inline SLArDetReadoutTile* GetReadoutTile() {return fReadoutTile;}
+    inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) {
+      auto it = fReadoutTileCatalog.find(tile_model_name);
+      if (it != fReadoutTileCatalog.end()) {
+        return it->second;
+      } else {
+        return nullptr;
+      }
+    }
     //! Return ReadoutTile detector object
-    inline SLArDetReadoutTile* GetReadoutTile() const {return fReadoutTile;}
+    inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) const {
+      auto it = fReadoutTileCatalog.find(tile_model_name);
+      if (it != fReadoutTileCatalog.end()) {
+        return it->second;
+      } else {
+        return nullptr;
+      }
+    }
+    //! Return Readout tile model map
+    inline std::map<std::string, SLArDetReadoutTile*>& GetReadoutTileMap() {return fReadoutTileCatalog;}
+    //! Return readout tile model map
+    inline const std::map<std::string, SLArDetReadoutTile*>& GetReadoutTileMap() const {return fReadoutTileCatalog;}
     //! Return TPC with given id
     SLArDetTPC* GetDetTPC(G4int tpcid);
     //! Return Cryostat detector object
@@ -147,7 +167,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     SLArDetSiPM* fSiPM = {}; //!< SiPM detector object
     std::map<std::string, SLArOpticalDetector*> fOpDetCatalog = {}; //!< Map of optical detector models
     std::map<int, SLArDetOpDetArray*> fOpDetArray = {};
-    SLArDetReadoutTile* fReadoutTile = {}; //!< ReadoutTile detector object
+    std::map<std::string, SLArDetReadoutTile*> fReadoutTileCatalog = {}; //!< Map of ReadoutTile detector object
     std::map<int, SLArDetAnodeAssembly*> fAnodes = {}; 
     std::map<G4String, SLArDetReadoutTileAssembly*> fReadoutMegaTile = {}; 
 
@@ -183,6 +203,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void InitTarget(const rapidjson::Value&);
     //! Compute TPC enclosure dimensions and set the corresponding parameters
     void ComputeTPCEnclosure(const G4double eps);
+    //! Setup the readout tile detector element
+    void SetupReadoutTile(const rapidjson::Value& jtile);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

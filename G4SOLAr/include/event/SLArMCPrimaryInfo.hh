@@ -19,8 +19,44 @@ class SLArMCPrimaryInfo : public TNamed
   public:
     SLArMCPrimaryInfo();
     SLArMCPrimaryInfo(const SLArMCPrimaryInfo& p);
+    inline SLArMCPrimaryInfo(SLArMCPrimaryInfo&& other) noexcept 
+      : TNamed(std::move(other)),
+      fPDG(other.fPDG), fTrkID(other.fTrkID),
+      fGeneratorLabel(std::move(other.fGeneratorLabel)),
+      fEnergy(other.fEnergy), fTime(other.fTime),
+      fTotalEdep(other.fTotalEdep), fTotalLArEdep(other.fTotalLArEdep),
+      fTotalScintPhotons(other.fTotalScintPhotons),
+      fTotalCerenkovPhotons(other.fTotalCerenkovPhotons),
+      fVertex(std::move(other.fVertex)),
+      fMomentum(std::move(other.fMomentum)),
+      fTrajectories(std::move(other.fTrajectories))
+    {
+      other.ClearTrajectories();
+    }
+
     SLArMCPrimaryInfo& operator=(const SLArMCPrimaryInfo& p);
-    SLArMCPrimaryInfo(SLArMCPrimaryInfo&&) = default;
+
+    inline SLArMCPrimaryInfo& operator=(SLArMCPrimaryInfo&& other) noexcept {
+      if (this != &other) {
+        TNamed::operator=(std::move(other));
+        fPDG = other.fPDG;
+        fTrkID = other.fTrkID;
+        fGeneratorLabel = std::move(other.fGeneratorLabel);
+        fEnergy = other.fEnergy;
+        fTime = other.fTime;
+        fTotalEdep = other.fTotalEdep;
+        fTotalLArEdep = other.fTotalLArEdep;
+        fTotalScintPhotons = other.fTotalScintPhotons;
+        fTotalCerenkovPhotons = other.fTotalCerenkovPhotons;
+        fVertex = std::move(other.fVertex);
+        fMomentum = std::move(other.fMomentum);
+        ClearTrajectories();
+        fTrajectories = std::move(other.fTrajectories);
+        other.fTrajectories.clear();
+      }
+      return *this;
+    }
+
     ~SLArMCPrimaryInfo();
 
     void SetPosition(const double&  x, const double&  y, const double&  z, const double& t = 0);

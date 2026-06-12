@@ -41,7 +41,7 @@ SLArEventMegatile::SLArEventMegatile(const SLArCfgMegaTile* cfg)
 int SLArEventMegatile::ResetHits() {
   int nhits = 0;
   for (auto &tile : fTilesMap) {
-    nhits += tile.second.GetNhits(); 
+    nhits += tile.second.GetNSiPMHits(); 
     tile.second.ResetHits(); 
     //delete tile.second;
   }
@@ -80,7 +80,7 @@ SLArEventTile& SLArEventMegatile::GetOrCreateEventTile(const int& tileId)
   else {
     fTilesMap.insert( std::make_pair(tileId, SLArEventTile(tileId) ) );  
     auto& t_event = fTilesMap[tileId];
-    t_event.SetBacktrackerRecordSize( fLightBacktrackerRecordSize ); 
+    t_event.SetSiPMBacktrackerRecordSize( fLightBacktrackerRecordSize ); 
     t_event.SetChargeBacktrackerRecordSize( fChargeBacktrackerRecordSize ); 
     return t_event;
   }
@@ -96,14 +96,14 @@ SLArEventTile& SLArEventMegatile::RegisterHit(const SLArEventPhotonHit& hit, con
   fNhits++; 
   
   auto& tile_ev = GetOrCreateEventTile(tile_idx);
-  tile_ev.RegisterHit(hit);
+  tile_ev.RegisterSiPMHit(hit);
   return tile_ev;
 }
 
 int SLArEventMegatile::GetNPhotonHits() const {
   int nhits = 0;
   for (const auto &tile : fTilesMap) {
-    nhits += tile.second.GetNhits(); 
+    nhits += tile.second.GetNSiPMHits();
   }
 
   return nhits; 

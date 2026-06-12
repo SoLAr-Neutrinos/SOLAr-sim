@@ -76,6 +76,7 @@ namespace vertex {
     private: 
       G4ThreeVector fVertex; //!< The vertex position in the 3D space   
       std::vector<G4ThreeVector> fVertexList = {}; //!< List of vertices (if needed)
+      UInt_t fNrOfEvPerVertex = 1; //!< Number of events per vertex (if needed)
       G4String fReferenceVolumeName = {}; //<!< Name of the reference volume for the vertex position
       G4Transform3D fTransform = {}; //!< Transform to the global frame of the reference volume
 
