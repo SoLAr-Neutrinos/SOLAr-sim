@@ -1283,14 +1283,23 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
 
     auto pos = opdetarray->GetPosition(); 
     auto rot = opdetarray->GetRotation();
+    G4LogicalVolume* mother_lv = nullptr;
+    G4ThreeVector glb_pos(0, 0, 0);
 
-    auto tpc = fTPC.find(opdetarray->GetTPCID())->second; 
-    auto glb_pos = tpc->GetTPCcenter() + pos; 
-    opdetarray->SetGlobalPos( glb_pos ); 
+    if (opdetarray->GetTPCID() > 0) {
+      auto tpc = fTPC.find(opdetarray->GetTPCID())->second; 
+      glb_pos = tpc->GetTPCcenter() + pos; 
+      mother_lv = tpc->GetModLV();
+    }
+    else { // place opdetarray directly in the LAr target volume
+      mother_lv = fLArTarget->GetModLV();
+      glb_pos = pos;
+    }
+    opdetarray->SetGlobalPos( glb_pos );
 
-    printf("---- Placing OpDet Array %i in TPC %i\n", opdetarray_id, tpc->GetID());
+    printf("---- Placing OpDet Array %i in TPC %i\n", opdetarray_id, opdetarray->GetTPCID());
     opdetarray->BuildAndPlacePV("pds_"+std::to_string(opdetarray_id), 
-        rot, pos, tpc->GetModLV(), 0, opdetarray_id); 
+        rot, pos, mother_lv, 0, opdetarray_id); 
 
     auto array_cfg = opdetarray->BuildOpDetArrayCfg(); 
     array_cfg.SetX( pos.x() ); array_cfg.SetPhysX( glb_pos.x() );
