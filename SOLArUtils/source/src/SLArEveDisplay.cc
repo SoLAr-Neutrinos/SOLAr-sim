@@ -1,6 +1,6 @@
 /**
  * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        : SLArEveDisplay
+ * @file        : SLArEveDisplay.cc
  * @created     : Thursday Apr 11, 2024 16:58:14 CEST
  */
 
@@ -8,11 +8,13 @@
 #include "TKey.h"
 #include "TClass.h"
 #include "TCanvas.h"
+#include "TObjString.h"
 #include "SLArEveDisplay.hh"
 #include "geo/SLArUnit.hpp"
 #include "event/SLArMCPrimaryInfo.hh"
 #include "event/SLArEventTrajectory.hh"
 #include "core/SLArDebugUtils.hh"
+#include "event/SLArEventBacktrackerRecord.hh"
 
 #include "Math/EulerAngles.h"
 
@@ -82,40 +84,35 @@ namespace display {
       TString hname = Form("hFirstOpHitTime_%i", ophit_set.first);
       TString htitl = Form("OpDet Group %i first optical hit time;Time [ps];Counts", ophit_set.first);
       hist_vec.emplace_back(hname, htitl, 1000, 0, 50000);
+      hist_vec.back().SetLineWidth(2);
 
       hname = Form("hOpHitTime_%i", ophit_set.first);
       htitl = Form("OpDet Group %i optical hit time;Time [ns];Counts", ophit_set.first);
       hist_vec.emplace_back(hname, htitl, 300, 0, 10000);
+      hist_vec.back().SetLineWidth(2);
+
+      hname = Form("hOpHitWavelength_%i", ophit_set.first);
+      htitl = Form("OpDet Group %i optical hit wavelength;Wavelength [nm];Counts", ophit_set.first);
+      hist_vec.emplace_back(hname, htitl, 100, 100, 900);
+      hist_vec.back().SetLineWidth(2);
     }
   }
 
   void SLArEveDisplay::update_time_histograms() {
-    TCanvas* c = fTimeHistCanvas->GetCanvas();
-    c->Clear();
-    c->Divide(2, 1);
+    TCanvas* cTimeProfile = fTimeHistCanvas->GetCanvas();
+    cTimeProfile->Clear();
+    cTimeProfile->DivideSquare(fPhotonDetectorsHitTimeHists.size());
 
-    c->cd(1);
-    bool draw_1 = true;
+    int i = 1;
     for (const auto& ophit_set : fPhotonDetectorsTHits) {
-      if (ophit_set.first == 10 ) continue;
       const auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
-      TString opt = (draw_1) ? "hist" : "hist same";
-      hist_vec.at(0).DrawClone(opt);
-      if (draw_1) draw_1 = false;
+      cTimeProfile->cd(i); 
+      hist_vec.at(1).DrawClone("hist");
+      ++i;
     }
 
-    c->cd(2);
-    bool draw_2 = true;
-    for (const auto& ophit_set : fPhotonDetectorsTHits) {
-      if (ophit_set.first == 10 ) continue;
-      const auto& hist_vec = fPhotonDetectorsHitTimeHists.at(ophit_set.first);
-      TString opt = (draw_2) ? "hist" : "hist same";
-      hist_vec.at(1).DrawClone(opt);
-      if (draw_2) draw_2 = false;
-    }
-
-    c->Modified();
-    c->Update();
+    cTimeProfile->Modified();
+    cTimeProfile->Update();
   }
 
   const MCParticleSelector_t& SLArEveDisplay::get_particle_selection(const int pdg) {
@@ -153,6 +150,13 @@ namespace display {
     if (fHitFile) {
       fHitFile->Close(); 
       delete fHitFile;
+      fHitFile = nullptr;
+    }
+
+    if (fMCEventFile) {
+        fMCEventFile->Close();
+        delete fMCEventFile;
+        fMCEventFile = nullptr;
     }
 
   }
@@ -474,6 +478,43 @@ namespace display {
     return;
   }
 
+  void SLArEveDisplay::ConfigureBacktracker(TObjString* g4_macro) {
+    if ( g4_macro == nullptr ) {
+      printf("No G4 macro provided for backtracker configuration. Skipping backtracker setup.\n");
+      return;
+    }
+
+    static const std::map<std::string, backtracker::EBacktracker> BacktrackerLabel = {
+      {"trkID", backtracker::EBacktracker::kTrkID}, 
+      {"ancestorID", backtracker::EBacktracker::kAncestorID}, 
+      {"opticalProc", backtracker::EBacktracker::kOpticalProc}, 
+      {"sipm_nr", backtracker::EBacktracker::kSiPMNr}, 
+      {"originVolID", backtracker::EBacktracker::kOriginVolID}, 
+      {"wavelength", backtracker::EBacktracker::kWavelength}
+    };
+
+    std::string line;
+    std::istringstream macro_stream( g4_macro->GetString().Data() );
+    while (std::getline(macro_stream, line)) {
+      if (line.find("registerBacktracker") != std::string::npos) {
+        std::istringstream line_stream(line);
+        std::string cmd, backtracker;
+        line_stream >> cmd >> backtracker;
+        std::istringstream bt_stream(backtracker);
+        std::string bt_sys, bk_name;
+        std::getline(bt_stream, bt_sys, ':');
+        std::getline(bt_stream, bk_name, ':');
+
+        printf("Registering backtracker: system = %s, name = %s\n", bt_sys.c_str(), bk_name.c_str());
+        if (BacktrackerLabel.find(bk_name) == BacktrackerLabel.end()) {
+          printf("Warning: Unknown backtracker name '%s'. Skipping.\n", bk_name.c_str());
+          continue;
+        }
+        fActiveBacktrackers.insert( BacktrackerLabel.at(bk_name) ); 
+      }
+    }
+  }
+
   int SLArEveDisplay::ReDraw() {
 /*
  *    for (auto& hitset : fHitSet) {
@@ -608,6 +649,14 @@ namespace display {
       h_first_hit.Fill( hit_time );
       for (const auto& hit_itr : ev_xa.GetConstHits()) {
         h_all_hits.Fill( hit_itr.first, hit_itr.second );
+
+        if ( ev_xa.GetBacktrackerRecordSize() > 0 ) {
+          const auto& collection = ev_xa.GetBacktrackerRecordCollection().at(hit_itr.first);
+          int irec = 0;
+          if (irec == 0) {
+          }
+          irec++; 
+        }
       }
     }
 
@@ -636,7 +685,7 @@ namespace display {
     const ROOT::Math::EulerAngles rrot = rot.Inverse();
     const ROOT::Math::EulerAngles lar_rot = fLArTarget.fRotation.Inverse();
 
-    const ROOT::Math::XYZVectorD sipm_size = {30.0, 1.0, 30.0};
+    const ROOT::Math::XYZVectorD sipm_size = {20.0, 1.0, 20.0};
     ROOT::Math::XYZVectorD sipm_size_rot = rrot*sipm_size;
     sipm_size_rot.SetXYZ( fabs(sipm_size_rot.x()), fabs(sipm_size_rot.y()), fabs(sipm_size_rot.z()) ); 
 
@@ -1049,18 +1098,36 @@ namespace display {
    browser->SetTabTitle("Event Control", 0);
 
    // Create a new tab in the Eve browser
-   TEveWindowSlot* slot = TEveWindow::CreateWindowInTab(
+   TEveWindowSlot* slot_time_hist = TEveWindow::CreateWindowInTab(
        gEve->GetBrowser()->GetTabRight());
 
    // Create embedded canvas in the slot
-   TEveWindowFrame* time_hist_frame = slot->MakeFrame();
+   TEveWindowFrame* time_hist_frame = slot_time_hist->MakeFrame();
    time_hist_frame->SetElementName("Time Distributions");
 
    fTimeHistCanvas = new TRootEmbeddedCanvas("TimeHistCanvas", time_hist_frame->GetGUICompositeFrame(), 800, 600);
    time_hist_frame->GetGUICompositeFrame()->AddFrame(fTimeHistCanvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
    time_hist_frame->GetGUICompositeFrame()->MapSubwindows();
 
-   fTimeHistCanvas->GetCanvas()->Divide(2, 1); 
+   fTimeHistCanvas->GetCanvas()->DivideSquare( fPhotonDetectorsHitTimeHists.size() ); 
+   
+   // Create a new tab in the Eve browser
+   TEveWindowSlot* slot_wavelen_hist = TEveWindow::CreateWindowInTab(
+       gEve->GetBrowser()->GetTabRight());
+
+   // Create embedded canvas in the slot
+   TEveWindowFrame* wavelen_hist_frame = slot_wavelen_hist->MakeFrame();
+   wavelen_hist_frame->SetElementName("Wavelength spectrum");
+
+   fWavelenHistCanvas = new TRootEmbeddedCanvas("WavelenHistCanvas", wavelen_hist_frame->GetGUICompositeFrame(), 800, 600);
+   wavelen_hist_frame->GetGUICompositeFrame()->AddFrame(fWavelenHistCanvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+   wavelen_hist_frame->GetGUICompositeFrame()->MapSubwindows();
+
+   fWavelenHistCanvas->GetCanvas()->DivideSquare( fPhotonDetectorsHitTimeHists.size() ); 
+
+
+   TEveBrowser* eve_browser = fEveManager->GetBrowser();
+   eve_browser->Connect("CloseWindow()", "TApplication", gApplication, "Terminate(=0)");
 
    return 1;
   }

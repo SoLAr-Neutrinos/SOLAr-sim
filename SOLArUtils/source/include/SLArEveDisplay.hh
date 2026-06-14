@@ -13,6 +13,7 @@
 #include "TFile.h"
 #include "TH1F.h"
 #include "TTree.h"
+#include "TApplication.h"
 
 #include "TGLabel.h"
 #include "TGNumberEntry.h"
@@ -39,6 +40,8 @@
 #include "event/SLArMCTruth.hh"
 #include "event/SLArEventAnode.hh"
 #include "event/SLArEventSuperCellArray.hh"
+#include "event/SLArEventBacktrackerRecord.hh"
+#include "analysis/SLArBacktracker.hh"
 
 #include "config/SLArCfgAnode.hh"
 #include "config/SLArCfgSuperCellArray.hh"
@@ -142,6 +145,8 @@ namespace display {
       Int_t GetUnID(void) { return ++nID; }
   };
 
+
+
   class SLArEveDisplay : public TGMainFrame {
     public: 
       SLArEveDisplay();
@@ -151,6 +156,21 @@ namespace display {
       int LoadMCEventFile(const TString file_path, const TString tree_key);
 
       void Configure(const rapidjson::Value& config); 
+      void ConfigureBacktracker(TObjString* g4_macro);
+      inline void CloseWindow() override {
+        if (fHitFile) {
+          fHitFile->Close();
+          delete fHitFile;
+          fHitFile = nullptr;
+        }
+        if (fMCEventFile) {
+          fMCEventFile->Close();
+          delete fMCEventFile;
+          fMCEventFile = nullptr;
+        }
+
+        gApplication->Terminate(0);
+      }
       int  MakeGUI(); 
       int  ReadHits(); 
       int  ReadMCTruth();
@@ -223,6 +243,7 @@ namespace display {
 
       TGNumberEntry* fEnterEntry = {};
       TRootEmbeddedCanvas* fTimeHistCanvas = {};
+      TRootEmbeddedCanvas* fWavelenHistCanvas = {};
       TGGroupFrame*  fGgroupframeParticleSelection = {};
       TGVerticalFrame*  fGframeParticleSelection = {};
       TGHorizontalFrame* fGframeParticleSetting[9] = {};
@@ -263,6 +284,8 @@ namespace display {
         fEnterEntry->SetIntNumber( fCurEvent );
         return;
       }
+
+      std::set<backtracker::EBacktracker> fActiveBacktrackers = {};
 
       ClassDef(display::SLArEveDisplay, 0)
   };
