@@ -1,6 +1,6 @@
 /**
  * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
- * @file        SLArBacktracker
+ * @file        SLArBacktracker.cc
  * @created     Friday Sep 29, 2023 10:30:22 CEST
  */
 
@@ -17,15 +17,15 @@ namespace backtracker {
 const G4String BkTrkReadoutSystemTag[3] = {"charge", "vuv_sipm", "supercell"};
 
 EBkTrkReadoutSystem GetBacktrackerReadoutSystem(const G4String sys) {
-  EBkTrkReadoutSystem id = kNoSystem;
+  EBkTrkReadoutSystem id = EBkTrkReadoutSystem::kNoSystem;
   if ( sys == "charge") {
-    id = kCharge;
+    id = EBkTrkReadoutSystem::kCharge;
   }
   else if (sys == "vuv_sipm") {
-    id = kVUVSiPM;
+    id = EBkTrkReadoutSystem::kVUVSiPM;
   }
-  else if (sys == "supercell") {
-    id = kSuperCell;
+  else if (sys == "supercell" || sys == "opdet") {
+    id = EBkTrkReadoutSystem::kOpDet;
   }
   else {
     printf("backtraker::GetBacktrackerReadoutSystem() WARNING no backtracker readout system called \"%s\"\n", 
@@ -35,24 +35,27 @@ EBkTrkReadoutSystem GetBacktrackerReadoutSystem(const G4String sys) {
 }
 
 
-const G4String BacktrackerLabel[5] = {"trkID", "ancestorID", "opticalProc", "sipm_nr", "originVolID"};
+const G4String BacktrackerLabel[6] = {"trkID", "ancestorID", "opticalProc", "sipm_nr", "originVolID", "wavelength"};
 
 EBacktracker GetBacktrackerEnum(const G4String bkt) {
-  EBacktracker id = kNoBacktracker;
+  EBacktracker id = EBacktracker::kNoBacktracker;
   if ( bkt == "trkID") {
-    id = kTrkID;
+    id = EBacktracker::kTrkID;
   }
   else if (bkt == "ancestorID") {
-    id = kAncestorID;
+    id = EBacktracker::kAncestorID;
   }
   else if (bkt == "opticalProc") {
-    id = kOpticalProc;
+    id = EBacktracker::kOpticalProc;
   }
   else if (bkt == "sipm_nr") {
-    id = kSiPMNr;
+    id = EBacktracker::kSiPMNr;
   }
   else if (bkt == "originVolID") {
-    id = kOriginVolID;
+    id = EBacktracker::kOriginVolID;
+  }
+  else if (bkt == "wavelength") {
+    id = EBacktracker::kWavelength;
   }
   else {
     printf("backtraker::GetBacktrackerEnum() WARNING no backtracker called \"%s\"\n", 
@@ -102,4 +105,11 @@ void SLArBacktrackerOriginVolID::Eval(SLArEventGenericHit* hit, SLArEventBacktra
   return;
 }
 
+void SLArBacktrackerWavelength::Eval(SLArEventGenericHit* hit, SLArEventBacktrackerRecord* rec) {
+  if (dynamic_cast<SLArEventPhotonHit*>(hit)) {
+    auto ph_hit = dynamic_cast<SLArEventPhotonHit*>(hit);
+    rec->UpdateCounter(ph_hit->GetWavelength()); 
+  }
+  return;
+}
 }

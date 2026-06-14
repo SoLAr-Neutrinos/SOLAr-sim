@@ -18,12 +18,12 @@ class SLArEventBacktrackerRecord;
 
 namespace backtracker{
 
-enum EBkTrkReadoutSystem {kNoSystem = -1, kCharge = 0, kVUVSiPM = 1, kSuperCell = 2};
+enum class EBkTrkReadoutSystem {kNoSystem = -1, kCharge = 0, kVUVSiPM = 1, kOpDet = 2};
 extern const G4String BkTrkReadoutSystemTag[3]; 
 EBkTrkReadoutSystem GetBacktrackerReadoutSystem(const G4String sys);
 
-enum EBacktracker {kNoBacktracker = -1, kTrkID = 0, kAncestorID = 1, kOpticalProc = 2, kSiPMNr = 3, kOriginVolID = 4};
-extern const G4String BacktrackerLabel[5];
+enum class EBacktracker {kNoBacktracker = -1, kTrkID = 0, kAncestorID = 1, kOpticalProc = 2, kSiPMNr = 3, kOriginVolID = 4, kWavelength = 5};
+extern const G4String BacktrackerLabel[6];
 EBacktracker GetBacktrackerEnum(const G4String bkt);
 
 class SLArBacktracker {
@@ -85,6 +85,14 @@ class SLArBacktrackerOriginVolID : public SLArBacktracker {
     void Eval(SLArEventGenericHit* hit, SLArEventBacktrackerRecord* rec) override;
 };
 
+class SLArBacktrackerWavelength : public SLArBacktracker {
+  public: 
+    inline SLArBacktrackerWavelength() : SLArBacktracker() {}
+    inline SLArBacktrackerWavelength(const G4String name) : SLArBacktracker(name) {}
+    inline ~SLArBacktrackerWavelength() {}
+
+    void Eval(SLArEventGenericHit* hit, SLArEventBacktrackerRecord* rec) override;
+};
 
 }
 

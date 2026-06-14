@@ -33,7 +33,7 @@ void SLArElectronDrift::Drift(const int& n,
   if (n <= 0) return;
 
   auto ana_mngr = SLArAnalysisManager::Instance();
-  auto bkt_mngr = ana_mngr->GetBacktrackerManager( backtracker::kCharge );
+  auto bkt_mngr = ana_mngr->GetBacktrackerManager( backtracker::EBkTrkReadoutSystem::kCharge ); 
 
   // Build anode reference frame
   G4ThreeVector anodeXaxis = 

@@ -259,7 +259,7 @@ G4int SLArEventAction::RecordEventReadoutTile(const G4Event* ev, const G4int& ve
     }   
 
     SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
-    auto bktManager = SLArAnaMgr->GetBacktrackerManager( backtracker::kVUVSiPM ); 
+    auto bktManager = SLArAnaMgr->GetBacktrackerManager( backtracker::EBkTrkReadoutSystem::kVUVSiPM ); 
 
     // Fill histograms
     G4int n_hit = hHC1->entries();
@@ -364,7 +364,7 @@ G4int SLArEventAction::RecordEventPDS(const G4Event* ev, const G4int& verbose)
       return 0;
     }   
     SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
-    auto bktManager = SLArAnaMgr->GetBacktrackerManager( backtracker::kSuperCell ); 
+    auto bktManager = SLArAnaMgr->GetBacktrackerManager( backtracker::EBkTrkReadoutSystem::kOpDet ); 
 
     G4int n_hit = hHC1->entries();
     for (G4int i=0;i<n_hit;i++) {

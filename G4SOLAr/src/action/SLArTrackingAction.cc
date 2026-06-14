@@ -35,7 +35,7 @@ SLArTrackingAction::~SLArTrackingAction() {
 
 void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 {
-  bool debug = true; 
+  bool debug = false; 
 
   if (aTrack->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition())
   {

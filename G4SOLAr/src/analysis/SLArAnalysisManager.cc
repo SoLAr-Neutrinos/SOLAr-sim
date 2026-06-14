@@ -504,24 +504,24 @@ int SLArAnalysisManager::WriteCrossSection(const SLArXSecDumpSpec xsec_dump) {
 void SLArAnalysisManager::ConstructBacktracker(const backtracker::EBkTrkReadoutSystem isys) {
 
   switch (isys) {
-    case backtracker::kSuperCell:
+    case backtracker::EBkTrkReadoutSystem::kOpDet:
       {
         fSuperCellBacktrackerManager = new backtracker::SLArBacktrackerManager(); 
         break;
       }
-    case backtracker::kVUVSiPM:
+    case backtracker::EBkTrkReadoutSystem::kVUVSiPM:
       {
         fVUVSiPMBacktrackerManager = new backtracker::SLArBacktrackerManager();
         break;
       }
-    case backtracker::kCharge:
+    case backtracker::EBkTrkReadoutSystem::kCharge:
       {
         fChargeBacktrackerManager = new backtracker::SLArBacktrackerManager();
         break;
       }
     default :
       {
-        printf("SLArAnalysisManager::ConstructBacktracker() WARNING case %i is not implemented\n", isys);
+        printf("SLArAnalysisManager::ConstructBacktracker() WARNING case %i is not implemented\n", static_cast<int>(isys));
         break;
       }
   }
@@ -541,15 +541,15 @@ backtracker::SLArBacktrackerManager* SLArAnalysisManager::GetBacktrackerManager(
   backtracker::SLArBacktrackerManager* bktMngr = nullptr;
 
   switch (isys) {
-    case backtracker::kCharge:
+    case backtracker::EBkTrkReadoutSystem::kCharge:
       bktMngr = fChargeBacktrackerManager;
       break;
 
-    case backtracker::kVUVSiPM:
+    case backtracker::EBkTrkReadoutSystem::kVUVSiPM:
       bktMngr = fVUVSiPMBacktrackerManager;
       break;
 
-    case backtracker::kSuperCell:
+    case backtracker::EBkTrkReadoutSystem::kOpDet:
       bktMngr = fSuperCellBacktrackerManager; 
       break;
 
