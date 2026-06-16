@@ -14,6 +14,7 @@
 #include "TRootBrowser.h"
 #include "TSystem.h"
 #include "TCanvas.h"
+#include "TVirtualX.h"
 #include "TMath.h"
 
 ClassImp(display::SLArEveDisplay)
@@ -216,17 +217,21 @@ ClassImp(display::SLArEveDisplay)
       if (hists.empty()) return;
 
       TCanvas* c = fTimeHistCanvas->GetCanvas();
-      c->cd(0);
       c->Clear();
       c->DivideSquare(static_cast<Int_t>(hists.size()));
 
-      int pad = 1;
+      int ipad = 1;
       for (const auto& [group_id, hvec] : hists) {
-        c->cd(pad++);
+        TVirtualPad* pad = c->cd(ipad);
         // Index 1 = all-hits time histogram (same choice as original code).
-        hvec.at(1).DrawClone("hist");
+        printf("[%p] %s pad %s (%p/%p): drawing %s - %g entries\n", c, c->GetName(), gPad->GetName(), gPad, pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
+        auto* h = static_cast<TH1*>(hvec.at(1).Clone());
+        h->SetDirectory(nullptr);
+        h->Draw("hist");
+        ipad++;
       }
-      c->Modified();
+
+      c->Modified(); 
       c->Update();
     }
 
@@ -238,17 +243,20 @@ ClassImp(display::SLArEveDisplay)
       if (hists.empty()) return;
 
       TCanvas* c = fWavelenHistCanvas->GetCanvas();
-      c->cd(0);
       c->Clear();
       c->DivideSquare(static_cast<Int_t>(hists.size()));
 
-      int pad = 1;
+      int ipad = 1;
       for (const auto& [group_id, hvec] : hists) {
+        TVirtualPad* pad = c->cd(ipad);
         // Index 2 = wavelength histogram (same choice as original code).
-        printf("c %s pad %d: drawing %s - %g entries\n", c->GetName(), pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
-        hvec.at(2).DrawClone("hist");
-        c->cd(pad++);
+        printf("[%p] %s pad %s (%p/%p) drawing %s - %g entries\n", c, c->GetName(), gPad->GetName(), gPad, pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
+        auto* h = static_cast<TH1*>(hvec.at(2).Clone());
+        h->SetDirectory(nullptr);
+        h->Draw("hist");
+        ipad++;
       }
+
       c->Modified();
       c->Update();
     }
@@ -425,10 +433,6 @@ ClassImp(display::SLArEveDisplay)
               static_cast<Int_t>(ngroups));
       }
 
-      frmMain->MapSubwindows();
-      frmMain->Resize();
-      frmMain->MapWindow();
-
       // ── Wavelength-spectrum canvas tab ────────────────────────────────────────
       {
         TEveWindowSlot*  slot  = TEveWindow::CreateWindowInTab(
@@ -448,11 +452,8 @@ ClassImp(display::SLArEveDisplay)
         if (ngroups > 0)
           fWavelenHistCanvas->GetCanvas()->DivideSquare(
               static_cast<Int_t>(ngroups));
-      }
 
-      frmMain->MapSubwindows();
-      frmMain->Resize();
-      frmMain->MapWindow();
+      }
 
       // ── Connect browser close to application exit ─────────────────────────────
       fEveManager->GetBrowser()->Connect(
