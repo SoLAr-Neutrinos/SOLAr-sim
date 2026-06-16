@@ -1,294 +1,181 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
- * @file        : SLArEveDisplay.hh
- * @created     : Thursday Apr 11, 2024 16:47:34 CEST
+ * @author  Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @file    SLArEveDisplay.hh
+ * @brief   Top-level orchestrator and GUI shell for the SOLAr-sim event display.
+ *
+ * Responsibilities kept here
+ * ──────────────────────────
+ *  • Own the five sub-components by value and wire them together.
+ *  • Build and manage the TGMainFrame / TEve GUI (navigation buttons, particle
+ *    selector panel, embedded canvases).
+ *  • Drive the per-event render loop: GetEntry → reset → render → redraw.
+ *  • Handle CloseWindow / application termination.
+ *
+ * What is NOT here
+ * ─────────────────
+ *  • Geometry construction        → SLArEveGeometry
+ *  • File / tree I/O              → SLArEveEventReader
+ *  • MC-truth track rendering     → SLArEveTrackRenderer
+ *  • Charge-pixel hit rendering   → SLArEveHitRenderer
+ *  • Optical hit rendering        → SLArEveOpHitRenderer
  */
 
-#ifndef SLAREVEDISPLAY_HH
+#ifndef SLAR_EVE_DISPLAY_HH
+#define SLAR_EVE_DISPLAY_HH
 
-#define SLAREVEDISPLAY_HH
+#include <memory>
+#include <set>
 
-#include <cstddef>
-#include <iostream>
-#include "TFile.h"
-#include "TH1F.h"
-#include "TTree.h"
 #include "TApplication.h"
-
+#include "TGFrame.h"
+#include "TGButton.h"
 #include "TGLabel.h"
 #include "TGNumberEntry.h"
-#include "TEveManager.h"
-#include "TEveBoxSet.h"
-#include "TEveManager.h"
-#include "TEveEventManager.h"
-#include "TEveViewer.h"
-#include "TEveFrameBox.h"
-#include "TEveGeoShape.h"
-#include "TEveTrack.h"
+#include "TGTab.h"
 #include "TRootEmbeddedCanvas.h"
-#include "Math/Vector3D.h"
-#include "Math/Point3D.h"
-#include "Math/EulerAngles.h"
 #include "TTimer.h"
-#include "TGeoManager.h"
-
-#include "memory"
+#include "TEveManager.h"
 #include "rapidjson/document.h"
 
-#include "SLArRecoHits.hh"
-
-#include "event/SLArMCTruth.hh"
-#include "event/SLArEventAnode.hh"
-#include "event/SLArEventSuperCellArray.hh"
-#include "event/SLArEventBacktrackerRecord.hh"
-#include "analysis/SLArBacktracker.hh"
-
-#include "config/SLArCfgAnode.hh"
-#include "config/SLArCfgSuperCellArray.hh"
-#include "config/SLArCfgBaseSystem.hh"
+#include "SLArEveGeometry.hh"
+#include "SLArEveEventReader.hh"
+#include "SLArEveTrackRenderer.hh"
+#include "SLArEveHitRenderer.hh"
+#include "SLArEveOpHitRenderer.hh"
 
 namespace display {
-  enum class EVolShape { kBox, kTub };
 
-  inline EVolShape string_to_vol_shape(const std::string& shape_str) {
-    if (shape_str == "box") {
-      return EVolShape::kBox;
-    } else if (shape_str == "tub") {
-      return EVolShape::kTub;
-    } else {
-      throw std::invalid_argument("Unknown volume shape: " + shape_str);
-    }
-  }
-
-  inline TString vol_shape_to_string(const EVolShape shape) {
-    switch (shape) {
-      case EVolShape::kBox: return "box";
-      case EVolShape::kTub: return "tub";
-      default: return "unknown";
-    }
-  }
-
-  /**
-   * @class GeoTPC_t
-   * @brief Basic geometry attributes of TPC volume
-   */
-  struct GeoTPC_t {
-    std::unique_ptr<TEveGeoShape> fVolume = {};
-    ROOT::Math::XYZVectorD fPosition = {};
-    ROOT::Math::XYZVectorD fDimension = {};
-    EVolShape fShape = EVolShape::kBox;
-    Double_t fRadius = 0; // for cylindrical TPCs
-    Double_t fHeight = 0; // for cylindrical TPCs
-    Int_t fID = {};
-    TGeoCombiTrans* fTransform = nullptr; // for hierarchical placement
-  };
-
-
-  struct GeoLArTarget_t {
-    std::unique_ptr<TEveGeoShape> fVolume;
-    ROOT::Math::XYZVectorD fPosition = {};
-    ROOT::Math::XYZVectorD fDimension = {};
-    ROOT::Math::EulerAngles fRotation = {};
-    EVolShape fShape = EVolShape::kBox;
-    double fRadius = 0; // for cylinder
-    double fHeight = 0; // for cylinder
-    TGeoCombiTrans* fTransform = nullptr; // for hierarchical placement
-  };
-
-  struct MCParticleSelector_t {
-    TString fName = {}; 
-    Bool_t fIsEnabled = {};
-    double fLowerEnergyThreshold = 0.0; 
-    Color_t fTrackColor = kBlack; 
-    Int_t fTrackStyle = 1; 
-    TGNumberEntry* fEntryForm = {};
-
-    inline MCParticleSelector_t() : fName(""), fIsEnabled(false), fLowerEnergyThreshold(0.0) {}
-    inline MCParticleSelector_t(
-        const char* name, const bool is_on, const double thrs, const Color_t col, const int style = 1) : 
-      fName(name), fIsEnabled(is_on), fLowerEnergyThreshold( thrs ), 
-      fTrackColor(col), fTrackStyle(style) {}
-
-    inline void ToggleEnable() {
-      (fIsEnabled) ? fIsEnabled = false : fIsEnabled = true;
-
-      if (fIsEnabled) {
-        printf("%s display enabled\n", fName.Data()); 
-      }
-      else {
-        printf("%s display disabled\n", fName.Data()); 
-      }
-      return;
-    }
-
-    inline void SetLowerEnergyDisplayThreshold(const double val) {
-      fLowerEnergyThreshold = val; 
-      printf("[%s] low energy threshold for display at %g MeV\n", fName.Data(), fLowerEnergyThreshold); 
-      return;
-    }
-    inline void SetLowerEnergyDisplayThreshold() {
-      if ( fEntryForm == nullptr ) return;
-      else {
-        Double_t val = fEntryForm->GetNumberEntry()->GetNumber(); 
-        SetLowerEnergyDisplayThreshold(val); 
-      }
-    }
-  }; 
+  // ── Simple unique-widget-ID generator ────────────────────────────────────────
 
   class IDList {
-    private:
-      Int_t nID;   // creates unique widget's IDs
-
     public:
-      IDList() : nID(0) {}
-      ~IDList() {}
-      Int_t GetUnID(void) { return ++nID; }
+      IDList() : fNextID(0) {}
+      Int_t GetUnID() { return ++fNextID; }
+    private:
+      Int_t fNextID;
   };
 
-
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SLArEveDisplay
+  // ─────────────────────────────────────────────────────────────────────────────
 
   class SLArEveDisplay : public TGMainFrame {
-    public: 
+    public:
       SLArEveDisplay();
-      ~SLArEveDisplay();
+      ~SLArEveDisplay() override = default;
 
-      int LoadHitFile(const TString file_path, const TString tree_key); 
-      int LoadMCEventFile(const TString file_path, const TString tree_key);
+      // ── Configuration (call before MakeGUI) ──────────────────────────────────
 
-      void Configure(const rapidjson::Value& config); 
-      void ConfigureBacktracker(TObjString* g4_macro);
-      inline void CloseWindow() override {
-        if (fHitFile) {
-          fHitFile->Close();
-          delete fHitFile;
-          fHitFile = nullptr;
-        }
-        if (fMCEventFile) {
-          fMCEventFile->Close();
-          delete fMCEventFile;
-          fMCEventFile = nullptr;
-        }
+      /**
+       * Parse geometry JSON and build the Eve scene graph.
+       * Must be called before LoadMCEventFile / MakeGUI.
+       */
+      void Configure(const rapidjson::Value& config);
 
-        gApplication->Terminate(0);
-      }
-      int  MakeGUI(); 
-      int  ReadHits(); 
-      int  ReadMCTruth();
-      int  ReadTracks();
-      int  ReadOpHits();
-      std::vector<int>  ReadOpHitsFromOpDetArray(const int idx_array, const SLArEventSuperCellArray& ev_opdet_array); 
-      std::vector<int>  ReadOpHitsFromAnode(const int tpc_id, const SLArEventAnode& ev_anode);
-      void ResetHits();  
-      int  ReDraw(); 
+      // ── File loading ─────────────────────────────────────────────────────────
+
+      /**
+       * Load the external reconstruction hit file.
+       * Optional; charge-pixel boxes are omitted if this is never called.
+       */
+      int LoadHitFile(const TString& file_path, const TString& tree_key);
+
+      /**
+       * Load the SOLAr-sim MC output file.
+       * Also reads geometry configs and wires the optical-hit renderer.
+       * Must be called after Configure().
+       */
+      int LoadMCEventFile(const TString& file_path, const TString& tree_key);
+
+      // ── GUI ──────────────────────────────────────────────────────────────────
+
+      /** Build and map the full GUI (navigation + particle-selector panel +
+       *  embedded histogram canvases).  Call after LoadMCEventFile(). */
+      int MakeGUI();
+
+      // ── Event navigation (connected to GUI buttons via ROOT signals) ──────────
+
       void NextEvent();
       void PrevEvent();
-      void ProcessEvent(); 
+      void ProcessEvent();
 
-      inline void SetEntry() {
+      void SetEntry()
+      {
         fCurEvent = fEnterEntry->GetNumberEntry()->GetIntNumber();
         ProcessEvent();
       }
-
-      inline void SetEntry(const Long64_t iev) {
+      void SetEntry(Long64_t iev)
+      {
         fCurEvent = iev;
         ProcessEvent();
       }
 
-      inline void ToggleModeNHitsTime() {
-        for (auto& itr : fPhotonDetectorsNHits) {
-          bool showHits = !itr.second->GetRnrSelf();
-          itr.second->SetRnrSelf(showHits);
-          fPhotonDetectorsTHits.at(itr.first)->SetRnrSelf(!showHits);
-        }
-        gEve->Redraw3D();
+      /** Toggle the N-hits / first-hit-time display mode for optical hits. */
+      void ToggleModeNHitsTime();
+
+      // ── TGMainFrame override ──────────────────────────────────────────────────
+
+      void CloseWindow() override
+      {
+        gApplication->Terminate(0);
       }
 
-    private: 
-      TFile* fHitFile = {};
-      TTree* fHitTree = {}; 
-      TFile* fMCEventFile = {};
-      TTree* fMCEventTree = {};
-      reco::hitvarContainerPtr fHitVars = {};
-      SLArMCTruth* fEvMCTruth = {};
-      SLArListEventAnode* fEvAnodeList = {};
-      SLArListEventPDS* fEvPDSList = {};
-      bool fIncludeMCTruth = true;
-      bool fIncludeTPCHits = true;
-      bool fIncludeOpHits = true;
-      std::map<int, std::unique_ptr<SLArCfgAnode>> fCfgAnodes = {}; 
-      std::unique_ptr<SLArCfgBaseSystem<SLArCfgSuperCellArray>> fCfgPDS = {}; 
-      std::unique_ptr<TTimer> fTimer = {};
-      std::unique_ptr<TEveManager> fEveManager = {};
-      std::vector<std::unique_ptr<TEveBoxSet>> fHitSet = {};
-      std::vector<std::unique_ptr<TEveTrackList>> fTrackLists = {}; 
-      std::map<int, std::unique_ptr<TEveBoxSet>> fPhotonDetectorsNHits = {}; 
-      std::map<int, std::unique_ptr<TEveBoxSet>> fPhotonDetectorsTHits = {}; 
-      std::map<int, std::vector<TH1F>> fPhotonDetectorsHitTimeHists = {};
-      TEveTrackPropagator* fPropagator = {};
-      std::unique_ptr<TEveRGBAPalette> fPaletteQHits = {};
-      std::unique_ptr<TEveRGBAPalette> fPaletteOpHits = {};
-      std::unique_ptr<TEveRGBAPalette> fPaletteOpHitsTime = {};
-      std::vector<GeoTPC_t> fTPCs;
-      GeoLArTarget_t fLArTarget;
+    private:
+      // ── Internal helpers ─────────────────────────────────────────────────────
 
-      Long64_t  fCurEvent = {};
-      Long64_t  fLastEvent = {};
+      /** Wire optical-hit renderer Eve elements into the LAr target volume and
+       *  initialise hit-set boxes after the MC file has been opened. */
+      void SetupOpHitRenderer();
 
-      Float_t fXmin = {}; 
-      Float_t fXmax = {}; 
-      Float_t fYmin = {}; 
-      Float_t fYmax = {}; 
-      Float_t fZmin = {}; 
-      Float_t fZmax = {}; 
+      /** Wire charge-hit renderer Eve elements into TPC volumes. */
+      void SetupHitRenderer();
 
-      TGNumberEntry* fEnterEntry = {};
-      TRootEmbeddedCanvas* fTimeHistCanvas = {};
-      TRootEmbeddedCanvas* fWavelenHistCanvas = {};
-      TGGroupFrame*  fGgroupframeParticleSelection = {};
-      TGVerticalFrame*  fGframeParticleSelection = {};
-      TGHorizontalFrame* fGframeParticleSetting[9] = {};
-      TGCheckButton* fGParticleSelectionButton[9] = {};
-      TGNumberEntry* fGParticleEnergyThreshold[9] = {};
-      TGTextButton* fNhitsTimeToggleButton = nullptr;
-      IDList fIDs = {}; 
+      /** Re-draw the 3D scene. */
+      void ReDraw();
 
+      /** Push current event number into the navigation entry widget. */
+      void UpdateEntryLabel() { fEnterEntry->SetIntNumber(fCurEvent); }
 
-      std::map<TString, MCParticleSelector_t> fParticleSelector; 
+      /** Repaint the time-histogram canvas with current event data. */
+      void UpdateTimeHistCanvas();
 
-      void ConfigureTPC(const rapidjson::Value& tpc_config);
+      // ── Sub-components (owned by value; initialised in constructor) ───────────
 
-      void MakeTPCBox(const rapidjson::Value& tpc_config, GeoTPC_t& geo_tpc);
+      SLArEveGeometry      fGeometry;
+      SLArEveEventReader   fReader;
+      SLArEveTrackRenderer fTrackRenderer;
+      SLArEveHitRenderer   fHitRenderer;
+      SLArEveOpHitRenderer fOpHitRenderer;
 
-      void MakeTPCTub(const rapidjson::Value& tpc_config, GeoTPC_t& geo_tpc);
+      // ── Eve infrastructure ────────────────────────────────────────────────────
 
-      void ConfigureLArTarget(const rapidjson::Value& target_config);
+      std::unique_ptr<TEveManager> fEveManager;
+      std::unique_ptr<TTimer>      fTimer;
 
-      inline Int_t GetTPCindex(const Int_t itpc) {
-        Int_t index = 0;
-        for (const auto& tpc : fTPCs) {
-          if (itpc == tpc.fID)  return index;
-          index++;
-        }
-        return -1;
-      }
+      // ── Event state ───────────────────────────────────────────────────────────
 
-      void setup_time_hist(); 
+      Long64_t fCurEvent  = 0;
 
-      void set_track_style(TEveTrack* track); 
+      // ── GUI widgets (raw non-owning pointers; ROOT owns them via TGMainFrame) ─
 
-      const MCParticleSelector_t& get_particle_selection(const int pdg);
+      IDList             fIDs;
+      TGNumberEntry*     fEnterEntry                    = nullptr;
+      TGGroupFrame*      fGgroupframeParticleSelection  = nullptr;
+      TGVerticalFrame*   fGframeParticleSelection       = nullptr;
+      // Up to 10 particle species; indices mirror fParticleSelector iteration order.
+      static constexpr int kMaxSpecies = 10;
+      TGHorizontalFrame* fGframeParticleSetting[kMaxSpecies]   = {};
+      TGCheckButton*     fGParticleSelectionButton[kMaxSpecies] = {};
+      TGNumberEntry*     fGParticleEnergyThreshold[kMaxSpecies] = {};
+      TGTextButton*      fNhitsTimeToggleButton = nullptr;
 
-      void update_time_histograms();
+      TRootEmbeddedCanvas* fTimeHistCanvas   = nullptr;
+      TRootEmbeddedCanvas* fWavelenHistCanvas = nullptr;
 
-      inline void update_entry_label() {
-        fEnterEntry->SetIntNumber( fCurEvent );
-        return;
-      }
-
-      std::set<backtracker::EBacktracker> fActiveBacktrackers = {};
-
-      ClassDef(display::SLArEveDisplay, 0)
+    public:
+      ClassDefOverride(display::SLArEveDisplay, 1)
   };
-}
-#endif /* end of include guard SLAREVEDISPLAY_HH */
 
+} // namespace display
+
+#endif // SLAR_EVE_DISPLAY_HH

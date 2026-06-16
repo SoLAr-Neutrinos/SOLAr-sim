@@ -105,7 +105,7 @@ int process_file(const TString input_file_path, const TString control_file_path)
     }
 
     auto macro_str = mc_truth_file->Get<TObjString>("g4macro");
-    eve_display->ConfigureBacktracker( macro_str );
+    //eve_display->ConfigureBacktracker( macro_str );
 
     mc_truth_file->Close();
 
