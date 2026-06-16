@@ -92,25 +92,43 @@ ClassImp(display::SLArEveDisplay)
           fReader.GetCfgPDS(),
           *fGeometry.GetLArTarget().fVolume);
 
-      const int proc_idx_sipm = fReader.GetBacktrackerRecordIndex(
-          "vuv_sipm", backtracker::EBacktracker::kOpticalProc);
-      const int proc_idx_sc   = fReader.GetBacktrackerRecordIndex(
-          "supercell", backtracker::EBacktracker::kOpticalProc);
+      fProcRecSiPM = fReader.GetBacktrackerRecordIndex("vuv_sipm",
+          backtracker::EBacktracker::kOpticalProc);
+      fProcRecOpDet = fReader.GetBacktrackerRecordIndex("supercell",
+          backtracker::EBacktracker::kOpticalProc);
+      fWvlRecSiPM = fReader.GetBacktrackerRecordIndex("vuv_sipm",
+          backtracker::EBacktracker::kWavelength);
+      fWvlRecOpDet = fReader.GetBacktrackerRecordIndex("supercell",
+          backtracker::EBacktracker::kWavelength);
 
       // Selectors default to SelectAll; only override when the
       // opticalProc backtracker is actually present for that system.
-      if (proc_idx_sipm >= 0) {
+      if (fProcRecSiPM >= 0) {
         printf("SLArEveDisplay: optical process backtracker available "
             "for vuv_sipm (record %d) — process selector enabled.\n",
-            proc_idx_sipm);
+            fProcRecSiPM);
         // Default to showing all processes; the GUI can override later.
         fOpHitRenderer.SetSiPMSelector( MakeSiPMSelectAll() );
       }
-      if (proc_idx_sc >= 0) {
+      if (fProcRecOpDet >= 0) {
         printf("SLArEveDisplay: optical process backtracker available "
-            "for supercell (record %d) — process selector enabled.\n",
-            proc_idx_sc);
+            "for opdets (record %d) — process selector enabled.\n",
+            fProcRecOpDet);
         fOpHitRenderer.SetOpDetSelector( MakeOpDetSelectAll() );
+      }
+      if (fWvlRecSiPM >= 0) {
+        printf("SLArEveDisplay: wavelength backtracker available "
+            "for vuv_sipm (record %d) — wavelength selector enabled.\n",
+            fWvlRecSiPM);
+        fOpHitRenderer.SetSiPMSelector( MakeSiPMSelectAll() );
+        fOpHitRenderer.SetSiPMWvlngthBacktrackerIndex(fWvlRecSiPM);
+      }
+      if (fWvlRecOpDet >= 0) {
+        printf("SLArEveDisplay: wavelength backtracker available "
+            "for opdets (record %d) — wavelength selector enabled.\n",
+            fWvlRecOpDet);
+        fOpHitRenderer.SetOpDetSelector( MakeOpDetSelectAll() );
+        fOpHitRenderer.SetOpDetWvlngthBacktrackerIndex(fWvlRecOpDet);
       }
     }
 
@@ -168,6 +186,7 @@ ClassImp(display::SLArEveDisplay)
       UpdateEntryLabel();
       ReDraw();
       UpdateTimeHistCanvas();
+      UpdateWavelengthCanvas();
     }
 
     void SLArEveDisplay::NextEvent()
@@ -197,6 +216,7 @@ ClassImp(display::SLArEveDisplay)
       if (hists.empty()) return;
 
       TCanvas* c = fTimeHistCanvas->GetCanvas();
+      c->cd(0);
       c->Clear();
       c->DivideSquare(static_cast<Int_t>(hists.size()));
 
@@ -205,6 +225,29 @@ ClassImp(display::SLArEveDisplay)
         c->cd(pad++);
         // Index 1 = all-hits time histogram (same choice as original code).
         hvec.at(1).DrawClone("hist");
+      }
+      c->Modified();
+      c->Update();
+    }
+
+    void SLArEveDisplay::UpdateWavelengthCanvas() 
+    {
+      if (!fWavelenHistCanvas) return;
+
+      const auto& hists = fOpHitRenderer.GetTimeHistograms();
+      if (hists.empty()) return;
+
+      TCanvas* c = fWavelenHistCanvas->GetCanvas();
+      c->cd(0);
+      c->Clear();
+      c->DivideSquare(static_cast<Int_t>(hists.size()));
+
+      int pad = 1;
+      for (const auto& [group_id, hvec] : hists) {
+        // Index 2 = wavelength histogram (same choice as original code).
+        printf("c %s pad %d: drawing %s - %g entries\n", c->GetName(), pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
+        hvec.at(2).DrawClone("hist");
+        c->cd(pad++);
       }
       c->Modified();
       c->Update();
@@ -339,6 +382,21 @@ ClassImp(display::SLArEveDisplay)
           new TGLayoutHints(kLHintsExpandX | kLHintsTop, 5, 5, 5, 5));
 
       frmMain->AddFrame(fGgroupframeParticleSelection);
+
+      auto* grpOpSel = new TGGroupFrame(frmMain, "Optical hit selector");
+      fOpHitSelectorPanel.Build(
+          *grpOpSel,
+          fOpHitRenderer,
+          fProcRecSiPM,
+          fProcRecOpDet,
+          fWvlRecSiPM,
+          fWvlRecOpDet);
+      fOpHitSelectorPanel.SetOnApply([this]() { ProcessEvent(); });
+      grpOpSel->MapSubwindows();
+      frmMain->AddFrame(grpOpSel,
+          new TGLayoutHints(kLHintsExpandX | kLHintsTop, 4, 4, 4, 4));
+
+
       frmMain->MapSubwindows();
       frmMain->Resize();
       frmMain->MapWindow();
@@ -367,6 +425,10 @@ ClassImp(display::SLArEveDisplay)
               static_cast<Int_t>(ngroups));
       }
 
+      frmMain->MapSubwindows();
+      frmMain->Resize();
+      frmMain->MapWindow();
+
       // ── Wavelength-spectrum canvas tab ────────────────────────────────────────
       {
         TEveWindowSlot*  slot  = TEveWindow::CreateWindowInTab(
@@ -387,6 +449,10 @@ ClassImp(display::SLArEveDisplay)
           fWavelenHistCanvas->GetCanvas()->DivideSquare(
               static_cast<Int_t>(ngroups));
       }
+
+      frmMain->MapSubwindows();
+      frmMain->Resize();
+      frmMain->MapWindow();
 
       // ── Connect browser close to application exit ─────────────────────────────
       fEveManager->GetBrowser()->Connect(

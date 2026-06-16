@@ -7,6 +7,7 @@
 #pragma link C++ namespace display;
 
 // Top-level orchestrator — uses ClassDef / ClassImp.
+#pragma link C++ class display::SLArEveOpHitSelectorPanel+;
 #pragma link C++ class display::SLArEveDisplay+;
 
 // MCParticleSelector_t uses ROOT Connect() signals from the GUI, so its

@@ -39,6 +39,7 @@ set(SLAREVEDISPLAY_SOURCES
   ${SOLAR_UTILS_SRC_DIR}/SLArEveTrackRenderer.cc
   ${SOLAR_UTILS_SRC_DIR}/SLArEveHitRenderer.cc
   ${SOLAR_UTILS_SRC_DIR}/SLArEveOpHitRenderer.cc
+  ${SOLAR_UTILS_SRC_DIR}/SLArEveOpHitSelectorPanel.cc
   ${SOLAR_UTILS_SRC_DIR}/SLArEveDisplay.cc
 )
 
@@ -47,7 +48,9 @@ set(SLAREVEDISPLAY_HEADERS
   ${SOLAR_UTILS_INC_DIR}/SLArEveEventReader.hh
   ${SOLAR_UTILS_INC_DIR}/SLArEveTrackRenderer.hh
   ${SOLAR_UTILS_INC_DIR}/SLArEveHitRenderer.hh
+  ${SOLAR_UTILS_INC_DIR}/SLArEveOpHitSelector.hh
   ${SOLAR_UTILS_INC_DIR}/SLArEveOpHitRenderer.hh
+  ${SOLAR_UTILS_INC_DIR}/SLArEveOpHitSelectorPanel.hh
   ${SOLAR_UTILS_INC_DIR}/SLArEveDisplay.hh
 )     
 

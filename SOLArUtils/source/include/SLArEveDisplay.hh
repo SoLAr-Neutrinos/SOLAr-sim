@@ -42,6 +42,7 @@
 #include "SLArEveTrackRenderer.hh"
 #include "SLArEveHitRenderer.hh"
 #include "SLArEveOpHitRenderer.hh"
+#include "SLArEveOpHitSelectorPanel.hh"
 
 namespace display {
 
@@ -139,6 +140,9 @@ namespace display {
       /** Repaint the time-histogram canvas with current event data. */
       void UpdateTimeHistCanvas();
 
+      /** Repaint the wavelength-histogram canvas with current event data. */
+      void UpdateWavelengthCanvas();
+
       // ── Sub-components (owned by value; initialised in constructor) ───────────
 
       SLArEveGeometry      fGeometry;
@@ -168,6 +172,12 @@ namespace display {
       TGCheckButton*     fGParticleSelectionButton[kMaxSpecies] = {};
       TGNumberEntry*     fGParticleEnergyThreshold[kMaxSpecies] = {};
       TGTextButton*      fNhitsTimeToggleButton = nullptr;
+
+      SLArEveOpHitSelectorPanel fOpHitSelectorPanel;
+      int fProcRecSiPM = -1;
+      int fProcRecOpDet = -1;
+      int fWvlRecSiPM = -1;
+      int fWvlRecOpDet = -1;
 
       TRootEmbeddedCanvas* fTimeHistCanvas   = nullptr;
       TRootEmbeddedCanvas* fWavelenHistCanvas = nullptr;

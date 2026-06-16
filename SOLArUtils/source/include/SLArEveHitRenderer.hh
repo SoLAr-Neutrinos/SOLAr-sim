@@ -24,6 +24,7 @@
 #include "TGeoMatrix.h"
 
 #include "SLArRecoHits.hh"
+#include "SLArEveEventReader.hh"
 #include "SLArEveGeometry.hh"
 
 namespace display {

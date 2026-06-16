@@ -40,6 +40,7 @@
 #include "config/SLArCfgSuperCellArray.hh"
 #include "config/SLArCfgBaseSystem.hh"
 
+#include "SLArEveEventReader.hh"
 #include "SLArEveGeometry.hh"
 #include "SLArEveOpHitSelector.hh"
 
@@ -95,6 +96,9 @@ namespace display {
           const CfgPDS_t*                                      pds_cfg,
           TEveElement&                                         parent);
 
+      void SetSiPMWvlngthBacktrackerIndex(int idx) { fSiPMWvlngthBktrkIdx = idx; }
+      void SetOpDetWvlngthBacktrackerIndex(int idx) { fOpDetWvlngthBktrkIdx = idx; }
+
       // ── Per-event ────────────────────────────────────────────────────────────
 
       /**
@@ -140,11 +144,11 @@ namespace display {
       // ── Per-group rendering helpers ───────────────────────────────────────────
 
       OpHitLimits RenderFromOpDetArray(
-          int                          idx_array,
+          int idx_array,
           const SLArEventSuperCellArray& ev_array);
 
       OpHitLimits RenderFromAnode(
-          int                    tpc_id,
+          int tpc_id,
           const SLArEventAnode&  ev_anode);
 
       // ── Histogram initialisation ──────────────────────────────────────────────
@@ -166,6 +170,9 @@ namespace display {
 
       std::unique_ptr<TEveRGBAPalette> fPaletteNHits;
       std::unique_ptr<TEveRGBAPalette> fPaletteTHits;
+
+      int fSiPMWvlngthBktrkIdx = -1;  ///< backtracker record index for SiPM wavelength (if present)
+      int fOpDetWvlngthBktrkIdx = -1; ///< backtracker record index for OpDet wavelength (if present)
 
       SiPMSelectorFn  fSiPMSelector = MakeSiPMSelectAll();
       OpDetSelectorFn fOpDetSelector = MakeOpDetSelectAll();
