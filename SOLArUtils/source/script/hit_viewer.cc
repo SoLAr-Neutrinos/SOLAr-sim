@@ -89,7 +89,6 @@ int process_file(const TString input_file_path, const TString control_file_path)
   TFile* mc_truth_file = nullptr;
 
   display::SLArEveDisplay* eve_display = new display::SLArEveDisplay();
-  eve_display->LoadHitFile( input_file_path, "HitTree" ); 
 
   if (control_file_path.IsNull() == false) {
     mc_truth_file = TFile::Open(control_file_path); 
@@ -105,11 +104,14 @@ int process_file(const TString input_file_path, const TString control_file_path)
     }
 
     auto macro_str = mc_truth_file->Get<TObjString>("g4macro");
+
     //eve_display->ConfigureBacktracker( macro_str );
 
     mc_truth_file->Close();
 
     eve_display->LoadMCEventFile( control_file_path, "EventTree" ); 
+
+    eve_display->LoadHitFile( input_file_path, "HitTree" ); 
   }
 
   eve_display->MakeGUI();

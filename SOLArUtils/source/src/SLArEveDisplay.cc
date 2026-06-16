@@ -91,6 +91,27 @@ ClassImp(display::SLArEveDisplay)
           fReader.GetCfgAnodes(),
           fReader.GetCfgPDS(),
           *fGeometry.GetLArTarget().fVolume);
+
+      const int proc_idx_sipm = fReader.GetBacktrackerRecordIndex(
+          "vuv_sipm", backtracker::EBacktracker::kOpticalProc);
+      const int proc_idx_sc   = fReader.GetBacktrackerRecordIndex(
+          "supercell", backtracker::EBacktracker::kOpticalProc);
+
+      // Selectors default to SelectAll; only override when the
+      // opticalProc backtracker is actually present for that system.
+      if (proc_idx_sipm >= 0) {
+        printf("SLArEveDisplay: optical process backtracker available "
+            "for vuv_sipm (record %d) — process selector enabled.\n",
+            proc_idx_sipm);
+        // Default to showing all processes; the GUI can override later.
+        fOpHitRenderer.SetSiPMSelector( MakeSiPMSelectAll() );
+      }
+      if (proc_idx_sc >= 0) {
+        printf("SLArEveDisplay: optical process backtracker available "
+            "for supercell (record %d) — process selector enabled.\n",
+            proc_idx_sc);
+        fOpHitRenderer.SetOpDetSelector( MakeOpDetSelectAll() );
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────

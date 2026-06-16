@@ -61,8 +61,8 @@ void SLArEveHitRenderer::RenderHits(const reco::hitvarContainerPtr& hit_vars)
         const int tpc_copy = hit_vars.hit_tpc->at(ihit);
         const int tpc_idx  = fGeometry.GetTPCIndex(tpc_copy);
         if (tpc_idx < 0 || tpc_idx >= static_cast<int>(fHitSets.size())) {
-            printf("SLArEveHitRenderer: unknown TPC copy-ID %i; skipping hit\n",
-                   tpc_copy);
+            printf("SLArEveHitRenderer: unknown TPC copy-ID %i (index %i - hitset size %ld); skipping hit\n",
+                   tpc_copy, tpc_idx, fHitSets.size());
             continue;
         }
 

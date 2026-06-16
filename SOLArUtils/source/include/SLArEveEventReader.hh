@@ -49,6 +49,12 @@ namespace display {
 // Convenience alias used throughout the display sub-system.
 using CfgPDS_t = SLArCfgBaseSystem<SLArCfgSuperCellArray>;
 
+// The key is the system tag ("charge", "vuv_sipm", "supercell").
+// The value is the ordered list of registered backtrackers, so that
+// fRecords[i] corresponds to fBacktrackerIndex[system][i].
+using BacktrackerIndex_t =
+    std::map<std::string, std::vector<backtracker::EBacktracker>>;
+
 /**
  * @class SLArEveEventReader
  * @brief Single point of contact for ROOT file I/O in the event display.
@@ -114,9 +120,21 @@ public:
     bool HasOpHits()   const { return fIncludeOpHits;  }
     bool HasHitFile()  const { return fHitFile != nullptr; }
 
-    /** Set of backtrackers whose records are present in the file. */
-    const std::set<backtracker::EBacktracker>& GetActiveBacktrackers() const
-    { return fActiveBacktrackers; }
+    //! Set of backtrackers whose records are present in the file, divided by readout system.
+    const BacktrackerIndex_t& GetBacktrackerIndex() const { return fBacktrackerIndex; }
+
+    //! Returns the record-vector index of @p bt for @p system,
+    //! or -1 if not registered.
+    inline int GetBacktrackerRecordIndex(const std::string& system,
+        backtracker::EBacktracker bt) const
+    {
+      const auto sit = fBacktrackerIndex.find(system);
+      if (sit == fBacktrackerIndex.end()) return -1;
+      const auto& vec = sit->second;
+      for (int i = 0; i < (int)vec.size(); ++i)
+        if (vec[i] == bt) return i;
+      return -1;
+    }
 
 private:
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -151,7 +169,8 @@ private:
     bool fIncludeTPCHits  = true;
     bool fIncludeOpHits   = true;
 
-    std::set<backtracker::EBacktracker> fActiveBacktrackers;
+    // ── Backtracker bookkeeping ───────────────────────────────────────────────
+    BacktrackerIndex_t fBacktrackerIndex;
 };
 
 } // namespace display

@@ -41,121 +41,134 @@
 #include "config/SLArCfgBaseSystem.hh"
 
 #include "SLArEveGeometry.hh"
+#include "SLArEveOpHitSelector.hh"
 
 namespace display {
 
-using CfgPDS_t = SLArCfgBaseSystem<SLArCfgSuperCellArray>;
+  using CfgPDS_t = SLArCfgBaseSystem<SLArCfgSuperCellArray>;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Result type returned from per-group rendering helpers
-// ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Result type returned from per-group rendering helpers
+  // ─────────────────────────────────────────────────────────────────────────────
 
-struct OpHitLimits {
+  struct OpHitLimits {
     int nhit_max = 0;
     int time_min = std::numeric_limits<int>::max();
     int time_max = 0;
-};
+  };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SLArEveOpHitRenderer
-// ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SLArEveOpHitRenderer
+  // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * @class SLArEveOpHitRenderer
- * @brief Handles all photon-detection-system rendering.
- *
- * Call order:
- *   1. Configure(anode_cfgs, pds_cfg, parent) — once, after reader is loaded.
- *   2. RenderOpHits(ev_anode_list, ev_pds_list) — once per event.
- *   3. Reset() — call before RenderOpHits() on each new event; or let
- *      RenderOpHits() call it automatically (it does).
- */
-class SLArEveOpHitRenderer {
-public:
-    explicit SLArEveOpHitRenderer(const SLArEveGeometry& geometry);
-    ~SLArEveOpHitRenderer() = default;
+  /**
+   * @class SLArEveOpHitRenderer
+   * @brief Handles all photon-detection-system rendering.
+   *
+   * Call order:
+   *   1. Configure(anode_cfgs, pds_cfg, parent) — once, after reader is loaded.
+   *   2. RenderOpHits(ev_anode_list, ev_pds_list) — once per event.
+   *   3. Reset() — call before RenderOpHits() on each new event; or let
+   *      RenderOpHits() call it automatically (it does).
+   */
+  class SLArEveOpHitRenderer {
+    public:
+      explicit SLArEveOpHitRenderer(const SLArEveGeometry& geometry);
+      ~SLArEveOpHitRenderer() = default;
 
-    SLArEveOpHitRenderer(const SLArEveOpHitRenderer&)            = delete;
-    SLArEveOpHitRenderer& operator=(const SLArEveOpHitRenderer&) = delete;
+      SLArEveOpHitRenderer(const SLArEveOpHitRenderer&)            = delete;
+      SLArEveOpHitRenderer& operator=(const SLArEveOpHitRenderer&) = delete;
 
-    // ── Setup ────────────────────────────────────────────────────────────────
+      // ── Setup ────────────────────────────────────────────────────────────────
 
-    /**
-     * Create TEveBoxSets for every detector group discovered in @p anode_cfgs
-     * and @p pds_cfg, and attach them to @p parent.  Also initialises the
-     * time histograms.
-     *
-     * @param anode_cfgs  Map TPC-ID → SLArCfgAnode (non-owning refs).
-     * @param pds_cfg     PDS system config (may be nullptr if unavailable).
-     * @param parent      Eve element to attach box sets to.
-     */
-    void Configure(
-        const std::map<int, std::unique_ptr<SLArCfgAnode>>& anode_cfgs,
-        const CfgPDS_t*                                      pds_cfg,
-        TEveElement&                                         parent);
+      /**
+       * Create TEveBoxSets for every detector group discovered in @p anode_cfgs
+       * and @p pds_cfg, and attach them to @p parent.  Also initialises the
+       * time histograms.
+       *
+       * @param anode_cfgs  Map TPC-ID → SLArCfgAnode (non-owning refs).
+       * @param pds_cfg     PDS system config (may be nullptr if unavailable).
+       * @param parent      Eve element to attach box sets to.
+       */
+      void Configure(
+          const std::map<int, std::unique_ptr<SLArCfgAnode>>& anode_cfgs,
+          const CfgPDS_t*                                      pds_cfg,
+          TEveElement&                                         parent);
 
-    // ── Per-event ────────────────────────────────────────────────────────────
+      // ── Per-event ────────────────────────────────────────────────────────────
 
-    /**
-     * Clear old hit boxes, repopulate from the current event, and update
-     * colour palettes.
-     *
-     * @param ev_anode_list  Charge-anode event data (may be nullptr).
-     * @param ev_pds_list    PDS event data (may be nullptr).
-     */
-    void RenderOpHits(const SLArListEventAnode* ev_anode_list,
-                      const SLArListEventPDS*   ev_pds_list);
+      /**
+       * Clear old hit boxes, repopulate from the current event, and update
+       * colour palettes.
+       *
+       * @param ev_anode_list  Charge-anode event data (may be nullptr).
+       * @param ev_pds_list    PDS event data (may be nullptr).
+       */
+      void RenderOpHits(const SLArListEventAnode* ev_anode_list,
+          const SLArListEventPDS*   ev_pds_list);
 
-    /** Clear all TEveBoxSets and reset all histograms. */
-    void Reset();
+      /** Clear all TEveBoxSets and reset all histograms. */
+      void Reset();
 
-    // ── Accessors ────────────────────────────────────────────────────────────
+      // -- Selectors 
+      void SetSiPMSelector(SiPMSelectorFn sel) { fSiPMSelector = std::move(sel); }
+      void SetOpDetSelector(OpDetSelectorFn sel)  { fOpDetSelector = std::move(sel); }
+      //! Restore both selectors to SelectAll
+      inline void ResetSelectors() {
+        fSiPMSelector = MakeSiPMSelectAll();
+        fOpDetSelector = MakeOpDetSelectAll();
+      }
 
-    /** Time histograms keyed by detector-group index; for canvas drawing. */
-    const std::map<int, std::vector<TH1F>>& GetTimeHistograms() const
-    { return fTimeHistograms; }
+      // ── Accessors ────────────────────────────────────────────────────────────
 
-    std::map<int, std::vector<TH1F>>& GetTimeHistograms()
-    { return fTimeHistograms; }
+      /** Time histograms keyed by detector-group index; for canvas drawing. */
+      const std::map<int, std::vector<TH1F>>& GetTimeHistograms() const
+      { return fTimeHistograms; }
 
-    /** Map from group index → nhit TEveBoxSet (for palette toggle in GUI). */
-    std::map<int, std::unique_ptr<TEveBoxSet>>& GetNHitSets()
-    { return fDetectorNHits; }
+      std::map<int, std::vector<TH1F>>& GetTimeHistograms()
+      { return fTimeHistograms; }
 
-    /** Map from group index → time TEveBoxSet. */
-    std::map<int, std::unique_ptr<TEveBoxSet>>& GetTimeSets()
-    { return fDetectorTHits; }
+      /** Map from group index → nhit TEveBoxSet (for palette toggle in GUI). */
+      std::map<int, std::unique_ptr<TEveBoxSet>>& GetNHitSets()
+      { return fDetectorNHits; }
 
-private:
-    // ── Per-group rendering helpers ───────────────────────────────────────────
+      /** Map from group index → time TEveBoxSet. */
+      std::map<int, std::unique_ptr<TEveBoxSet>>& GetTimeSets()
+      { return fDetectorTHits; }
 
-    OpHitLimits RenderFromOpDetArray(
-        int                          idx_array,
-        const SLArEventSuperCellArray& ev_array);
+    private:
+      // ── Per-group rendering helpers ───────────────────────────────────────────
 
-    OpHitLimits RenderFromAnode(
-        int                    tpc_id,
-        const SLArEventAnode&  ev_anode);
+      OpHitLimits RenderFromOpDetArray(
+          int                          idx_array,
+          const SLArEventSuperCellArray& ev_array);
 
-    // ── Histogram initialisation ──────────────────────────────────────────────
+      OpHitLimits RenderFromAnode(
+          int                    tpc_id,
+          const SLArEventAnode&  ev_anode);
 
-    void SetupTimeHistograms();
+      // ── Histogram initialisation ──────────────────────────────────────────────
 
-    // ── Data members ─────────────────────────────────────────────────────────
+      void SetupTimeHistograms();
 
-    const SLArEveGeometry& fGeometry;   ///< non-owning ref
+      // ── Data members ─────────────────────────────────────────────────────────
 
-    // Non-owning config pointers; lifetimes guaranteed by SLArEveEventReader.
-    const std::map<int, std::unique_ptr<SLArCfgAnode>>* fCfgAnodes = nullptr;
-    const CfgPDS_t*                                      fCfgPDS   = nullptr;
+      const SLArEveGeometry& fGeometry;   ///< non-owning ref
 
-    std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorNHits;
-    std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorTHits;
+      // Non-owning config pointers; lifetimes guaranteed by SLArEveEventReader.
+      const std::map<int, std::unique_ptr<SLArCfgAnode>>* fCfgAnodes = nullptr;
+      const CfgPDS_t*                                      fCfgPDS   = nullptr;
 
-    std::map<int, std::vector<TH1F>> fTimeHistograms;
+      std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorNHits;
+      std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorTHits;
 
-    std::unique_ptr<TEveRGBAPalette> fPaletteNHits;
-    std::unique_ptr<TEveRGBAPalette> fPaletteTHits;
-};
+      std::map<int, std::vector<TH1F>> fTimeHistograms;
+
+      std::unique_ptr<TEveRGBAPalette> fPaletteNHits;
+      std::unique_ptr<TEveRGBAPalette> fPaletteTHits;
+
+      SiPMSelectorFn  fSiPMSelector = MakeSiPMSelectAll();
+      OpDetSelectorFn fOpDetSelector = MakeOpDetSelectAll();
+  };
 
 } // namespace display

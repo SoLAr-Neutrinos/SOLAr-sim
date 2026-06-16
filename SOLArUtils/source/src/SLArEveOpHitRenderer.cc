@@ -174,10 +174,10 @@ OpHitLimits SLArEveOpHitRenderer::RenderFromOpDetArray(
     auto& h_all   = fTimeHistograms.at(idx_array).at(1);
 
     for (const auto& [idx_xa, ev_xa] : ev_array.GetConstSuperCellMap()) {
-        const int nhit = ev_xa.GetNhits();
-        if (nhit == 0) continue;
+        const auto select_result = fOpDetSelector(ev_xa);
+        if (select_result.nhits == 0) continue;
 
-        if (nhit > limits.nhit_max) limits.nhit_max = nhit;
+        if (select_result.nhits > limits.nhit_max) limits.nhit_max = select_result.nhits;
 
         const auto& cfg_xa = cfg_wall.GetBaseElement(idx_xa);
 
@@ -206,9 +206,9 @@ OpHitLimits SLArEveOpHitRenderer::RenderFromOpDetArray(
 
         bs_nhit->AddBox(xglob[0], xglob[1], xglob[2],
                         xsize[0],  xsize[1],  xsize[2]);
-        bs_nhit->DigitValue(nhit);
+        bs_nhit->DigitValue(select_result.nhits);
 
-        const int hit_time = ev_xa.GetConstHits().begin()->first;
+        const int hit_time = select_result.time_min;
         if (hit_time < limits.time_min) limits.time_min = hit_time;
         if (hit_time > limits.time_max) limits.time_max = hit_time;
 
