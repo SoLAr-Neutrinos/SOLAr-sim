@@ -13,12 +13,12 @@
 class SLArMCTruth : public TObject {
   public: 
     
-    inline SLArMCTruth() : fEvNumber(-1), TObject() {fPrimaries.reserve(100);}
+    inline SLArMCTruth() : TObject(), fEvNumber(-1) {fPrimaries.reserve(100);}
     
-    inline SLArMCTruth(const int& evNumber) : fEvNumber(evNumber), TObject() {}
+    inline SLArMCTruth(const int& evNumber) :  TObject(), fEvNumber(evNumber) {}
     
     inline SLArMCTruth(const SLArMCTruth& ev) : 
-      fEvNumber(ev.fEvNumber), fPrimaries(ev.fPrimaries), TObject(ev) {}
+      TObject(ev), fEvNumber(ev.fEvNumber), fPrimaries(ev.fPrimaries)  {}
     
     inline ~SLArMCTruth() { Reset(); }
 
@@ -27,6 +27,8 @@ class SLArMCTruth : public TObject {
     inline int GetEventNumber() const {return fEvNumber;}
     
     inline std::vector<SLArMCPrimaryInfo>& GetPrimaries() {return fPrimaries;}
+
+    inline const std::vector<SLArMCPrimaryInfo>& GetPrimaries() const {return fPrimaries;}
     
     inline void Reset() {fPrimaries.clear(); fEvNumber = -1;}
     
@@ -36,9 +38,21 @@ class SLArMCTruth : public TObject {
     }
     
     inline SLArMCPrimaryInfo& GetPrimary(int ip) {return fPrimaries.at(ip);}
+    
+    inline const SLArMCPrimaryInfo& GetPrimary(int ip) const {return fPrimaries.at(ip);}
 
     inline SLArMCPrimaryInfo& GetPrimaryByTrkID(int id) {
       for (auto &p : fPrimaries) {
+        if (p.GetTrackID() == id) return p;
+      }
+
+      printf("SLArMCTruth::GetPrimaryByTrkID WARNING: Unable to find primary wit track id %i returning the first primary in the list\n", 
+          id);
+      return fPrimaries.front();
+    }
+
+    inline const SLArMCPrimaryInfo& GetPrimaryByTrkID(int id) const {
+      for (const auto &p : fPrimaries) {
         if (p.GetTrackID() == id) return p;
       }
 
@@ -64,7 +78,7 @@ class SLArMCTruth : public TObject {
     std::vector<SLArMCPrimaryInfo> fPrimaries;
 
   public:
-    ClassDef(SLArMCTruth, 1);
+    ClassDef(SLArMCTruth, 2);
 };
 
 #endif /* end of include guard SLARMCTRUTH_HH */
