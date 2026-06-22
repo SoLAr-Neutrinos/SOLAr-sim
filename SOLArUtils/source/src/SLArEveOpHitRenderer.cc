@@ -29,10 +29,12 @@ namespace display {
   void SLArEveOpHitRenderer::Configure(
       const std::map<int, std::unique_ptr<SLArCfgAnode>>& anode_cfgs,
       const CfgPDS_t* pds_cfg,
+      const BacktrackerDict_t* backtracker_dict,
       TEveElement& parent)
   {
     fCfgAnodes = &anode_cfgs;
     fCfgPDS    = pds_cfg;
+    fBacktrackerDict = backtracker_dict;
 
     // ── Anode SiPM arrays (one group per TPC) ─────────────────────────────────
     for (const auto& [tpc_id, cfg_anode] : anode_cfgs) {
@@ -146,7 +148,7 @@ namespace display {
     for (auto& [id, bs] : fDetectorTHits)
       bs->Reset(TEveBoxSet::kBT_AABox, false, 10000);
 
-    for (auto& [id, hists] : fTimeHistograms)
+    for (auto& [id, hists] : fOpHitsHistograms)
       for (auto& h : hists) h.Reset();
   }
 
@@ -170,14 +172,21 @@ namespace display {
     auto& bs_nhit = fDetectorNHits.at(idx_array);
     auto& bs_time = fDetectorTHits.at(idx_array);
 
-    auto& h_first = fTimeHistograms.at(idx_array).at(0);
-    auto& h_all   = fTimeHistograms.at(idx_array).at(1);
+    for (auto& hist : fOpHitsHistograms.at(idx_array)) {
+      hist.Reset();
+    }
+    auto& h_first = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kFirstHitTime));
+    auto& h_all   = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kAllHitTime  ));
+    auto& h_scint = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kScintHitTime));
+    auto& h_cher  = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kCherHitTime ));
+    auto& h_wls   = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kWLSHitTime  ));
+    auto& h_wvl   = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kWavelength  ));
 
     for (const auto& [idx_xa, ev_xa] : ev_array.GetConstSuperCellMap()) {
       const auto select_result = fOpDetSelector(ev_xa);
-      if (select_result.nhits == 0) continue;
+      if (select_result.n_hits == 0) continue;
 
-      if (select_result.nhits > limits.nhit_max) limits.nhit_max = select_result.nhits;
+      if (select_result.n_hits > limits.nhit_max) limits.nhit_max = select_result.n_hits;
 
       const auto& cfg_xa = cfg_wall.GetBaseElement(idx_xa);
 
@@ -206,7 +215,7 @@ namespace display {
 
       bs_nhit->AddBox(xglob[0], xglob[1], xglob[2],
           xsize[0],  xsize[1],  xsize[2]);
-      bs_nhit->DigitValue(select_result.nhits);
+      bs_nhit->DigitValue(select_result.n_hits);
 
       const int hit_time = select_result.time_min;
       if (hit_time < limits.time_min) limits.time_min = hit_time;
@@ -217,18 +226,46 @@ namespace display {
       bs_time->DigitValue(hit_time);
 
       h_first.Fill(static_cast<double>(hit_time));
-      for (const auto& [bin, count] : ev_xa.GetConstHits()) {
-        h_all.Fill(static_cast<double>(bin),
+
+      const HitsCollection_t& hits_sel = ( OpDetSelectorIsFiltering() ) ? 
+        select_result.fHits : ev_xa.GetConstHits();
+
+      for (const auto& [time_bin, count] : hits_sel) {
+        h_all.Fill(static_cast<double>(time_bin),
             static_cast<double>(count));
 
-        if (fOpDetWvlngthBktrkIdx < 0) continue;
+        if (OpDetSelectorIsFiltering() == true) continue;
+
         const auto& bt_coll = ev_xa.GetBacktrackerRecordCollection();
         if (bt_coll.empty()) continue;
-        TH1F& h_wvl = fTimeHistograms.at(idx_array).at(2);
-        const auto wvl_bkt = bt_coll.at(bin).GetConstRecords().at(fOpDetWvlngthBktrkIdx);
-        for (const auto& [wvl_key, wvl_count] : wvl_bkt.GetConstCounter()) {
-          const float wvl = wvl_key;
-          h_wvl.Fill(static_cast<double>(wvl), static_cast<double>(wvl_count));
+        const auto& records = bt_coll.at(time_bin).GetConstRecords();
+            
+        // check if wavelength backtracker is active
+        if (fOpDetWvlngthBktrkIdx >= 0) {
+          if (bt_coll.empty()) continue;
+          if (fOpDetWvlngthBktrkIdx >= static_cast<int>(records.size())) continue;
+          for (const auto& [wvl_key, count] : records[fOpDetWvlngthBktrkIdx].GetConstCounter()) {
+            const float wvl_val = wvl_key;
+            h_wvl.Fill(wvl_val, static_cast<double>(count));
+          }
+        }
+
+        if (fOpDetOpProcBktrkIdx >= 0) {
+          const auto& proc_bkt = records[fOpDetOpProcBktrkIdx].GetConstCounter();
+          for (const auto& [proc_key, count] : proc_bkt) {
+            const int proc_val = proc_key;
+            if (count > 0) {
+              if (proc_val == static_cast<int>(EPhProcess::kScnt)) {
+                h_scint.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+              }
+              else if (proc_val == static_cast<int>(EPhProcess::kCher)) {
+                h_cher.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+              }
+              else if (proc_val == static_cast<int>(EPhProcess::kWLS)) {
+                h_wls.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+              }
+            }
+          }
         }
       }
     }
@@ -272,8 +309,16 @@ namespace display {
     auto& bs_nhit = fDetectorNHits.at(tpc_id);
     auto& bs_time = fDetectorTHits.at(tpc_id);
 
-    auto& h_first = fTimeHistograms.at(tpc_id).at(0);
-    auto& h_all   = fTimeHistograms.at(tpc_id).at(1);
+    for (auto& hist : fOpHitsHistograms.at(tpc_id)) {
+      hist.Reset();
+    }
+
+    auto& h_first = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kFirstHitTime));
+    auto& h_all   = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kAllHitTime  ));
+    auto& h_scint = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kScintHitTime));
+    auto& h_cher  = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kCherHitTime ));
+    auto& h_wls   = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kWLSHitTime  ));
+    auto& h_wvl   = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kWavelength  ));
 
     for (const auto& [idx_mt, ev_mt] : ev_anode.GetConstMegaTilesMap()) {
       if (ev_mt.GetNPhotonHits() == 0) continue;
@@ -305,7 +350,7 @@ namespace display {
 
         for (const auto& [idx_sipm, ev_sipm] : ev_t.GetConstSiPMEvents()) {
           const auto select_result = fSiPMSelector(ev_sipm);
-          const int& nhit = select_result.nhits;
+          const int& nhit = select_result.n_hits;
           const int& hit_time = select_result.time_min;
           if (nhit == 0) continue;
           if (nhit > limits.nhit_max) limits.nhit_max = nhit;
@@ -339,20 +384,46 @@ namespace display {
           bs_time->DigitValue(hit_time);
 
           h_first.Fill(static_cast<double>(hit_time));
-          for (const auto& [bin, count] : ev_sipm.GetConstHits()) {
-            h_all.Fill(static_cast<double>(bin),
-                static_cast<double>(count));
-            // check if wavelength backtracker is active
-            if (fSiPMWvlngthBktrkIdx < 0) continue;
 
-            auto& h_wvl = fTimeHistograms.at(tpc_id).at(2);
+          const HitsCollection_t& hits_sel = ( SiPMSelectorIsFiltering() ) ? 
+            select_result.fHits : ev_sipm.GetConstHits();
+
+          for (const auto& [time_bin, count] : select_result.fHits) {
+            h_all.Fill(static_cast<double>(time_bin),
+                static_cast<double>(count));
+
+            if (SiPMSelectorIsFiltering() == true) continue;
+
             const auto& bt_coll = ev_sipm.GetBacktrackerRecordCollection();
             if (bt_coll.empty()) continue;
-            const auto& records = bt_coll.at(bin).GetConstRecords();
-            if (fSiPMWvlngthBktrkIdx >= static_cast<int>(records.size())) continue;
-            for (const auto& [wvl_key, count] : records[fSiPMWvlngthBktrkIdx].GetConstCounter()) {
-              const float wvl_val = wvl_key;
-              h_wvl.Fill(wvl_val, static_cast<double>(count));
+            const auto& records = bt_coll.at(time_bin).GetConstRecords();
+            
+            // check if wavelength backtracker is active
+            if (fSiPMWvlngthBktrkIdx >= 0) {
+              if (bt_coll.empty()) continue;
+              if (fSiPMWvlngthBktrkIdx >= static_cast<int>(records.size())) continue;
+              for (const auto& [wvl_key, count] : records[fSiPMWvlngthBktrkIdx].GetConstCounter()) {
+                const float wvl_val = wvl_key;
+                h_wvl.Fill(wvl_val, static_cast<double>(count));
+              }
+            }
+
+            if (fSiPMOpProcBktrkIdx >= 0) {
+              const auto& proc_bkt = records[fSiPMOpProcBktrkIdx].GetConstCounter();
+              for (const auto& [proc_key, count] : proc_bkt) {
+                const int proc_val = proc_key;
+                if (count > 0) {
+                  if (proc_val == static_cast<int>(EPhProcess::kScnt)) {
+                    h_scint.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                  }
+                  else if (proc_val == static_cast<int>(EPhProcess::kCher)) {
+                    h_cher.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                  }
+                  else if (proc_val == static_cast<int>(EPhProcess::kWLS)) {
+                    h_wls.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                  }
+                }
+              }
             }
           }
         } // SiPM loop
@@ -382,8 +453,8 @@ namespace display {
     // Build histogram vectors for every detector group that was registered
     // in Configure() (both anode SiPMs and PDS walls use the same key space).
     for (const auto& [group_id, bs] : fDetectorNHits) {
-      fTimeHistograms[group_id] = std::vector<TH1F>{};
-      auto& hv = fTimeHistograms[group_id];
+      fOpHitsHistograms[group_id] = std::vector<TH1F>{};
+      auto& hv = fOpHitsHistograms[group_id];
 
       hv.emplace_back(
           Form("hFirstOpHitTime_%i",   group_id),
@@ -394,6 +465,24 @@ namespace display {
       hv.emplace_back(
           Form("hOpHitTime_%i",        group_id),
           Form("Group %i all-hit time;Time [ns];Counts", group_id),
+          300, 0., 10000.);
+      hv.back().SetLineWidth(2);
+
+      hv.emplace_back(
+          Form("hOpHitTimeScint_%i",        group_id),
+          Form("Group %i Scintillation hit time;Time [ns];Counts", group_id),
+          300, 0., 10000.);
+      hv.back().SetLineWidth(2);
+
+      hv.emplace_back(
+          Form("hOpHitTimeCher_%i",        group_id),
+          Form("Group %i Cherenkov hit time;Time [ns];Counts", group_id),
+          300, 0., 10000.);
+      hv.back().SetLineWidth(2);
+
+      hv.emplace_back(
+          Form("hOpHitTimeWLS%i",        group_id),
+          Form("Group %i WLS hit time;Time [ns];Counts", group_id),
           300, 0., 10000.);
       hv.back().SetLineWidth(2);
 

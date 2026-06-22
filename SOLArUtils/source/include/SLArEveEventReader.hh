@@ -52,8 +52,42 @@ using CfgPDS_t = SLArCfgBaseSystem<SLArCfgSuperCellArray>;
 // The key is the system tag ("charge", "vuv_sipm", "supercell").
 // The value is the ordered list of registered backtrackers, so that
 // fRecords[i] corresponds to fBacktrackerIndex[system][i].
-using BacktrackerIndex_t =
-    std::map<std::string, std::vector<backtracker::EBacktracker>>;
+using BacktrackerList_t = std::vector<backtracker::EBacktracker>;
+using BacktrackerDict_t = std::unordered_map<backtracker::EBkTrkReadoutSystem, BacktrackerList_t>;
+
+static const std::map<std::string, backtracker::EBacktracker>
+  BacktrackerLabelDict = {
+    {"trkID",       backtracker::EBacktracker::kTrkID},
+    {"ancestorID",  backtracker::EBacktracker::kAncestorID},
+    {"opticalProc", backtracker::EBacktracker::kOpticalProc},
+    {"sipm_nr",     backtracker::EBacktracker::kSiPMNr},
+    {"originVolID", backtracker::EBacktracker::kOriginVolID},
+    {"wavelength",  backtracker::EBacktracker::kWavelength},
+  };
+
+static const std::map<std::string, backtracker::EBkTrkReadoutSystem>
+  ReadoutSystemLabelDict = {
+    {"charge", backtracker::EBkTrkReadoutSystem::kCharge},
+    {"vuv_sipm", backtracker::EBkTrkReadoutSystem::kVUVSiPM},
+    {"supercell", backtracker::EBkTrkReadoutSystem::kOpDet},
+  };
+
+static inline backtracker::EBacktracker string_to_backtracker(const std::string& label)
+{
+  const auto it = BacktrackerLabelDict.find(label);
+  if (it == BacktrackerLabelDict.end())
+    throw std::runtime_error("Unknown backtracker label: " + label);
+  return it->second;
+}
+
+static inline backtracker::EBkTrkReadoutSystem string_to_bktrk_system(const std::string& label)
+{
+  const auto it = ReadoutSystemLabelDict.find(label);
+  if (it == ReadoutSystemLabelDict.end())
+    throw std::runtime_error("Unknown readout system label: " + label);
+  return it->second;
+}
+
 
 /**
  * @class SLArEveEventReader
@@ -121,19 +155,29 @@ public:
     bool HasHitFile()  const { return fHitFile != nullptr; }
 
     //! Set of backtrackers whose records are present in the file, divided by readout system.
-    const BacktrackerIndex_t& GetBacktrackerIndex() const { return fBacktrackerIndex; }
+    const BacktrackerDict_t& GetBacktrackerDictionary() const { return fBacktrackerDict; }
 
     //! Returns the record-vector index of @p bt for @p system,
     //! or -1 if not registered.
-    inline int GetBacktrackerRecordIndex(const std::string& system,
+    inline int GetBacktrackerRecordIndex(const backtracker::EBkTrkReadoutSystem kSystem,
         backtracker::EBacktracker bt) const
     {
-      const auto sit = fBacktrackerIndex.find(system);
-      if (sit == fBacktrackerIndex.end()) return -1;
+      const auto sit = fBacktrackerDict.find(kSystem);
+      if (sit == fBacktrackerDict.end()) return -1;
       const auto& vec = sit->second;
       for (int i = 0; i < (int)vec.size(); ++i)
         if (vec[i] == bt) return i;
       return -1;
+    }
+
+    inline int GetBacktrackerRecordIndex(const std::string& system, backtracker::EBacktracker bt) const
+    {
+      return GetBacktrackerRecordIndex(string_to_bktrk_system(system), bt);
+    }
+
+    inline int GetBacktrackerRecordIndex(const std::string& system, const std::string& bt_label) const
+    {
+      return GetBacktrackerRecordIndex(string_to_bktrk_system(system), string_to_backtracker(bt_label));
     }
 
 private:
@@ -170,7 +214,7 @@ private:
     bool fIncludeOpHits   = true;
 
     // ── Backtracker bookkeeping ───────────────────────────────────────────────
-    BacktrackerIndex_t fBacktrackerIndex;
+    BacktrackerDict_t fBacktrackerDict;
 };
 
 } // namespace display

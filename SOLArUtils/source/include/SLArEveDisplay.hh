@@ -11,13 +11,6 @@
  *  • Drive the per-event render loop: GetEntry → reset → render → redraw.
  *  • Handle CloseWindow / application termination.
  *
- * What is NOT here
- * ─────────────────
- *  • Geometry construction        → SLArEveGeometry
- *  • File / tree I/O              → SLArEveEventReader
- *  • MC-truth track rendering     → SLArEveTrackRenderer
- *  • Charge-pixel hit rendering   → SLArEveHitRenderer
- *  • Optical hit rendering        → SLArEveOpHitRenderer
  */
 
 #ifndef SLAR_EVE_DISPLAY_HH
@@ -55,6 +48,7 @@ namespace display {
     private:
       Int_t fNextID;
   };
+
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SLArEveDisplay

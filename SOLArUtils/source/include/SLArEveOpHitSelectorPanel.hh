@@ -47,6 +47,7 @@ namespace display {
 
 class SLArEveOpHitSelectorPanel {
 public:
+  enum class ESelectorMode { kAll = 0, kProcess = 1, kWavelength = 2 };
     SLArEveOpHitSelectorPanel() = default;
     ~SLArEveOpHitSelectorPanel() = default;
 
@@ -84,6 +85,9 @@ public:
     /** Rebuild selectors from current widget state and push to renderer. */
     void Apply();
 
+    /** Update the active selector mode based on which radio button is down. */
+    void OnModeChanged();
+
     /** Reset all widgets to "accept all" and call Apply(). */
     void Reset();
 
@@ -97,6 +101,11 @@ private:
     // ── Non-owning references ─────────────────────────────────────────────────
 
     SLArEveOpHitRenderer* fRenderer = {};
+    
+    // ── Selector ──────────────────────────────────────────────────────────────
+    ESelectorMode fActiveSelector = ESelectorMode::kAll;
+    bool fHasProcessSelector    = false;
+    bool fHasWavelengthSelector = false;
 
     // Resolved backtracker record indices (set during Build, -1 = absent)
     int fProcRecSiPM = -1;
@@ -104,7 +113,17 @@ private:
     int fWvlRecSiPM = -1;
     int fWvlRecOpDet = -1;
 
-    // ── Process toggle buttons ────────────────────────────────────────────────
+    // ── Mode radio buttons (non-owning) ──────────────────────────────────────
+    TGRadioButton* fRadioAll        = nullptr;
+    TGRadioButton* fRadioOpProcess  = nullptr;
+    TGRadioButton* fRadioWavelength = nullptr;
+
+    // Sub-panel frames (shown/hidden based on active mode)
+    TGCompositeFrame* fPanelParent = nullptr;
+    TGCompositeFrame* fOpProcessSubFrame    = nullptr;
+    TGCompositeFrame* fWavelengthSubFrame = nullptr;
+
+    // ── Process toggle buttons ───────────────────────────────────────────────
     // Indices match EPhProcess: kPrimaryGen=4, kScnt=2, kCher=1, kWLS=3
     // We expose 4 controls in display order: PrimaryGen, Scint, Cher, WLS
     static constexpr int kNProc = 4;
@@ -113,14 +132,13 @@ private:
     };
     // ROOT check-buttons, one per process (non-owning, ROOT owns via parent)
     std::array<TGCheckButton*, kNProc> fProcButtons = {};
-    bool fHasProcessSelector = false;
 
-    // ── Wavelength range entries ──────────────────────────────────────────────
+    // ── Wavelength range entries ─────────────────────────────────────────────
     static constexpr float kWvlMin =  100.f;  // nm
     static constexpr float kWvlMax =  800.f;  // nm
     TGNumberEntry* fWvlMinEntry = nullptr;
     TGNumberEntry* fWvlMaxEntry = nullptr;
-    bool fHasWavelengthSelector = false;
+
 
     // ── Callback ─────────────────────────────────────────────────────────────
     std::function<void()> fOnApply;

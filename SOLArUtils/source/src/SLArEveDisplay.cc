@@ -91,15 +91,16 @@ ClassImp(display::SLArEveDisplay)
       fOpHitRenderer.Configure(
           fReader.GetCfgAnodes(),
           fReader.GetCfgPDS(),
+          &fReader.GetBacktrackerDictionary(),
           *fGeometry.GetLArTarget().fVolume);
 
-      fProcRecSiPM = fReader.GetBacktrackerRecordIndex("vuv_sipm",
+      fProcRecSiPM = fReader.GetBacktrackerRecordIndex(backtracker::EBkTrkReadoutSystem::kVUVSiPM,
           backtracker::EBacktracker::kOpticalProc);
-      fProcRecOpDet = fReader.GetBacktrackerRecordIndex("supercell",
+      fProcRecOpDet = fReader.GetBacktrackerRecordIndex(backtracker::EBkTrkReadoutSystem::kOpDet,
           backtracker::EBacktracker::kOpticalProc);
-      fWvlRecSiPM = fReader.GetBacktrackerRecordIndex("vuv_sipm",
+      fWvlRecSiPM = fReader.GetBacktrackerRecordIndex(backtracker::EBkTrkReadoutSystem::kVUVSiPM,
           backtracker::EBacktracker::kWavelength);
-      fWvlRecOpDet = fReader.GetBacktrackerRecordIndex("supercell",
+      fWvlRecOpDet = fReader.GetBacktrackerRecordIndex(backtracker::EBkTrkReadoutSystem::kOpDet,
           backtracker::EBacktracker::kWavelength);
 
       // Selectors default to SelectAll; only override when the
@@ -110,12 +111,14 @@ ClassImp(display::SLArEveDisplay)
             fProcRecSiPM);
         // Default to showing all processes; the GUI can override later.
         fOpHitRenderer.SetSiPMSelector( MakeSiPMSelectAll() );
+        fOpHitRenderer.SetSiPMOpProcessBacktrackerIndex(fProcRecSiPM);
       }
       if (fProcRecOpDet >= 0) {
         printf("SLArEveDisplay: optical process backtracker available "
             "for opdets (record %d) — process selector enabled.\n",
             fProcRecOpDet);
         fOpHitRenderer.SetOpDetSelector( MakeOpDetSelectAll() );
+        fOpHitRenderer.SetOpDetOpProcessBacktrackerIndex(fProcRecOpDet);
       }
       if (fWvlRecSiPM >= 0) {
         printf("SLArEveDisplay: wavelength backtracker available "
@@ -225,9 +228,35 @@ ClassImp(display::SLArEveDisplay)
         TVirtualPad* pad = c->cd(ipad);
         // Index 1 = all-hits time histogram (same choice as original code).
         printf("[%p] %s pad %s (%p/%p): drawing %s - %g entries\n", c, c->GetName(), gPad->GetName(), gPad, pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
-        auto* h = static_cast<TH1*>(hvec.at(1).Clone());
+        auto* h = static_cast<TH1*>(hvec.at(
+              static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kAllHitTime)
+              ).Clone());
         h->SetDirectory(nullptr);
+        h->SetLineColor(kBlack);
         h->Draw("hist");
+        // check if process backtracker is active for this group and if so, overlay process-specific histograms
+        if (fProcRecSiPM >= 0 || fProcRecOpDet >= 0) {
+          auto* h_scint = static_cast<TH1*>(hvec.at(
+                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kScintHitTime)
+                ).Clone());
+          h_scint->SetDirectory(nullptr);
+          h_scint->SetLineColor(kRed);
+          h_scint->Draw("hist same");
+
+          auto* h_cher = static_cast<TH1*>(hvec.at(
+                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kCherHitTime)
+                ).Clone());
+          h_cher->SetDirectory(nullptr);
+          h_cher->SetLineColor(kGreen+2);
+          h_cher->Draw("hist same");
+
+          auto* h_wls = static_cast<TH1*>(hvec.at(
+                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kWLSHitTime)
+                ).Clone());
+          h_wls->SetDirectory(nullptr);
+          h_wls->SetLineColor(kBlue);
+          h_wls->Draw("hist same");
+        }
         ipad++;
       }
 
@@ -251,7 +280,9 @@ ClassImp(display::SLArEveDisplay)
         TVirtualPad* pad = c->cd(ipad);
         // Index 2 = wavelength histogram (same choice as original code).
         printf("[%p] %s pad %s (%p/%p) drawing %s - %g entries\n", c, c->GetName(), gPad->GetName(), gPad, pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
-        auto* h = static_cast<TH1*>(hvec.at(2).Clone());
+        auto* h = static_cast<TH1*>(hvec.at(
+              static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kWavelength)
+              ).Clone());
         h->SetDirectory(nullptr);
         h->Draw("hist");
         ipad++;

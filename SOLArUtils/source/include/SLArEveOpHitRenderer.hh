@@ -74,6 +74,17 @@ namespace display {
    */
   class SLArEveOpHitRenderer {
     public:
+      //! Enum for indexing the time histogram vector;
+      enum class EOpHitHistType { 
+        kFirstHitTime = 0,
+        kAllHitTime   = 1,
+        kScintHitTime = 2,
+        kCherHitTime  = 3, 
+        kWLSHitTime   = 4, 
+        kWavelength   = 5
+      };
+
+
       explicit SLArEveOpHitRenderer(const SLArEveGeometry& geometry);
       ~SLArEveOpHitRenderer() = default;
 
@@ -93,11 +104,14 @@ namespace display {
        */
       void Configure(
           const std::map<int, std::unique_ptr<SLArCfgAnode>>& anode_cfgs,
-          const CfgPDS_t*                                      pds_cfg,
-          TEveElement&                                         parent);
+          const CfgPDS_t* pds_cfg,
+          const BacktrackerDict_t* backtracker_dict,
+          TEveElement& parent);
 
-      void SetSiPMWvlngthBacktrackerIndex(int idx) { fSiPMWvlngthBktrkIdx = idx; }
-      void SetOpDetWvlngthBacktrackerIndex(int idx) { fOpDetWvlngthBktrkIdx = idx; }
+      inline void SetSiPMWvlngthBacktrackerIndex(int idx) { fSiPMWvlngthBktrkIdx = idx; }
+      inline void SetOpDetWvlngthBacktrackerIndex(int idx) { fOpDetWvlngthBktrkIdx = idx; }
+      inline void SetSiPMOpProcessBacktrackerIndex(int idx) { fSiPMOpProcBktrkIdx = idx; }
+      inline void SetOpDetOpProcessBacktrackerIndex(int idx) { fOpDetOpProcBktrkIdx = idx; }
 
       // ── Per-event ────────────────────────────────────────────────────────────
 
@@ -115,22 +129,32 @@ namespace display {
       void Reset();
 
       // -- Selectors 
-      void SetSiPMSelector(SiPMSelectorFn sel) { fSiPMSelector = std::move(sel); }
-      void SetOpDetSelector(OpDetSelectorFn sel)  { fOpDetSelector = std::move(sel); }
+      void SetSiPMSelector(SiPMSelectorFn sel, EOpHitSelectorMode kMode = EOpHitSelectorMode::kAll) 
+      { 
+        fSiPMSelector = std::move(sel);
+        fSiPMSelectorMode = kMode;
+      }
+      void SetOpDetSelector(OpDetSelectorFn sel, EOpHitSelectorMode kMode = EOpHitSelectorMode::kAll)  
+      { 
+        fOpDetSelector = std::move(sel); 
+        fOpDetSelectorMode = kMode;
+      }
       //! Restore both selectors to SelectAll
       inline void ResetSelectors() {
-        fSiPMSelector = MakeSiPMSelectAll();
+        fSiPMSelector = MakeSiPMSelectAll(); 
+        fSiPMSelectorMode = EOpHitSelectorMode::kAll;
         fOpDetSelector = MakeOpDetSelectAll();
+        fOpDetSelectorMode = EOpHitSelectorMode::kAll;
       }
 
       // ── Accessors ────────────────────────────────────────────────────────────
 
       /** Time histograms keyed by detector-group index; for canvas drawing. */
       const std::map<int, std::vector<TH1F>>& GetTimeHistograms() const
-      { return fTimeHistograms; }
+      { return fOpHitsHistograms; }
 
       std::map<int, std::vector<TH1F>>& GetTimeHistograms()
-      { return fTimeHistograms; }
+      { return fOpHitsHistograms; }
 
       /** Map from group index → nhit TEveBoxSet (for palette toggle in GUI). */
       std::map<int, std::unique_ptr<TEveBoxSet>>& GetNHitSets()
@@ -151,6 +175,15 @@ namespace display {
           int tpc_id,
           const SLArEventAnode&  ev_anode);
 
+      //! Returns true when the SiPM selector applies a real filter (not accept-all).
+      bool SiPMSelectorIsFiltering()  const
+      { return fSiPMSelectorMode  != EOpHitSelectorMode::kAll; }
+
+
+      //! Returns true when the OpDet selector applies a real filter (not accept-all).
+      bool OpDetSelectorIsFiltering() const
+      { return fOpDetSelectorMode != EOpHitSelectorMode::kAll; }
+
       // ── Histogram initialisation ──────────────────────────────────────────────
 
       void SetupTimeHistograms();
@@ -161,21 +194,27 @@ namespace display {
 
       // Non-owning config pointers; lifetimes guaranteed by SLArEveEventReader.
       const std::map<int, std::unique_ptr<SLArCfgAnode>>* fCfgAnodes = nullptr;
-      const CfgPDS_t*                                      fCfgPDS   = nullptr;
+      const CfgPDS_t*                                     fCfgPDS   = nullptr;
+      const BacktrackerDict_t*                            fBacktrackerDict;  
 
       std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorNHits;
       std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorTHits;
 
-      std::map<int, std::vector<TH1F>> fTimeHistograms;
+      //! Key: group index (TPC ID for anodes, wall ID for PDS); value: vector of time histograms for that group.
+      std::map<int, std::vector<TH1F>> fOpHitsHistograms;
 
       std::unique_ptr<TEveRGBAPalette> fPaletteNHits;
       std::unique_ptr<TEveRGBAPalette> fPaletteTHits;
 
       int fSiPMWvlngthBktrkIdx = -1;  ///< backtracker record index for SiPM wavelength (if present)
       int fOpDetWvlngthBktrkIdx = -1; ///< backtracker record index for OpDet wavelength (if present)
+      int fSiPMOpProcBktrkIdx = -1; ///< backtracker record index for SiPM optical process (if present)
+      int fOpDetOpProcBktrkIdx = -1; ///< backtracker record index for OpDet optical process (if present)
 
       SiPMSelectorFn  fSiPMSelector = MakeSiPMSelectAll();
       OpDetSelectorFn fOpDetSelector = MakeOpDetSelectAll();
+      EOpHitSelectorMode fSiPMSelectorMode = EOpHitSelectorMode::kAll;
+      EOpHitSelectorMode fOpDetSelectorMode = EOpHitSelectorMode::kAll;
   };
 
 } // namespace display

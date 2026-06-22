@@ -92,6 +92,7 @@ target_link_libraries(SLArEveDisplay
     SOLARSIM::SLArReadoutSystemConfig
     SOLARSIM::SLArMCTruth
     SOLARSIM::SLArMCEventReadout
+    SOLARSIM::SLArGenRecords
   )
 
 root_generate_dictionary(G_SLArEveDisplay

@@ -181,17 +181,6 @@ namespace display {
   {
     if (!g4_macro) return;
 
-    // Stable string → enum mapping; must stay consistent with
-    // SLArBacktrackerManager registration order.
-    static const std::map<std::string, backtracker::EBacktracker>
-      kBacktrackerLabel = {
-        {"trkID",       backtracker::EBacktracker::kTrkID},
-        {"ancestorID",  backtracker::EBacktracker::kAncestorID},
-        {"opticalProc", backtracker::EBacktracker::kOpticalProc},
-        {"sipm_nr",     backtracker::EBacktracker::kSiPMNr},
-        {"originVolID", backtracker::EBacktracker::kOriginVolID},
-        {"wavelength",  backtracker::EBacktracker::kWavelength},
-      };
 
     std::istringstream stream(g4_macro->GetString().Data());
     std::string line;
@@ -205,23 +194,15 @@ namespace display {
       // Token format: "<system>:<name>"
       const auto colon = bt_token.find(':');
       if (colon == std::string::npos) continue;
-      const std::string bk_system  = bt_token.substr(0, colon);
-      const std::string bk_name = bt_token.substr(colon + 1);
+      const std::string bk_system_str  = bt_token.substr(0, colon);
+      const std::string bk_name_str = bt_token.substr(colon + 1);
 
-      auto it = kBacktrackerLabel.find(bk_name);
-      if (it == kBacktrackerLabel.end()) {
-        printf("SLArEveEventReader: unknown backtracker '%s' for system: '%s'; skipping.\n",
-            bk_name.c_str(), bk_system.c_str());
-        continue;
-      }
-
-      auto bk_it = kBacktrackerLabel.find(bk_name);
-      if (bk_it == kBacktrackerLabel.end()) { 
-        continue; 
-      }
-      fBacktrackerIndex[bk_system].push_back(it->second);
-      printf("SLArEveEventReader: registered backtracker '%s'\n",
-          bk_name.c_str());
+      const auto bk = string_to_backtracker( bk_name_str ); 
+      const auto bk_sys = string_to_bktrk_system( bk_system_str ); 
+      
+      fBacktrackerDict[bk_sys].push_back( bk );
+      printf("SLArEveEventReader: registered backtracker '%s' for system %s\n",
+          bk_name_str.c_str(), bk_system_str.c_str());
     }
   }
 
