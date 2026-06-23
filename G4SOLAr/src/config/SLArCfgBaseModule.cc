@@ -64,6 +64,11 @@ SLArCfgBaseModule::~SLArCfgBaseModule()
 }
 
 void SLArCfgBaseModule::SetupAxes() {
+  if (fNormal.Mag2() < 1e-6) {
+    printf("SLArCfgBaseModule::SetupAxes: ERROR: normal vector is null\n");
+    exit(EXIT_FAILURE);
+  }
+
   if (fNormal == TVector3(1, 0, 0) || fNormal == TVector3(-1, 0, 0)) {
     fAxis0.SetXYZ(0, 0, 1);  
   } 

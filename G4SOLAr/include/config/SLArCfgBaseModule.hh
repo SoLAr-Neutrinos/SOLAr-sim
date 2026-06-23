@@ -73,11 +73,11 @@ class SLArCfgBaseModule : public TNamed {
       v1.GetXYZ( xx ); fAxis1.SetXYZ(xx[0], xx[1], xx[2]); 
     }
     virtual void SetupAxes(); 
-    inline const TVector3& GetAxis0() {return fAxis0;} 
-    inline const TVector3& GetAxis1() {return fAxis1;} 
-    inline const xyzpoint& GetVecAxis0() {return fVecAxis0;} 
-    inline const xyzpoint& GetVecAxis1() {return fVecAxis1;} 
-    inline const xyzpoint& GetVecNormal(){return fVecNormal;}
+    inline const TVector3& GetAxis0() const {return fAxis0;} 
+    inline const TVector3& GetAxis1() const {return fAxis1;} 
+    inline const xyzpoint& GetVecAxis0() const {return fVecAxis0;} 
+    inline const xyzpoint& GetVecAxis1() const {return fVecAxis1;} 
+    inline const xyzpoint& GetVecNormal() const {return fVecNormal;}
 
   protected: 
     int      fID    ; //!< Module ID

@@ -37,9 +37,13 @@ class SLArDetOpDetArray : public SLArBaseDetModule {
     void BuildMaterial(G4String materials_db); 
     void BuildOpDetArray(SLArOpticalDetector*); 
 
-    const G4ThreeVector& GetNormal() {return fNormal;}
-    const G4ThreeVector& GetPosition() {return fPosition;}
-    const G4ThreeVector& GetGlbPosition() {return fGlobalPosition;}
+    const G4ThreeVector& GetNormal() const {return fNormal;}
+    G4ThreeVector& GetNormal() {return fNormal;}
+    const G4ThreeVector& GetPosition() const {return fPosition;}
+    G4ThreeVector& GetPosition() {return fPosition;}
+    const G4ThreeVector& GetGlbPosition() const {return fGlobalPosition;}
+    G4ThreeVector& GetGlbPosition() {return fGlobalPosition;}
+    G4RotationMatrix* GetRotation() const {return fRotation;}
     G4RotationMatrix* GetRotation() {return fRotation;}
     G4String GetPhotoDetModel() {return fPhotoDetModel;}
     G4int GetTPCID() {return fTPCID;}
