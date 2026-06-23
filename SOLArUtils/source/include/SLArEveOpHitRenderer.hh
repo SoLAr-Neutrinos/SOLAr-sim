@@ -81,7 +81,8 @@ namespace display {
         kScintHitTime = 2,
         kCherHitTime  = 3, 
         kWLSHitTime   = 4, 
-        kWavelength   = 5
+        kWavelength   = 5,
+        kOpHitMap     = 6
       };
 
 
@@ -150,10 +151,10 @@ namespace display {
       // ── Accessors ────────────────────────────────────────────────────────────
 
       /** Time histograms keyed by detector-group index; for canvas drawing. */
-      const std::map<int, std::vector<TH1F>>& GetTimeHistograms() const
+      const std::map<int, std::vector<std::unique_ptr<TH1>>>& GetOpDetHistograms() const
       { return fOpHitsHistograms; }
 
-      std::map<int, std::vector<TH1F>>& GetTimeHistograms()
+      std::map<int, std::vector<std::unique_ptr<TH1>>>& GetOpDetHistograms()
       { return fOpHitsHistograms; }
 
       /** Map from group index → nhit TEveBoxSet (for palette toggle in GUI). */
@@ -163,6 +164,14 @@ namespace display {
       /** Map from group index → time TEveBoxSet. */
       std::map<int, std::unique_ptr<TEveBoxSet>>& GetTimeSets()
       { return fDetectorTHits; }
+
+      /** mat TVector3 to axis label */
+      static TString GetAxisLabel(const TVector3& axis) {
+        if (axis == TVector3(1, 0, 0)) return "X";
+        if (axis == TVector3(0, 1, 0)) return "Y";
+        if (axis == TVector3(0, 0, 1)) return "Z";
+        return "Unknown";
+      } 
 
     private:
       // ── Per-group rendering helpers ───────────────────────────────────────────
@@ -186,7 +195,7 @@ namespace display {
 
       // ── Histogram initialisation ──────────────────────────────────────────────
 
-      void SetupTimeHistograms();
+      void SetupHistograms();
 
       // ── Data members ─────────────────────────────────────────────────────────
 
@@ -201,7 +210,7 @@ namespace display {
       std::map<int, std::unique_ptr<TEveBoxSet>> fDetectorTHits;
 
       //! Key: group index (TPC ID for anodes, wall ID for PDS); value: vector of time histograms for that group.
-      std::map<int, std::vector<TH1F>> fOpHitsHistograms;
+      std::map<int, std::vector<std::unique_ptr<TH1>>> fOpHitsHistograms;
 
       std::unique_ptr<TEveRGBAPalette> fPaletteNHits;
       std::unique_ptr<TEveRGBAPalette> fPaletteTHits;

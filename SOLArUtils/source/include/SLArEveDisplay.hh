@@ -137,6 +137,9 @@ namespace display {
       /** Repaint the wavelength-histogram canvas with current event data. */
       void UpdateWavelengthCanvas();
 
+      /** Repaint the optical-hit map canvas with current event data. */
+      void UpdateOpHitMapCanvas();
+
       // ── Sub-components (owned by value; initialised in constructor) ───────────
 
       SLArEveGeometry      fGeometry;
@@ -173,8 +176,9 @@ namespace display {
       int fWvlRecSiPM = -1;
       int fWvlRecOpDet = -1;
 
-      TRootEmbeddedCanvas* fTimeHistCanvas   = nullptr;
+      TRootEmbeddedCanvas* fTimeHistCanvas = nullptr;
       TRootEmbeddedCanvas* fWavelenHistCanvas = nullptr;
+      TRootEmbeddedCanvas* fOpHitMapCanvas = nullptr;
 
     public:
       ClassDefOverride(display::SLArEveDisplay, 1)

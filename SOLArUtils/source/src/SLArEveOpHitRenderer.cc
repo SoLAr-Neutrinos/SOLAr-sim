@@ -4,11 +4,16 @@
  */
 
 #include "SLArEveOpHitRenderer.hh"
+#include "config/SLArCfgAnode.hh"
+#include "config/SLArCfgSuperCellArray.hh"
+#include "config/SLArCfgBaseSystem.hh"
 
 #include <cmath>
 #include <limits>
+#include <memory>
 
 #include "Math/EulerAngles.h"
+#include "TH2Poly.h"
 
 namespace display {
 
@@ -76,7 +81,7 @@ namespace display {
       }
     }
 
-    SetupTimeHistograms();
+    SetupHistograms();
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -149,7 +154,7 @@ namespace display {
       bs->Reset(TEveBoxSet::kBT_AABox, false, 10000);
 
     for (auto& [id, hists] : fOpHitsHistograms)
-      for (auto& h : hists) h.Reset();
+      for (auto& h : hists) h->Reset();
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -173,7 +178,7 @@ namespace display {
     auto& bs_time = fDetectorTHits.at(idx_array);
 
     for (auto& hist : fOpHitsHistograms.at(idx_array)) {
-      hist.Reset();
+      hist->Reset();
     }
     auto& h_first = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kFirstHitTime));
     auto& h_all   = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kAllHitTime  ));
@@ -181,6 +186,8 @@ namespace display {
     auto& h_cher  = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kCherHitTime ));
     auto& h_wls   = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kWLSHitTime  ));
     auto& h_wvl   = fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kWavelength  ));
+    auto h2_map   = dynamic_cast<TH2Poly*>(
+        fOpHitsHistograms.at(idx_array).at(static_cast<int>(EOpHitHistType::kOpHitMap)).get() );
 
     for (const auto& [idx_xa, ev_xa] : ev_array.GetConstSuperCellMap()) {
       const auto select_result = fOpDetSelector(ev_xa);
@@ -225,13 +232,18 @@ namespace display {
           xsize[0],  xsize[1],  xsize[2]);
       bs_time->DigitValue(hit_time);
 
-      h_first.Fill(static_cast<double>(hit_time));
+      h_first->Fill(static_cast<double>(hit_time));
+      
+      if (h2_map) {
+        const int idx_bin = cfg_wall.GetConstMap().at(idx_xa).GetBinIdx(); 
+        h2_map->SetBinContent(idx_bin, static_cast<double>(select_result.n_hits));
+      }
 
       const HitsCollection_t& hits_sel = ( OpDetSelectorIsFiltering() ) ? 
         select_result.fHits : ev_xa.GetConstHits();
 
       for (const auto& [time_bin, count] : hits_sel) {
-        h_all.Fill(static_cast<double>(time_bin),
+        h_all->Fill(static_cast<double>(time_bin),
             static_cast<double>(count));
 
         if (OpDetSelectorIsFiltering() == true) continue;
@@ -246,7 +258,7 @@ namespace display {
           if (fOpDetWvlngthBktrkIdx >= static_cast<int>(records.size())) continue;
           for (const auto& [wvl_key, count] : records[fOpDetWvlngthBktrkIdx].GetConstCounter()) {
             const float wvl_val = wvl_key;
-            h_wvl.Fill(wvl_val, static_cast<double>(count));
+            h_wvl->Fill(wvl_val, static_cast<double>(count));
           }
         }
 
@@ -256,13 +268,13 @@ namespace display {
             const int proc_val = proc_key;
             if (count > 0) {
               if (proc_val == static_cast<int>(EPhProcess::kScnt)) {
-                h_scint.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                h_scint->Fill(static_cast<double>(time_bin), static_cast<double>(count));
               }
               else if (proc_val == static_cast<int>(EPhProcess::kCher)) {
-                h_cher.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                h_cher->Fill(static_cast<double>(time_bin), static_cast<double>(count));
               }
               else if (proc_val == static_cast<int>(EPhProcess::kWLS)) {
-                h_wls.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                h_wls->Fill(static_cast<double>(time_bin), static_cast<double>(count));
               }
             }
           }
@@ -310,7 +322,7 @@ namespace display {
     auto& bs_time = fDetectorTHits.at(tpc_id);
 
     for (auto& hist : fOpHitsHistograms.at(tpc_id)) {
-      hist.Reset();
+      hist->Reset();
     }
 
     auto& h_first = fOpHitsHistograms.at(tpc_id).at(static_cast<int>(EOpHitHistType::kFirstHitTime));
@@ -383,13 +395,13 @@ namespace display {
               sipm_size_rot.z());
           bs_time->DigitValue(hit_time);
 
-          h_first.Fill(static_cast<double>(hit_time));
+          h_first->Fill(static_cast<double>(hit_time));
 
           const HitsCollection_t& hits_sel = ( SiPMSelectorIsFiltering() ) ? 
             select_result.fHits : ev_sipm.GetConstHits();
 
           for (const auto& [time_bin, count] : select_result.fHits) {
-            h_all.Fill(static_cast<double>(time_bin),
+            h_all->Fill(static_cast<double>(time_bin),
                 static_cast<double>(count));
 
             if (SiPMSelectorIsFiltering() == true) continue;
@@ -404,7 +416,7 @@ namespace display {
               if (fSiPMWvlngthBktrkIdx >= static_cast<int>(records.size())) continue;
               for (const auto& [wvl_key, count] : records[fSiPMWvlngthBktrkIdx].GetConstCounter()) {
                 const float wvl_val = wvl_key;
-                h_wvl.Fill(wvl_val, static_cast<double>(count));
+                h_wvl->Fill(wvl_val, static_cast<double>(count));
               }
             }
 
@@ -414,13 +426,13 @@ namespace display {
                 const int proc_val = proc_key;
                 if (count > 0) {
                   if (proc_val == static_cast<int>(EPhProcess::kScnt)) {
-                    h_scint.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                    h_scint->Fill(static_cast<double>(time_bin), static_cast<double>(count));
                   }
                   else if (proc_val == static_cast<int>(EPhProcess::kCher)) {
-                    h_cher.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                    h_cher->Fill(static_cast<double>(time_bin), static_cast<double>(count));
                   }
                   else if (proc_val == static_cast<int>(EPhProcess::kWLS)) {
-                    h_wls.Fill(static_cast<double>(time_bin), static_cast<double>(count));
+                    h_wls->Fill(static_cast<double>(time_bin), static_cast<double>(count));
                   }
                 }
               }
@@ -448,49 +460,64 @@ namespace display {
   // Private – histogram initialisation
   // ─────────────────────────────────────────────────────────────────────────────
 
-  void SLArEveOpHitRenderer::SetupTimeHistograms()
+  void SLArEveOpHitRenderer::SetupHistograms()
   {
     // Build histogram vectors for every detector group that was registered
     // in Configure() (both anode SiPMs and PDS walls use the same key space).
     for (const auto& [group_id, bs] : fDetectorNHits) {
-      fOpHitsHistograms[group_id] = std::vector<TH1F>{};
+      bool is_anode = (fCfgAnodes && fCfgAnodes->count(group_id) > 0);
+      bool is_opdet = (fCfgPDS && fCfgPDS->GetConstMap().count(group_id) > 0);
+
+      fOpHitsHistograms[group_id] = std::vector<std::unique_ptr<TH1>>{};
       auto& hv = fOpHitsHistograms[group_id];
 
-      hv.emplace_back(
+      hv.emplace_back(std::make_unique<TH1F>(
           Form("hFirstOpHitTime_%i",   group_id),
           Form("Group %i first hit time;Time [bin];Counts", group_id),
-          1000, 0., 50000.);
-      hv.back().SetLineWidth(2);
+          1000, 0., 50000.));
+      hv.back()->SetLineWidth(2);
 
-      hv.emplace_back(
+      hv.emplace_back(std::make_unique<TH1F>(
           Form("hOpHitTime_%i",        group_id),
           Form("Group %i all-hit time;Time [ns];Counts", group_id),
-          300, 0., 10000.);
-      hv.back().SetLineWidth(2);
+          300, 0., 10000.));
+      hv.back()->SetLineWidth(2);
 
-      hv.emplace_back(
+      hv.emplace_back(std::make_unique<TH1F>(
           Form("hOpHitTimeScint_%i",        group_id),
           Form("Group %i Scintillation hit time;Time [ns];Counts", group_id),
-          300, 0., 10000.);
-      hv.back().SetLineWidth(2);
+          300, 0., 10000.));
+      hv.back()->SetLineWidth(2);
 
-      hv.emplace_back(
+      hv.emplace_back(std::make_unique<TH1F>(
           Form("hOpHitTimeCher_%i",        group_id),
           Form("Group %i Cherenkov hit time;Time [ns];Counts", group_id),
-          300, 0., 10000.);
-      hv.back().SetLineWidth(2);
+          300, 0., 10000.));
+      hv.back()->SetLineWidth(2);
 
-      hv.emplace_back(
+      hv.emplace_back(std::make_unique<TH1F>(
           Form("hOpHitTimeWLS%i",        group_id),
           Form("Group %i WLS hit time;Time [ns];Counts", group_id),
-          300, 0., 10000.);
-      hv.back().SetLineWidth(2);
+          300, 0., 10000.));
+      hv.back()->SetLineWidth(2);
 
-      hv.emplace_back(
+      hv.emplace_back(std::make_unique<TH1F>(
           Form("hOpHitWavelength_%i",  group_id),
           Form("Group %i wavelength;Wavelength [nm];Counts", group_id),
-          100, 100., 900.);
-      hv.back().SetLineWidth(2);
+          100, 100., 900.));
+      hv.back()->SetLineWidth(2);
+
+      if (is_opdet) {
+        const auto& cfg_plane = fCfgPDS->GetConstMap().at(group_id);
+        TH2Poly* h2poly = cfg_plane.BuildPolyBinHist(SLArCfgSuperCellArray::ESubModuleReferenceFrame::kWorld);
+        TString x_label = GetAxisLabel(cfg_plane.GetAxis0());
+        TString y_label = GetAxisLabel(cfg_plane.GetAxis1());
+        if ( cfg_plane.GetAxis0().Dot(TVector3(1, 0, 0)) > 0.5 ) { x_label = "X";}
+        h2poly->SetNameTitle(
+            Form("hOpHitMap_%i", group_id),
+            Form("Group %i hit map;%s [mm];%s [mm]", group_id, x_label.Data(), y_label.Data()));
+        hv.emplace_back(std::move(h2poly));
+      }
     }
   }
 

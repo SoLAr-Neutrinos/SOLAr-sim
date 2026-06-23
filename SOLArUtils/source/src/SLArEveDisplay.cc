@@ -191,6 +191,7 @@ ClassImp(display::SLArEveDisplay)
       ReDraw();
       UpdateTimeHistCanvas();
       UpdateWavelengthCanvas();
+      UpdateOpHitMapCanvas();
     }
 
     void SLArEveDisplay::NextEvent()
@@ -216,7 +217,7 @@ ClassImp(display::SLArEveDisplay)
     {
       if (!fTimeHistCanvas) return;
 
-      const auto& hists = fOpHitRenderer.GetTimeHistograms();
+      const auto& hists = fOpHitRenderer.GetOpDetHistograms();
       if (hists.empty()) return;
 
       TCanvas* c = fTimeHistCanvas->GetCanvas();
@@ -227,32 +228,26 @@ ClassImp(display::SLArEveDisplay)
       for (const auto& [group_id, hvec] : hists) {
         TVirtualPad* pad = c->cd(ipad);
         // Index 1 = all-hits time histogram (same choice as original code).
-        printf("[%p] %s pad %s (%p/%p): drawing %s - %g entries\n", c, c->GetName(), gPad->GetName(), gPad, pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
-        auto* h = static_cast<TH1*>(hvec.at(
-              static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kAllHitTime)
-              ).Clone());
+        const auto& h = hvec.at(static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kAllHitTime));
         h->SetDirectory(nullptr);
         h->SetLineColor(kBlack);
         h->Draw("hist");
         // check if process backtracker is active for this group and if so, overlay process-specific histograms
         if (fProcRecSiPM >= 0 || fProcRecOpDet >= 0) {
-          auto* h_scint = static_cast<TH1*>(hvec.at(
-                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kScintHitTime)
-                ).Clone());
+          const auto& h_scint = hvec.at(
+                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kScintHitTime) );
           h_scint->SetDirectory(nullptr);
           h_scint->SetLineColor(kRed);
           h_scint->Draw("hist same");
 
-          auto* h_cher = static_cast<TH1*>(hvec.at(
-                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kCherHitTime)
-                ).Clone());
+          auto& h_cher = hvec.at(
+                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kCherHitTime) ); 
           h_cher->SetDirectory(nullptr);
           h_cher->SetLineColor(kGreen+2);
           h_cher->Draw("hist same");
 
-          auto* h_wls = static_cast<TH1*>(hvec.at(
-                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kWLSHitTime)
-                ).Clone());
+          auto& h_wls = hvec.at(
+                static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kWLSHitTime) ); 
           h_wls->SetDirectory(nullptr);
           h_wls->SetLineColor(kBlue);
           h_wls->Draw("hist same");
@@ -268,7 +263,7 @@ ClassImp(display::SLArEveDisplay)
     {
       if (!fWavelenHistCanvas) return;
 
-      const auto& hists = fOpHitRenderer.GetTimeHistograms();
+      const auto& hists = fOpHitRenderer.GetOpDetHistograms();
       if (hists.empty()) return;
 
       TCanvas* c = fWavelenHistCanvas->GetCanvas();
@@ -278,11 +273,7 @@ ClassImp(display::SLArEveDisplay)
       int ipad = 1;
       for (const auto& [group_id, hvec] : hists) {
         TVirtualPad* pad = c->cd(ipad);
-        // Index 2 = wavelength histogram (same choice as original code).
-        printf("[%p] %s pad %s (%p/%p) drawing %s - %g entries\n", c, c->GetName(), gPad->GetName(), gPad, pad, hvec.at(2).GetName(), hvec.at(2).GetEntries());
-        auto* h = static_cast<TH1*>(hvec.at(
-              static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kWavelength)
-              ).Clone());
+        const auto& h = hvec.at(static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kWavelength));
         h->SetDirectory(nullptr);
         h->Draw("hist");
         ipad++;
@@ -290,6 +281,38 @@ ClassImp(display::SLArEveDisplay)
 
       c->Modified();
       c->Update();
+    }
+
+    void SLArEveDisplay::UpdateOpHitMapCanvas()
+    {
+      if (!fOpHitMapCanvas) return;
+
+      const auto& hists = fOpHitRenderer.GetOpDetHistograms();
+      if (hists.empty()) return;
+
+      TCanvas* c = fOpHitMapCanvas->GetCanvas();
+      c->Clear();
+      c->DivideSquare(static_cast<Int_t>(hists.size()));
+
+      int ipad = 1;
+      for (const auto& [group_id, hvec] : hists) {
+        TVirtualPad* pad = c->cd(ipad);
+        if (hvec.size() <= static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kOpHitMap)) {
+          ipad++;
+          continue;
+        }
+        const auto& h = dynamic_cast<TH2Poly*>(
+            hvec.at(static_cast<int>(SLArEveOpHitRenderer::EOpHitHistType::kOpHitMap)).get());
+        if (h == nullptr) {ipad++; continue;}
+        h->SetDirectory(nullptr);
+        h->Draw("colz");
+        ipad++;
+      }
+
+      c->Modified();
+      c->Update();
+
+
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -458,7 +481,7 @@ ClassImp(display::SLArEveDisplay)
             new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
         frame->GetGUICompositeFrame()->MapSubwindows();
 
-        const std::size_t ngroups = fOpHitRenderer.GetTimeHistograms().size();
+        const std::size_t ngroups = fOpHitRenderer.GetOpDetHistograms().size();
         if (ngroups > 0)
           fTimeHistCanvas->GetCanvas()->DivideSquare(
               static_cast<Int_t>(ngroups));
@@ -479,11 +502,32 @@ ClassImp(display::SLArEveDisplay)
             new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
         frame->GetGUICompositeFrame()->MapSubwindows();
 
-        const std::size_t ngroups = fOpHitRenderer.GetTimeHistograms().size();
+        const std::size_t ngroups = fOpHitRenderer.GetOpDetHistograms().size();
         if (ngroups > 0)
           fWavelenHistCanvas->GetCanvas()->DivideSquare(
               static_cast<Int_t>(ngroups));
 
+      }
+
+      // --- Create OpHit map canvas tab
+      {
+        TEveWindowSlot*  slot  = TEveWindow::CreateWindowInTab(
+            gEve->GetBrowser()->GetTabRight());
+        TEveWindowFrame* frame = slot->MakeFrame();
+        frame->SetElementName("Optical Hit Map");
+
+        fOpHitMapCanvas = new TRootEmbeddedCanvas(
+            "OpHitMapCanvas",
+            frame->GetGUICompositeFrame(), 800, 600);
+        frame->GetGUICompositeFrame()->AddFrame(
+            fOpHitMapCanvas,
+            new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+        frame->GetGUICompositeFrame()->MapSubwindows();
+
+        const std::size_t ngroups = fOpHitRenderer.GetOpDetHistograms().size();
+        if (ngroups > 0) {
+          fOpHitMapCanvas->GetCanvas()->DivideSquare( static_cast<Int_t>(ngroups) );
+        }
       }
 
       // ── Connect browser close to application exit ─────────────────────────────
