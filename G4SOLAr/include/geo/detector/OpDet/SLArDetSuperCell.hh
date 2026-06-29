@@ -10,6 +10,7 @@
 
 #include "detector/OpDet/SLArOpticalDetector.hh"
 #include "G4LogicalBorderSurface.hh"
+#include <G4Exception.hh>
 
 class SLArDetSuperCell : public SLArOpticalDetector
 {
@@ -27,6 +28,7 @@ public:
 
   inline SLArDetSuperCell(const SLArDetSuperCell &detSuperCell) : SLArOpticalDetector(detSuperCell)
   {
+    fOpDetType = EOpDetType::kSuperCell;
     fMatSuperCell = new SLArMaterial(*detSuperCell.fMatSuperCell); 
     fMatLightGuide = new SLArMaterial(*detSuperCell.fMatLightGuide);
     fMatCoating   = new SLArMaterial(*detSuperCell.fMatCoating);
@@ -50,11 +52,27 @@ public:
   inline G4double GetTotalHeight() { return fhTot; }
   inline G4double GetSize() { return fSize; }
 
+  inline void Init(const rapidjson::Value& jconf) override {
+    SLArOpticalDetector::Init(jconf); 
+    if (jconf.HasMember("coating_material")) {
+      fMatCoatingName = jconf["coating_material"].GetString(); 
+    }
+    else {
+      G4ExceptionDescription ed;
+      ed << "SLArDetSuperCell::Init(): No coating material specified in JSON configuration! Defaulting to PTP_sensitive.";
+      G4Exception("SLArDetSuperCell::Init()", "ConfigError001", JustWarning, ed);
+      fMatCoatingName = "PTP_sensitive"; 
+    }
+    return;
+  }
+
 protected:
 
 private:
   G4double  fhTot = {};
   G4double  fSize = {};
+
+  G4String  fMatCoatingName = {};
 
   SLArBaseDetModule* fLightGuide = {};
   SLArBaseDetModule* fCoating = {}; 

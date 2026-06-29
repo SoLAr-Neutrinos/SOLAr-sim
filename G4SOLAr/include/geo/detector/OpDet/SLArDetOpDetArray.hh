@@ -25,17 +25,18 @@ class SLArDetOpDetArray : public SLArBaseDetModule {
     enum class EPlacementMode { kParameterised = 0, kExplicit = 1 };
     //! Single entry of the explicit-position list parsed from JSON.
     struct SExplicitOpDetPos {
-      G4int         id;       //!< Copy number / detector identifier
-      G4ThreeVector position; //!< Position in the array-local frame [Geant4 length units]
+      G4int         id = {};       //!< Copy number / detector identifier
+      G4ThreeVector position = {}; //!< Position in the array-local frame [Geant4 length units]
+      G4String      model_key = {};//!< Model key for the optical detector to place at this position
     };
 
 
     SLArDetOpDetArray(); 
     ~SLArDetOpDetArray(); 
     
-    SLArCfgSuperCellArray BuildOpDetArrayCfg(); 
+    SLArCfgSuperCellArray BuildOpDetArrayCfg(const std::map<std::string, SLArOpticalDetector*>& opdet_catalog) const; 
     void BuildMaterial(G4String materials_db); 
-    void BuildOpDetArray(SLArOpticalDetector*); 
+    void BuildOpDetArray(const std::map<std::string, SLArOpticalDetector*>& opdet_catalog); 
 
     const G4ThreeVector& GetNormal() const {return fNormal;}
     G4ThreeVector& GetNormal() {return fNormal;}
@@ -55,21 +56,20 @@ class SLArDetOpDetArray : public SLArBaseDetModule {
     std::pair<int, G4double> ComputeArrayTrueLength(G4double width, G4double spacing, G4double max_len);
     //! Build the array by placing each optical detector individually at the
     //! coordinates stored in fExplicitPositions.
-    void BuildOpDetArrayExplicit(SLArOpticalDetector* opdet);
+    void BuildOpDetArrayExplicit(const std::map<std::string, SLArOpticalDetector*>& opdet_catalog);
 
     //! Build the array using G4PVParameterised, with replication parameters 
     //! stored in SLArPlaneParameterisation objects in fParameterisation.
-    void BuildOpDetArrayParameterised(SLArOpticalDetector* opdet);
+    void BuildOpDetArrayParameterised(const std::map<std::string, SLArOpticalDetector*>& opdet_catalog);
 
     //! Fill the SLArCfgSuperCellArray for the parameterised placement mode.
-    void FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) const;
+    void FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg, const std::map<std::string, SLArOpticalDetector*>& opdet_catalog) const;
 
     //! Fill the SLArCfgSuperCellArray for the explicit placement mode.
-    void FillCfgExplicit(SLArCfgSuperCellArray& arrayCfg) const;
+    void FillCfgExplicit(SLArCfgSuperCellArray& arrayCfg, const std::map<std::string, SLArOpticalDetector*>& opdet_catalog) const;
 
     G4int fTPCID; 
     SLArMaterial* fMaterialBase;
-    SLArBaseDetModule* fOpDetModuleBase; 
     G4ThreeVector fPosition; 
     G4ThreeVector fGlobalPosition; 
     G4ThreeVector fNormal;

@@ -13,19 +13,19 @@
 #include "G4VisAttributes.hh"
 
 SLArDetSuperCell::~SLArDetSuperCell() {
-  G4cout << "Deleting SLArDetSuperCell... " <<  G4endl;
+  G4cout << "Deleting " << fName << " SLArDetSuperCell... " <<  G4endl;
   if (fLightGuide)   {delete fLightGuide; fLightGuide = 0;}
   if (fCoating)      {delete fCoating; fCoating = 0;}
   if (fMatSuperCell) {delete fMatSuperCell; fMatSuperCell = 0;}
   if (fMatLightGuide){delete fMatLightGuide; fMatLightGuide = 0;}
   if (fMatCoating)   {delete fMatCoating; fMatCoating = 0;}
   if (fMatWLSCoating){delete fMatWLSCoating; fMatWLSCoating = 0;}
-  G4cerr << "SLArDetSuperCell DONE" <<  G4endl;
+  G4cout << "SLArDetSuperCell DONE" <<  G4endl;
 }
 
 void SLArDetSuperCell::BuildLightGuide()
 {
-  G4cout << "Building SuperCell Lightguide" << G4endl;
+  G4cout << "Building " << fName << " SuperCell Lightguide" << G4endl;
 
   fLightGuide = new SLArBaseDetModule();
   fLightGuide->SetGeoPar(fGeoInfo->GetGeoPair("cell_z"));
@@ -51,7 +51,7 @@ void SLArDetSuperCell::BuildLightGuide()
 
 void SLArDetSuperCell::BuildCoating()
 {
-  G4cout << "Building SuperCell sensitive coating..." << G4endl;
+  G4cout << "Building " << fName << " SuperCell sensitive coating..." << G4endl;
   fCoating = new SLArBaseDetModule();
   fCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_z"  ));
   fCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_x"  ));
@@ -74,7 +74,7 @@ void SLArDetSuperCell::BuildCoating()
 
 void SLArDetSuperCell::BuildWLSCoating()
 {
-  G4cout << "Building SuperCell wavelength-shifting Coating..." << G4endl;
+  G4cout << "Building " << fName << " SuperCell wavelength-shifting Coating..." << G4endl;
   fWLSCoating = new SLArBaseDetModule();
   fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_z"  ));
   fWLSCoating->SetGeoPar(fGeoInfo->GetGeoPair("cell_x"  ));
@@ -110,7 +110,7 @@ void SLArDetSuperCell::BuildOpticalDetector()
   // Building a "empty" LV as SuperCell container        //
   //* * * * * * * * * * * * * * * * * * * * * * * * * * *//
 
-  G4cout << "SLArDetSuperCell::BuildSuperCell()" << G4endl;
+  G4cout << "SLArDetSuperCell::BuildSuperCell() " << fName << G4endl;
 
   fhTot = fGeoInfo->GetGeoPar("cell_y") 
     + fGeoInfo->GetGeoPar("coating_y");
@@ -175,7 +175,14 @@ void SLArDetSuperCell::SetVisAttributes(const int& level)
     LGvisAttributes->SetColor(0.862, 0.952, 0.976, 0.5);
     fLightGuide->GetModLV()->SetVisAttributes( LGvisAttributes );
 
-    G4VisAttributes* CoatingvisAttributes = new G4VisAttributes( G4Color(0.968, 0.494, 0.007) );
+    G4Color col_sens; 
+    if (fMatCoatingName == "PTP_sensitive") {
+      col_sens = G4Color(0.776, 0.0, 1.0, 0.5);
+    }
+    else {
+      col_sens = G4Color(0.0, 0.0, 1.0); 
+    }
+    G4VisAttributes* CoatingvisAttributes = new G4VisAttributes( col_sens );
     fCoating->GetModLV()->SetVisAttributes( CoatingvisAttributes );
 
     if (fWLSCoating) {
@@ -223,7 +230,7 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
   fMatLightGuide->SetMaterialID("Plastic");
   fMatLightGuide->BuildMaterialFromDB(materials_db);
 
-  fMatCoating->SetMaterialID("PTP_sensitive");
+  fMatCoating->SetMaterialID( fMatCoatingName );
   fMatCoating->BuildMaterialFromDB(materials_db);
 
   fMatWLSCoating->SetMaterialID("PTP_wls");

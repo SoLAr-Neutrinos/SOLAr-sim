@@ -16,7 +16,7 @@
 SLArDetOpDetArray::SLArDetOpDetArray() : 
   SLArBaseDetModule(), 
   fTPCID(0), 
-  fMaterialBase(nullptr), fOpDetModuleBase(nullptr),  
+  fMaterialBase(nullptr),
   fPosition(0, 0, 0), fGlobalPosition(0, 0, 0), fNormal(0, 1, 0),
   fRotation(nullptr), fPhotoDetModel("")
 {}
@@ -127,6 +127,12 @@ void SLArDetOpDetArray::Init(const rapidjson::Value& jconf) {
           jxyz[0].GetDouble() * pos_unit,
           jxyz[1].GetDouble() * pos_unit,
           jxyz[2].GetDouble() * pos_unit);
+
+      if (jentry.HasMember("photodet_model")) {
+        entry.model_key = jentry["photodet_model"].GetString();
+      } else {
+        entry.model_key = fPhotoDetModel;
+      }
  
       fExplicitPositions.push_back(entry);
     }
@@ -143,16 +149,31 @@ void SLArDetOpDetArray::Init(const rapidjson::Value& jconf) {
   return;
 }
 
-void SLArDetOpDetArray::BuildOpDetArray(SLArOpticalDetector* opdet) {
+void SLArDetOpDetArray::BuildOpDetArray(const std::map<std::string, SLArOpticalDetector*>& opdet_catalog) {
   if (fPlacementMode == EPlacementMode::kExplicit) {
-    BuildOpDetArrayExplicit(opdet);
+    BuildOpDetArrayExplicit(opdet_catalog);
   } else {
-    BuildOpDetArrayParameterised(opdet);
+    BuildOpDetArrayParameterised(opdet_catalog);
   }
 }
 
-void SLArDetOpDetArray::BuildOpDetArrayParameterised(SLArOpticalDetector* opdet) {
-  fOpDetModuleBase = opdet;
+void SLArDetOpDetArray::BuildOpDetArrayParameterised(const std::map<std::string,SLArOpticalDetector*>& opdet_catalog) {
+  const auto& opdet_model_itr =  opdet_catalog.find( fPhotoDetModel );
+  if ( opdet_model_itr == opdet_catalog.end() ) {
+    G4String err_msg = "SLArDetOpDetArray::BuildOpDetArrayParameterised() ERROR: ";
+    err_msg += "Unable to find optical detector model " + fPhotoDetModel 
+      + " in the optical detector catalog. "
+      + "Check that the model name is correct and that the corresponding optical detector "
+      + "is properly defined in the geometry configuration file.";
+    err_msg += " Available models are: ";
+    for (const auto& opdet_model : opdet_catalog) {
+      err_msg += opdet_model.first + " ";
+    }
+    err_msg += "\n"; 
+
+    G4Exception("SLArDetOpDetArray::BuildOpDetArrayParameterised()",
+        "OpDetModelNotFound", FatalException, err_msg.c_str());
+  }
 
   G4ThreeVector max_dim( 
       fGeoInfo->GetGeoPar("dim_x"), 
@@ -226,7 +247,7 @@ void SLArDetOpDetArray::BuildOpDetArrayParameterised(SLArOpticalDetector* opdet)
     else if (rpars == fParameterisation.front()) {
       fSubModules.push_back( new SLArBaseDetModule() ); 
       target = fSubModules.back();
-      origin = opdet;
+      origin = opdet_model_itr->second;
       target_prefix = "opdet";
     }
     else {
@@ -251,7 +272,7 @@ void SLArDetOpDetArray::BuildOpDetArrayParameterised(SLArOpticalDetector* opdet)
   fModLV->SetVisAttributes( G4VisAttributes(false) ); 
 }
 
-void SLArDetOpDetArray::BuildOpDetArrayExplicit(SLArOpticalDetector* opdet) {
+void SLArDetOpDetArray::BuildOpDetArrayExplicit(const std::map<std::string,SLArOpticalDetector*>& opdet_catalog) {
   // Build a bounding-box volume for the whole array using the dimensions
   // declared in the JSON configuration.
   const G4ThreeVector max_dim(
@@ -267,13 +288,31 @@ void SLArDetOpDetArray::BuildOpDetArrayExplicit(SLArOpticalDetector* opdet) {
  
   // Place each detector at its explicitly specified local position.
   for (const SExplicitOpDetPos& entry : fExplicitPositions) {
+    const auto& opdet_model_itr =  opdet_catalog.find( entry.model_key );
+    if ( opdet_model_itr == opdet_catalog.end() ) {
+      G4String err_msg = "SLArDetOpDetArray::BuildOpDetArrayExplicit() ERROR: ";
+      err_msg += "Unable to find optical detector model " + entry.model_key 
+        + " in the optical detector catalog. "
+        + "Check that the model name is correct and that the corresponding optical detector "
+        + "is properly defined in the geometry configuration file.";
+      err_msg += " Available models are: ";
+      for (const auto& opdet_model : opdet_catalog) {
+        err_msg += opdet_model.first + " ";
+      }
+      err_msg += "\n"; 
+
+      G4Exception("SLArDetOpDetArray::BuildOpDetArrayExplicit()",
+          "OpDetModelNotFound", FatalException, err_msg.c_str());
+    }
+
+    G4LogicalVolume* opdet_model_lv = opdet_model_itr->second->GetModLV();
     const G4String pv_name =
-        Form("%s_%i_%i_pv", fPhotoDetModel.data(), fID, entry.id);
- 
+        Form("%s_%i_%i_pv", opdet_model_lv->GetName().data(), fID, entry.id);
+
     new G4PVPlacement(
         nullptr,          // inherit array rotation — no additional rotation
         entry.position,   // position in array-local frame
-        opdet->GetModLV(),
+        opdet_model_lv,
         pv_name,
         fModLV,
         false,            // pMany
@@ -304,7 +343,7 @@ std::pair<int, G4double> SLArDetOpDetArray::ComputeArrayTrueLength(
   return std::make_pair(n_replica, fabs(len));
 };
 
-SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg() {
+SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg(const std::map<std::string, SLArOpticalDetector*>& opdet_catalog) const {
   SLArCfgSuperCellArray arrayCfg("OpDet_array_" + std::to_string(fID), fID);
  
   arrayCfg.SetIdx(fID);
@@ -315,9 +354,9 @@ SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg() {
   arrayCfg.SetPsi  (fGeoInfo->GetGeoPar("opdetarray_psi"));
  
   if (fPlacementMode == EPlacementMode::kExplicit) {
-    FillCfgExplicit(arrayCfg);
+    FillCfgExplicit(arrayCfg, opdet_catalog);
   } else {
-    FillCfgParameterised(arrayCfg);
+    FillCfgParameterised(arrayCfg, opdet_catalog);
   }
  
   return arrayCfg;
@@ -397,7 +436,10 @@ SLArCfgSuperCellArray SLArDetOpDetArray::BuildOpDetArrayCfg() {
  */
 
 
-void SLArDetOpDetArray::FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) const {
+void SLArDetOpDetArray::FillCfgParameterised(
+    SLArCfgSuperCellArray& arrayCfg,
+    const std::map<std::string, SLArOpticalDetector*>& opdet_catalog) const 
+{
   auto sc_array = static_cast<G4PVParameterised*>(fModLV->GetDaughter(0));
   auto sc_row   = static_cast<G4PVParameterised*>(
       fSubModules.front()->GetModLV()->GetDaughter(0));
@@ -407,6 +449,23 @@ void SLArDetOpDetArray::FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) co
 
   auto rot_inv = new G4RotationMatrix(*fRotation);
   rot_inv->invert();
+
+  const auto& opdet_model_itr =  opdet_catalog.find( fPhotoDetModel );
+  if ( opdet_model_itr == opdet_catalog.end() ) {
+    G4String err_msg = "SLArDetOpDetArray::FillCfgParameterised() ERROR: ";
+    err_msg += "Unable to find optical detector model " + fPhotoDetModel
+      + " in the optical detector catalog. "
+      + "Check that the model name is correct and that the corresponding optical detector "
+      + "is properly defined in the geometry configuration file.";
+    err_msg += " Available models are: ";
+    for (const auto& opdet_model : opdet_catalog) {
+      err_msg += opdet_model.first + " ";
+    }
+    err_msg += "\n"; 
+
+    G4Exception("SLArDetOpDetArray::FillCfgParameterised()",
+        "OpDetModelNotFound", FatalException, err_msg.c_str());
+  }
 
   for (int i_sc_row = 0; i_sc_row < rpl_sc_row.fNreplica; ++i_sc_row) {
     const G4ThreeVector pos_sc_row =
@@ -441,7 +500,7 @@ void SLArDetOpDetArray::FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) co
       scCfg.SetNormal(arrayCfg.GetNormal());
       scCfg.SetupAxes();
 
-      const auto* scBox = static_cast<const G4Box*>(fOpDetModuleBase->GetModSV());
+      const auto* scBox = static_cast<const G4Box*>(opdet_model_itr->second->GetModSV());
       scCfg.SetSize(2 * scBox->GetXHalfLength(),
                     2 * scBox->GetYHalfLength(),
                     2 * scBox->GetZHalfLength());
@@ -453,28 +512,43 @@ void SLArDetOpDetArray::FillCfgParameterised(SLArCfgSuperCellArray& arrayCfg) co
 
  
 
-void SLArDetOpDetArray::FillCfgExplicit(SLArCfgSuperCellArray& arrayCfg) const {
-  if (!fOpDetModuleBase) {
-    G4Exception("SLArDetOpDetArray::FillCfgExplicit", "ConfigError010",
-        FatalException,
-        "fOpDetModuleBase is null. Call BuildOpDetArray() before BuildOpDetArrayCfg().");
-  }
-
+void SLArDetOpDetArray::FillCfgExplicit(
+    SLArCfgSuperCellArray& arrayCfg,
+    const std::map<std::string,SLArOpticalDetector*>& opdet_catalog) const 
+{
   auto rot_inv = new G4RotationMatrix(*fRotation);
   rot_inv->invert();
 
-  const auto* scBox = static_cast<const G4Box*>(fOpDetModuleBase->GetModSV());
-  const G4double sx = 2 * scBox->GetXHalfLength();
-  const G4double sy = 2 * scBox->GetYHalfLength();
-  const G4double sz = 2 * scBox->GetZHalfLength();
-
   for (const SExplicitOpDetPos& entry : fExplicitPositions) {
+
+    const auto& opdet_model_itr =  opdet_catalog.find( fPhotoDetModel );
+    if ( opdet_model_itr == opdet_catalog.end() ) {
+      G4String err_msg = "SLArDetOpDetArray::FillCfgExplicit() ERROR: ";
+      err_msg += "Unable to find optical detector model " + fPhotoDetModel
+        + " in the optical detector catalog. "
+        + "Check that the model name is correct and that the corresponding optical detector "
+        + "is properly defined in the geometry configuration file.";
+      err_msg += " Available models are: ";
+      for (const auto& opdet_model : opdet_catalog) {
+        err_msg += opdet_model.first + " ";
+      }
+      err_msg += "\n"; 
+
+      G4Exception("SLArDetOpDetArray::FillCfgExplicit()",
+          "OpDetModelNotFound", FatalException, err_msg.c_str());
+    }
+
     const G4String scName =
-        Form("%s_%i_%i", fPhotoDetModel.data(), arrayCfg.GetIdx(), entry.id);
+      Form("%s_%i_%i", entry.model_key.data(), arrayCfg.GetIdx(), entry.id);
+
+    const auto* scBox = static_cast<const G4Box*>(opdet_model_itr->second->GetModSV());
+    const G4double sx = 2 * scBox->GetXHalfLength();
+    const G4double sy = 2 * scBox->GetYHalfLength();
+    const G4double sz = 2 * scBox->GetZHalfLength();
 
     SLArCfgSuperCell scCfg(entry.id);
     scCfg.SetName(scName);
- 
+
     // Local position (in the array frame)
     scCfg.SetX(entry.position.x());
     scCfg.SetY(entry.position.y());

@@ -36,6 +36,7 @@
       "required" : ["id", "xyz"],
       "properties" : {
         "id" : {"type" : "integer"},
+        "photodet_model" : {"type" : "string"},
         "xyz" : {"type" : "array", "items" : {"type" : "number"}, "minItems" : 3, "maxItems" : 3, "additionalItems" : false},
         "unit" : {"type" : "string"}
       }

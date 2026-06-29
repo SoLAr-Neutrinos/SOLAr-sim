@@ -215,13 +215,13 @@ void SLArDetectorConstruction::Init() {
             "InvalidOpDetModuleType", FatalException, 
             err_msg.data());
       }
-      fOpDetCatalog.insert( std::make_pair(opdet->GetOpDetModelName(), opdet) );
+      fOpDetCatalog.insert( std::make_pair(opdet->GetOpDetModelName(), std::move(opdet) ) );
       G4cout << "OpDet model " << opdet->GetOpDetModelName() << " initialized and added to catalog" << G4endl;
     }
   }
   else if (d.HasMember("SuperCell")) {
     G4cout << "SLArDetectorConstruction::Init SuperCells" << G4endl;
-    InitSuperCell( d["SuperCell"].GetObj() ); 
+    fSuperCell = InitSuperCell( d["SuperCell"].GetObj() ); 
     G4cout << "SLArDetectorConstruction::Init SuperCells DONE" << G4endl;
   }
 
@@ -291,21 +291,21 @@ void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
 } 
 
 SLArDetSuperCell* SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell) {
-  fSuperCell = new SLArDetSuperCell(); 
+  auto supercell = new SLArDetSuperCell(); 
   debug::require_json_member(jsupercell, "dimensions");
   debug::require_json_type(jsupercell["dimensions"], rapidjson::kArrayType);
-  fSuperCell->Init(jsupercell);
-  fSuperCell->GetGeoInfo()->ReadFromJSON(jsupercell["dimensions"].GetArray()); 
-  return fSuperCell;
+  supercell->Init(jsupercell);
+  supercell->GetGeoInfo()->ReadFromJSON(jsupercell["dimensions"].GetArray()); 
+  return supercell;
 }
 
 SLArDetSiPM* SLArDetectorConstruction::InitSiPM(const rapidjson::Value& jsipm) {
-  fSiPM = new SLArDetSiPM(); 
+  auto sipm = new SLArDetSiPM(); 
   debug::require_json_member(jsipm, "dimensions");
   debug::require_json_type(jsipm["dimensions"], rapidjson::kArrayType);
-  fSiPM->Init(jsipm);
-  fSiPM->GetGeoInfo()->ReadFromJSON(jsipm["dimensions"].GetArray()); 
-  return fSiPM;
+  sipm->Init(jsipm);
+  sipm->GetGeoInfo()->ReadFromJSON(jsipm["dimensions"].GetArray()); 
+  return sipm;
 }
 
 
@@ -1041,14 +1041,25 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
   }
 
   // 6. Build and place the "conventional" Photon Detection System 
-  if (fSuperCell) BuildAndPlaceOpDets();
+  if (fOpDetArray.empty() == false) BuildAndPlaceOpDets();
+  else if (fSuperCell) BuildAndPlaceOpDets();
 
   // 7. Build and place the "pixel-based" readout system 
   BuildAndPlaceAnode(); 
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
   //Visualization attributes
-  if (fSuperCell) fSuperCell->SetVisAttributes(2);
+  if (fOpDetCatalog.empty() == false) {
+    for (auto& [id, opdet] : fOpDetCatalog) {
+      if (opdet->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSiPM) {
+        opdet->SetVisAttributes(1);
+      }
+      else if (opdet->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell) {
+        opdet->SetVisAttributes(2);
+      }
+    }
+  }
+  else if (fSuperCell) fSuperCell->SetVisAttributes(2);
 
   G4VisAttributes* visAttributes = new G4VisAttributes();
   visAttributes->SetColor(0.25,0.54,0.79, 0.0);
@@ -1120,18 +1131,22 @@ void SLArDetectorConstruction::ConstructSDandField()
   }
 
   //Set SuperCell SD
-  if (fSuperCell) {
-    G4VSensitiveDetector* superCellSD
-      = new SLArSuperCellSD(SDname="/pds/supercell", "pds_xa_coll"); 
-    SDman->AddNewDetector(superCellSD); 
-    SetSensitiveDetector(
-        fSuperCell->GetCoating()->GetModLV(), superCellSD );
-  }
-
-  if (fSiPM) {
-    G4VSensitiveDetector* sipm_pdsSD
-      = new SLArSuperCellSD(SDname="/pds/sipm", "pds_sipm_coll");
-    SDman->AddNewDetector(sipm_pdsSD);
+  if (fOpDetCatalog.empty() == false) {
+    for (auto& opdet : fOpDetCatalog) {
+      if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell) {
+        G4VSensitiveDetector* superCellSD
+          = new SLArSuperCellSD(SDname="/pds/supercell", "pds_xa_coll"); 
+        SDman->AddNewDetector(superCellSD); 
+        SLArDetSuperCell* superCell = dynamic_cast<SLArDetSuperCell*>(opdet.second);
+        SetSensitiveDetector(
+            superCell->GetCoating()->GetModLV(), superCellSD );
+      }
+      else if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSiPM) {
+        G4VSensitiveDetector* sipm_pdsSD
+          = new SLArSuperCellSD(SDname="/pds/sipm", "pds_sipm_coll");
+        SDman->AddNewDetector(sipm_pdsSD);
+      }
+    }
   }
 
   // Set LAr-volume SD
@@ -1240,14 +1255,30 @@ G4String SLArDetectorConstruction::GetFirstChar(G4String line)
  */
 void SLArDetectorConstruction::BuildAndPlaceOpDets()
 {
+  for (auto& opdet : fOpDetCatalog) {
+    opdet.second->BuildMaterial(fMaterialDBFile);
+    if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell)
+    {
+      SLArDetSuperCell* supercell = dynamic_cast<SLArDetSuperCell*>(opdet.second);
+      supercell->BuildOpticalDetector();
+      supercell->BuildLogicalSkinSurface(); 
+    }
+    else if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSiPM)
+    {
+      SLArDetSiPM* sipm = dynamic_cast<SLArDetSiPM*>(opdet.second);
+      sipm->BuildOpticalDetector();
+      sipm->BuildLogicalSkinSurface();
+    }
+  }
+
   if (fSuperCell) {
     fSuperCell->BuildMaterial(fMaterialDBFile);
     fSuperCell->BuildOpticalDetector();
-    fSuperCell->BuildLogicalSkinSurface(); 
+    fSuperCell->BuildLogicalSkinSurface();
   }
 
   if (fSiPM) {
-    fSiPM->BuildMaterial( fMaterialDBFile );
+    fSiPM->BuildMaterial(fMaterialDBFile);
     fSiPM->BuildOpticalDetector();
     fSiPM->BuildLogicalSkinSurface();
   }
@@ -1262,24 +1293,8 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
     auto opdetarray_id = array_.first; 
     opdetarray->BuildMaterial(fMaterialDBFile); 
     printf("---- Building OpDet array volume\n");
-    const auto& opdet_model_itr =  fOpDetCatalog.find( opdetarray->GetPhotoDetModel() );
-    if ( opdet_model_itr == fOpDetCatalog.end() ) {
-      G4String err_msg = "SLArDetectorConstruction::BuildAndPlaceOpDets() ERROR: ";
-      err_msg += "Unable to find optical detector model " + opdetarray->GetPhotoDetModel() 
-        + " in the optical detector catalog. "
-        + "Check that the model name is correct and that the corresponding optical detector "
-        + "is properly defined in the geometry configuration file.";
-      err_msg += " Available models are: ";
-      for (const auto& opdet_model : fOpDetCatalog) {
-        err_msg += opdet_model.first + " ";
-      }
-      err_msg += "\n"; 
 
-      G4Exception("SLArDetectorConstruction::BuildAndPlaceOpDets()",
-          "OpDetModelNotFound", FatalException, err_msg.c_str());
-    }
-
-    opdetarray->BuildOpDetArray( opdet_model_itr->second );
+    opdetarray->BuildOpDetArray( fOpDetCatalog );
 
     auto pos = opdetarray->GetPosition(); 
     auto rot = opdetarray->GetRotation();
@@ -1301,7 +1316,7 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
     opdetarray->BuildAndPlacePV("pds_"+std::to_string(opdetarray_id), 
         rot, pos, mother_lv, 0, opdetarray_id); 
 
-    auto array_cfg = opdetarray->BuildOpDetArrayCfg(); 
+    auto array_cfg = opdetarray->BuildOpDetArrayCfg( fOpDetCatalog ); 
     array_cfg.SetX( pos.x() ); array_cfg.SetPhysX( glb_pos.x() );
     array_cfg.SetY( pos.y() ); array_cfg.SetPhysY( glb_pos.y() );
     array_cfg.SetZ( pos.z() ); array_cfg.SetPhysZ( glb_pos.z() );
@@ -1914,17 +1929,46 @@ G4VIStore* SLArDetectorConstruction::CreateImportanceStore() {
       }
     }
 
-    for (int k=0; k<fSuperCell->GetModLV()->GetNoDaughters(); k++) {
-      auto vol = fSuperCell->GetModLV()->GetDaughter(k); 
-      cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
-      if (istore->IsKnown(cell) == false) {
-        printf("SC OBJECT: Adding %s (rp nr %i) to istore with importance %g\n",
-            cell.GetPhysicalVolume().GetName().data(), 
-            cell.GetReplicaNumber(), imp); 
-        istore->AddImportanceGeometryCell(imp, cell); 
+    for (auto& opdet : fOpDetCatalog) {
+      for (int k=0; k<opdet.second->GetModLV()->GetNoDaughters(); k++) {
+        auto vol = opdet.second->GetModLV()->GetDaughter(k); 
+        cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
+        if (istore->IsKnown(cell) == false) {
+          printf("SC OBJECT: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp); 
+          istore->AddImportanceGeometryCell(imp, cell); 
+        }
       }
     }
 
+    if (fSuperCell)
+    {
+      for (int k=0; k<fSuperCell->GetModLV()->GetNoDaughters(); k++) {
+        auto vol = fSuperCell->GetModLV()->GetDaughter(k); 
+        cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
+        if (istore->IsKnown(cell) == false) {
+          printf("SC OBJECT: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp); 
+          istore->AddImportanceGeometryCell(imp, cell); 
+        }
+      }
+    }
+
+
+    if (fSiPM) {
+      for (int k=0; k<fSiPM->GetModLV()->GetNoDaughters(); k++) {
+        auto vol = fSiPM->GetModLV()->GetDaughter(k); 
+        cell = G4GeometryCell(*vol, vol->GetCopyNo()); 
+        if (istore->IsKnown(cell) == false) {
+          printf("SiPM OBJECT: Adding %s (rp nr %i) to istore with importance %g\n",
+              cell.GetPhysicalVolume().GetName().data(), 
+              cell.GetReplicaNumber(), imp); 
+          istore->AddImportanceGeometryCell(imp, cell); 
+        }
+      }
+    }
 
   }
 
