@@ -31,6 +31,11 @@ target_link_libraries(SLArHitConverter PUBLIC
   ${ROOT_LIBRARIES}
   Geant4::G4intercoms)
 
+root_generate_dictionary(G__SLArHitConverter
+  ${SOLAR_UTILS_INC_DIR}/TChannelAnalyzer.hh
+  MODULE SLArHitConverter
+)
+
 #----------------------------------------------------------------------
 # Create Event Display library
 set(SLAREVEDISPLAY_SOURCES
@@ -95,7 +100,7 @@ target_link_libraries(SLArEveDisplay
     SOLARSIM::SLArGenRecords
   )
 
-root_generate_dictionary(G_SLArEveDisplay
+root_generate_dictionary(G__SLArEveDisplay
   ${SOLAR_UTILS_INC_DIR}/SLArEveDisplay.hh
   ${SOLAR_UTILS_INC_DIR}/SLArEveTrackRenderer.hh 
   MODULE SLArEveDisplay
@@ -123,7 +128,9 @@ foreach(lib IN LISTS SOLAr_utils_libs)
       "${CMAKE_CURRENT_BINARY_DIR}/G__${lib}.cxx"
       "${CMAKE_CURRENT_BINARY_DIR}/lib${lib}.rootmap"
       "${CMAKE_CURRENT_BINARY_DIR}/lib${lib}_rdict.pcm"
-  )
+    )
+  else() 
+    message(WARNING "Dictionary file for ${lib} not found. Skipping installation of dictionary files for this library.")
   endif()
 
   # set the library properties
