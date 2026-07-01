@@ -9,6 +9,7 @@
 #define SLARDEBUGUTILS_HH
 
 #include <type_traits>
+#include <vector>
 
 #include "G4Exception.hh"
 #include "G4String.hh"
