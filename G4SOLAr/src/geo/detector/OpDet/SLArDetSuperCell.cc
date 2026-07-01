@@ -118,7 +118,7 @@ void SLArDetSuperCell::BuildOpticalDetector()
     fhTot += fWLSCoating->GetGeoPar("wlscoating_y");
   }
 
-  fModSV = new G4Box("SuperCell",
+  fModSV = new G4Box(fName + "SV",
       fGeoInfo->GetGeoPar("cell_x")*0.5,
       fhTot*0.5,
       fGeoInfo->GetGeoPar("cell_z")*0.5
@@ -128,7 +128,7 @@ void SLArDetSuperCell::BuildOpticalDetector()
   fModLV
     = new G4LogicalVolume(fModSV, 
         fMatSuperCell->GetMaterial(),
-        "SuperCellLV",0,0,0);
+        fName+"LV",0,0,0);
 
   /*  *  *  *  *  *  *  *  *  *  *  *  * 
    * Place SuperCell components
@@ -142,7 +142,7 @@ void SLArDetSuperCell::BuildOpticalDetector()
 
   printf("SLArDetSuperCell::BuildSuperCell: placing components...\n");
   G4cout<<"GetModPV light guide..." << G4endl; 
-  fLightGuide->BuildAndPlacePV("SuperCellLightGuide", 0, 
+  fLightGuide->BuildAndPlacePV(fName+"LightGuide", 0, 
       G4ThreeVector(0, h, 0),
       fModLV, false, 101);
 
@@ -159,7 +159,7 @@ void SLArDetSuperCell::BuildOpticalDetector()
     h = 0.5*fhTot 
       - 0.5*fWLSCoating->GetGeoPar("wlscoating_y");
     printf("  WLS coating: %s\n", fWLSCoating->GetModLV()->GetName().c_str());
-    fWLSCoating->BuildAndPlacePV("SuperCellWLSCoating", 0, 
+    fWLSCoating->BuildAndPlacePV(fName+"WLSCoating", 0, 
         G4ThreeVector(0, h, 0), 
         fModLV, false, 102);
   }
