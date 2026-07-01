@@ -1134,8 +1134,8 @@ void SLArDetectorConstruction::ConstructSDandField()
   if (fOpDetCatalog.empty() == false) {
     for (auto& opdet : fOpDetCatalog) {
       if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell) {
-        G4VSensitiveDetector* superCellSD
-          = new SLArSuperCellSD(SDname="/pds/supercell", "pds_xa_coll"); 
+        auto superCellSD
+          = new SLArSuperCellSD(SDname="/pds/opdet_"+opdet.first, opdet.first+"_opdet_coll"); 
         SDman->AddNewDetector(superCellSD); 
         SLArDetSuperCell* superCell = dynamic_cast<SLArDetSuperCell*>(opdet.second);
         SetSensitiveDetector(

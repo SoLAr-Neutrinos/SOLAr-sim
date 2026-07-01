@@ -151,7 +151,7 @@ void SLArDetSuperCell::BuildOpticalDetector()
     - (fWLSCoating ? fWLSCoating->GetGeoPar("wlscoating_y") : 0);
 
   G4cout<<"GetModPV coating..." << G4endl; 
-  fCoating->BuildAndPlacePV("SuperCellCoating", 0, 
+  fCoating->BuildAndPlacePV(fName+"SensitiveCoating", 0, 
       G4ThreeVector(0, h, 0),
       fModLV, false, 102);
 

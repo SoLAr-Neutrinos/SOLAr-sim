@@ -151,17 +151,17 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
     SLArUserPhotonTrackInformation* photonInfo = 
       dynamic_cast<SLArUserPhotonTrackInformation*>
       (track->GetUserInformation());
+    
     // Get the creation process of optical photon
-
-    //G4String procName = "";
-    //if (track->GetCreatorProcess()) // make sure consider only secondaries
-    //{
-      //procName = track->GetCreatorProcess()->GetProcessName();
-    //}
     auto procID = (photonInfo) ? photonInfo->GetCreator() : optical::EPhotonCreator::kUnknown;
+
+    // Get the origin volume ID of the optical photon
     G4int origin_vol_id = (photonInfo) ? photonInfo->GetOriginVolumID() : -1;
+
+    // Get the photon energy
     phEne = track->GetTotalEnergy();
 
+    // Create a new hit and set its properties
     hit = new SLArSuperCellHit(); //so create new hit
     hit->SetPhotonEnergy( phEne );
     hit->SetPhotonWavelength( CLHEP::h_Planck * CLHEP::c_light / phEne *1e6); 
@@ -173,16 +173,27 @@ G4bool SLArSuperCellSD::ProcessHits_constStep(const G4Step* step,
         printf("[%i] volume: %s - copyNo: %i\n", 
             i, touchable->GetVolume(i)->GetName().data(), touchable->GetCopyNumber(i));
       }
-      //getchar(); 
     }
-    //hit->SetSuperCellIdx(postStepPoint->
-        //GetTouchableHandle()->GetCopyNumber(1));
-    hit->SetSuperCellNo( touchable->GetCopyNumber(1) ); 
-    hit->SetSuperCellRowNo( touchable->GetCopyNumber(2) ); 
-    hit->SetSuperCellArrayNo( touchable->GetCopyNumber(3) ); 
     hit->SetPhotonProcess( static_cast<int>( procID ) );
     hit->SetOriginVolumeID( origin_vol_id );
     hit->SetProducerID( track->GetParentID() );
+ 
+    //hit->SetSuperCellIdx(postStepPoint->
+        //GetTouchableHandle()->GetCopyNumber(1));
+    G4bool isParameterised = false;
+    if (touchable->GetHistoryDepth() >= 2) {
+      isParameterised = touchable->GetVolume(2)->IsParameterised();
+    }
+    if ( isParameterised ) {
+      hit->SetSuperCellNo( touchable->GetCopyNumber(1) ); 
+      hit->SetSuperCellRowNo( touchable->GetCopyNumber(2) ); 
+      hit->SetSuperCellArrayNo( touchable->GetCopyNumber(3) ); 
+    }
+    else {
+      hit->SetSuperCellNo( touchable->GetCopyNumber(1) ); 
+      hit->SetSuperCellRowNo( -1 );
+      hit->SetSuperCellArrayNo( touchable->GetCopyNumber(2) );
+    }
     
     fHitsCollection->insert(hit);
   }

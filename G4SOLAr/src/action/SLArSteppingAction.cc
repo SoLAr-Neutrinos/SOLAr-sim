@@ -434,7 +434,7 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
                 G4Exception("SLArSteppingAction::UserSteppingAction::Detection", 
                     "UnrecognizedParentVolume", FatalException, ed);
               }
-            } else if (volName == "SuperCellCoating") {
+            } else if (G4StrUtil::ends_with(volName, "SensitiveCoating") ) {
 //#ifdef SLAR_DEBUG
               //printf("Copy No hierarchy: [%i, %i, %i, %i, %i]\n", 
                   //touchable->GetCopyNumber(0), 
@@ -446,7 +446,10 @@ void SLArSteppingAction::UserSteppingAction(const G4Step* step)
               ////getchar(); 
 //#endif
 
-              pdsSD = (SLArSuperCellSD*)SDman->FindSensitiveDetector(sdNameSC);
+              const int str_idx = volName.find("SensitiveCoating");
+              G4String opdet_name = volName.substr(0, str_idx);
+
+              pdsSD = (SLArSuperCellSD*)SDman->FindSensitiveDetector("/pds/opdet_"+opdet_name);
               if(pdsSD) { 
                 fEventAction->IncSuperCellHitCount(); 
                 pdsSD->ProcessHits_constStep(step, nullptr);
