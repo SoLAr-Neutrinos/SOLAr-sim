@@ -282,6 +282,12 @@ namespace display {
       }
     }
 
+    h_all->SetEntries( h_all->Integral() );
+    h_scint->SetEntries( h_scint->Integral() );
+    h_cher->SetEntries( h_cher->Integral() );
+    h_wls->SetEntries( h_wls->Integral() );
+    h_wvl->SetEntries( h_wvl->Integral() );
+
     auto finish_boxset = [](TEveBoxSet& bs) {
       bs.RefitPlex();
       bs.SetPickable(kTRUE);
@@ -452,6 +458,13 @@ namespace display {
       finish(*bs_time);
       bs_time->SetRnrSelf(kFALSE);
     } // megatile loop
+
+    h_all->SetEntries( h_all->Integral() );
+    h_scint->SetEntries( h_scint->Integral() );
+    h_cher->SetEntries( h_cher->Integral() );
+    h_wls->SetEntries( h_wls->Integral() ); 
+    h_wvl->SetEntries( h_wvl->Integral() );
+
 
     return limits;
   }
