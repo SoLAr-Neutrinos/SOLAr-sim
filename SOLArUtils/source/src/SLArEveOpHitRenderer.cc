@@ -282,6 +282,12 @@ namespace display {
       }
     }
 
+    h_all->SetEntries( h_all->Integral() );
+    h_scint->SetEntries( h_scint->Integral() );
+    h_cher->SetEntries( h_cher->Integral() );
+    h_wls->SetEntries( h_wls->Integral() );
+    h_wvl->SetEntries( h_wvl->Integral() );
+
     auto finish_boxset = [](TEveBoxSet& bs) {
       bs.RefitPlex();
       bs.SetPickable(kTRUE);
@@ -440,6 +446,12 @@ namespace display {
           }
         } // SiPM loop
       } // tile loop
+
+      h_all->SetEntries( h_all->Integral() );
+      h_scint->SetEntries( h_scint->Integral() );
+      h_cher->SetEntries( h_cher->Integral() );
+      h_wls->SetEntries( h_wls->Integral() ); 
+      h_wvl->SetEntries( h_wvl->Integral() );
 
       // Refresh once per megatile to avoid RefitPlex spam.
       auto finish = [](TEveBoxSet& bs) {
