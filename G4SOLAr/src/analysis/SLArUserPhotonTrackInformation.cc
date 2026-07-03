@@ -27,14 +27,14 @@ void SLArUserPhotonTrackInformation::AddTrackStatusFlag(int s)
 int SLArUserPhotonTrackInformation::GetOriginVolumID() const {
   G4int originVolID = 0;
   if ( fCreator == optical::EPhotonCreator::kWLS ) {
-    if (fOriginVolume.size() > 4) {
+    if (fOriginVolume.size() >= 4) {
       originVolID  = fOriginVolume.at(3)*1e6;  // optical module wall
-      originVolID += fOriginVolume.at(2)*1e3; // optical module row
-      originVolID += fOriginVolume.at(1);     // optical module column
+      originVolID += fOriginVolume.at(2)*1e3;  // optical module row (zero for explicit placement)
+      originVolID += fOriginVolume.at(1);      // optical module column
     }
   }
   else {
-    originVolID = fOriginVolume[0];
+    originVolID = fOriginVolume.at(0);
   }
   return originVolID;
 }

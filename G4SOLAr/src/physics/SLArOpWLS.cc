@@ -222,7 +222,29 @@ G4VParticleChange* SLArOpWLS::PostStepDoIt(const G4Track& aTrack,
     }
 
     wlsphotonInfo->SetCreator( optical::EPhotonCreator::kWLS ); 
-    const auto vol_hierarchy = geo::navigate_vol_hierarchy( pPostStepPoint );
+
+    {
+      const auto touchableHistory = dynamic_cast<const G4TouchableHistory*>(pPostStepPoint->GetTouchable());
+      std::vector<int> vol_hierarchy(4, 0);
+
+      if ( touchableHistory == nullptr ) continue;
+
+      vol_hierarchy.at(0) = touchableHistory->GetVolume(0)->GetCopyNo();
+      vol_hierarchy.at(1) = touchableHistory->GetVolume(1)->GetCopyNo();
+
+      bool is_prmtrsd = touchableHistory->GetVolume(2)->IsParameterised();
+
+      if (is_prmtrsd) {
+        vol_hierarchy.at(2) = touchableHistory->GetVolume(2)->GetCopyNo(); 
+        vol_hierarchy.at(3) = touchableHistory->GetVolume(3)->GetCopyNo();
+      }
+      else {
+        vol_hierarchy.at(3) = touchableHistory->GetVolume(2)->GetCopyNo();
+      }
+
+      wlsphotonInfo->SetOriginVolume( std::move(vol_hierarchy) ); 
+    }
+
     secTrack->SetUserInformation(wlsphotonInfo);
 
     proposedSecondaries.push_back(secTrack);
