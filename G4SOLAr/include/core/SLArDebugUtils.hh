@@ -9,6 +9,7 @@
 #define SLARDEBUGUTILS_HH
 
 #include <type_traits>
+#include <vector>
 
 #include "G4Exception.hh"
 #include "G4String.hh"
@@ -133,6 +134,21 @@ namespace debug {
       G4String err_msg = G4String("Missing required JSON member: ") + member_name;
       G4Exception("debug::require_json_member", "JsonDebug001", FatalException, err_msg);
     }
+  }
+
+  inline void require_json_member(
+      const rapidjson::Value& obj, //!< target JSON object
+      std::vector<const char*> member_names //!< list of ALTERNATIVE member names
+      )
+  {
+    for (const auto& member_name : member_names) {
+      if (obj.HasMember(member_name)) return; // found at least one of the required members
+    }
+    G4String err_msg = "Missing required JSON member. Expected at least one of: ";
+    for (const auto& member_name : member_names) {
+      err_msg += G4String("\"") + member_name + "\" ";
+    }
+    G4Exception("debug::require_json_member", "JsonDebug001", FatalException, err_msg);
   }
 
   inline void require_json_array(
