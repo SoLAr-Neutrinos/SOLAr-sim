@@ -38,7 +38,7 @@ class SLArRunAction : public G4UserRunAction
     inline const G4Transform3D& GetTransformWorld2Det() const {return fTransformWorld2Det;}
 
   private:
-    G4String fG4MacroFile; 
+    G4String fG4MacroFile = {}; 
     SLArEventAction* fEventAction = {};
     SLArElectronDrift* fElectronDrift = {}; 
     SLArRandom* fTRandomInterface = {};
