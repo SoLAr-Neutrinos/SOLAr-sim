@@ -399,22 +399,22 @@ void SLArDetReadoutTile::BuildMaterial(G4String materials_db)
   fMatReadoutTile = new SLArMaterial();
   fMatSiPMCapsule = new SLArMaterial(); 
 
-  fMatReadoutTile->SetMaterialID("LAr");
+  fMatReadoutTile->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatReadoutTile->BuildMaterialFromDB(materials_db);
 
-  fMatPCB->SetMaterialID("PCB");
+  fMatPCB->SetMaterialID(fMatInfo.GetMaterial("pcb_material"));
   fMatPCB->BuildMaterialFromDB(materials_db);
 
-  fMatCopper->SetMaterialID("CopperPassive");
+  fMatCopper->SetMaterialID(fMatInfo.GetMaterial("front_material"));
   fMatCopper->BuildMaterialFromDB(materials_db);
 
-  fMatChargePix->SetMaterialID("Steel");
+  fMatChargePix->SetMaterialID(fMatInfo.GetMaterial("pixel_material"));
   fMatChargePix->BuildMaterialFromDB(materials_db);
 
-  fMatSiPM->SetMaterialID("SiliconActive");
+  fMatSiPM->SetMaterialID(fMatInfo.GetMaterial("sipm_active_material"));
   fMatSiPM->BuildMaterialFromDB(materials_db);
 
-  fMatSiPMCapsule->SetMaterialID("SiliconPassive");
+  fMatSiPMCapsule->SetMaterialID(fMatInfo.GetMaterial("sipm_capsule_material"));
   fMatSiPMCapsule->BuildMaterialFromDB(materials_db);
 }
 

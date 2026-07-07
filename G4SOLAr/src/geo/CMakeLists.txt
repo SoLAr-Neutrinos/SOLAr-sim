@@ -11,6 +11,7 @@ set ( SLAR_GEO_HEADERS
   "${SLAR_GEO_INCLUDE_DIR}/SLArUnit.hpp"
   "${SLAR_GEO_INCLUDE_DIR}/SLArGeoInfo.hh"
   "${SLAR_GEO_INCLUDE_DIR}/SLArGeoUtils.hh"
+  "${SLAR_GEO_INCLUDE_DIR}/SLArMaterialsInfo.hh"
 )
 
 set( SLAR_GEO_SRC 

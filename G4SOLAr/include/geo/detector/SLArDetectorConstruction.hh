@@ -103,9 +103,13 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Get the LAr target volume 
     inline const SLArBaseDetModule* GetLArTargetVolume() const {return fDetector;}
     //!  Return the geometry configuration file
+    G4String                        GetGeometryCfgFile() const {return fGeometryCfgFile;}
+    //!  Return the geometry configuration file
     G4String                        GetGeometryCfgFile() {return fGeometryCfgFile;}
     //!  Return the material configuration file
     G4String                        GetMaterialCfgFile() {return fMaterialDBFile;}
+    //!  Return the material configuration file
+    G4String                        GetMaterialCfgFile() const {return fMaterialDBFile;} 
     //!  Return Liquid Argon Properties
     SLArLArProperties&              GetLArProperties() {return fLArProperties;}
     //!  Return Liquid Argon Properties
@@ -138,7 +142,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     std::map<int, SLArDetCathode*> fCathode; 
 
     SLArGeoInfo fWorldGeoPars;//!< World volume geometry parameters
+    SLArMaterialsInfo fWorldMatPars; //!< World volume material parameters
     SLArGeoInfo fCavernGeoPars; //!< Cavern volume geometry attributes
+    SLArMaterialsInfo fCavernMatPars; //!< Cavern volume material attributes
     SLArDetExpHall* fExpHall; //!< Experimental Hall detector object
     std::vector<SLArDetShielding*> fShielding; //!< Shielding detector objects
     SLArDetSuperCell* fSuperCell; //!< SuperCell detector object

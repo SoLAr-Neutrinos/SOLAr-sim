@@ -24,7 +24,7 @@ SLArDetSuperCellArray::SLArDetSuperCellArray() :
 SLArDetSuperCellArray::~SLArDetSuperCellArray() {}
 
 void SLArDetSuperCellArray::BuildMaterial(G4String materials_db) {
-  fMaterialBase = new SLArMaterial("LAr"); 
+  fMaterialBase = new SLArMaterial( fMatInfo.GetMaterial("base_material") ); 
   fMaterialBase->BuildMaterialFromDB(materials_db); 
   return;
 }
@@ -98,6 +98,9 @@ void SLArDetSuperCellArray::Init(const rapidjson::Value& jconf) {
       printf("WARNING: CANNOT PARSE SUPERCELL ARRAY REPLICATION DATA\n");
     }
   }
+
+  debug::require_json_member(jarray, {"materials", "base_material"});
+  fMatInfo.ReadFromJSON(jarray);
   
   return; 
 }
