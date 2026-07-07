@@ -33,6 +33,16 @@
   },
   
   "type" : "object",
+  "oneOf" : [
+    {
+      "required" : ["base_material"],
+      "properties" : {"base_material" : {"$ref":"common.schema.json#/$defs/base_material"}}
+    },
+    {
+      "required" : ["materials"],
+      "properties" : {"materials":{"$ref":"common.schema.json#/$defs/materials"}}
+    }
+  ],
   "required" : ["copyID", "tpcID", "name", "position", "normal", "rot", "photodet_model", "dimensions" ], 
   "additionalProperties" : true,
   "properties" : {

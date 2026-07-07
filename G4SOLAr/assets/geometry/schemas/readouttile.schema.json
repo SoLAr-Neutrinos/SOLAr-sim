@@ -108,7 +108,16 @@
     "tile_assembly_object": {
       "type": "object",
       "required": ["name", "copyID", "dimensions"],
-      "additionalProperties": false,
+      "oneOf" : [
+        {
+          "required" : ["base_material"],
+          "properties" : {"base_material" : {"$ref":"common.schema.json#/$defs/base_material"}}
+        },
+        {
+          "required" : ["materials"],
+          "properties" : {"materials":{"$ref":"common.schema.json#/$defs/materials"}}
+        }
+      ],
       "properties": {
         "name": {"type": "string"},
         "copyID": {"type": "integer"},
@@ -127,8 +136,7 @@
   },
 
   "type": "object",
-  "required": ["dimensions", "components", "unit_cell", "tile_assembly"],
-  "additionalProperties": false,
+  "required": ["dimensions", "components", "unit_cell", "tile_assembly", "materials"],
   "properties": {
     "copyID": {"type": "integer"},
     "dimensions": {
@@ -152,6 +160,20 @@
       "type": "array",
       "minItems": 1,
       "items" : {"$ref" : "#/$defs/tile_assembly_object"}
+    },
+    "materials" : {
+      "type" : "array",
+      "minItems" : 6, 
+      "maxItems" : 6,
+      "items" : {"$ref" : "common.schema.json#/$defs/material_entry"},
+      "allOf": [
+        {"contains": {"properties": {"module": {"const": "base_material"}}}},
+        {"contains": {"properties": {"module": {"const": "front_material"}}}},
+        {"contains": {"properties": {"module": {"const": "pcb_material"}}}},
+        {"contains": {"properties": {"module": {"const": "pixel_material"}}}},
+        {"contains": {"properties": {"module": {"const": "sipm_active_material"}}}},
+        {"contains": {"properties": {"module": {"const": "sipm_capsule_material"}}}}
+      ]
     }
   }
 }

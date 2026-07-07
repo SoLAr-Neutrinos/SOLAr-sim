@@ -69,6 +69,37 @@
           "maxItems": 3
         }
       }
-    }
+    },
+
+    "base_material": {
+      "description": "Material name used as the base for a volume or layer.",
+      "type": "string"
+    },
+
+     "material_entry": {
+      "description": "A material assignment for a module.",
+      "type": "object",
+      "required": ["module", "material"],
+      "properties": {
+        "module": { "type": "string" },
+        "material": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "materials": {
+      "description": "Array of material assignments for modules. Must include a module with value 'base_material'.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/material_entry" },
+      "contains": {
+        "type": "object",
+        "required": ["module", "material"],
+        "properties": {
+          "module": { "const": "base_material" },
+          "material": { "$ref": "#/$defs/base_material" }
+        }
+      }
+    } 
   }
 }

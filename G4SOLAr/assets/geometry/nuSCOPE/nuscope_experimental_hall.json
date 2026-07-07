@@ -1,6 +1,7 @@
 {
   "World" : {
     "copyID" : 0,
+    "base_material" : "Air",
     "dimensions" : [
       {"name" : "size_x" , "val" : 40.0, "unit": "m"},
       {"name" : "size_y" , "val" : 40.0, "unit": "m"},

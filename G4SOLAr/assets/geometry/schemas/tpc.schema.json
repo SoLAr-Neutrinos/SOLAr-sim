@@ -28,6 +28,16 @@
 
     "tpc_object": {
       "type": "object",
+      "oneOf" : [
+        {
+          "required" : ["base_material"],
+          "properties" : {"base_material" : {"$ref":"common.schema.json#/$defs/base_material"}}
+        },
+        {
+          "required" : ["materials"],
+          "properties" : {"materials":{"$ref":"common.schema.json#/$defs/materials"}}
+        }
+      ],
       "required": [
         "shape",
         "copyID",
@@ -52,9 +62,19 @@
         },
         "field_cage": {
           "type": "object",
-          "additionalProperties": false,
-          "required": ["thickness", "spacing"],
+          "required": ["thickness", "spacing", "materials"],
           "properties": {
+            "materials" : {
+              "type" : "array",
+              "minItems" : 2,
+              "maxItems" : 2,
+              "items" : { "$ref" : "common.schema.json#/$defs/material_entry" },
+              "description" : "Materials for the field cage: [base, conductor]",
+              "allOf" : [
+                {"contains" : {"properties" : {"module" : {"const" : "base_material"}}}},
+                {"contains" : {"properties" : {"module" : {"const" : "conductor_material"}}}}
+              ]
+            },
             "thickness": {"$ref": "common.schema.json#/$defs/val_w_unit" },
             "spacing": {"$ref": "common.schema.json#/$defs/val_w_unit"},
             "shift": {"$ref": "common.schema.json#/$defs/vec3_w_unit"},

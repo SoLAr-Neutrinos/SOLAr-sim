@@ -1,6 +1,7 @@
 {
   "TPC" : [
     {"copyID" : 10, 
+      "base_material" : "LAr",
       "shape" : "box",
       "position": {"xyz" : [0, 110.05, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, -1, 0]},
@@ -15,10 +16,15 @@
         "wall_distance" : {"val" : 50, "unit" : "cm"},
         "spacing" : {"val" : 60, "unit" : "mm"}, 
         "height_long_side" : {"val" : 13, "unit" : "mm"},
-        "height_short_side" : {"val" : 15, "unit" : "mm"}
+        "height_short_side" : {"val" : 15, "unit" : "mm"},
+        "materials" : [
+          {"module" : "base_material", "material" : "LAr"},
+          {"module" : "conductor_material", "material" : "Steel"}
+        ]
       }
     },
     {"copyID" : 11, 
+      "base_material" : "LAr",
       "shape" : "box",
       "position": {"xyz" : [0, -110.05, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [0, 1, 0]},
@@ -33,13 +39,19 @@
         "wall_distance" : {"val" : 50, "unit" : "cm"},
         "spacing" : {"val" : 60, "unit" : "mm"}, 
         "height_long_side" : {"val" : 13, "unit" : "mm"},
-        "height_short_side" : {"val" : 15, "unit" : "mm"}
+        "height_short_side" : {"val" : 15, "unit" : "mm"},
+        "materials" : [
+          {"module" : "base_material", "material" : "LAr"},
+          {"module" : "conductor_material", "material" : "Steel"}
+        ]
+ 
       }
     }
   ],
   "Cathode" : [
     {"copyID": 99, 
       "shape" : "box",
+      "base_material" : "FR4",
       "position" : {"xyz": [0, 0, 0], "unit" : "cm"}, 
       "dimensions" : [
         {"name" : "dim_x", "val" :  4.00, "unit" : "m"},
@@ -51,6 +63,7 @@
   "Anode" : [
     {"copyID" : 50, 
       "tpcID" : 10,
+      "base_material" : "LAr",
       "position" : {"xyz" : [0, 100.00, 0], "unit" : "cm"}, 
       "normal" : [0, -1, 0],
       "rot" : {"val" : [0, 0, 180], "unit" : "degree"}, 
@@ -63,6 +76,7 @@
     }, 
     {"copyID" : 51, 
       "tpcID" : 11,
+      "base_material" : "LAr",
       "position" : {"xyz" : [0, -100.00, 0], "unit" : "cm"}, 
       "rot" : {"val" : [0, 0, 0], "unit" : "deg"}, 
       "normal" : [0, 1, 0],

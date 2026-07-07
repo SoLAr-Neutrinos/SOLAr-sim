@@ -2,8 +2,21 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "anode.schema.json",
   "type": "object",
+  "oneOf" : [
+    {
+      "required" : ["base_material"],
+      "properties" : {
+        "base_material" : { "$ref" : "common.schema.json#/$defs/base_material" }
+      }
+    },
+    {
+      "required" : ["materials"],
+      "properties" : {
+        "materials" : { "$ref" : "common.schema.json#/$defs/materials" }
+      }
+    }
+  ],
   "required": ["copyID", "tpcID", "tile_assembly", "position", "rot", "normal", "dimensions"],
-  "additionalProperties": false,
   "properties": {
     "copyID": {
       "type": "integer"
