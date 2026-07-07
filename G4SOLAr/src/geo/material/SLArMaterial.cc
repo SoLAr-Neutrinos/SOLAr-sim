@@ -6,6 +6,7 @@
 
 #include "SLArUserPath.hh"
 #include "SLArDebugUtils.hh"
+#include "detector/SLArDetectorConstruction.hh"
 #include "SLArUnit.hpp"
 #include "material/SLArMaterial.hh"
 
@@ -16,6 +17,7 @@
 
 #include "G4UIcommand.hh"
 #include "G4NistManager.hh"
+#include <G4RunManager.hh>
 #include <cassert>
 #include <regex>
 #include <iterator>
@@ -114,6 +116,19 @@ void SLArMaterial::BuildMaterialFromDB(G4String db_file, G4String mat_id) {
   if (mat_id.empty()) mat_id = fMaterialID;
   else SetMaterialID(mat_id);
 
+  if (db_file.empty()) {
+    G4RunManager* runManager = G4RunManager::GetRunManager();
+    if (runManager) {
+      auto detector = dynamic_cast<const SLArDetectorConstruction*>(runManager->GetUserDetectorConstruction());
+      if (detector) {
+        db_file = detector->GetMaterialCfgFile();
+      }
+      else {
+        G4Exception("SLArMaterial::BuildMaterialFromDB", "InvalidMaterialDBFile", FatalException, 
+            "Unable to retrieve material DB file from detector construction");
+      }
+    }
+  }
   fDBFile = db_file; 
    
   if ( (fMaterial = FindInMaterialTable(mat_id)) ) {
