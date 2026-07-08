@@ -243,13 +243,13 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
   fMatCoating      = new SLArMaterial();
   fMatSuperCell    = new SLArMaterial();
 
-  fMatSuperCell->SetMaterialID("Vacuum");
+  fMatSuperCell->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatSuperCell->BuildMaterialFromDB(materials_db);
 
-  fMatLightGuide->SetMaterialID("Plastic");
+  fMatLightGuide->SetMaterialID(fMatInfo.GetMaterial("lightguide_material"));
   fMatLightGuide->BuildMaterialFromDB(materials_db);
 
-  fMatCoating->SetMaterialID("PTP");
+  fMatCoating->SetMaterialID(fMatInfo.GetMaterial("sensitive_coating_material"));
   fMatCoating->BuildMaterialFromDB(materials_db);
 }
 

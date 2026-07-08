@@ -36,7 +36,7 @@
 
 
 SLArDetTPC::SLArDetTPC() : SLArBaseDetModule(),
-  fMatTarget(nullptr), fMatFieldCage(nullptr), fFieldCage(nullptr), fFieldCageVisibility(true)
+  fMatTarget(nullptr), fFieldCage(nullptr), fFieldCageVisibility(true)
 {
   fGeoInfo = new SLArGeoInfo();
 }
@@ -50,13 +50,9 @@ SLArDetTPC::~SLArDetTPC() {
 void SLArDetTPC::BuildMaterial(G4String db_file) 
 {
   fMatTarget = new SLArMaterial();
-  fMatFieldCage = new SLArMaterial(); 
 
-  fMatTarget->SetMaterialID("LAr");
+  fMatTarget->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatTarget->BuildMaterialFromDB(db_file);
-
-  fMatFieldCage->SetMaterialID("Steel"); 
-  fMatFieldCage->BuildMaterialFromDB(db_file); 
 }
 
 void SLArDetTPC::BuildDefalutGeoParMap() {}
@@ -313,7 +309,7 @@ void SLArDetTPC::BuildTPC()
 
 
   if (fFieldCage) {
-    fFieldCage->Build(fMatFieldCage->GetMaterial(), fMatTarget->GetMaterial());
+    fFieldCage->Build();
     fFieldCage->GetModPV("field_cage", rot, fFieldCage->GetShift(), this->GetModLV(), false, 99); 
   }
 }
@@ -369,6 +365,9 @@ void SLArDetTPC::SetVisAttributes()
 void SLArDetTPC::Init(const rapidjson::Value& jconf) {
   assert(jconf.IsObject()); 
   auto jtpc = jconf.GetObject(); 
+
+  debug::require_json_member(jtpc, {"base_material", "materials"});
+  fMatInfo.ReadFromJSON(jtpc);
   
   if (jtpc.HasMember("shape")) {
     fShape = geo::get_geo_shape_code(jtpc["shape"].GetString());

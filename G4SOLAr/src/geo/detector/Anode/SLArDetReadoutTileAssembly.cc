@@ -44,7 +44,7 @@ void SLArDetReadoutTileAssembly::BuildDefalutGeoParMap()
 void SLArDetReadoutTileAssembly::BuildMaterial(G4String materials_db)
 {
   fMatReadoutPlane = new SLArMaterial(); 
-  fMatReadoutPlane->SetMaterialID("LAr");
+  fMatReadoutPlane->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatReadoutPlane->BuildMaterialFromDB(materials_db);
 }
 

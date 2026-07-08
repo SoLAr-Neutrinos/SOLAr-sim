@@ -4,7 +4,6 @@
  * @created     Wed Mar 15, 2023 11:57:41 CET
  */
 #include "G4Box.hh"
-#include "G4Trd.hh"
 #include "G4Tubs.hh"
 #include "G4SubtractionSolid.hh"
 #include "G4UnionSolid.hh"
@@ -97,6 +96,9 @@ void SLArDetCryostat::InitCryostatStructure(const rapidjson::Value& jcryo) {
 }
 
 void SLArDetCryostat::BuildCryostatTubStructure(const rapidjson::Value& jcryo) {
+  debug::require_json_member(jcryo, {"base_material", "materials"});
+  fMatInfo.ReadFromJSON(jcryo);
+
   assert(jcryo.HasMember("Cryostat_structure")); 
   assert(jcryo["Cryostat_structure"].IsArray()); 
 
@@ -146,6 +148,9 @@ void SLArDetCryostat::BuildCryostatTubStructure(const rapidjson::Value& jcryo) {
 }
 
 void SLArDetCryostat::BuildCryostatBoxStructure(const rapidjson::Value& jcryo) {
+  debug::require_json_member(jcryo, {"base_material", "materials"});
+  fMatInfo.ReadFromJSON(jcryo);
+
   assert(jcryo.HasMember("Cryostat_structure")); 
   assert(jcryo["Cryostat_structure"].IsArray()); 
 
@@ -171,6 +176,20 @@ void SLArDetCryostat::BuildCryostatBoxStructure(const rapidjson::Value& jcryo) {
     fBuildSupport = true; 
     G4double support_wd = 0.; 
     const auto jsupport = jcryo["Cryostat_support"].GetObj(); 
+    
+    debug::require_json_member(jsupport, {"materials", "base_material"}); 
+    if (jsupport.HasMember("base_material")) {
+      fMatInfo.RegisterMaterial("waffle_material", jsupport["base_material"].GetString());
+    }
+    else if (jsupport.HasMember("materials")) {
+      for (const auto& mat : jsupport["materials"].GetArray()) {
+        const G4String module_name = mat["module"].GetString();
+        if (module_name == "base_material" || module_name == "waffle_material") {
+          fMatInfo.RegisterMaterial("waffle_material", mat["material"].GetString());
+        }
+      }
+    }
+
     support_wd += unit::ParseJsonVal(jsupport["steel_major_width"]); 
 
     fGeoInfo->RegisterGeoPar("waffle_major_width", 
@@ -1174,11 +1193,11 @@ void SLArDetCryostat::BuildMaterials(G4String material_db) {
   }
 
   fMatWorld = new SLArMaterial();
-  fMatWorld->SetMaterialID("Air");
+  fMatWorld->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatWorld->BuildMaterialFromDB(material_db);
 
   fMatWaffle = new SLArMaterial(); 
-  fMatWaffle->SetMaterialID("DuneSteel"); 
+  fMatWaffle->SetMaterialID(fMatInfo.GetMaterial("waffle_material")); 
   fMatWaffle->BuildMaterialFromDB(material_db); 
 
   if (fMatBrick) {

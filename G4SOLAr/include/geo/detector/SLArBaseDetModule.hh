@@ -10,6 +10,7 @@
 
 #include "material/SLArMaterial.hh"
 #include "SLArGeoInfo.hh"
+#include "SLArMaterialsInfo.hh"
 #include "SLArGeoUtils.hh"
 
 #include "G4ThreeVector.hh"
@@ -35,6 +36,12 @@ class SLArBaseDetModule
     void               SetGeoPar(G4String str, G4double val);
     void               SetGeoPar(std::pair<G4String, G4double> p);
     G4double           GetGeoPar(G4String str); 
+    inline const SLArMaterialsInfo& GetMaterialsInfo() const {return fMatInfo;}
+    inline SLArMaterialsInfo& GetMaterialsInfo() {return fMatInfo;}
+    inline G4bool      ContainsMaterial(G4String str) const {return fMatInfo.Contains(str);}
+    inline G4String    GetModuleMaterial(const G4String& module) const 
+      {return fMatInfo.Contains(module) ? fMatInfo.GetMaterial(module) : "G4_AIR";}
+
 
     virtual void       Init(const rapidjson::Value&) {}
     
@@ -74,6 +81,7 @@ class SLArBaseDetModule
   protected:
     G4Material*        fMaterial;
     SLArGeoInfo*       fGeoInfo ;
+    SLArMaterialsInfo  fMatInfo ;
 
     G4LogicalVolume*   fModLV   ;
     G4VSolid*          fModSV   ;

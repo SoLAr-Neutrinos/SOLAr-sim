@@ -1,5 +1,13 @@
 {
   "ReadoutTile" : {
+    "materials" : [
+      {"module" : "base_material" , "material" : "LAr"},
+      {"module" : "front_material" , "material" : "CopperPassive"},
+      {"module" : "pcb_material" , "material" : "FR4"},
+      {"module" : "pixel_material" , "material" : "CopperPassive"},
+      {"module" : "sipm_active_material" , "material" : "SiliconActive"},
+      {"module" : "sipm_capsule_material" , "material" : "SiliconPassive"}
+    ],
     "dimensions" : [
       {"name" : "tile_x", "val" :256.0, "unit" : "mm" },
       {"name" : "tile_y", "val" : 2.5, "unit" : "mm" },
@@ -105,6 +113,7 @@
     "tile_assembly" : [
       {
         "name" : "StdReadoutPlane", 
+        "base_material" : "LAr",
         "copyID" : 2000, 
         "dimensions" : [
           {"name" : "rdoutplane_x", "val" : 32.0, "unit" : "cm"}, 

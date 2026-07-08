@@ -133,12 +133,23 @@ void SLArDetectorConstruction::Init() {
   // Parse world dimensions
   if (d.HasMember("World")) {
     const rapidjson::Value& wrld = d["World"]; 
-    assert(wrld.HasMember("dimensions")); 
+    debug::require_json_member(wrld, "dimensions"); 
+    debug::require_json_type(wrld["dimensions"], rapidjson::kArrayType);
     fWorldGeoPars.ReadFromJSON(wrld["dimensions"].GetArray());
+    debug::require_json_member(wrld, {"materials", "base_material"});
+    fWorldMatPars.ReadFromJSON( wrld ); 
   } else {
+    G4ExceptionDescription ed;
+    ed << "Missing required JSON member: World. Using default world dimensions and material.\n";
+    ed << "Default world dimensions: size_x = 5 m, size_y = 8 m, size_z = 20 m\n";
+    ed << "Default world material: Air\n";
     fWorldGeoPars.RegisterGeoPar("size_x", 5*CLHEP::m); 
     fWorldGeoPars.RegisterGeoPar("size_y", 8*CLHEP::m); 
     fWorldGeoPars.RegisterGeoPar("size_z",20*CLHEP::m); 
+
+    fWorldMatPars.RegisterMaterial("base_material", "Air");
+
+    G4Exception("SLArDetectorConstruction::Init", "WorldConfig001", JustWarning, ed);
   }
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -255,7 +266,7 @@ void SLArDetectorConstruction::InitTPC(const rapidjson::Value& jtpc) {
 }
 
 void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
-  assert(jcathode.IsArray()); 
+  debug::require_json_type(jcathode, rapidjson::kArrayType); 
 
   for (const auto &jcath : jcathode.GetArray()) {
     SLArDetCathode* detCathode = new SLArDetCathode(); 
@@ -268,6 +279,7 @@ void SLArDetectorConstruction::InitSuperCell(const rapidjson::Value& jsupercell)
   fSuperCell = new SLArDetSuperCell(); 
   assert(jsupercell.HasMember("dimensions")); 
   fSuperCell->GetGeoInfo()->ReadFromJSON(jsupercell["dimensions"].GetArray()); 
+  fSuperCell->GetMaterialsInfo().ReadFromJSON(jsupercell);
   return;
 }
 
@@ -366,6 +378,8 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
   assert(pixsys.HasMember("dimensions")); 
   assert(pixsys.HasMember("components")); 
   assert(pixsys.HasMember("unit_cell")); 
+  debug::require_json_member(pixsys, "materials");
+  fReadoutTile->GetMaterialsInfo().ReadFromJSON(pixsys);
 
   fReadoutTile->GetGeoInfo()->ReadFromJSON(pixsys["dimensions"].GetArray()); 
   fReadoutTile->BuildComponentsDefinition(pixsys["components"]); 
@@ -384,6 +398,8 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys) {
       SLArDetReadoutTileAssembly* megatile = new SLArDetReadoutTileAssembly(); 
       assert(mtile.HasMember("dimensions")); 
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
+      debug::require_json_member(mtile, {"materials", "base_material"});
+      megatile->GetMaterialsInfo().ReadFromJSON(mtile);
       megatile->BuildMaterial(fMaterialDBFile); 
       fReadoutMegaTile.insert(std::make_pair(mtile["name"].GetString(),megatile)); 
     } // end of Megatile models loop
@@ -419,6 +435,10 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
             "Invalid LAr target shape specified in JSON configuration! Valid options are: 'box' and 'cylinder' (or 'tub')");
       }
     }
+
+    // --- Material ---
+    debug::require_json_member(jlar_target, {"materials", "base_material"});
+    fDetector->GetMaterialsInfo().ReadFromJSON(jlar_target);
 
     // --- Position ---
     G4ThreeVector pos(0., 0., 0.);
@@ -556,13 +576,21 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
       fDetector->SetGeoPar("det_rot_phi",   tpc->GetGeoPar("tpc_rot_phi"));
       fDetector->SetGeoPar("det_rot_theta", tpc->GetGeoPar("tpc_rot_theta"));
       fDetector->SetGeoPar("det_rot_psi",   tpc->GetGeoPar("tpc_rot_psi"));
+
+      fDetector->GetMaterialsInfo().RegisterMaterial("base_material", 
+          tpc->GetMaterialsInfo().GetMaterial("base_material"));
     }
     else {
+      const auto& tpc = fTPC.begin()->second;
+      fDetector->GetMaterialsInfo().RegisterMaterial("base_material", 
+          tpc->GetMaterialsInfo().GetMaterial("base_material"));
       ComputeTPCEnclosure(eps);
     }
   }
 
   // --- Summary printout ---
+  printf("LAr material ID: %s\n", 
+      fDetector->GetMaterialsInfo().GetMaterial("base_material").data());
   if (fLArTargetShape == geo::kBox) {
     printf("LAr target [box]:      pos (%.1f, %.1f, %.1f) mm  "
         "size %.1f x %.1f x %.1f mm\n",

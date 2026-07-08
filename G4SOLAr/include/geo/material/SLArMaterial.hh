@@ -20,7 +20,7 @@ class SLArMaterial {
     SLArMaterial(G4String matID);
     ~SLArMaterial();
 
-    void                BuildMaterialFromDB(const G4String db_file, G4String mat_id = "");
+    void                BuildMaterialFromDB(const G4String db_file = "", G4String mat_id = "");
     G4Material*         GetMaterial();
     G4MaterialPropertiesTable* GetMaterialPropTable(); 
     G4String            GetMaterialID();

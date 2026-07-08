@@ -40,7 +40,6 @@ public:
 
 private:
   SLArMaterial* fMatTarget;
-  SLArMaterial* fMatFieldCage;
   SLArDetFieldCage* fFieldCage; 
   geo::EGeoShape fShape{geo::kBox};
   G4double      fElectricField; 

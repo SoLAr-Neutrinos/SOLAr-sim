@@ -1,5 +1,6 @@
 {
   "Cryostat" : {
+    "base_material" : "Air",
     "Cryostat_structure" : [
       {"id" : 21 , "name" : "outer_frame"     , "material" : "Steel"               , "thickness" : {"val":  3.0 , "unit" : "cm"}} ,
       {"id" : 22 , "name" : "plywood_1"       , "material" : "Plywood"             , "thickness" : {"val":  1.0 , "unit" : "cm"}} ,
@@ -17,7 +18,11 @@
       "steel_thickness" : {"val" : 30, "unit" : "mm"},
       "steel_major_width" : {"val" : 50, "unit" : "cm"}, 
       "steel_minor_width" : {"val" : 20, "unit" : "cm"}, 
-      "main_spacing" : {"val" : 150, "unit" : "cm"}
+      "main_spacing" : {"val" : 150, "unit" : "cm"},
+      "materials" : [
+        {"module" : "waffle_material", "material" : "Steel"},
+        {"module" : "base_material", "material" : "Air"}
+      ]
     }
   }
 }

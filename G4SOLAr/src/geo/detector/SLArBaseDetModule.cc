@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * *  
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArBaseModule
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArBaseModule.hh
  * @created     : mercoledì ago 07, 2019 13:24:21 CEST
  */
 

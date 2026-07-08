@@ -27,7 +27,20 @@
     "cathode_object" : {
       "type": "object",
       "required": ["copyID", "position", "dimensions", "shape"],
-      "additionalProperties": false,
+      "oneOf" : [
+        {
+          "required" : ["base_material"],
+          "properties" : {
+            "base_material" : { "$ref" : "common.schema.json#/$defs/base_material" }
+          }
+        },
+        {
+          "required" : ["materials"],
+          "properties" : {
+            "materials" : { "$ref" : "common.schema.json#/$defs/materials" }
+          }
+        }
+      ],
       "properties": {
         "copyID": {"type": "integer"},
         "shape": {"type": "string", "enum": ["box", "tub"]},
