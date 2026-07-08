@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------------
 # Setup the project
 cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
-project(SOLAr-sim LANGUAGES CXX C VERSION 0.3.0)
+project(SOLAr-sim LANGUAGES CXX C VERSION 0.4.0)
 
 message(STATUS "Building ${PROJECT_NAME} version ${PROJECT_VERSION}")
 
