@@ -15,14 +15,14 @@ categories:
         - "bug"
   - title: " Maintenance"
     when:
-      labels: "chore"
+      label: "chore"
   - type: "pre-exclude"
     when:
-      labels: "skip-changelog"
+      label: "skip-changelog"
   - type: "version-resolver"
     semver-increment: "major"
     when:
-      labels: "major"
+      label: "major"
   - type: "version-resolver"
     semver-increment: "patch"
 change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
