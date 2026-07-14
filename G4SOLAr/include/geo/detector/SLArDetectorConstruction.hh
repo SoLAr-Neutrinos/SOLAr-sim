@@ -127,8 +127,6 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //!  Return the geometry configuration file
     G4String                        GetGeometryCfgFile() const {return fGeometryCfgFile;}
     //!  Return the geometry configuration file
-    G4String                        GetGeometryCfgFile() const {return fGeometryCfgFile;}
-    //!  Return the geometry configuration file
     G4String                        GetGeometryCfgFile() {return fGeometryCfgFile;}
     //!  Return the material configuration file
     G4String                        GetMaterialCfgFile() {return fMaterialDBFile;}
