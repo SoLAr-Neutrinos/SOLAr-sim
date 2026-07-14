@@ -466,7 +466,6 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys)
       debug::require_json_member(mtile, "dimensions");
       debug::require_json_type(mtile["dimensions"], rapidjson::kArrayType);
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
-
       debug::require_json_member(mtile, {"materials", "base_material"});
       megatile->GetMaterialsInfo().ReadFromJSON(mtile);
       megatile->BuildMaterial(fMaterialDBFile); 
