@@ -31,7 +31,7 @@ class SLArDetSiPM : public SLArOpticalDetector
     
     ~SLArDetSiPM() = default;
 
-    void BuildMaterial(G4String materials_db) override;
+    void BuildMaterials(G4String materials_db = "") override;
     void BuildOpticalDetector() override;
     void SetVisAttributes(const int&) override;
     G4LogicalSkinSurface* BuildLogicalSkinSurface();

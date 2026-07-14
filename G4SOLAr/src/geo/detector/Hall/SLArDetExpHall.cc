@@ -54,9 +54,8 @@ void SLArDetExpHall::Init(const rapidjson::Value& config)
   assert(config.HasMember("dimensions"));
   fGeoInfo->ReadFromJSON(config["dimensions"].GetArray());
 
-  if (config.HasMember("base_material")) {
-    SLArMaterial mat(config["base_material"].GetString());
-  }
+  debug::require_json_member(config, {"materials", "base_material"});
+  fMatInfo.ReadFromJSON(config);
 }
 
 void SLArDetExpHall::BuildMaterials(G4String db_file)
@@ -66,6 +65,7 @@ void SLArDetExpHall::BuildMaterials(G4String db_file)
     layer.fMaterial.BuildMaterialFromDB(db_file);
   }
 
+  fBaseMaterial.SetMaterialID( fMatInfo.GetMaterial("base_material") );
   fBaseMaterial.BuildMaterialFromDB(db_file);
 
   return;

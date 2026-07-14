@@ -20,7 +20,9 @@ SLArDetFieldCage::SLArDetFieldCage()
   : SLArBaseDetModule(),
     fShape(geo::kBox),
     fShift(0., 0., 0.),
-    fDriftDir(1., 0., 0.)
+    fDriftDir(1., 0., 0.),
+    fMatConductor(nullptr),
+    fMatFill(nullptr)
 {}
 
 SLArDetFieldCage::~SLArDetFieldCage() {}
@@ -45,6 +47,12 @@ void SLArDetFieldCage::ResolveDriftAxes(int& iDrift,
 
 void SLArDetFieldCage::Init(const rapidjson::Value& jconf) 
 {
+  debug::require_json_type(jconf, rapidjson::kObjectType);
+  debug::require_json_member(jconf, "materials");
+  debug::require_json_object_in_array(jconf["materials"], "module", rapidjson::kStringType, "base_material");
+  debug::require_json_object_in_array(jconf["materials"], "module", rapidjson::kStringType, "conductor_material");
+  fMatInfo.ReadFromJSON(jconf);
+
   debug::require_json_member(jconf, "shape");
   fShape    = geo::get_geo_shape_code(jconf["shape"].GetString());
 
@@ -172,13 +180,15 @@ void SLArDetFieldCage::Init(const rapidjson::Value& jconf)
   return;
 }
 
-void SLArDetFieldCage::Build(G4Material* matConductor, G4Material* matFill)
+void SLArDetFieldCage::Build()
 {
-  if (fShape == geo::kBox) BuildBox(matConductor, matFill);
-  else                     BuildTub(matConductor, matFill);
+  BuildMaterial();
+
+  if (fShape == geo::kBox) BuildBox();
+  else                     BuildTub();
 }
 
-void SLArDetFieldCage::BuildBox(G4Material* matConductor, G4Material* matFill)
+void SLArDetFieldCage::BuildBox()
 {
   const G4double R   = fGeoInfo->GetGeoPar("corner_radius");
   const G4double tk  = fGeoInfo->GetGeoPar("thickness");
@@ -197,12 +207,12 @@ void SLArDetFieldCage::BuildBox(G4Material* matConductor, G4Material* matFill)
   const G4ThreeVector cornerTubAxis(0., 0., 1.);
   auto fc_corner_tub = new G4Tubs("fc_corner_sv",
       R-tk, R, 0.5*std::max(hl,hs), 0., 90.*CLHEP::deg);
-  auto fc_corner_lv  = new G4LogicalVolume(fc_corner_tub, matConductor, "fc_corner_lv");
+  auto fc_corner_lv  = new G4LogicalVolume(fc_corner_tub, fMatConductor->GetMaterial(), "fc_corner_lv");
 
   auto fc_yside_box  = new G4Box("fc_yside_box", 0.5*hy, 0.5*tk, 0.5*Du - R);
   auto fc_zside_box  = new G4Box("fc_zside_box", 0.5*hz, 0.5*tk, 0.5*Dv - R);
-  auto fc_yside_lv   = new G4LogicalVolume(fc_yside_box, matConductor, "fc_yside_lv");
-  auto fc_zside_lv   = new G4LogicalVolume(fc_zside_box, matConductor, "fc_zside_lv");
+  auto fc_yside_lv   = new G4LogicalVolume(fc_yside_box, fMatConductor->GetMaterial(), "fc_yside_lv");
+  auto fc_zside_lv   = new G4LogicalVolume(fc_zside_box, fMatConductor->GetMaterial(), "fc_zside_lv");
 
   const G4double deltaDim = R - (R-tk)*std::cos(45.*CLHEP::deg) + 1.*CLHEP::mm;
   auto layer_outer = new G4Box("fc_layer_outerBox", 0.5*hs, 0.5*Du, 0.5*Dv);
@@ -210,7 +220,7 @@ void SLArDetFieldCage::BuildBox(G4Material* matConductor, G4Material* matFill)
       0.5*hs, 0.5*Du-deltaDim, 0.5*Dv-deltaDim);
   auto fc_layer_sv = new G4SubtractionSolid("fc_layer_sv",
       layer_outer, layer_inner);
-  auto fc_layer_lv = new G4LogicalVolume(fc_layer_sv, matFill, "fieldCage_layer_lv");
+  auto fc_layer_lv = new G4LogicalVolume(fc_layer_sv, fMatFill->GetMaterial(), "fieldCage_layer_lv");
   fc_layer_lv->SetVisAttributes(G4VisAttributes(false));
 
   // Place four rounded corners
@@ -248,7 +258,7 @@ void SLArDetFieldCage::BuildBox(G4Material* matConductor, G4Material* matFill)
   auto vol_inner = new G4Box("fcvolume_inner_box",
       0.5*DDriftLength, 0.5*Du-deltaDim, 0.5*Dv-deltaDim);
   auto fc_volume_sv = new G4SubtractionSolid("fc_volume_sv", vol_outer, vol_inner);
-  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv, matFill, "fc_volume_lv");
+  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv, fMatFill->GetMaterial(), "fc_volume_lv");
   fc_volume_lv->SetVisAttributes(G4VisAttributes(false));
 
   SetSolidVolume(fc_volume_sv);
@@ -267,7 +277,7 @@ void SLArDetFieldCage::BuildBox(G4Material* matConductor, G4Material* matFill)
   GetModPV()->SetCopyNo(20);
 }
 
-void SLArDetFieldCage::BuildTub(G4Material* matConductor, G4Material* matFill)
+void SLArDetFieldCage::BuildTub()
 {
   const G4double tk  = fGeoInfo->GetGeoPar("thickness");
   const G4double sp  = fGeoInfo->GetGeoPar("spacing");
@@ -277,13 +287,13 @@ void SLArDetFieldCage::BuildTub(G4Material* matConductor, G4Material* matFill)
 
   // ---- Single ring (one field-cage electrode) ----
   auto fc_ring_sv = new G4Tubs("fc_ring_sv", R_fc - tk, R_fc, 0.5*rh, 0., CLHEP::twopi);
-  auto fc_ring_lv = new G4LogicalVolume(fc_ring_sv, matConductor, "fc_ring_lv");
+  auto fc_ring_lv = new G4LogicalVolume(fc_ring_sv, fMatConductor->GetMaterial(), "fc_ring_lv");
 
   // ---- Container: cylindrical shell spanning the drift length ----
   // rMin/rMax bracket the ring so the parameterised placement is valid.
   auto fc_volume_sv = new G4Tubs("fc_volume_sv",
       R_fc - tk, R_fc, 0.5*DDriftLength, 0., CLHEP::twopi);
-  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv, matFill, "fc_volume_lv");
+  auto fc_volume_lv = new G4LogicalVolume(fc_volume_sv, fMatFill->GetMaterial(), "fc_volume_lv");
   fc_volume_lv->SetVisAttributes(G4VisAttributes(false));
 
   SetSolidVolume(fc_volume_sv);

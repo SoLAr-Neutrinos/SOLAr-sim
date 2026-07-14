@@ -37,7 +37,7 @@ public:
 
   ~SLArDetSuperCell();
   
-  void BuildMaterial(G4String materials_db) override;
+  void BuildMaterials(G4String materials_db = "") override;
   void BuildOpticalDetector() override;
   void BuildLightGuide();
   void BuildCoating();
@@ -54,15 +54,21 @@ public:
 
   inline void Init(const rapidjson::Value& jconf) override {
     SLArOpticalDetector::Init(jconf); 
-    if (jconf.HasMember("coating_material")) {
-      fMatCoatingName = jconf["coating_material"].GetString(); 
-    }
-    else {
-      G4ExceptionDescription ed;
-      ed << "SLArDetSuperCell::Init(): No coating material specified in JSON configuration! Defaulting to PTP_sensitive.";
-      G4Exception("SLArDetSuperCell::Init()", "ConfigError001", JustWarning, ed);
-      fMatCoatingName = "PTP_sensitive"; 
-    }
+
+    fGeoInfo->ReadFromJSON(jconf["dimensions"].GetArray());
+    fMatInfo.ReadFromJSON(jconf);
+/*
+ *
+ *    if (jconf.HasMember("coating_material")) {
+ *      fMatCoatingName = jconf["coating_material"].GetString(); 
+ *    }
+ *    else {
+ *      G4ExceptionDescription ed;
+ *      ed << "SLArDetSuperCell::Init(): No coating material specified in JSON configuration! Defaulting to PTP_sensitive.";
+ *      G4Exception("SLArDetSuperCell::Init()", "ConfigError001", JustWarning, ed);
+ *      fMatCoatingName = "PTP_sensitive"; 
+ *    }
+ */
     return;
   }
 

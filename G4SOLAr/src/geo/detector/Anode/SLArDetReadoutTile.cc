@@ -14,18 +14,13 @@
 
 #include "G4VSolid.hh"
 #include "G4Box.hh"
-#include "G4SubtractionSolid.hh"
-#include "G4UnionSolid.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4PVReplica.hh"
 #include "G4PVParameterised.hh"
 #include "G4VPhysicalVolume.hh"
 
-#include "G4UnitsTable.hh"
-#include "G4PhysicalConstants.hh"
 #include "G4VisAttributes.hh"
-#include "G4MaterialPropertyVector.hh"
 
 #include "TH2Poly.h"
 
@@ -126,7 +121,7 @@ void SLArDetReadoutTile::BuildUnitCell() {
   //--------------------------  Build Unit Cell components
   BuildChargePix(); 
   if (fSiPM) {
-    fSiPM->BuildMaterial( fMaterialDBPath );
+    fSiPM->BuildMaterials( fMaterialDBPath );
     fSiPM->BuildOpticalDetector();
     fSiPM->BuildLogicalSkinSurface();
   }
@@ -151,8 +146,8 @@ void SLArDetReadoutTile::BuildUnitCell() {
   
   for (const auto& comp : fCellStructure) {
     G4ThreeVector yshift(0, 0, 0); 
-    //if (comp.fMod == fChargePix && hq < hl) yshift.setY(0.5*(hq-hl));
-    if (comp.fMod == fChargePix && hq < hl) continue; // spare some RAM 
+    if (comp.fMod == fChargePix && hq < hl) yshift.setY(0.5*(hq-hl));
+    //if (comp.fMod == fChargePix && hq < hl) continue; // spare some RAM 
                                                       // for DUNE-size module
     else if (comp.fMod == fSiPM && hl < hq) yshift.setY(0.5*(hl-hq));
     comp.fMod->BuildAndPlacePV(comp.fName, 0, comp.fPos+yshift, 
@@ -293,19 +288,17 @@ void SLArDetReadoutTile::BuildMaterial(G4String materials_db)
   fMatChargePix   = new SLArMaterial(); 
   fMatReadoutTile = new SLArMaterial();
 
-  fMatReadoutTile->SetMaterialID("LAr");
+  fMatReadoutTile->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatReadoutTile->BuildMaterialFromDB(materials_db);
 
-  fMatPCB->SetMaterialID("PCB");
+  fMatPCB->SetMaterialID(fMatInfo.GetMaterial("pcb_material"));
   fMatPCB->BuildMaterialFromDB(materials_db);
 
-  fMatCopper->SetMaterialID("CopperPassive");
+  fMatCopper->SetMaterialID(fMatInfo.GetMaterial("front_material"));
   fMatCopper->BuildMaterialFromDB(materials_db);
 
-  fMatChargePix->SetMaterialID("Steel");
+  fMatChargePix->SetMaterialID(fMatInfo.GetMaterial("pixel_material"));
   fMatChargePix->BuildMaterialFromDB(materials_db);
-
-  fMaterialDBPath = materials_db;
 }
 
 void SLArDetReadoutTile::BuildComponentsDefinition(const rapidjson::Value& comps) 
@@ -335,6 +328,7 @@ void SLArDetReadoutTile::BuildComponentsDefinition(const rapidjson::Value& comps
 
     debug::require_json_type(comp["dimensions"], rapidjson::kArrayType); 
     mod->GetGeoInfo()->ReadFromJSON(comp["dimensions"].GetArray()); 
+    mod->GetMaterialsInfo().ReadFromJSON(comp);
   }
 }
 

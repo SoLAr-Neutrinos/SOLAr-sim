@@ -414,6 +414,10 @@ namespace display {
 
             const auto& bt_coll = ev_sipm.GetBacktrackerRecordCollection();
             if (bt_coll.empty()) continue;
+            if (bt_coll.find(time_bin) == bt_coll.end()) {
+              printf("Warning: time bin %d not found in backtracker collection for SiPM %d\n", time_bin, idx_sipm);
+              continue;
+            }
             const auto& records = bt_coll.at(time_bin).GetConstRecords();
             
             // check if wavelength backtracker is active

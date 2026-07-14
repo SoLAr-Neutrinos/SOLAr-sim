@@ -32,11 +32,15 @@ SLArDetAnodeAssembly::~SLArDetAnodeAssembly() {}
 void SLArDetAnodeAssembly::BuildMaterial(G4String materials_db)
 {
   fMatAnode = new SLArMaterial(); 
-  fMatAnode->SetMaterialID("LAr");
+  fMatAnode->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatAnode->BuildMaterialFromDB(materials_db);
 }
 
 void SLArDetAnodeAssembly::Init(const rapidjson::Value& jconf) {
+  
+  debug::require_json_member(jconf, {"materials", "base_material"});
+  fMatInfo.ReadFromJSON(jconf);
+
   G4String suffix[3] = {"x", "y", "z"}; 
 
   assert(jconf.IsObject()); 

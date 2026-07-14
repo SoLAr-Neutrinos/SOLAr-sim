@@ -213,7 +213,7 @@ void SLArDetSuperCell::SetVisAttributes(const int& level)
 }
 
 
-void SLArDetSuperCell::BuildMaterial(G4String materials_db)
+void SLArDetSuperCell::BuildMaterials(G4String materials_db)
 {
   if (fMatLightGuide) {delete fMatLightGuide; fMatLightGuide = {};} 
   if (fMatCoating) {delete fMatCoating; fMatCoating = {};} 
@@ -224,17 +224,20 @@ void SLArDetSuperCell::BuildMaterial(G4String materials_db)
   fMatSuperCell    = new SLArMaterial();
   fMatWLSCoating   = new SLArMaterial();
 
-  fMatSuperCell->SetMaterialID("LAr");
+  fMatSuperCell->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatSuperCell->BuildMaterialFromDB(materials_db);
 
-  fMatLightGuide->SetMaterialID("Plastic");
+  fMatLightGuide->SetMaterialID(fMatInfo.GetMaterial("lightguide_material"));
   fMatLightGuide->BuildMaterialFromDB(materials_db);
 
-  fMatCoating->SetMaterialID( fMatCoatingName );
+  fMatCoatingName = fMatInfo.GetMaterial("sensitive_coating_material");
+  fMatCoating->SetMaterialID(fMatInfo.GetMaterial("sensitive_coating_material"));
   fMatCoating->BuildMaterialFromDB(materials_db);
 
-  fMatWLSCoating->SetMaterialID("PTP_wls");
-  fMatWLSCoating->BuildMaterialFromDB(materials_db);
+  if (fGeoInfo->Contains("wlscoating_y")) {
+    fMatWLSCoating->SetMaterialID(fMatInfo.GetMaterial("wls_coating_material"));
+    fMatWLSCoating->BuildMaterialFromDB(materials_db);
+  }
 }
 
 G4LogicalSkinSurface* SLArDetSuperCell::BuildLogicalSkinSurface() {

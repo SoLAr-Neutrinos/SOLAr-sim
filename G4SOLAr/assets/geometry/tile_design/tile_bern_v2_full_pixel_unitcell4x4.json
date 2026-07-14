@@ -3,6 +3,11 @@
     "tile_model" : [
       {
         "name" : "Bern_v2_full_pixel_unitcell4x4",
+        "materials" : [
+          {"module" : "base_material" , "material" : "LAr"},
+          {"module" : "front_material" , "material" : "CopperPassive"},
+          {"module" : "pcb_material" , "material" : "FR4"}
+        ],
         "dimensions" : [
           {"name" : "tile_x", "val" :256.0, "unit" : "mm" },
           {"name" : "tile_y", "val" : 2.5, "unit" : "mm" },
@@ -111,6 +116,7 @@
       {
         "name" : "StdReadoutPlane", 
         "tile_model" : "Bern_v2_full_pixel_unitcell4x4",
+        "base_material" : "LAr",
         "copyID" : 2000, 
         "dimensions" : [
           {"name" : "rdoutplane_x", "val" : 32.0, "unit" : "cm"}, 

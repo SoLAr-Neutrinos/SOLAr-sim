@@ -56,7 +56,20 @@
       "description": "Waffle support structure (box geometry only). All four width/thickness fields are unconditionally read by the loader.",
       "type": "object",
       "required": ["steel_major_width", "steel_minor_width", "steel_thickness", "main_spacing"],
-      "additionalProperties": false,
+      "oneOf" : [
+        {
+          "required" : ["base_material"],
+          "properties" : {
+            "base_material" : { "$ref" : "common.schema.json#/$defs/base_material" }
+          }
+        },
+        {
+          "required" : ["materials"],
+          "properties" : {
+            "materials" : { "$ref" : "common.schema.json#/$defs/materials" }
+          }
+        }
+      ],
       "properties": {
         "steel_major_width": { "$ref": "common.schema.json#/$defs/val_w_unit" },
         "steel_minor_width": { "$ref": "common.schema.json#/$defs/val_w_unit" },
@@ -69,6 +82,20 @@
   },
 
   "type": "object",
+  "oneOf" : [
+    {
+      "required" : ["base_material"],
+      "properties" : {
+        "base_material" : { "$ref" : "common.schema.json#/$defs/base_material" }
+      }
+    },
+    {
+      "required" : ["materials"],
+      "properties" : {
+        "materials" : { "$ref" : "common.schema.json#/$defs/materials" }
+      }
+    }
+  ],
   "required": ["Cryostat_structure"],
 
   "properties": {

@@ -30,21 +30,12 @@ void SLArDetCathode::BuildMaterial(G4String db_file)
 {
   // TODO: IMPLEMENT PROPER MATERIALS IN /materials
   fMatCathode = new SLArMaterial();
-
-  fMatCathode->SetMaterialID("FR4");
+  fMatCathode->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatCathode->BuildMaterialFromDB(db_file);
 }
 
 void SLArDetCathode::BuildDefalutGeoParMap() 
 {
-  G4cerr << "SLArDetCathode::BuildGeoParMap()" << G4endl;
-  fGeoInfo->RegisterGeoPar("pos_x"       ,   0.0*CLHEP::mm);
-  fGeoInfo->RegisterGeoPar("pos_y"       ,   0.0*CLHEP::mm);
-  fGeoInfo->RegisterGeoPar("pos_z"       ,   0.0*CLHEP::mm);
-  fGeoInfo->RegisterGeoPar("dim_y"       , 150.0*CLHEP::cm);
-  fGeoInfo->RegisterGeoPar("dim_z"       , 200.0*CLHEP::cm);
-  fGeoInfo->RegisterGeoPar("dim_x"       ,  60.0*CLHEP::cm); 
-  G4cerr << "Exit method\n" << G4endl;
 }
 
 void SLArDetCathode::BuildCathode() 
@@ -109,7 +100,7 @@ void SLArDetCathode::SetVisAttributes()
 }
 
 void SLArDetCathode::Init(const rapidjson::Value& jconf) {
-  assert(jconf.IsObject()); 
+  debug::require_json_type(jconf, rapidjson::kObjectType); 
   auto jcathode = jconf.GetObject(); 
 
   debug::require_json_member(jcathode, "dimensions"); 
@@ -150,6 +141,9 @@ void SLArDetCathode::Init(const rapidjson::Value& jconf) {
     fGeoInfo->RegisterGeoPar("cathode_theta", eulerAngles[1]); 
     fGeoInfo->RegisterGeoPar("cathode_psi", eulerAngles[2]); 
   }
+
+  debug::require_json_member(jcathode, {"materials", "base_material"});
+  fMatInfo.ReadFromJSON(jcathode);
 
   return;
 }

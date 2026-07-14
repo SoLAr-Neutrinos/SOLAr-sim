@@ -151,7 +151,6 @@ namespace debug {
     G4Exception("debug::require_json_member", "JsonDebug001", FatalException, err_msg);
   }
 
-
   inline void require_json_array(
       const rapidjson::Value& obj,
       rapidjson::SizeType expected_size = 0)

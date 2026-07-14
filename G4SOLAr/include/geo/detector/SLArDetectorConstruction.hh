@@ -125,9 +125,13 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Get the LAr target volume 
     inline const SLArBaseDetModule* GetLArTargetVolume() const {return fLArTarget;}
     //!  Return the geometry configuration file
+    G4String                        GetGeometryCfgFile() const {return fGeometryCfgFile;}
+    //!  Return the geometry configuration file
     G4String                        GetGeometryCfgFile() {return fGeometryCfgFile;}
     //!  Return the material configuration file
     G4String                        GetMaterialCfgFile() {return fMaterialDBFile;}
+    //!  Return the material configuration file
+    G4String                        GetMaterialCfgFile() const {return fMaterialDBFile;} 
     //!  Return Liquid Argon Properties
     SLArLArProperties&              GetLArProperties() {return fLArProperties;}
     //!  Return Liquid Argon Properties
@@ -159,10 +163,12 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     std::map<int, SLArDetTPC*> fTPC = {};
     std::map<int, SLArDetCathode*> fCathode = {}; 
 
-    SLArGeoInfo fWorldGeoPars = {};//!< World volume geometry parameters
-    SLArGeoInfo fCavernGeoPars = {}; //!< Cavern volume geometry attributes
-    SLArDetExpHall* fExpHall = {}; //!< Experimental Hall detector object
-    std::vector<SLArDetShielding*> fShielding = {}; //!< Shielding detector objects
+    SLArGeoInfo fWorldGeoPars;//!< World volume geometry parameters
+    SLArMaterialsInfo fWorldMatPars; //!< World volume material parameters
+    SLArGeoInfo fCavernGeoPars; //!< Cavern volume geometry attributes
+    SLArMaterialsInfo fCavernMatPars; //!< Cavern volume material attributes
+    SLArDetExpHall* fExpHall; //!< Experimental Hall detector object
+    std::vector<SLArDetShielding*> fShielding; //!< Shielding detector objects
     SLArDetSuperCell* fSuperCell = {}; //!< SuperCell detector object
     SLArDetSiPM* fSiPM = {}; //!< SiPM detector object
     std::map<std::string, SLArOpticalDetector*> fOpDetCatalog = {}; //!< Map of optical detector models

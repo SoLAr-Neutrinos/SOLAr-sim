@@ -127,12 +127,23 @@ void SLArDetectorConstruction::Init() {
   // Parse world dimensions
   if (d.HasMember("World")) {
     const rapidjson::Value& wrld = d["World"]; 
-    assert(wrld.HasMember("dimensions")); 
+    debug::require_json_member(wrld, "dimensions"); 
+    debug::require_json_type(wrld["dimensions"], rapidjson::kArrayType);
     fWorldGeoPars.ReadFromJSON(wrld["dimensions"].GetArray());
+    debug::require_json_member(wrld, {"materials", "base_material"});
+    fWorldMatPars.ReadFromJSON( wrld ); 
   } else {
+    G4ExceptionDescription ed;
+    ed << "Missing required JSON member: World. Using default world dimensions and material.\n";
+    ed << "Default world dimensions: size_x = 5 m, size_y = 8 m, size_z = 20 m\n";
+    ed << "Default world material: Air\n";
     fWorldGeoPars.RegisterGeoPar("size_x", 5*CLHEP::m); 
     fWorldGeoPars.RegisterGeoPar("size_y", 8*CLHEP::m); 
     fWorldGeoPars.RegisterGeoPar("size_z",20*CLHEP::m); 
+
+    fWorldMatPars.RegisterMaterial("base_material", "Air");
+
+    G4Exception("SLArDetectorConstruction::Init", "WorldConfig001", JustWarning, ed);
   }
 
   //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -281,7 +292,7 @@ void SLArDetectorConstruction::InitTPC(const rapidjson::Value& jtpc) {
 }
 
 void SLArDetectorConstruction::InitCathode(const rapidjson::Value& jcathode) {
-  assert(jcathode.IsArray()); 
+  debug::require_json_type(jcathode, rapidjson::kArrayType); 
 
   for (const auto &jcath : jcathode.GetArray()) {
     SLArDetCathode* detCathode = new SLArDetCathode(); 
@@ -294,8 +305,9 @@ SLArDetSuperCell* SLArDetectorConstruction::InitSuperCell(const rapidjson::Value
   auto supercell = new SLArDetSuperCell(); 
   debug::require_json_member(jsupercell, "dimensions");
   debug::require_json_type(jsupercell["dimensions"], rapidjson::kArrayType);
+  debug::require_json_member(jsupercell, "materials");
+  debug::require_json_type(jsupercell["materials"], rapidjson::kArrayType);
   supercell->Init(jsupercell);
-  supercell->GetGeoInfo()->ReadFromJSON(jsupercell["dimensions"].GetArray()); 
   return supercell;
 }
 
@@ -390,7 +402,6 @@ void SLArDetectorConstruction::InitPDS(const rapidjson::Value& jconf) {
  *
  */
 
-
 void SLArDetectorConstruction::SetupReadoutTile(const rapidjson::Value& jtilemodel)
 {
   G4String model_name = (jtilemodel.HasMember("name")) ? 
@@ -401,11 +412,13 @@ void SLArDetectorConstruction::SetupReadoutTile(const rapidjson::Value& jtilemod
   printf("SLArDetectorConstruction::SetupReadoutTile: %s [%p]\n", 
       model_name.c_str(), static_cast<void*>(readout_tile));
 
-  assert(jtilemodel.HasMember("dimensions")); 
-  assert(jtilemodel.HasMember("components")); 
-  assert(jtilemodel.HasMember("unit_cell")); 
+  debug::require_json_member(jtilemodel,  "materials");
+  debug::require_json_member(jtilemodel, "dimensions"); 
+  debug::require_json_member(jtilemodel, "components"); 
+  debug::require_json_member(jtilemodel,  "unit_cell"); 
 
   readout_tile->GetGeoInfo()->ReadFromJSON(jtilemodel["dimensions"].GetArray()); 
+  readout_tile->GetMaterialsInfo().ReadFromJSON(jtilemodel);
   readout_tile->BuildComponentsDefinition(jtilemodel["components"]); 
   readout_tile->BuildUnitCellStructure(jtilemodel["unit_cell"]); 
   readout_tile->BuildMaterial(fMaterialDBFile);
@@ -447,13 +460,17 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys)
         printf("SLArDetectorConstruction::InitReadoutTile: Setting up %s tile assembly\n", 
             mtile["name"].GetString()); 
       } 
+      SLArDetReadoutTileAssembly* megatile = new SLArDetReadoutTileAssembly(); 
+
       debug::require_json_member(mtile, "name");
       debug::require_json_member(mtile, "dimensions");
       debug::require_json_type(mtile["dimensions"], rapidjson::kArrayType);
-
-      SLArDetReadoutTileAssembly* megatile = new SLArDetReadoutTileAssembly(); 
       megatile->GetGeoInfo()->ReadFromJSON(mtile["dimensions"].GetArray()); 
+
+      debug::require_json_member(mtile, {"materials", "base_material"});
+      megatile->GetMaterialsInfo().ReadFromJSON(mtile);
       megatile->BuildMaterial(fMaterialDBFile); 
+
       fReadoutMegaTile.insert(std::make_pair(mtile["name"].GetString(), megatile)); 
 
       if (mtile.HasMember("tile_model")) {
@@ -496,6 +513,10 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
             "Invalid LAr target shape specified in JSON configuration! Valid options are: 'box' and 'cylinder' (or 'tub')");
       }
     }
+
+    // --- Material ---
+    debug::require_json_member(jlar_target, {"materials", "base_material"});
+    fLArTarget->GetMaterialsInfo().ReadFromJSON(jlar_target);
 
     // --- Position ---
     G4ThreeVector pos(0., 0., 0.);
@@ -633,13 +654,21 @@ void SLArDetectorConstruction::InitTarget(const rapidjson::Value& d) {
       fLArTarget->SetGeoPar("det_rot_phi",   tpc->GetGeoPar("tpc_rot_phi"));
       fLArTarget->SetGeoPar("det_rot_theta", tpc->GetGeoPar("tpc_rot_theta"));
       fLArTarget->SetGeoPar("det_rot_psi",   tpc->GetGeoPar("tpc_rot_psi"));
+
+      fLArTarget->GetMaterialsInfo().RegisterMaterial("base_material", 
+          tpc->GetMaterialsInfo().GetMaterial("base_material"));
     }
     else {
+      const auto& tpc = fTPC.begin()->second;
+      fLArTarget->GetMaterialsInfo().RegisterMaterial("base_material", 
+          tpc->GetMaterialsInfo().GetMaterial("base_material"));
       ComputeTPCEnclosure(eps);
     }
   }
 
   // --- Summary printout ---
+  printf("LAr material ID: %s\n", 
+      fLArTarget->GetMaterialsInfo().GetMaterial("base_material").data());
   if (fLArTargetShape == geo::kBox) {
     printf("LAr target [box]:      pos (%.1f, %.1f, %.1f) mm  "
         "size %.1f x %.1f x %.1f mm\n",
@@ -1256,7 +1285,8 @@ G4String SLArDetectorConstruction::GetFirstChar(G4String line)
 void SLArDetectorConstruction::BuildAndPlaceOpDets()
 {
   for (auto& opdet : fOpDetCatalog) {
-    opdet.second->BuildMaterial(fMaterialDBFile);
+    printf("SLArDetectorConstruction::BuildAndPlaceOpDets: Building OpDet %s\n", opdet.first.data());
+    opdet.second->BuildMaterials(fMaterialDBFile);
     if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell)
     {
       SLArDetSuperCell* supercell = dynamic_cast<SLArDetSuperCell*>(opdet.second);
@@ -1272,13 +1302,13 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
   }
 
   if (fSuperCell) {
-    fSuperCell->BuildMaterial(fMaterialDBFile);
+    fSuperCell->BuildMaterials(fMaterialDBFile);
     fSuperCell->BuildOpticalDetector();
     fSuperCell->BuildLogicalSkinSurface();
   }
 
   if (fSiPM) {
-    fSiPM->BuildMaterial(fMaterialDBFile);
+    fSiPM->BuildMaterials(fMaterialDBFile);
     fSiPM->BuildOpticalDetector();
     fSiPM->BuildLogicalSkinSurface();
   }

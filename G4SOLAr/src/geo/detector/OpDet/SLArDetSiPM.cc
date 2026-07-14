@@ -11,14 +11,14 @@
 #include "G4SubtractionSolid.hh"
 #include "G4VisAttributes.hh"
 
-void SLArDetSiPM::BuildMaterial(G4String materials_db) {
-  fBaseMaterial = new SLArMaterial("LAr");
+void SLArDetSiPM::BuildMaterials(G4String materials_db) {
+  fBaseMaterial = new SLArMaterial(fMatInfo.GetMaterial("base_material"));
   fBaseMaterial->BuildMaterialFromDB(materials_db);
 
-  fMatSiPM = new SLArMaterial("SiliconActive");
+  fMatSiPM = new SLArMaterial(fMatInfo.GetMaterial("sipm_active_material"));
   fMatSiPM->BuildMaterialFromDB(materials_db); 
   
-  fMatSiPMCapsule = new SLArMaterial("SiliconPassive");
+  fMatSiPMCapsule = new SLArMaterial(fMatInfo.GetMaterial("sipm_capsule_material"));
   fMatSiPMCapsule->BuildMaterialFromDB(materials_db);
   return;
 }

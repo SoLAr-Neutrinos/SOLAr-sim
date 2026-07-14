@@ -35,7 +35,18 @@ class SLArDetFieldCage : public SLArBaseDetModule {
      * @param matConductor  material for the conducting electrodes
      * @param matFill       material filling the cage envelope (typically LAr)
      */
-    void Build(G4Material* matConductor, G4Material* matFill);
+    void Build();
+
+    inline void BuildMaterial(const G4String& db_file = "") 
+    {
+      fMatFill = new SLArMaterial();
+      fMatFill->SetMaterialID(fMatInfo.GetMaterial("base_material"));
+      fMatFill->BuildMaterialFromDB(db_file);
+
+      fMatConductor = new SLArMaterial();
+      fMatConductor->SetMaterialID(fMatInfo.GetMaterial("conductor_material"));
+      fMatConductor->BuildMaterialFromDB(db_file);
+    }
 
     geo::EGeoShape        GetShape()    const { return fShape; }
     const G4ThreeVector&  GetShift()    const { return fShift; }
@@ -48,8 +59,11 @@ class SLArDetFieldCage : public SLArBaseDetModule {
     G4ThreeVector     fDriftDir;     // cached from Init(), used in Build()
     G4Transform3D     fLocalToTPC;   // cached from Init(), used in Build()
 
-    void BuildBox(G4Material* matConductor, G4Material* matFill);
-    void BuildTub(G4Material* matConductor, G4Material* matFill);
+    SLArMaterial* fMatConductor;  // material for the conducting electrodes
+    SLArMaterial* fMatFill;       // material filling the cage envelope (typically LAr)
+
+    void BuildBox();
+    void BuildTub();
 
     // Helper: find drift and transverse axis indices
     void ResolveDriftAxes(int& iDrift, int& iTrans1, int& iTrans2) const;

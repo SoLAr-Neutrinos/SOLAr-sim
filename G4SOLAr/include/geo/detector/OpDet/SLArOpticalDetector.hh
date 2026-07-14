@@ -37,7 +37,7 @@ class SLArOpticalDetector : public SLArBaseDetModule
     inline EOpDetType GetOpDetType() const { return fOpDetType; }
     inline G4String GetOpDetTypeName() const { return fOpDetTypeName; }
     inline G4String GetOpDetModelName() const { return fOpDetModelName; }
-    virtual void BuildMaterial(G4String materials_db) = 0;
+    virtual void BuildMaterials(G4String materials_db = "") = 0;
     virtual void BuildOpticalDetector() = 0;
     inline virtual void Init(const rapidjson::Value& config) override {
       debug::require_json_type(config, rapidjson::kObjectType);

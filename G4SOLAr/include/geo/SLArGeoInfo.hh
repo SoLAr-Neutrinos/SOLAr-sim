@@ -8,7 +8,7 @@
                    
 #define SLArGEOINFO_HH
 
-#include <ostream>
+#include <iostream>
 #include <map>
 #include <G4ThreeVector.hh>
 
@@ -35,9 +35,8 @@ class SLArGeoInfo {
     bool     ReadFromJSON    (const rapidjson::Value::ConstObject&, const char* prefix = ""); 
 
   private:
-    std::map<G4String, G4double        >  fGeoPar;
+    std::map<G4String, G4double>  fGeoPar;
 };
-
 
 
 #endif /* end of include guard SLArGEOINFO_H */

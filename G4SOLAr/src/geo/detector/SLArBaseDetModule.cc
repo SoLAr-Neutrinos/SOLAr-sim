@@ -20,6 +20,7 @@ SLArBaseDetModule::SLArBaseDetModule() : fName{}
 SLArBaseDetModule::SLArBaseDetModule(const SLArBaseDetModule &base) : 
   fMaterial( base.fMaterial ),
   fGeoInfo( new SLArGeoInfo(*base.fGeoInfo) ),
+  fMatInfo( base.fMatInfo ),
   fModLV( base.fModLV ? base.fModLV : nullptr ),
   fModSV( base.fModSV ? base.fModSV : nullptr ),
   fModPV( base.fModPV ? base.fModPV : nullptr ),

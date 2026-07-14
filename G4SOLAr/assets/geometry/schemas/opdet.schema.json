@@ -30,19 +30,48 @@
         {"contains" : {"properties" : {"name" : {"const" : "sipm_fill_factor"}}}}
       ]
     },
+    "supercell_materials" : {
+      "type" : "array",
+      "items" : {"$ref": "common.schema.json#/$defs/material_entry"},
+      "minItems" : 3,
+      "additionalItems" : false,
+      "allOf" : [
+        {"contains" : {"properties" : {"module" : {"const" : "base_material"}}}},
+        {"contains" : {"properties" : {"module" : {"const" : "lightguide_material"}}}},
+        {"contains" : {"properties" : {"module" : {"const" : "sensitive_coating_material"}}}}
+      ]
+    },
+    "sipm_materials" : {
+      "type" : "array",
+      "items" : {"$ref": "common.schema.json#/$defs/material_entry"},
+      "minItems" : 3,
+      "maxItems" : 3,
+      "additionalItems" : false,
+      "allOf" : [
+        {"contains" : {"properties" : {"module" : {"const" : "base_material"}}}},
+        {"contains" : {"properties" : {"module" : {"const" : "sipm_active_material"}}}},
+        {"contains" : {"properties" : {"module" : {"const" : "sipm_capsule_material"}}}}
+      ]
+    },
+
     "opdet_module_obj" : {
       "type" : "object",
-      "required" : ["dimensions", "module_type", "name"],
+      "required" : ["dimensions", "module_type", "name", "materials"],
       "properties" : {
         "name" : {"type" : "string"},
         "module_type" : {"type" : "string", "enum" : ["SiPM", "SuperCell"]}
       },
       "if" : { "properties" : { "module_type" : {"const" : "SiPM"}}}, 
-      "then" : {"properties" : { "dimensions" : {"$ref" : "#/$defs/sipm_dim"}}},
-      "else" : {"properties" : { "dimensions" : {"$ref" : "#/$defs/supercell_dim"}}}
+      "then" : {"properties" : { 
+        "dimensions" : {"$ref" : "#/$defs/sipm_dim"}},
+        "materials"  : {"$ref" : "#/$defs/sipm_materials"}
+      },
+      "else" : {"properties" : { 
+        "dimensions" : {"$ref" : "#/$defs/supercell_dim"}},
+        "materials"  : {"$ref" : "#/$defs/supercell_materials"}
+      }
     }
   },
-
 
   "oneOf" : [
     {

@@ -1,7 +1,7 @@
 /**
  * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
- * @file        : SLArRunAction
- * @created     : venerdì nov 04, 2022 09:26:25 CET
+ * @file        : SLArRunAction.hh
+ * @created     : Fri Nov 04, 2022 09:26:25 CET
  */
 
 #ifndef SLArRunAction_h
@@ -62,7 +62,6 @@ class SLArRunAction : public G4UserRunAction
     
     G4String fFLSConfigPath;
     G4bool fFastLightSimEnabled;
-
 };
 
 
