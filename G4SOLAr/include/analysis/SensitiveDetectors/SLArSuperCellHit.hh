@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArSuperCellHit
  * @created     : venerdì ott 21, 2022 10:27:34 CEST
  */
@@ -64,8 +64,12 @@ public:
     G4ThreeVector GetWorldPos() const { return fWorldPos; }
 
     void      SetPhotonProcess(G4String prname);
+    void      SetPhotonProcess(const int prid) { fPhType = prid; }
     G4int     GetPhotonProcessId() const;
     G4String  GetPhotonProcessName() const;
+
+    inline void SetOriginVolumeID(const int vol_id) {fPhOriginVolumeID = vol_id;}
+    inline G4int GetOriginVolumeID() const {return fPhOriginVolumeID;}
 
     inline void SetSuperCellNo(G4int idx) { fSuperCellNo= idx; }
     inline G4int GetSuperCellNo() const { return fSuperCellNo; }
@@ -84,6 +88,7 @@ private:
     G4double      fTime;
     G4int         fPhType;
     G4int         fPhProducerID;
+    G4int         fPhOriginVolumeID;
     G4ThreeVector fLocalPos;
     G4ThreeVector fWorldPos;
 };

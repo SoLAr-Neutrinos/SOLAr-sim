@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArPointVertexGenerator.cc
  * @created     : Monday Jun 23, 2025 16:28:52 CEST
  */
@@ -36,6 +36,13 @@ namespace gen {
         throw std::invalid_argument("field \"value\" must be a rapidjson::Array\n");
       }
       G4double vunit = unit::GetJSONunit(jxyz);
+
+      if (jxyz.HasMember("n_events")) {
+        if (jxyz["n_events"].IsInt() == false) {
+          throw std::invalid_argument("field \"n_events\" must be an integer\n");
+        }
+        fNrOfEvPerVertex = jxyz["n_events"].GetInt();
+      }
 
       if (jxyz_val[0].IsArray()) {
         for (const auto& jjxyz : jxyz_val.GetArray()) {
@@ -112,7 +119,7 @@ namespace gen {
         const SLArPrimaryGeneratorAction* primary_gen_action = 
           dynamic_cast<const SLArPrimaryGeneratorAction*>(run_manager->GetUserPrimaryGeneratorAction());
         const int event_nr = primary_gen_action->GetEventID();
-        idx = (event_nr) % fVertexList.size();
+        idx = (event_nr / fNrOfEvPerVertex) % (int)fVertexList.size();
 
         vtx.set(fVertexList[idx].x(),
             fVertexList[idx].y(),

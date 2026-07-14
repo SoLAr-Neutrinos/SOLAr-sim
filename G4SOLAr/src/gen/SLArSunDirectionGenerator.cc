@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArSunDirectionGenerator.cc
  * @created     : Wednesday Feb 12, 2025 15:40:22 CET
  */

@@ -1,9 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArTrajectory
- * @created     : lunedì ago 31, 2020 12:57:05 CEST
- *
- * Reimplemented from examples/extended/optical/SLAr
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArTrajectory.hh
+ * @created     : Mon Aug 31, 2020 12:57:05 CEST
  */
 
 #ifndef SLArTRAJECTORY_HH
@@ -19,7 +17,7 @@
 #include "G4Track.hh"
 #include "G4Step.hh"
 
-class G4Polyline;                   // Forward declaration.
+class G4Polyline; 
 
 class SLArTrajectory : public G4Trajectory
 {

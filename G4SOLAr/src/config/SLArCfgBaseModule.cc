@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArCfgBaseModule.cc
  * @created     : martedì lug 19, 2022 10:54:11 CEST
  */
@@ -64,6 +64,11 @@ SLArCfgBaseModule::~SLArCfgBaseModule()
 }
 
 void SLArCfgBaseModule::SetupAxes() {
+  if (fNormal.Mag2() < 1e-6) {
+    printf("SLArCfgBaseModule::SetupAxes: ERROR: normal vector is null\n");
+    exit(EXIT_FAILURE);
+  }
+
   if (fNormal == TVector3(1, 0, 0) || fNormal == TVector3(-1, 0, 0)) {
     fAxis0.SetXYZ(0, 0, 1);  
   } 

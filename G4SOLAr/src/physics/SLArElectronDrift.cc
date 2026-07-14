@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArElectronDrift.cc
  * @created     Thur Nov 10, 2022 18:26:54 CET
  */
@@ -33,7 +33,7 @@ void SLArElectronDrift::Drift(const int& n,
   if (n <= 0) return;
 
   auto ana_mngr = SLArAnalysisManager::Instance();
-  auto bkt_mngr = ana_mngr->GetBacktrackerManager( backtracker::kCharge );
+  auto bkt_mngr = ana_mngr->GetBacktrackerManager( backtracker::EBkTrkReadoutSystem::kCharge ); 
 
   // Build anode reference frame
   G4ThreeVector anodeXaxis = 
@@ -43,7 +43,7 @@ void SLArElectronDrift::Drift(const int& n,
   G4ThreeVector anodeNormal= 
     G4ThreeVector(anodeCfg->GetNormal().x(), anodeCfg->GetNormal().y(), anodeCfg->GetNormal().z());
   G4ThreeVector anodePos = 
-    G4ThreeVector(anodeCfg->GetPhysX(), anodeCfg->GetPhysY(), anodeCfg->GetPhysZ()); 
+    G4ThreeVector(anodeCfg->GetX(), anodeCfg->GetY(), anodeCfg->GetZ()); 
 
   // Step assessment 
   G4ThreeVector stepVec = postPos - prePos;
@@ -66,7 +66,8 @@ void SLArElectronDrift::Drift(const int& n,
 
     // Compute segment position and time
     double u = (iseg + 0.5) / nSegments;
-    G4ThreeVector pos = prePos + u*stepVec;
+    G4ThreeVector pos = transform_position(prePos + u*stepVec);
+
     double time = prestep_time + u*dt_step;
 
     // Get anode position and compute drift time
@@ -85,11 +86,17 @@ void SLArElectronDrift::Drift(const int& n,
 #ifdef SLAR_DEBUG
     printf("%i electrons at [%.0f, %0.f, %0.f] mm, t = %g ns\n", 
         n, pos.x(), pos.y(), pos.z(), time);
+    printf("absolute coordinates: [%.0f, %.0f, %.0f] mm\n", pos.x(), pos.y(), pos.z());
+    printf("anode position: [%.0f, %.0f, %.0f] mm\n", anodePos.x(), anodePos.y(), anodePos.z());
+    printf("anode normal: [%.2f, %.2f, %.2f]\n", anodeNormal.x(), anodeNormal.y(), anodeNormal.z());
+    printf("anode axes: [%g, %g, %g] - [%g, %g, %g]\n", 
+        anodeXaxis.x(), anodeXaxis.y(), anodeXaxis.z(), 
+        anodeYaxis.x(), anodeYaxis.y(), anodeYaxis.z());
     printf("local_coordinates: [%.0f, %.0f, %.0f] mm\n", pos_local.x(), pos_local.y(), pos_local.z());
     printf("axis projection: [%.0f, %.0f]\n", pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
     printf("Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
         driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
-    getchar(); 
+    //getchar(); 
 #endif
 
     G4int n_elec_anode = G4Poisson(n_elec_segment*f_surv); 

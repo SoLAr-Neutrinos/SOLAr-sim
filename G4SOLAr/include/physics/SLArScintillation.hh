@@ -47,6 +47,7 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+#include <G4Types.hh>
 #ifndef SLArScintillation_h
 #define SLarScintillation_h 1
 
@@ -187,6 +188,12 @@ class SLArScintillation : public G4VRestDiscreteProcess
   G4int GetNumPhotons() const;
   // Returns the current number of scint. photons (after PostStepDoIt)
 
+  const std::vector<G4double>& GetPhotonWavelengths() const { return fPhotonWavelengths; }
+  // Returns the wavelengths of the scintillation photons generated in the current step (only for FastLightSim)
+  
+  const std::vector<G4double>& GetPhotonTimes() const { return fPhotonTimes; }
+  // Returns the emission times of the scintillation photons generated in the current step (only for FastLightSim)
+
   G4int GetNumIonElectrons() const;
   // Returns the current number of ionization electrons (after PostStepDoIt)
 
@@ -216,6 +223,8 @@ class SLArScintillation : public G4VRestDiscreteProcess
 
   G4int fNumPhotons;
   G4int fNumIonElectrons; 
+  std::vector<G4double> fPhotonWavelengths;
+  std::vector<G4double> fPhotonTimes;
 
   G4bool fScintillationByParticleType;
   G4bool fScintillationTrackInfo;

@@ -8,6 +8,7 @@
 
 #define TCHANNELANALYZER_HH
 
+#include "TRotation.h"
 #include "event/SLArEventChargePixel.hh"
 #include "config/SLArCfgAnode.hh"
 #include "SLArRecoHits.hh"
@@ -30,6 +31,7 @@ class TChannelAnalyzer {
     inline void set_drift_velocity(const Float_t v) {fDriftVelocity = v;}
     inline void set_drift_direction(const TVector3& v) {fDriftDirection = &v;}
     inline void set_tpc_center_position(const TVector3& pos) {fTPCCenterPosition = &pos;}
+    inline void set_tpc_rotation(const TRotation& rot_inv) { if (fRotInv) delete fRotInv; fRotInv = &rot_inv; } 
     inline void set_channel_rms(const Float_t rms) {fChannelPedestalRMS = rms;}
     inline void set_anode_config(SLArCfgAnode* anode_cfg) {
       fCfgAnode = anode_cfg;
@@ -55,6 +57,7 @@ class TChannelAnalyzer {
     const SLArCfgMegaTile* fCfgMegaTile = {};
     const TVector3* fDriftDirection = {};
     const TVector3* fTPCCenterPosition = {};
+    const TRotation* fRotInv = new TRotation();
 
     int record_hit(const Int_t& pix_bin, const UInt_t& q, const UInt_t& trigger_t, reco::hitvarContainer& hitvars);
     TVector3 get_bin_center(TH2PolyBin* bin, const TVector3& axis_x, const TVector3& axis_y);

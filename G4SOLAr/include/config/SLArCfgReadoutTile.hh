@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArCfgReadoutTile.hh
  * @created     : martedì lug 19, 2022 13:38:21 CEST
  */
@@ -32,6 +32,11 @@ class SLArCfgReadoutTile : public SLArCfgBaseModule
     void   Set2DSize_Y(float _y) {f2DSize_Y = _y;}
     void   DumpInfo() const override;
     TGraph BuildGShape() const override;
+    void   SetNCellRows(UInt_t nrows) {fNCellRows = nrows;}
+    void   SetNCellCols(UInt_t ncols) {fNCellCols = ncols;}
+    UInt_t GetNCellRows() const {return fNCellRows;}
+    UInt_t GetNCellCols() const {return fNCellCols;}
+
     // TODO: Move this method in a more appropriate place
     //void   AddPixelToHistMap(TH2Poly* hmap, std::vector<xypoint>);
     // TODO: Move this method in SLArCfgSystemPix
@@ -40,11 +45,13 @@ class SLArCfgReadoutTile : public SLArCfgBaseModule
   protected:
     float    f2DSize_X; 
     float    f2DSize_Y;
+    UInt_t   fNCellRows = {};
+    UInt_t   fNCellCols = {};
     //TH2Poly* fH2Pixels; 
     //std::map<int, TGraph*> fPixelBins; 
 
   public:
-    ClassDefOverride(SLArCfgReadoutTile, 1);
+    ClassDefOverride(SLArCfgReadoutTile, 2);
 }; 
 
 

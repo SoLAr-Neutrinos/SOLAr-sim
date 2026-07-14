@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArAnalysisManager.hh
  * @created     Wed Feb 12, 2020 15:03:53 CET
  * @brief       Custom SoLAr-sim Analysis Manager

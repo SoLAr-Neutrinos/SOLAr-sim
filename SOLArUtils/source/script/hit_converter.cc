@@ -132,12 +132,38 @@ int main (int argc, char *argv[]) {
   // Setup anode configuration
   std::map<Int_t, SLArCfgAnode*> anodeConfig; 
   std::map<Int_t, TVector3> tpcCenterPos;
-  anodeConfig.insert( {10, input_file->Get<SLArCfgAnode>("AnodeCfg50")} );
-  anodeConfig.insert( {11, input_file->Get<SLArCfgAnode>("AnodeCfg51")} );
+  std::map<Int_t, TRotation> tpcRotation;
+
+  for (const auto& key : *input_file->GetListOfKeys()) {
+    TString obj_name = key->GetName();
+    if (obj_name.Contains("AnodeCfg")) {
+      SLArCfgAnode* anode_cfg = input_file->Get<SLArCfgAnode>(key->GetName()); 
+      anodeConfig.insert( {anode_cfg->GetTPCID(), anode_cfg} ); 
+      printf("Found anode configuration for TPC %i\n", anode_cfg->GetTPCID()); 
+    }
+  }
 
   auto geometry_str = input_file->Get<TObjString>("geometry"); 
   rapidjson::Document d; 
   d.Parse<rapidjson::kParseCommentsFlag>( geometry_str->GetString() ); 
+  
+  TRotation target_rot;
+  if (d.HasMember("LArTarget")) {
+    const auto& jtarget = d["LArTarget"]; 
+    if (jtarget.HasMember("rot")) {
+      const auto& jrot = jtarget["rot"]; 
+      const auto& jeuler = jrot["val"].GetArray();
+      const double rot_unit = (jrot.HasMember("unit")) ? unit::Unit2Val( jrot["unit"] ) : 1.0;
+
+      target_rot.SetXEulerAngles( 
+          jeuler[0].GetDouble()*rot_unit,
+          jeuler[1].GetDouble()*rot_unit,
+          jeuler[2].GetDouble()*rot_unit
+          );
+      target_rot = target_rot.Invert();
+    }
+  }
+
   if (d.HasMember("TPC")) {
     for (const auto& jtpc : d["TPC"].GetArray()) {
       printf("found tpc with id %i\n", jtpc["copyID"].GetInt()); 
@@ -188,12 +214,16 @@ int main (int argc, char *argv[]) {
       const SLArEventAnode& anode = anode_itr.second;
       SLArCfgAnode* anode_cfg = anodeConfig[anode_itr.first]; 
       const TVector3 drift_direction = anode_cfg->GetNormal(); 
+      TRotation anode_rot;
+      anode_rot.SetXEulerAngles(anode_cfg->GetPhi(), anode_cfg->GetTheta(), anode_cfg->GetPsi());
+      anode_rot = anode_rot.Invert();
 
       ch_analyzer.set_anode_config( anode_cfg ); 
       ch_analyzer.set_drift_direction( drift_direction ); 
       ch_analyzer.set_drift_velocity( drift_velocity );
       ch_analyzer.set_tpc_id( itpc ); 
       ch_analyzer.set_tpc_center_position( tpcCenterPos[itpc] ); 
+      //ch_analyzer.set_tpc_rotation( anode_rot* target_rot );
 
       const auto& mt_map = anode.GetConstMegaTilesMap();
       for (const auto& mt_itr : mt_map) {

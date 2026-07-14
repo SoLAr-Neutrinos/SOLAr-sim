@@ -14,7 +14,7 @@ set(SLAR_GEO_DETECTOR_SRC
 add_subdirectory( Hall )
 add_subdirectory( TPC )
 add_subdirectory( Anode )
-add_subdirectory( SuperCell )
+add_subdirectory( OpDet )
 
 set(SLAR_GEO_HEADERS ${SLAR_GEO_HEADERS} ${SLAR_GEO_DETECTOR_HEADERS} PARENT_SCOPE)
 set(SLAR_GEO_SRC ${SLAR_GEO_SRC} ${SLAR_GEO_DETECTOR_SRC} PARENT_SCOPE)

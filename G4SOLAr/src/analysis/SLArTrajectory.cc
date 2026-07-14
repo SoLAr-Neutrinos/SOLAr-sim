@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArTrajectory
- * @created     : lunedì ago 31, 2020 12:59:32 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArTrajectory.cc
+ * @created     : Mon Aug 31, 2020 12:59:32 CEST
  */
 
 #include "SLArAnalysisManager.hh"

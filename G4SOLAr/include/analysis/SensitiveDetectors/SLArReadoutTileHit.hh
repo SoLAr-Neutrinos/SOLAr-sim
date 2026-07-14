@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArReadoutTileHit.hh
  * @created     Wed Aug 10, 2022 08:56:55 CEST
  */
@@ -27,16 +27,16 @@ class G4AttValue;
 /// - the particle local and global positions
 
 
-class SLArReadoutTileHit : public G4VHit
+class SLArReadoutTileSiPMHit : public G4VHit
 {
 public:
-    SLArReadoutTileHit();
-    SLArReadoutTileHit(G4double z);
-    SLArReadoutTileHit(const SLArReadoutTileHit &right);
-    virtual ~SLArReadoutTileHit();
+    SLArReadoutTileSiPMHit();
+    SLArReadoutTileSiPMHit(G4double z);
+    SLArReadoutTileSiPMHit(const SLArReadoutTileSiPMHit &right);
+    virtual ~SLArReadoutTileSiPMHit();
 
-    const SLArReadoutTileHit& operator=(const SLArReadoutTileHit &right);
-    int operator==(const SLArReadoutTileHit &right) const;
+    const SLArReadoutTileSiPMHit& operator=(const SLArReadoutTileSiPMHit &right);
+    int operator==(const SLArReadoutTileSiPMHit &right) const;
     
     inline void *operator new(size_t);
     inline void operator delete(void *aHit);
@@ -58,7 +58,8 @@ public:
     void SetWorldPos(G4ThreeVector xyz) { fWorldPos = xyz; }
     G4ThreeVector GetWorldPos() const { return fWorldPos; }
 
-    void      SetPhotonProcess(G4String prname);
+    void SetPhotonProcess(G4String prname);
+    inline void SetPhotonProcess(const int prid) { fPhType = prid; }
     G4int     GetPhotonProcessId() const;
     G4String  GetPhotonProcessName() const;
 
@@ -76,6 +77,8 @@ public:
     inline G4int GetCellNr() const {return fCellNr;}
     inline void SetProducerID(const int trk_id) {fPhProducerID = trk_id;}
     inline G4int GetProducerID() const {return fPhProducerID;}
+    inline void SetOriginVolumeID(const int vol_id) {fPhOriginVolumeID = vol_id;}
+    inline G4int GetOriginVolumeID() const {return fPhOriginVolumeID;}
     void SetRowCellNr(G4int n) {fRowCellNr = n;}
     G4int GetRowCellNr() {return fRowCellNr;}
 
@@ -93,24 +96,25 @@ private:
     G4float       fTime;
     G4int         fPhType;
     G4int         fPhProducerID;
+    G4int         fPhOriginVolumeID;
     G4ThreeVector fLocalPos;
     G4ThreeVector fWorldPos;
 };
 
-typedef G4THitsCollection<SLArReadoutTileHit> SLArReadoutTileHitsCollection;
+typedef G4THitsCollection<SLArReadoutTileSiPMHit> SLArReadoutTileHitsCollection;
 
-extern G4ThreadLocal G4Allocator<SLArReadoutTileHit>* SLArReadoutTileHitAllocator;
+extern G4ThreadLocal G4Allocator<SLArReadoutTileSiPMHit>* SLArReadoutTileHitAllocator;
 
-inline void* SLArReadoutTileHit::operator new(size_t)
+inline void* SLArReadoutTileSiPMHit::operator new(size_t)
 {
     if (!SLArReadoutTileHitAllocator)
-        SLArReadoutTileHitAllocator = new G4Allocator<SLArReadoutTileHit>;
+        SLArReadoutTileHitAllocator = new G4Allocator<SLArReadoutTileSiPMHit>;
     return (void*)SLArReadoutTileHitAllocator->MallocSingle();
 }
 
-inline void SLArReadoutTileHit::operator delete(void* aHit)
+inline void SLArReadoutTileSiPMHit::operator delete(void* aHit)
 {
-    SLArReadoutTileHitAllocator->FreeSingle((SLArReadoutTileHit*) aHit);
+    SLArReadoutTileHitAllocator->FreeSingle((SLArReadoutTileSiPMHit*) aHit);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

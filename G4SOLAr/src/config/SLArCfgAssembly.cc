@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArCfgAssembly.cc
  * @created     : Tuesday Jul 19, 2022 11:53:34 CEST
  */
@@ -125,10 +125,10 @@ TH2Poly* SLArCfgAssembly<TBaseModule>::BuildPolyBinHist(
     TGraph g = el.BuildGShape(); 
     if (kFrame == kRelative) {
       for (int i=0; i<g.GetN(); i++) {
-        //printf("(%g, %g) -> ", g->GetX()[i], g->GetY()[i]);
+        //printf("(%g, %g) -> ", g.GetX()[i], g.GetY()[i]);
         g.GetX()[i] -= TVector3(fPhysX, fPhysY, fPhysZ).Dot( fAxis0 ); 
         g.GetY()[i] -= TVector3(fPhysX, fPhysY, fPhysZ).Dot( fAxis1 ); 
-        //printf("(%g, %g)\n", g->GetX()[i], g->GetY()[i]);
+        //printf("(%g, %g)\n", g.GetX()[i], g.GetY()[i]);
       }
       //getchar(); 
     }
@@ -136,6 +136,41 @@ TH2Poly* SLArCfgAssembly<TBaseModule>::BuildPolyBinHist(
     int bin_idx = h2Bins->AddBin(std::move((TGraph*)g.Clone(gBinName)));
     el.SetBinIdx(bin_idx);
     fBinToIdxMap.insert( std::make_pair(bin_idx, i_element) ); 
+    iBin ++;
+  }
+
+  h2Bins->ChangePartition(n, m); 
+  return h2Bins;
+}
+
+template<class TBaseModule>
+TH2Poly* SLArCfgAssembly<TBaseModule>::BuildPolyBinHist(
+    const ESubModuleReferenceFrame kFrame, 
+    const bool set_bin_idx,
+    const int n, const int m) const
+{
+  TH2Poly* h2Bins = new TH2Poly();
+  
+  h2Bins->SetName(fName+"_bins");
+
+  h2Bins->SetFloat();
+
+  int iBin = 1;
+  const size_t n_elements = fElementsMap.size(); 
+  for (size_t i_element = 0; i_element < n_elements; i_element++) {
+    auto& el = GetBaseElement(i_element); 
+    TGraph g = el.BuildGShape(); 
+    if (kFrame == kRelative) {
+      for (int i=0; i<g.GetN(); i++) {
+        //printf("(%g, %g) -> ", g.GetX()[i], g.GetY()[i]);
+        g.GetX()[i] -= TVector3(fPhysX, fPhysY, fPhysZ).Dot( fAxis0 ); 
+        g.GetY()[i] -= TVector3(fPhysX, fPhysY, fPhysZ).Dot( fAxis1 ); 
+        //printf("(%g, %g)\n", g.GetX()[i], g.GetY()[i]);
+      }
+      //getchar(); 
+    }
+    TString gBinName = Form("gBin%i", iBin);
+    h2Bins->AddBin(std::move((TGraph*)g.Clone(gBinName)));
     iBin ++;
   }
 

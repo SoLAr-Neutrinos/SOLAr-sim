@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArDetReadoutTileAssembly.cc
  * @created     : Mon Jul 18, 2022 11:10:23 CEST
  */
@@ -19,13 +19,13 @@
 #include "G4MaterialPropertyVector.hh"
 
 SLArDetReadoutTileAssembly::SLArDetReadoutTileAssembly() 
-  : SLArBaseDetModule(), fMatReadoutPlane(nullptr), fTileRow(nullptr)
+  : SLArBaseDetModule(), fMatReadoutPlane(nullptr), fTileRow(nullptr), fTileModel("")
 {
   fGeoInfo = new SLArGeoInfo();  
 }
 
 SLArDetReadoutTileAssembly::SLArDetReadoutTileAssembly(const SLArDetReadoutTileAssembly& detReadoutPlane) 
-  : SLArBaseDetModule(detReadoutPlane), fMatReadoutPlane(nullptr), fTileRow(nullptr) 
+  : SLArBaseDetModule(detReadoutPlane), fMatReadoutPlane(nullptr), fTileRow(nullptr), fTileModel(detReadoutPlane.fTileModel)
 {
   fMatReadoutPlane = new SLArMaterial(*detReadoutPlane.fMatReadoutPlane);
 }
@@ -35,10 +35,6 @@ SLArDetReadoutTileAssembly::~SLArDetReadoutTileAssembly()
 
 void SLArDetReadoutTileAssembly::BuildDefalutGeoParMap() 
 {
-  G4cout  << "SLArDetReadoutTileAssembly::BuildGeoParMap()" << G4endl;
-  
-  fGeoInfo->RegisterGeoPar("rdoutplane_z"   ,  1.0*CLHEP::m);
-  fGeoInfo->RegisterGeoPar("rdoutplane_x"   ,  2.0*CLHEP::m);
 }
 
 void SLArDetReadoutTileAssembly::BuildMaterial(G4String materials_db)

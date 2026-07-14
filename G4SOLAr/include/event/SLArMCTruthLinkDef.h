@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArMCTruthLinkDef.h
  * @created     : Fri Feb 14, 2020 17:28:47 CET
  */

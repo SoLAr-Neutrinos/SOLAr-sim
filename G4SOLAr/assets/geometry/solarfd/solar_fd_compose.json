@@ -6,8 +6,15 @@
   "TPC" : {"@include" : "solar_fd_tpc_vd.json::.TPC"},
   "Cathode" : {"@include" : "solar_fd_tpc_vd.json::.Cathode"},
   "Anode" : {"@include" : "solar_fd_tpc_vd.json::.Anode"},
-  "ReadoutTile" : {"@include" : "tile_bern_v2_full_pixel_unitcell4x4_4x4megatile.json::.ReadoutTile"},
-  "SuperCell" : {"@include" : "solar_fd_vd_pds.json::.SuperCell"},
+  "ReadoutTile" : {
+    "tile_model" : [ 
+      {"@include" : "tile_bern_v2_full_pixel_unitcell4x4_4x4megatile.json::.ReadoutTile.tile_model[0]"}
+    ], 
+    "tile_assembly" : [
+      {"@include" : "tile_bern_v2_full_pixel_unitcell4x4_4x4megatile.json::.ReadoutTile.tile_assembly[0]"}
+    ]
+  },
+  "OpDetModules" : {"@include" : "solar_fd_vd_pds.json::.OpDetModules"},
   "PhotoDetectionSystem" : {"@include" : "solar_fd_vd_pds.json::.PhotoDetectionSystem"}
 }
 

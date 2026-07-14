@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArDetAnodeAssembly.hh
  * @created     Tue Mar 21, 2023 11:54:25 CET
  */

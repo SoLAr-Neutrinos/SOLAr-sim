@@ -1,7 +1,7 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArCrossSectionBiasing.hh
- * @created     lunedì giu 19, 2023 10:53:05 CEST
+ * @created     Mon Jun 19, 2023 10:53:05 CEST
  */
 
 #ifndef SLARCROSSSECTIONBIASING

@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArBoxSurfaceVertexGenerator.hh
  * @created     Tue Apr 11, 2023 09:58:25 CEST
  */

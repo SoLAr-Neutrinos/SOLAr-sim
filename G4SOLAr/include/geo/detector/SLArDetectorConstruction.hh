@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArDetectorConstruction.hh
  * @created     Wed Nov 16, 2022 09:42:24 CET
  */
@@ -13,8 +13,8 @@
 #include "detector/TPC/SLArDetTPC.hh"
 #include "detector/TPC/SLArDetCryostat.hh"
 #include "detector/TPC/SLArDetCathode.hh"
-#include "detector/SuperCell/SLArDetSuperCell.hh"
-#include "detector/SuperCell/SLArDetSuperCellArray.hh"
+#include "detector/OpDet/SLArDetSuperCell.hh"
+#include "detector/OpDet/SLArDetOpDetArray.hh"
 #include "detector/Anode/SLArDetReadoutTile.hh"
 #include "detector/Anode/SLArDetReadoutTileAssembly.hh"
 #include "detector/Anode/SLArDetAnodeAssembly.hh"
@@ -63,6 +63,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
       InitTarget(d);
       BuildTarget();
     }
+    //! Export the LAr target configuration as a JSON document
+    rapidjson::Document ExportLArTargetConfig() const;
     //! Construct Cathode
     void ConstructCathode();
     //! Construct Cryostat
@@ -74,10 +76,30 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     G4VIStore* CreateImportanceStore();
     //! Return SLArDetectorConstruction::fTPCs map
     inline std::map<G4int, SLArDetTPC*>& GetDetTPCs() {return fTPC;}
+    //! Return SLArDetectorConstruction::fTPCs map
+    inline const std::map<G4int, SLArDetTPC*>& GetDetTPCs() const {return fTPC;}
     //! Return ReadoutTile detector object
-    inline SLArDetReadoutTile* GetReadoutTile() {return fReadoutTile;}
+    inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) {
+      auto it = fReadoutTileCatalog.find(tile_model_name);
+      if (it != fReadoutTileCatalog.end()) {
+        return it->second;
+      } else {
+        return nullptr;
+      }
+    }
     //! Return ReadoutTile detector object
-    inline SLArDetReadoutTile* GetReadoutTile() const {return fReadoutTile;}
+    inline SLArDetReadoutTile* GetReadoutTile(const G4String& tile_model_name) const {
+      auto it = fReadoutTileCatalog.find(tile_model_name);
+      if (it != fReadoutTileCatalog.end()) {
+        return it->second;
+      } else {
+        return nullptr;
+      }
+    }
+    //! Return Readout tile model map
+    inline std::map<std::string, SLArDetReadoutTile*>& GetReadoutTileMap() {return fReadoutTileCatalog;}
+    //! Return readout tile model map
+    inline const std::map<std::string, SLArDetReadoutTile*>& GetReadoutTileMap() const {return fReadoutTileCatalog;}
     //! Return TPC with given id
     SLArDetTPC* GetDetTPC(G4int tpcid);
     //! Return Cryostat detector object
@@ -85,7 +107,7 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Return Cryostat detector object
     inline SLArDetCryostat* GetCryostat() const {return fCryostat;}
     //! Build SuperCell object and place the SuperCells according to the given configuration
-    void BuildAndPlaceSuperCells();
+    void BuildAndPlaceOpDets();
     //! Build the ReadoutTile object and the place the MegaTiles according to the given configuration
     void BuildAndPlaceAnode();
     //! Build the target volume according to the given configuration 
@@ -99,9 +121,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Get the vector containing the Physical Volumes of volumes set as ExtScorer
     inline std::vector<G4VPhysicalVolume*>&GetVecExtScorerPV() {return fExtScorerPV;}
     //! Get the LAr target volume
-    inline SLArBaseDetModule* GetLArTargetVolume() {return fDetector;}
+    inline SLArBaseDetModule* GetLArTargetVolume() {return fLArTarget;}
     //! Get the LAr target volume 
-    inline const SLArBaseDetModule* GetLArTargetVolume() const {return fDetector;}
+    inline const SLArBaseDetModule* GetLArTargetVolume() const {return fLArTarget;}
     //!  Return the geometry configuration file
     G4String                        GetGeometryCfgFile() const {return fGeometryCfgFile;}
     //!  Return the geometry configuration file
@@ -132,14 +154,14 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     G4String fMaterialDBFile;  //!< Material table file
     SLArLArProperties fLArProperties; //!< Liquid Argon Properties
     //! vector of visualization attributes
-    std::vector<G4VisAttributes*>   fVisAttributes; 
+    std::vector<G4VisAttributes*>   fVisAttributes = {}; 
 
     //! TPC detector object (cryostat + LAr target)
     geo::EGeoShape fLArTargetShape{geo::EGeoShape::kBox};
-    SLArBaseDetModule* fDetector;
-    SLArDetCryostat* fCryostat; 
-    std::map<int, SLArDetTPC*> fTPC;
-    std::map<int, SLArDetCathode*> fCathode; 
+    SLArBaseDetModule* fLArTarget = {};
+    SLArDetCryostat* fCryostat = {}; 
+    std::map<int, SLArDetTPC*> fTPC = {};
+    std::map<int, SLArDetCathode*> fCathode = {}; 
 
     SLArGeoInfo fWorldGeoPars;//!< World volume geometry parameters
     SLArMaterialsInfo fWorldMatPars; //!< World volume material parameters
@@ -147,16 +169,18 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     SLArMaterialsInfo fCavernMatPars; //!< Cavern volume material attributes
     SLArDetExpHall* fExpHall; //!< Experimental Hall detector object
     std::vector<SLArDetShielding*> fShielding; //!< Shielding detector objects
-    SLArDetSuperCell* fSuperCell; //!< SuperCell detector object
-    std::map<int, SLArDetSuperCellArray*> fSCArray;
-    SLArDetReadoutTile* fReadoutTile; //!< ReadoutTile detector object
-    std::map<int, SLArDetAnodeAssembly*> fAnodes; 
-    std::map<G4String, SLArDetReadoutTileAssembly*> fReadoutMegaTile; 
+    SLArDetSuperCell* fSuperCell = {}; //!< SuperCell detector object
+    SLArDetSiPM* fSiPM = {}; //!< SiPM detector object
+    std::map<std::string, SLArOpticalDetector*> fOpDetCatalog = {}; //!< Map of optical detector models
+    std::map<int, SLArDetOpDetArray*> fOpDetArray = {};
+    std::map<std::string, SLArDetReadoutTile*> fReadoutTileCatalog = {}; //!< Map of ReadoutTile detector object
+    std::map<int, SLArDetAnodeAssembly*> fAnodes = {}; 
+    std::map<G4String, SLArDetReadoutTileAssembly*> fReadoutMegaTile = {}; 
 
-    G4LogicalVolume* fWorldLog; //!< World logical volume
-    G4VPhysicalVolume* fWorldPhys; //!< World physical volume
-    std::vector<G4VPhysicalVolume*> fSuperCellsPV;
-    std::vector<G4VPhysicalVolume*> fExtScorerPV;
+    G4LogicalVolume* fWorldLog = {}; //!< World logical volume
+    G4VPhysicalVolume* fWorldPhys = {}; //!< World physical volume
+    std::vector<G4VPhysicalVolume*> fSuperCellsPV = {};
+    std::vector<G4VPhysicalVolume*> fExtScorerPV = {};
     G4String GetFirstChar(G4String line);
     
     //! Construct Experimental Hall
@@ -168,7 +192,9 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     //! Parse the description of the shielding 
     void InitShielding(const rapidjson::Value&);
     //! Parse the description of the supercell detector system
-    void InitSuperCell(const rapidjson::Value&); 
+    SLArDetSuperCell* InitSuperCell(const rapidjson::Value&); 
+    //! Parse the description of the sipm detector system
+    SLArDetSiPM* InitSiPM(const rapidjson::Value&); 
     //! Parse the description of the SC PDS
     void InitPDS(const rapidjson::Value&);
     //! Parse the description of the ReadoutTile detector system
@@ -183,6 +209,8 @@ class SLArDetectorConstruction : public G4VUserDetectorConstruction
     void InitTarget(const rapidjson::Value&);
     //! Compute TPC enclosure dimensions and set the corresponding parameters
     void ComputeTPCEnclosure(const G4double eps);
+    //! Setup the readout tile detector element
+    void SetupReadoutTile(const rapidjson::Value& jtile);
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

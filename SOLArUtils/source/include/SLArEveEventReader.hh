@@ -1,0 +1,220 @@
+/**
+ * @file    SLArEveEventReader.hh
+ * @brief   Manages ROOT file / tree I/O for the event display.
+ *
+ * Responsibilities
+ * ─────────────────
+ *  • Open and validate the hit reconstruction file (external reco TTree with
+ *    hit_x/y/z/q/tpc branches) and the MC simulation file (SLArMCTruth,
+ *    SLArListEventAnode, SLArListEventPDS branches + geometry config objects).
+ *  • Expose per-event data via const accessors after a GetEntry() call.
+ *  • Own the geometry config objects read from the MC file
+ *    (SLArCfgAnode, SLArCfgBaseSystem<SLArCfgSuperCellArray>).
+ *
+ * Ownership model
+ * ────────────────
+ *  • TFile objects are owned as raw pointers only because ROOT's TTree
+ *    lifetime is tied to its parent TFile; the destructor closes and deletes
+ *    them explicitly.
+ *  • Branch payload objects (fEvMCTruth etc.) are owned here; TTree only
+ *    holds non-owning branch addresses.
+ *  • Geometry config objects (SLArCfgAnode, SLArCfgBaseSystem<…>) are
+ *    heap-allocated by ROOT's key-reading machinery and adopted into
+ *    std::unique_ptr here.
+ */
+
+#pragma once
+
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+
+#include "TFile.h"
+#include "TTree.h"
+#include "TObjString.h"
+
+#include "SLArRecoHits.hh"
+#include "event/SLArMCTruth.hh"
+#include "event/SLArEventAnode.hh"
+#include "event/SLArEventSuperCellArray.hh"
+#include "config/SLArCfgAnode.hh"
+#include "config/SLArCfgSuperCellArray.hh"
+#include "config/SLArCfgBaseSystem.hh"
+#include "analysis/SLArBacktracker.hh"
+
+namespace display {
+
+// Convenience alias used throughout the display sub-system.
+using CfgPDS_t = SLArCfgBaseSystem<SLArCfgSuperCellArray>;
+
+// The key is the system tag ("charge", "vuv_sipm", "supercell").
+// The value is the ordered list of registered backtrackers, so that
+// fRecords[i] corresponds to fBacktrackerIndex[system][i].
+using BacktrackerList_t = std::vector<backtracker::EBacktracker>;
+using BacktrackerDict_t = std::unordered_map<backtracker::EBkTrkReadoutSystem, BacktrackerList_t>;
+
+static const std::map<std::string, backtracker::EBacktracker>
+  BacktrackerLabelDict = {
+    {"trkID",       backtracker::EBacktracker::kTrkID},
+    {"ancestorID",  backtracker::EBacktracker::kAncestorID},
+    {"opticalProc", backtracker::EBacktracker::kOpticalProc},
+    {"sipm_nr",     backtracker::EBacktracker::kSiPMNr},
+    {"originVolID", backtracker::EBacktracker::kOriginVolID},
+    {"wavelength",  backtracker::EBacktracker::kWavelength},
+  };
+
+static const std::map<std::string, backtracker::EBkTrkReadoutSystem>
+  ReadoutSystemLabelDict = {
+    {"charge", backtracker::EBkTrkReadoutSystem::kCharge},
+    {"vuv_sipm", backtracker::EBkTrkReadoutSystem::kVUVSiPM},
+    {"supercell", backtracker::EBkTrkReadoutSystem::kOpDet},
+  };
+
+static inline backtracker::EBacktracker string_to_backtracker(const std::string& label)
+{
+  const auto it = BacktrackerLabelDict.find(label);
+  if (it == BacktrackerLabelDict.end())
+    throw std::runtime_error("Unknown backtracker label: " + label);
+  return it->second;
+}
+
+static inline backtracker::EBkTrkReadoutSystem string_to_bktrk_system(const std::string& label)
+{
+  const auto it = ReadoutSystemLabelDict.find(label);
+  if (it == ReadoutSystemLabelDict.end())
+    throw std::runtime_error("Unknown readout system label: " + label);
+  return it->second;
+}
+
+
+/**
+ * @class SLArEveEventReader
+ * @brief Single point of contact for ROOT file I/O in the event display.
+ */
+class SLArEveEventReader {
+public:
+    SLArEveEventReader()  = default;
+    ~SLArEveEventReader();
+
+    // Non-copyable; the class owns raw ROOT file pointers.
+    SLArEveEventReader(const SLArEveEventReader&)            = delete;
+    SLArEveEventReader& operator=(const SLArEveEventReader&) = delete;
+    SLArEveEventReader(SLArEveEventReader&&)                 = default;
+    SLArEveEventReader& operator=(SLArEveEventReader&&)      = default;
+
+    // ── File loading ─────────────────────────────────────────────────────────
+
+    /**
+     * Load the external reconstruction hit file.
+     * @return 0 on success, non-zero on failure.
+     */
+    int LoadHitFile(const TString& file_path, const TString& tree_key);
+
+    /**
+     * Load the SOLAr-sim MC output file.
+     * Also reads geometry config objects and registers active backtrackers
+     * from the G4 macro stored in the file (if present).
+     * @return 0 on success, non-zero on failure.
+     */
+    int LoadMCEventFile(const TString& file_path, const TString& tree_key);
+
+    // ── Event navigation ─────────────────────────────────────────────────────
+
+    /** Populate all branch payload objects for entry @p ev. */
+    void GetEntry(Long64_t ev);
+
+    Long64_t GetLastEvent() const { return fLastEvent; }
+
+    // ── Branch payload accessors (valid after GetEntry) ───────────────────────
+
+    /** Returns nullptr when the MC file was not loaded or branch is absent. */
+    const SLArMCTruth*        GetMCTruth()    const { return fEvMCTruth;    }
+    const SLArMCTruth*        GetMCTruth()    { return fEvMCTruth;    }
+    const SLArListEventAnode* GetAnodeList()  const { return fEvAnodeList;  }
+    const SLArListEventPDS*   GetPDSList()    const { return fEvPDSList;    }
+
+    /** Reco hit variables; valid only when the hit file was loaded. */
+    const reco::hitvarContainerPtr& GetHitVars() const { return fHitVars; }
+
+    // ── Geometry configs (read once at file load) ─────────────────────────────
+
+    /** Map from TPC copy-ID → SLArCfgAnode; populated from the MC file. */
+    const std::map<int, std::unique_ptr<SLArCfgAnode>>& GetCfgAnodes() const
+    { return fCfgAnodes; }
+
+    /** PDS geometry config; may be null if not found in file. */
+    const CfgPDS_t* GetCfgPDS() const { return fCfgPDS.get(); }
+
+    // ── Feature flags ────────────────────────────────────────────────────────
+
+    bool HasMCTruth()  const { return fIncludeMCTruth; }
+    bool HasTPCHits()  const { return fIncludeTPCHits; }
+    bool HasOpHits()   const { return fIncludeOpHits;  }
+    bool HasHitFile()  const { return fHitFile != nullptr; }
+
+    //! Set of backtrackers whose records are present in the file, divided by readout system.
+    const BacktrackerDict_t& GetBacktrackerDictionary() const { return fBacktrackerDict; }
+
+    //! Returns the record-vector index of @p bt for @p system,
+    //! or -1 if not registered.
+    inline int GetBacktrackerRecordIndex(const backtracker::EBkTrkReadoutSystem kSystem,
+        backtracker::EBacktracker bt) const
+    {
+      const auto sit = fBacktrackerDict.find(kSystem);
+      if (sit == fBacktrackerDict.end()) return -1;
+      const auto& vec = sit->second;
+      for (int i = 0; i < (int)vec.size(); ++i)
+        if (vec[i] == bt) return i;
+      return -1;
+    }
+
+    inline int GetBacktrackerRecordIndex(const std::string& system, backtracker::EBacktracker bt) const
+    {
+      return GetBacktrackerRecordIndex(string_to_bktrk_system(system), bt);
+    }
+
+    inline int GetBacktrackerRecordIndex(const std::string& system, const std::string& bt_label) const
+    {
+      return GetBacktrackerRecordIndex(string_to_bktrk_system(system), string_to_backtracker(bt_label));
+    }
+
+private:
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Parse the G4 macro string and populate fActiveBacktrackers. */
+    void ParseBacktrackers(const TObjString* g4_macro);
+
+    // ── ROOT I/O state ────────────────────────────────────────────────────────
+
+    TFile*  fHitFile      = nullptr;
+    TTree*  fHitTree      = nullptr;
+    TFile*  fMCEventFile  = nullptr;
+    TTree*  fMCEventTree  = nullptr;
+
+    Long64_t fLastEvent   = 0;
+
+    // ── Branch payload objects (non-null only when branch is connected) ───────
+
+    reco::hitvarContainerPtr fHitVars    = {};
+    SLArMCTruth*             fEvMCTruth  = nullptr;
+    SLArListEventAnode*      fEvAnodeList = nullptr;
+    SLArListEventPDS*        fEvPDSList   = nullptr;
+
+    // ── Geometry configs loaded from the MC file ──────────────────────────────
+
+    std::map<int, std::unique_ptr<SLArCfgAnode>> fCfgAnodes;
+    std::unique_ptr<CfgPDS_t>                    fCfgPDS;
+
+    // ── Feature flags ─────────────────────────────────────────────────────────
+
+    bool fIncludeMCTruth  = true;
+    bool fIncludeTPCHits  = true;
+    bool fIncludeOpHits   = true;
+
+    // ── Backtracker bookkeeping ───────────────────────────────────────────────
+    BacktrackerDict_t fBacktrackerDict;
+};
+
+} // namespace display

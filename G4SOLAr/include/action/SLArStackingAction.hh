@@ -1,4 +1,3 @@
-//
 // ********************************************************************
 // * License and Disclaimer                                           *
 // *                                                                  *
@@ -23,13 +22,16 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-/// \file SLAr/include/SLArStackingAction.hh
-/// \brief Definition of the SLArStackingAction class
-//
+/// 
+//  @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+//  @file        : SLArStackingAction.hh
+//  @created     : Tuesday Aug 05, 2025 15:38:10 CEST
+//  Definition of the SLArStackingAction class
 //
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+#include <G4ClassificationOfNewTrack.hh>
 #ifndef SLArStackingAction_H
 #define SLArStackingAction_H 1
 
@@ -39,6 +41,7 @@
 class SLArEventAction;
 class G4Track;
 class SLArMCPrimaryInfo;
+class SLArAnalysisManager;
 
 class SLArStackingAction : public G4UserStackingAction
 {
@@ -53,7 +56,10 @@ class SLArStackingAction : public G4UserStackingAction
 
   private:
     SLArEventAction* fEventAction;
+    G4ClassificationOfNewTrack ClassifyNewTrackOpticalPhoton(const G4Track* aTrack) const;
+    G4ClassificationOfNewTrack ClassifyNewGeneralTrack(const G4Track* aTrack) const;
     bool PositivePrimaryIdentification(const G4Track*, SLArMCPrimaryInfo&) const;
+    void UpdatePrimaryTrackID(const G4Track* aTrack, SLArAnalysisManager* creatorProc) const;
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

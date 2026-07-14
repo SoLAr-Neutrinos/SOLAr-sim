@@ -1,12 +1,12 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArAbsModule
- * @created     : mercoledì ago 07, 2019 13:08:35 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArBaseDetModule.hh
+ * @created     : Wed Aug 07, 2019 13:08:35 CEST
  */
 
-#ifndef SLArABSMODULE_HH
+#ifndef SLARBASEDETMODULE_HH
 
-#define SLArABSMODULE_HH
+#define SLARBASEDETMODULE_HH
 
 #include "material/SLArMaterial.hh"
 #include "SLArGeoInfo.hh"
@@ -15,14 +15,13 @@
 
 #include "G4ThreeVector.hh"
 #include "G4RotationMatrix.hh"
+#include "G4Transform3D.hh"
 #include "G4VSolid.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4VSolid.hh"
 #include "G4RotationMatrix.hh"
 
-
-enum EPhotoDetPosition {kTop=0, kBottom=1};
 
 class SLArBaseDetModule 
 {
@@ -53,14 +52,15 @@ class SLArBaseDetModule
     inline G4LogicalVolume*   GetModLV() {return fModLV;}
     inline const G4LogicalVolume* GetModLV() const {return fModLV;}
 
-    void               SetRotation(G4RotationMatrix* rot);
-    void               SetTranslation(G4ThreeVector* vec);
+    void               SetRotation(G4RotationMatrix* rot) {fRot = rot;}
+    void               SetTranslation(G4ThreeVector* vec) {fTranslation = *vec;}
 
     void               SetMaterial(G4Material* mat);
     G4Material*        GetMaterial();
 
-    G4RotationMatrix*  GetRotation();
-    G4ThreeVector*     GetTranslation();
+    G4RotationMatrix*  GetRotation() const {return fRot;}
+    G4RotationMatrix*  GetRotation() {return fRot;}
+    G4ThreeVector*     GetTranslation() {return &fTranslation;}
     
     void               SetID(const int id) {fID = id;}
     G4int              GetID() {return fID;}
@@ -70,29 +70,36 @@ class SLArBaseDetModule
     void SetModPV(G4VPhysicalVolume* pv) {fModPV = pv;}
     inline G4VPhysicalVolume* GetModPV() {return fModPV;}
     inline const G4VPhysicalVolume* GetModPV() const {return fModPV;}
-    G4VPhysicalVolume* GetModPV(
-        G4String                          name, 
-        G4RotationMatrix*                 rot,
-        const G4ThreeVector               &vec,
-        G4LogicalVolume*                  mlv,
-        G4bool                            pMany = false,
-        G4int                             pCopyNo = 0);
+    G4VPhysicalVolume* BuildAndPlacePV(
+        G4String                    name, 
+        G4RotationMatrix*           rot,
+        const G4ThreeVector         &vec,
+        G4LogicalVolume*            mlv,
+        G4bool                      pMany = false,
+        G4int                       pCopyNo = 0);
+    G4VPhysicalVolume* BuildAndPlacePV(
+        G4String                    name, 
+        const G4Transform3D         tr,
+        G4LogicalVolume*            mlv,
+        G4bool                      pMany = false,
+        G4int                       pCopyNo = 0);
 
   protected:
-    G4Material*        fMaterial;
-    SLArGeoInfo*       fGeoInfo ;
+    G4Material*        fMaterial = {};
+    SLArGeoInfo*       fGeoInfo  = {};
     SLArMaterialsInfo  fMatInfo ;
 
-    G4LogicalVolume*   fModLV   ;
-    G4VSolid*          fModSV   ;
-    G4VPhysicalVolume* fModPV   ;
+    G4LogicalVolume*   fModLV       = {};
+    G4VSolid*          fModSV       = {};
+    G4VPhysicalVolume* fModPV       = {};
 
-    G4RotationMatrix*  fRot     ;
-    G4ThreeVector      fVec     ;
-    G4String           fName    ;
-    G4int              fID      ; 
+    G4RotationMatrix*  fRot         = {};
+    G4ThreeVector      fTranslation = {};
+    G4int              fID          = {-999}; 
+    G4String           fName;
+
 };
 
 
-#endif /* end of include guard SLArABSMODULE_HH */
+#endif /* end of include guard SLARBASEDETMODULE_HH */
 

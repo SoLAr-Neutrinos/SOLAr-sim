@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArReadoutTileSD
  * @created     : mercoledì ago 10, 2022 08:54:48 CEST
  */
@@ -16,11 +16,11 @@ class G4Step;
 class G4HCofThisEvent;
 class G4TouchableHistory;
 
-class SLArReadoutTileSD : public G4VSensitiveDetector
+class SLArReadoutTileSiPMSD : public G4VSensitiveDetector
 {
 public:
-    SLArReadoutTileSD(G4String name);
-    virtual ~SLArReadoutTileSD();
+    SLArReadoutTileSiPMSD(G4String name);
+    virtual ~SLArReadoutTileSiPMSD();
     
     virtual void Initialize(G4HCofThisEvent*HCE);
     virtual G4bool ProcessHits(G4Step* aStep, G4TouchableHistory* ROhist);

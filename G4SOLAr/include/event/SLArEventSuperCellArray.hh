@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArEventSuperCellArray.hh
  * @created     : Thur Oct 20, 2022 16:08:33 CEST
  */
@@ -45,10 +45,10 @@ class SLArEventSuperCellArray : public TNamed {
 
 class SLArListEventPDS: public TObject {
   public: 
-    inline SLArListEventPDS() : fEvNumber(-1), TObject() {}
+    inline SLArListEventPDS() : TObject(), fEvNumber(-1)  {}
 
     inline SLArListEventPDS(const SLArListEventPDS& ev) 
-      : fEvNumber(ev.fEvNumber), TObject(ev) 
+      : TObject(ev), fEvNumber(ev.fEvNumber) 
     {
       for (const auto& p : ev.fOpDetArrayMap) {
         fOpDetArrayMap[p.first] = SLArEventSuperCellArray(p.second);

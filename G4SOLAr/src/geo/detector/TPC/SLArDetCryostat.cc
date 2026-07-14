@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArDetCryostat.cc
  * @created     Wed Mar 15, 2023 11:57:41 CET
  */
@@ -868,7 +868,7 @@ void SLArDetCryostat::BuildCryostat()
 
   if (fBuildSupport) {
     BuildSupportStructure();
-    fSupportStructure->GetModPV("cryostat_support_structure_pv", 
+    fSupportStructure->BuildAndPlacePV("cryostat_support_structure_pv", 
         0, G4ThreeVector(0,0,0), fModLV, false, 996 );
   }
 
@@ -891,7 +891,7 @@ void SLArDetCryostat::BuildCryostat()
       layer.fModule = BuildCryostatTubLayer(layer.fName, 
           layer.fRadius, layer.fHalfLength, layer.fThickness, layer.fMaterial);
     }
-    layer.fModule->GetModPV(layer.fName+"_pv", 0, G4ThreeVector(0,0,0), fModLV, false, ll.first);
+    layer.fModule->BuildAndPlacePV(layer.fName+"_pv", 0, G4ThreeVector(0,0,0), fModLV, false, ll.first);
   }
 
   // -------------------------------------------------------------------------
@@ -948,7 +948,7 @@ SLArBaseDetModule* SLArDetCryostat::BuildSupportStructure() {
       (fabs(face_normal.dot(cryostat_dim)) 
        - 0.5*fGeoInfo->GetGeoPar("waffle_total_width")); 
     G4RotationMatrix* rot = new G4RotationMatrix(rot_axis, rot_angle);
-    waffle_face->GetModPV(face_pv_name, rot, pos, fSupportStructure->GetModLV(), false, i+1); 
+    waffle_face->BuildAndPlacePV(face_pv_name, rot, pos, fSupportStructure->GetModLV(), false, i+1); 
     fSupportStructureFaces.insert( std::make_pair(kFace, waffle_face) ); 
   }
 
@@ -1196,9 +1196,11 @@ void SLArDetCryostat::BuildMaterials(G4String material_db) {
   fMatWorld->SetMaterialID(fMatInfo.GetMaterial("base_material"));
   fMatWorld->BuildMaterialFromDB(material_db);
 
-  fMatWaffle = new SLArMaterial(); 
-  fMatWaffle->SetMaterialID(fMatInfo.GetMaterial("waffle_material")); 
-  fMatWaffle->BuildMaterialFromDB(material_db); 
+  if (fBuildSupport) {
+    fMatWaffle = new SLArMaterial(); 
+    fMatWaffle->SetMaterialID(fMatInfo.GetMaterial("waffle_material")); 
+    fMatWaffle->BuildMaterialFromDB(material_db); 
+  }
 
   if (fMatBrick) {
     fMatBrick->BuildMaterialFromDB(material_db); 

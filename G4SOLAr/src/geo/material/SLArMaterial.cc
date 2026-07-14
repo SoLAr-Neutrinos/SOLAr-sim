@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArMaterial.cc
  * @created     : lunedì ago 08, 2022 17:49:24 CEST
  */
@@ -23,9 +23,7 @@
 #include <iterator>
 
 
-SLArMaterial::SLArMaterial() : 
-  fDBFile(""), fMaterialID(""), fMaterial(nullptr), fOpticalSurf(nullptr)
-{}
+SLArMaterial::SLArMaterial() : fMaterialID{} {}
 
 SLArMaterial::SLArMaterial(const SLArMaterial &mat)
 {
@@ -35,13 +33,10 @@ SLArMaterial::SLArMaterial(const SLArMaterial &mat)
   fOpticalSurf   = mat.fOpticalSurf; 
 }
 
-SLArMaterial::SLArMaterial(G4String matID)
+SLArMaterial::SLArMaterial(G4String matID) : SLArMaterial()
 {
   SetMaterialID(matID);
 }
-
-SLArMaterial::~SLArMaterial()
-{}
 
 G4Material* SLArMaterial::GetMaterial() 
 {

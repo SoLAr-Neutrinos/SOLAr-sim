@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArDetCathode.cc
  * @created     Mon Mar 20, 2023 16:28:35 CET
  */
@@ -18,14 +18,12 @@
 
 SLArDetCathode::SLArDetCathode() : SLArBaseDetModule(),
   fMatCathode(nullptr)
-{
-  fGeoInfo = new SLArGeoInfo();
-}
+{}
 
 
 SLArDetCathode::~SLArDetCathode() {
-  std::cerr << "Deleting SLArDetCathode..." << std::endl;
-  std::cerr << "SLArDetCathode DONE" << std::endl;
+  std::cout << "Deleting SLArDetCathode..." << std::endl;
+  std::cout << "SLArDetCathode DONE" << std::endl;
 }
 
 void SLArDetCathode::BuildMaterial(G4String db_file) 

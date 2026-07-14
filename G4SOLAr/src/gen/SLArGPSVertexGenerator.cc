@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArGPSVertexGenerator
  * @created     : Wednesday Dec 04, 2024 10:58:43 CET
  */

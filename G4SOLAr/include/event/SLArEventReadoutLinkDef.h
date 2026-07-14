@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArEventReadoutLinkDef.h
  * @created     : Wed Aug 10, 2022 15:24:11 CEST
  */
@@ -26,7 +26,9 @@
 #pragma link C++ class SLArEventHitsCollection<SLArEventPhotonHit>+;
 #pragma link C++ class SLArEventHitsCollection<SLArEventChargeHit>+;
 #pragma link C++ class SLArEventChargePixel+; 
+#pragma link C++ class SLArEventSiPM+; 
 #pragma link C++ class std::map<int, SLArEventChargePixel>+; 
+#pragma link C++ class std::map<int, SLArEventSiPM>+; 
 #pragma link C++ class SLArEventTile+;
 #pragma link C++ class std::map<int, SLArEventTile>+;
 #pragma link C++ class SLArEventMegatile+;

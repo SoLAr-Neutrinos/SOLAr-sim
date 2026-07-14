@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArPlaneParameterisation
  * @created     : mercoledì mar 22, 2023 11:20:47 CET
  */

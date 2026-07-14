@@ -1,9 +1,10 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArAnalysisManager.cc
  * @created     : Wed Feb 12, 2020 18:26:02 CET
  */
 
+#include <G4Exception.hh>
 #include <cstdio>
 #include <sys/stat.h>
 #include <fstream>
@@ -320,9 +321,10 @@ int SLArAnalysisManager::WriteCfgFile(G4String name, const char* path)
   std::ifstream ifile; 
   ifile.open(path); 
   if (!ifile.is_open()) {
-    printf("SLArAnalysisManager::WriteCfgFile WARNING ");
-    printf("Unable to open file %s\n", path);
-    return 4; 
+    G4ExceptionDescription ed; 
+      ed << "SLArAnalysisManager::WriteCfgFile WARNING\n"; 
+      ed << "Unable to open file " << path << "\n";
+    G4Exception("SLArAnalysisManager::WriteCfgFile()", "CfgFileNotFound", FatalException, ed);
   }
 
   std::stringstream strm; 
@@ -502,24 +504,24 @@ int SLArAnalysisManager::WriteCrossSection(const SLArXSecDumpSpec xsec_dump) {
 void SLArAnalysisManager::ConstructBacktracker(const backtracker::EBkTrkReadoutSystem isys) {
 
   switch (isys) {
-    case backtracker::kSuperCell:
+    case backtracker::EBkTrkReadoutSystem::kOpDet:
       {
         fSuperCellBacktrackerManager = new backtracker::SLArBacktrackerManager(); 
         break;
       }
-    case backtracker::kVUVSiPM:
+    case backtracker::EBkTrkReadoutSystem::kVUVSiPM:
       {
         fVUVSiPMBacktrackerManager = new backtracker::SLArBacktrackerManager();
         break;
       }
-    case backtracker::kCharge:
+    case backtracker::EBkTrkReadoutSystem::kCharge:
       {
         fChargeBacktrackerManager = new backtracker::SLArBacktrackerManager();
         break;
       }
     default :
       {
-        printf("SLArAnalysisManager::ConstructBacktracker() WARNING case %i is not implemented\n", isys);
+        printf("SLArAnalysisManager::ConstructBacktracker() WARNING case %i is not implemented\n", static_cast<int>(isys));
         break;
       }
   }
@@ -539,15 +541,15 @@ backtracker::SLArBacktrackerManager* SLArAnalysisManager::GetBacktrackerManager(
   backtracker::SLArBacktrackerManager* bktMngr = nullptr;
 
   switch (isys) {
-    case backtracker::kCharge:
+    case backtracker::EBkTrkReadoutSystem::kCharge:
       bktMngr = fChargeBacktrackerManager;
       break;
 
-    case backtracker::kVUVSiPM:
+    case backtracker::EBkTrkReadoutSystem::kVUVSiPM:
       bktMngr = fVUVSiPMBacktrackerManager;
       break;
 
-    case backtracker::kSuperCell:
+    case backtracker::EBkTrkReadoutSystem::kOpDet:
       bktMngr = fSuperCellBacktrackerManager; 
       break;
 

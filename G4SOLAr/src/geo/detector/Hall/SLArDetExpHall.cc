@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArDetExpHall.cc
  * @created     : Tuesday Nov 12, 2024 16:22:08 CET
  */
@@ -14,7 +14,7 @@
 #include "detector/Hall/SLArDetExpHall.hh"
 #include "TMath.h"
 
-SLArDetExpHall::SLArDetExpHall()
+SLArDetExpHall::SLArDetExpHall() : SLArBaseDetModule()
 {
     
 }

@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArMCPrimaryInfo.cc
  * @created     Fri Feb 14, 2020 16:56:53 CET
  */

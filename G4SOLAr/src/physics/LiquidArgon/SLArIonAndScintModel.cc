@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArIonAndScintModel.cc
  * @created     Wed Mar 01, 2023 11:41:24 CET
  */

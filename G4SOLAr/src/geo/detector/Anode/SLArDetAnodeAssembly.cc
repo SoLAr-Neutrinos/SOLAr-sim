@@ -1,9 +1,10 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArDetAnodeAssembly.cc
  * @created     Tue Mar 21, 2023 12:00:33 CET
  */
 
+#include "detector/SLArDetectorConstruction.hh"
 #include "detector/Anode/SLArDetAnodeAssembly.hh"
 #include "detector/Anode/SLArDetReadoutTileAssembly.hh"
 #include "detector/SLArPlaneParameterisation.hpp"
@@ -14,6 +15,9 @@
 #include "G4PVParameterised.hh"
 #include "G4Box.hh"
 #include "G4RotationMatrix.hh"
+#include "CLHEP/Geometry/Point3D.h"
+#include "CLHEP/Vector/EulerAngles.h"
+#include <G4Run.hh>
 
 SLArDetAnodeAssembly::SLArDetAnodeAssembly() : 
   SLArBaseDetModule(), 
@@ -21,9 +25,7 @@ SLArDetAnodeAssembly::SLArDetAnodeAssembly() :
   fMatAnode(nullptr), fAnodeRow(nullptr), 
   fPosition(0, 0, 0), fNormal(1, 0, 0),
   fRotation(0), fTileAssemblyModel("")
-{
-  fGeoInfo = new SLArGeoInfo();     
-}
+{ }
 
 SLArDetAnodeAssembly::~SLArDetAnodeAssembly() {}
 
@@ -96,7 +98,11 @@ void SLArDetAnodeAssembly::Init(const rapidjson::Value& jconf) {
 
 void SLArDetAnodeAssembly::BuildAnodeAssembly(SLArDetReadoutTileAssembly* megatile) {
   G4Box* megatileBox = (G4Box*)megatile->GetModSV(); 
-  if (!megatileBox) printf("MEGATILE BOX IS NULL!\n"); 
+  if (!megatileBox) {
+    G4ExceptionDescription ed;
+    ed << "SLArDetAnodeAssembly::BuildAnodeAssembly() ERROR: Megatile solid volume is not a G4Box! Quit.\n"; 
+    G4Exception("SLArDetAnodeAssembly::BuildAnodeAssembly()", "SLArDetAnodeAssembly001", FatalException, ed);
+  }
   G4double mt_x = 2*megatileBox->GetXHalfLength(); 
   G4double mt_y = 2*megatileBox->GetYHalfLength(); 
   G4double mt_z = 2*megatileBox->GetZHalfLength(); 
@@ -149,6 +155,14 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
   anodeCfg.SetTheta( fGeoInfo->GetGeoPar("anode_theta") ); 
   anodeCfg.SetPsi( fGeoInfo->GetGeoPar("anode_psi") ); 
 
+  const auto detector = static_cast<const SLArDetectorConstruction*>(
+      G4RunManager::GetRunManager()->GetUserDetectorConstruction()
+      );
+
+  auto transforms = geo::get_volume_transforms(
+      fModPV->GetName(), detector->GetLArTargetVolume()->GetModPV()->GetName()); 
+  const auto& transform_to_lar = transforms.front();
+  auto to_lar_shift = transform_to_lar.getTranslation();
 
   auto anode_parameterised = (G4PVParameterised*)fModLV->GetDaughter(0); 
   auto mtrow_parameterised = (G4PVParameterised*)fAnodeRow->GetModLV()->GetDaughter(0); 
@@ -159,6 +173,9 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
   
   auto mt_parameterised  = (G4PVParameterised*)megatile_lv->GetDaughter(0); 
   auto trow_parameterised  = (G4PVParameterised*)trow_lv->GetDaughter(0); 
+  auto tile_sens_row_parameterised = (G4PVParameterised*)tile_lv->GetDaughter(2)->GetLogicalVolume()->GetDaughter(0);
+  auto tile_sens_col_parameterised = (G4PVParameterised*)tile_sens_row_parameterised->GetLogicalVolume()->GetDaughter(0);
+
 
   if (anode_parameterised->IsParameterised() == false) {
     printf("SLArDetAnodeAssembly::BuildAnodeConfig() "); 
@@ -181,6 +198,8 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
   auto rpl_mt_clm = get_replication_data(mtrow_parameterised); 
   auto rpl_t_row  = get_replication_data(mt_parameterised); 
   auto rpl_t_clm  = get_replication_data(trow_parameterised); 
+  auto rpl_c_row  = get_replication_data(tile_sens_row_parameterised);
+  auto rpl_c_clm  = get_replication_data(tile_sens_col_parameterised);
 
   auto rot_inv = new G4RotationMatrix(*fRotation); 
   rot_inv->invert(); 
@@ -201,10 +220,12 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
       mtCfg.SetY(mt_local_pos.y()); 
       mtCfg.SetZ(mt_local_pos.z()); 
 
-      G4ThreeVector mt_abs_pos = fPosition + mt_local_pos.transform(*rot_inv); 
-      mtCfg.SetPhysX( mt_abs_pos.x() ); 
-      mtCfg.SetPhysY( mt_abs_pos.y() ); 
-      mtCfg.SetPhysZ( mt_abs_pos.z() ); 
+      G4ThreeVector mt_abs_pos = mt_local_pos.transform(*rot_inv); 
+      HepGeom::Point3D<double> mt_abs_pos_point( mt_abs_pos.x(), mt_abs_pos.y(), mt_abs_pos.z() );
+      auto mt_xyz_lar = mt_abs_pos_point + to_lar_shift;
+      mtCfg.SetPhysX( mt_xyz_lar.x() ); 
+      mtCfg.SetPhysY( mt_xyz_lar.y() ); 
+      mtCfg.SetPhysZ( mt_xyz_lar.z() ); 
 
       mtCfg.SetPhi( anodeCfg.GetPhi() ); 
       mtCfg.SetTheta( anodeCfg.GetTheta() ); 
@@ -218,10 +239,11 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
           2*((G4Box*)megatile_lv->GetSolid())->GetYHalfLength(),
           2*((G4Box*)megatile_lv->GetSolid())->GetZHalfLength() ); 
       
-
-      //printf("megatile %i: local (%.2f, %.2f, %.2f) - abs (%.2f, %.2f, %.2f)\n", 
+      //printf("megatile %i: local (%.2f, %.2f, %.2f) - abs (%.2f, %.2f, %.2f) - lar( %.2f, %.2f, %.2f)\n", 
           //mtCfg.GetIdx(), mtCfg.GetX(), mtCfg.GetY(), mtCfg.GetZ(), 
-          //mtCfg.GetPhysX(), mtCfg.GetPhysY(), mtCfg.GetPhysZ());
+          //mt_abs_pos.x(), mt_abs_pos.y(), mt_abs_pos.z(),
+          //mtCfg.GetPhysX(), mtCfg.GetPhysY(), mtCfg.GetPhysZ()
+          //);
 
       for (int i_t_row = 0; i_t_row < rpl_t_row.fNreplica; i_t_row++) {
         G4ThreeVector pos_t_row = 
@@ -241,6 +263,9 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
           tileCfg.SetName( tileName.data() ); 
           //printf("tile name: %s\n", tileCfg->GetName()); 
 
+          tileCfg.SetNCellRows(rpl_c_row.fNreplica);
+          tileCfg.SetNCellCols(rpl_c_clm.fNreplica);
+
           tileCfg.SetPhi( anodeCfg.GetPhi() ); 
           tileCfg.SetTheta( anodeCfg.GetTheta() ); 
           tileCfg.SetPsi( anodeCfg.GetPsi() ); 
@@ -249,11 +274,18 @@ SLArCfgAnode SLArDetAnodeAssembly::BuildAnodeConfig() {
           tileCfg.SetY( t_local_pos.y() ); 
           tileCfg.SetZ( t_local_pos.z() ); 
           
-          G4ThreeVector t_abs_pos = mt_abs_pos + t_local_pos.transform(*rot_inv); 
+          G4ThreeVector t_abs_pos = t_local_pos.transform(*rot_inv); 
+          HepGeom::Point3D<double> t_abs_pos_point( t_abs_pos.x(), t_abs_pos.y(), t_abs_pos.z() );
+          auto t_xyz_lar = mt_xyz_lar + t_abs_pos_point;
+          //printf("\tTile %i: local (%.2f, %.2f, %.2f) - abs (%.2f, %.2f, %.2f) - lar (%.2f, %.2f, %.2f)\n", 
+              //tileCfg.GetIdx(), tileCfg.GetX(), tileCfg.GetY(), tileCfg.GetZ(), 
+              //t_abs_pos.x(), t_abs_pos.y(), t_abs_pos.z(),
+              //t_xyz_lar.x(), t_xyz_lar.y(), t_xyz_lar.z()
+              //);
 
-          tileCfg.SetPhysX( t_abs_pos.x() ); 
-          tileCfg.SetPhysY( t_abs_pos.y() ); 
-          tileCfg.SetPhysZ( t_abs_pos.z() ); 
+          tileCfg.SetPhysX( t_xyz_lar.x() ); 
+          tileCfg.SetPhysY( t_xyz_lar.y() ); 
+          tileCfg.SetPhysZ( t_xyz_lar.z() ); 
 
           tileCfg.SetNormal( mtCfg.GetNormal() ); 
           tileCfg.SetupAxes(); 

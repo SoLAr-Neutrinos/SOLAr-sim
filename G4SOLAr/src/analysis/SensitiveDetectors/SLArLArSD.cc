@@ -1,7 +1,7 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArLArSD.cc
- * @created     : giovedì nov 03, 2022 12:44:17 CET
+ * @created     : Thur Nov 03, 2022 12:44:17 CET
  */
 
 
@@ -77,9 +77,6 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
   G4TouchableHistory* touchable
     = (G4TouchableHistory*)(step->GetPreStepPoint()->GetTouchable());
-#ifdef SLAR_DEBUG
-  //printf("SLArLArSD::ProcessHits(trk %i)\n", step->GetTrack()->GetTrackID());
-#endif
 
   if (step->GetTrack()->GetDynamicParticle()
       ->GetDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) {
@@ -140,7 +137,11 @@ G4bool SLArLArSD::ProcessHits(G4Step* step, G4TouchableHistory*)
       }
       const auto eventAction = (SLArEventAction*)
         G4RunManager::GetRunManager()->GetUserEventAction(); 
-      auto ancestor_id = eventAction->FindAncestorID(step->GetTrack()->GetTrackID()); 
+      //auto ancestor_id = eventAction->FindAncestorID(step->GetTrack()->GetTrackID()); 
+      const auto trackInfo = 
+        (SLArUserTrackInformation*)step->GetTrack()->GetUserInformation();
+      const auto ancestor_id = 
+        trackInfo->GetTrackAncestor();
       // Add edep in LAr to the primary 
       SLArMCPrimaryInfo* ancestor = nullptr;
       auto& primaries = anaMngr->GetMCTruth().GetPrimaries();

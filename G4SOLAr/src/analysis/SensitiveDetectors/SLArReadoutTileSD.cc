@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArReadoutTileSD.cc
  * @created     Wed Aug 10, 2022 08:53:56 CEST
  */
@@ -7,6 +7,7 @@
 
 #include "SensitiveDetectors/SLArReadoutTileSD.hh"
 #include "SensitiveDetectors/SLArReadoutTileHit.hh"
+#include "SLArUserPhotonTrackInformation.hh"
 
 #include "G4HCofThisEvent.hh"
 #include "G4TouchableHistory.hh"
@@ -21,7 +22,7 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileSD::SLArReadoutTileSD(G4String name)
+SLArReadoutTileSiPMSD::SLArReadoutTileSiPMSD(G4String name)
 : G4VSensitiveDetector(name), fHitsCollection(0), fHCID(-2)
 {
     collectionName.insert("ReadoutTileColl");
@@ -29,12 +30,12 @@ SLArReadoutTileSD::SLArReadoutTileSD(G4String name)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SLArReadoutTileSD::~SLArReadoutTileSD()
+SLArReadoutTileSiPMSD::~SLArReadoutTileSiPMSD()
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void SLArReadoutTileSD::Initialize(G4HCofThisEvent* hce)
+void SLArReadoutTileSiPMSD::Initialize(G4HCofThisEvent* hce)
 {
     fHitsCollection 
       = new SLArReadoutTileHitsCollection(SensitiveDetectorName,collectionName[0]);
@@ -47,7 +48,7 @@ void SLArReadoutTileSD::Initialize(G4HCofThisEvent* hce)
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-G4bool SLArReadoutTileSD::ProcessHits(G4Step* step, G4TouchableHistory*)
+G4bool SLArReadoutTileSiPMSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 {
 
   auto particleDef = step->GetTrack()->GetDynamicParticle()->GetParticleDefinition(); 
@@ -67,7 +68,7 @@ G4bool SLArReadoutTileSD::ProcessHits(G4Step* step, G4TouchableHistory*)
   return true;
 }
 
-G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
+G4bool SLArReadoutTileSiPMSD::ProcessHits_constStep(const G4Step* step,
                                        G4TouchableHistory* ){
 
   G4Track* track = step->GetTrack();
@@ -94,19 +95,29 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
   G4ThreeVector localPos
     = touchable->GetHistory()
       ->GetTopTransform().TransformPoint(worldPos);
+
+  // access photon user track information
+  const auto photonInfo = 
+    dynamic_cast<const SLArUserPhotonTrackInformation*>
+    (track->GetUserInformation());
+  G4int procID = (photonInfo) ? 
+    static_cast<G4int>(photonInfo->GetCreator()) : 
+    static_cast<G4int>(optical::EPhotonCreator::kOther);
+  G4int origin_vol_id = (photonInfo) ? photonInfo->GetOriginVolumID() : -1;
  
-  SLArReadoutTileHit* hit = nullptr;
-  // Get the creation process of optical photon
-  G4String procName = "";
-  
-  if (track->GetTrackID() != 1) // make sure consider only secondaries
-  {
-    auto creator = track->GetCreatorProcess(); 
-    if (creator) procName = creator->GetProcessName();
-  }
+  SLArReadoutTileSiPMHit* hit = nullptr;
   phEne = track->GetTotalEnergy();
 
-  hit = new SLArReadoutTileHit(); //so create new hit
+#ifdef SLAR_DEBUG
+  printf("SLArReadoutTileSD::ProcessHits_constStep(): photon energy = %g eV\n", phEne/CLHEP::eV);
+  printf("Touchable depth scan:\n");
+  for (G4int i=0; i<touchable->GetHistoryDepth(); ++i) {
+    G4String vol_name = touchable->GetVolume(i)->GetName();
+    printf("[%i]: CopyID %i - %s\n", i, touchable->GetCopyNumber(i), vol_name.data());
+  }
+#endif
+
+  hit = new SLArReadoutTileSiPMHit(); //so create new hit
   hit->SetPhotonWavelength( CLHEP::h_Planck * CLHEP::c_light / phEne * 1e6);
   hit->SetWorldPos(worldPos);
   hit->SetLocalPos(localPos);
@@ -118,12 +129,14 @@ G4bool SLArReadoutTileSD::ProcessHits_constStep(const G4Step* step,
   hit->SetTileReplicaNr(touchable->GetCopyNumber(5));
   hit->SetRowCellNr(touchable->GetCopyNumber(3)); 
   hit->SetCellNr(touchable->GetCopyNumber(2)); 
-  hit->SetPhotonProcess(procName);
+  hit->SetPhotonProcess( procID );
   hit->SetProducerID( track->GetParentID() ); 
+  hit->SetOriginVolumeID( origin_vol_id );
 
 
 #ifdef SLAR_DEBUG
   printf("SLArReadoutTileSD::ProcessHits_constStep\n");
+  G4String procName = optical::EPhProcName[procID];
   printf("%s photon hit at t = %g ns\n", procName.c_str(), hit->GetTime());
   //if (hit->GetTime() < 1*CLHEP::ns) getchar(); 
 #endif

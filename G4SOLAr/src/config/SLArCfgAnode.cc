@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArCfgAnode.cc
  * @created     Thursday Nov 10, 2022 16:24:26 CET
  */
@@ -12,19 +12,19 @@ ClassImp(SLArCfgAnode)
 
 SLArCfgAnode::SLArCfgAnode() 
   : SLArCfgAssembly<SLArCfgMegaTile>(), 
-  fTPCID(0), fAnodeLevelsMap(3)
+  fAnodeLevelsMap(3), fTPCID(0)
 {} 
 
 SLArCfgAnode::SLArCfgAnode(const SLArCfgAssembly<SLArCfgMegaTile>& cfg) 
- : SLArCfgAssembly<SLArCfgMegaTile>(cfg), fTPCID(0), fAnodeLevelsMap(3)
+ : SLArCfgAssembly<SLArCfgMegaTile>(cfg), fAnodeLevelsMap(3), fTPCID(0)
 {}
 
 SLArCfgAnode::SLArCfgAnode(TString name) 
-  : SLArCfgAssembly<SLArCfgMegaTile>(name), fTPCID(0), fAnodeLevelsMap(3)
+  : SLArCfgAssembly<SLArCfgMegaTile>(name), fAnodeLevelsMap(3), fTPCID(0)
 {}
 
 SLArCfgAnode::SLArCfgAnode(const SLArCfgAnode& ref) 
-  : SLArCfgAssembly<SLArCfgMegaTile>(ref), fTPCID(ref.fTPCID), fAnodeLevelsMap(3)
+  : SLArCfgAssembly<SLArCfgMegaTile>(ref), fAnodeLevelsMap(3), fTPCID(ref.fTPCID)
 {
   
   for (int i=0; i<3; i++) {
@@ -157,9 +157,6 @@ TH2Poly* SLArCfgAnode::ConstructPixHistMap(const int depth,
     case 1:
       {
         SLArCfgMegaTile& cfgMegaTile  = GetBaseElement(idx[0]); 
-        //if (!cfgMegaTile) {
-          //return nullptr;
-        //}
         return cfgMegaTile.BuildPolyBinHist(); 
       }
       break;
@@ -168,11 +165,6 @@ TH2Poly* SLArCfgAnode::ConstructPixHistMap(const int depth,
     case 2:
       {
         SLArCfgMegaTile& cfgMegaTile  = GetBaseElement(idx[0]); 
-        //if (!cfgMegaTile) {
-          //printf("SLArCfgAnode::ConstructPixHistMap ERROR. Cannot find MT %i in configuration\n", 
-              //idx[0]);
-          //return nullptr; 
-        //}
         SLArCfgReadoutTile& cfgTile = cfgMegaTile.GetBaseElement(idx[1]);
         TVector3 tile_pos( cfgTile.GetPhysX(), cfgTile.GetPhysY(), cfgTile.GetPhysZ() ); 
         //double tile_xpos = cfgTile->GetPhysZ(); 

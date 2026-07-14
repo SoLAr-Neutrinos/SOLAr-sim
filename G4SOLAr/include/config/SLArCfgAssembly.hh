@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArCfgAssembly.hh
  * @created     : Tuesday Jul 19, 2022 11:12:12 CEST
  */
@@ -72,6 +72,7 @@ class SLArCfgAssembly : public SLArCfgBaseModule {
     inline std::vector<TBaseModule>& GetMap() {return fElementsMap;}
     inline const std::vector<TBaseModule>& GetConstMap() const {return fElementsMap;}
     void RegisterElement(TBaseModule& element);
+    virtual TH2Poly* BuildPolyBinHist(const ESubModuleReferenceFrame kFrame = kWorld, const bool set_bin_idx = false, const int n = 25, const int m = 25) const;
     virtual TH2Poly* BuildPolyBinHist(const ESubModuleReferenceFrame kFrame = kWorld, const bool set_bin_idx = false, const int n = 25, const int m = 25);
     TGraph BuildGShape() const override; 
 

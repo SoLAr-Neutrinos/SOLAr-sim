@@ -1,7 +1,7 @@
 /**
- * @author      : guff (guff@guff-gssi)
- * @file        : SLArGeoInfo
- * @created     : giovedì ago 01, 2019 10:32:45 CEST
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
+ * @file        : SLArGeoInfo.cc
+ * @created     : Thur Aug 01, 2019 10:32:45 CEST
  */
 
 #include "SLArGeoInfo.hh"

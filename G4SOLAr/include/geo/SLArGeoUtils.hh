@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArGeoUtils.hpp
  * @created     Wed Apr 19, 2023 08:08:00 CEST
  */
@@ -95,6 +95,8 @@ namespace geo {
 
   double get_bounding_volume_surface(const G4VSolid* solid);
 
+  G4ThreeVector get_bounding_volume_size(const G4VSolid* solid);
+
   inline std::vector<G4VPhysicalVolume*> GetPhysicalVolumes(const G4LogicalVolume* lv) 
   {
     G4PhysicalVolumeStore* pvs = G4PhysicalVolumeStore::GetInstance();
@@ -124,7 +126,7 @@ namespace geo {
 
   std::vector<G4Transform3D> get_volume_transforms(
       const G4String& target_pv_name,
-      const G4String& mother_pv_name);
+      const G4String& reference_pv_name);
 
   void collect_volume_transforms(
       const G4LogicalVolume* logicalVolume,
@@ -174,6 +176,25 @@ namespace geo {
     return transform_frame_world_to_det(pos);
   }
 
+  inline static const std::vector<int> navigate_vol_hierarchy(const G4StepPoint* step)
+  {
+    std::vector<int> copyNumbers;
+    if (!step) return copyNumbers;
+
+    const G4TouchableHistory* touchable = 
+        dynamic_cast<const G4TouchableHistory*>(step->GetTouchable());
+    if (!touchable) return copyNumbers;
+
+    int depth = touchable->GetHistoryDepth();
+
+    // Loop over all levels: depth = 0 is the current volume, 
+    // depth = last is the World volume
+    for (int i = 0; i <= depth; i++) {
+        int copyNo = touchable->GetCopyNumber(i);
+        copyNumbers.push_back(copyNo);
+    }
+    return copyNumbers;
+  }
 
 }
 

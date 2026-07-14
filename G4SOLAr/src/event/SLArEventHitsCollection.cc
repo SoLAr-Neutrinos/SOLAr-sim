@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArEventHitsCollection.cc
  * @created     : Fri Nov 11, 2022 14:28:03 CET
  */
@@ -12,18 +12,18 @@ templateClassImp(SLArEventHitsCollection)
 
 template<class T>
 SLArEventHitsCollection<T>::SLArEventHitsCollection() 
-  : TNamed(), fIdx(0), fIsActive(true), fNhits(0), fClockUnit(1), fBacktrackerRecordSize(0)
+  : TNamed(), fIdx(0), fIsActive(true), fNhits(0), fBacktrackerRecordSize(0), fClockUnit(1)
 {}
 
 template<class T>
 SLArEventHitsCollection<T>::SLArEventHitsCollection(const int idx) 
-  : TNamed(), fIdx(idx), fIsActive(true), fNhits(0), fClockUnit(1), fBacktrackerRecordSize(0) {}
+  : TNamed(), fIdx(idx), fIsActive(true), fNhits(0), fBacktrackerRecordSize(0), fClockUnit(1) {}
 
 
 template<class T>
 SLArEventHitsCollection<T>::SLArEventHitsCollection(const int idx, const UShort_t clock) 
-  : TNamed(), fIdx(idx), fIsActive(true), fNhits(0), fClockUnit(clock), 
-    fBacktrackerRecordSize(0){}
+  : TNamed(), fIdx(idx), fIsActive(true), fNhits(0), 
+    fBacktrackerRecordSize(0), fClockUnit(clock) {}
 
 template<class T>
 SLArEventHitsCollection<T>::SLArEventHitsCollection(const SLArEventHitsCollection<T>& other)

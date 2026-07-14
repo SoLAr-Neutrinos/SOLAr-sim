@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArDetFieldCage
  * @created     : Tuesday Apr 28, 2026 14:30:34 CEST
  */
@@ -35,7 +35,7 @@ void SLArDetFieldCage::ResolveDriftAxes(int& iDrift,
     G4ThreeVector(1,0,0), G4ThreeVector(0,1,0), G4ThreeVector(0,0,1)};
   iTrans1 = -1; iTrans2 = -1; iDrift = -1;
   for (int i = 0; i < 3; i++) {
-    if (std::abs(fDriftDir.dot(ax[i])) > 0.5) 
+    if (std::fabs(fDriftDir.dot(ax[i])) > 0.5) 
       iDrift = i;
     else if (iTrans1 < 0) 
       iTrans1 = i;
@@ -158,6 +158,25 @@ void SLArDetFieldCage::Init(const rapidjson::Value& jconf)
     }
   }
 
+  // -- setup local-to-TPC transform for proper placement --
+  const G4ThreeVector local_fc_axis = 
+    (fShape == geo::kBox) ? G4ThreeVector(1., 0., 0.) : G4ThreeVector(0., 0., 1.);
+
+  const G4ThreeVector rot_axis = local_fc_axis.cross(fDriftDir);
+  const G4double rot_angle = fDriftDir.angle(local_fc_axis);
+  G4RotationMatrix rot;
+
+  if (rot_axis.mag2() > 1e-12) { 
+    // Standard case: vectors are not collinear
+    rot.rotate(rot_angle, rot_axis.unit());
+  } 
+  else if (rot_angle > 1.0) { 
+    // Edge case: Vectors are anti-parallel (angle is ~pi)
+    // Rotate 180 degrees around *any* vector orthogonal to the local vector
+    rot.rotate(CLHEP::pi, local_fc_axis.orthogonal().unit());
+  }
+  fLocalToTPC = G4Transform3D(rot, fShift);
+
   return;
 }
 
@@ -251,10 +270,10 @@ void SLArDetFieldCage::BuildBox()
   while (len_tmp <= DDriftLength) { len = len_tmp; n_replica++; len_tmp += sp; }
 
   auto param = new SLArPlaneParameterisation(kXAxis,
-      G4ThreeVector(-0.5*(len - sp + hl), 0., 0.), sp);
+      G4ThreeVector(-0.5*(len - hs), 0., 0.), sp);
   SetModPV(new G4PVParameterised("fieldCage_ppv",
         fc_layer_lv, fc_volume_lv,
-        param->GetReplicationAxis(), n_replica-1, param));
+        param->GetReplicationAxis(), n_replica, param));
   GetModPV()->SetCopyNo(20);
 }
 

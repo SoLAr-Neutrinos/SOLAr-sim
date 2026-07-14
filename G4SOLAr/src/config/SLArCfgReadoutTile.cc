@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : SLArCfgReadoutTile.cc
  * @created     : martedì lug 19, 2022 13:40:08 CEST
  */
@@ -28,7 +28,8 @@ SLArCfgReadoutTile::SLArCfgReadoutTile(int id, float xc, float yc, float zc,
 {}
 
 SLArCfgReadoutTile::SLArCfgReadoutTile(const SLArCfgReadoutTile& ref)
-  : SLArCfgBaseModule(ref)
+  : SLArCfgBaseModule(ref), f2DSize_X(ref.f2DSize_X), f2DSize_Y(ref.f2DSize_Y), 
+  fNCellRows(ref.fNCellRows), fNCellCols(ref.fNCellCols)
 {
   //fH2Pixels = nullptr; 
   //if (ref.fH2Pixels) {
@@ -96,7 +97,7 @@ TGraph SLArCfgReadoutTile::BuildGShape() const
   TVector3 pos(fPhysX, fPhysY, fPhysZ); 
   TVector3 size_tmp(fSize); 
   TRotation rot; 
-  rot.SetXPhi( fPhi ); rot.SetXTheta( fTheta ); rot.SetXPsi( fPsi ); 
+  rot.SetXEulerAngles(fPhi, fTheta, fPsi);
   TRotation rot_inv = rot.Inverse(); 
   size_tmp.Transform( rot_inv ); 
   

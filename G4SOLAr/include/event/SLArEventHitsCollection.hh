@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArEventHitsCollection.hh
  * @created     Fri Nov 11, 2022 14:21:29 CET
  */
@@ -35,7 +35,7 @@ class SLArEventHitsCollection : public TNamed {
     inline UShort_t GetClockUnit() const {return fClockUnit;}
     inline int GetIdx() const {return fIdx;}
     inline int GetNhits() const {return fNhits;}
-    inline virtual double GetTime() {return -1.;} 
+    inline virtual double GetTime() const {return -1.;} 
     inline HitsCollection_t& GetHits() {return fHits;}
     inline const HitsCollection_t& GetConstHits() const {return fHits;}
     inline BacktrackerVectorCollection_t& GetBacktrackerRecordCollection() {return fBacktrackerCollections;}

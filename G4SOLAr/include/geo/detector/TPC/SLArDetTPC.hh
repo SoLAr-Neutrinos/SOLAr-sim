@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArDetTPC.hh
  * @created     Thur Nov 03, 2022 12:22:00 CET
  */
@@ -19,7 +19,7 @@ class SLArDetTPC : public SLArBaseDetModule {
 
 public:
   SLArDetTPC          ();
-  virtual ~SLArDetTPC ();
+  virtual ~SLArDetTPC () = default;
 
   void          BuildTPC();
 
@@ -39,12 +39,12 @@ public:
     { if (fFieldCage) fFieldCage->SetVisAttributes(vis); }
 
 private:
-  SLArMaterial* fMatTarget;
-  SLArDetFieldCage* fFieldCage; 
-  geo::EGeoShape fShape{geo::kBox};
-  G4double      fElectricField; 
-  G4ThreeVector fElectronDriftDir; 
-  G4bool fFieldCageVisibility;
+  SLArMaterial* fMatTarget = {};
+  SLArDetFieldCage* fFieldCage = {}; 
+  geo::EGeoShape fShape = geo::kBox;
+  G4double      fElectricField = {}; 
+  G4ThreeVector fElectronDriftDir = {}; 
+  G4bool fFieldCageVisibility = true;
 
 };
 

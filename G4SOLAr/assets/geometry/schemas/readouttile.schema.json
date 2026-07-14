@@ -14,6 +14,15 @@
         {"contains": {"properties": {"name": {"const": "pix_z"}}, "required": ["name"]}}
       ]
     },
+    "pixel_materials" : {
+      "type" : "array", 
+      "minItems" : 1,
+      "items" : {"$ref" : "common.schema.json#/$defs/material_entry"},
+      "allOf": [
+        {"contains": {"properties": {"module": {"const": "base_material"}}}}
+      ]
+    },
+
     "sipm_dimensions" : {
       "type" : "array", 
       "minItems" : 3,
@@ -25,18 +34,36 @@
         {"contains": {"properties": {"name": {"const": "sipm_z"}}, "required": ["name"]}}
       ]
     },
+    "sipm_materials" : {
+      "type" : "array", 
+      "minItems" : 3,
+      "maxItems" : 3,
+      "items" : {"$ref" : "common.schema.json#/$defs/material_entry"},
+      "allOf": [
+        {"contains": {"properties": {"module": {"const": "base_material"}}}},
+        {"contains": {"properties": {"module": {"const": "sipm_active_material"}}}},
+        {"contains": {"properties": {"module": {"const": "sipm_capsule_material"}}}}
+      ]
+    },
 
     "component_object" : {
       "type" : "object",
-      "required" : ["name", "dimensions"],
+      "required" : ["name", "dimensions", "materials"],
       "additionalProperties" : false,
       "properties" : {
         "name" : { "type" : "string", "enum" : ["pixel", "sipm"] },
-        "dimensions" : {"$ref" : "common.schema.json#/$defs/dimensions"}
+        "dimensions" : {"$ref" : "common.schema.json#/$defs/dimensions"},
+        "materials" : {"$ref" : "common.schema.json#/$defs/materials"}
       },
       "if" : {"properties" : { "name" : {"const" : "pixel"}}},
-      "then" : {"properties" : {"dimensions" : {"$ref" : "#/$defs/pixel_dimensions"}}},
-      "else" : {"properties" : {"dimensions" : {"$ref" : "#/$defs/sipm_dimensions"}}
+      "then" : {"properties" : {
+        "dimensions" : {"$ref" : "#/$defs/pixel_dimensions"}, 
+        "materials" : {"$ref" : "#/$defs/pixel_materials"}}
+      },
+      "else" : {"properties" : {
+        "dimensions" : {"$ref" : "#/$defs/sipm_dimensions"},
+        "materials" : {"$ref" : "#/$defs/sipm_materials"}
+      }
       }
     },
 
@@ -105,9 +132,46 @@
       }
     },
 
+    "tile_model_object" : {
+      "type" : "object",
+      "required" : ["name", "dimensions", "components", "unit_cell", "materials"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "copyID": {"type": "integer"},
+        "materials": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items" : {"$ref" : "common.schema.json#/$defs/material_entry"},
+          "allOf": [
+            {"contains": {"properties": {"module": {"const": "base_material"}}}},
+            {"contains": {"properties": {"module": {"const": "pcb_material"}}}},
+            {"contains": {"properties": {"module": {"const": "front_material"}}}}
+          ]
+        },
+        "dimensions": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
+          "allOf": [
+            {"contains": {"properties": {"name": {"const": "tile_x"}}, "required": ["name"]}},
+            {"contains": {"properties": {"name": {"const": "tile_y"}}, "required": ["name"]}},
+            {"contains": {"properties": {"name": {"const": "tile_z"}}, "required": ["name"]}}
+          ] 
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items" : {"$ref" : "#/$defs/component_object"}
+        },
+        "unit_cell": {"$ref" : "#/$defs/unit_cell_object"}
+      }
+    },
+
     "tile_assembly_object": {
       "type": "object",
-      "required": ["name", "copyID", "dimensions"],
       "oneOf" : [
         {
           "required" : ["base_material"],
@@ -118,9 +182,11 @@
           "properties" : {"materials":{"$ref":"common.schema.json#/$defs/materials"}}
         }
       ],
+      "required": ["name", "copyID", "tile_model", "dimensions"],
       "properties": {
         "name": {"type": "string"},
         "copyID": {"type": "integer"},
+        "tile_model": {"type": "string"},
         "dimensions": {
           "type": "array",
           "minItems": 2,
@@ -135,45 +201,19 @@
     }
   },
 
-  "type": "object",
-  "required": ["dimensions", "components", "unit_cell", "tile_assembly", "materials"],
-  "properties": {
-    "copyID": {"type": "integer"},
-    "dimensions": {
-      "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
-      "items" : {"$ref" : "common.schema.json#/$defs/named_val_w_unit"},
-      "allOf": [
-        {"contains": {"properties": {"name": {"const": "tile_x"}}, "required": ["name"]}},
-        {"contains": {"properties": {"name": {"const": "tile_y"}}, "required": ["name"]}},
-        {"contains": {"properties": {"name": {"const": "tile_z"}}, "required": ["name"]}}
-      ] 
-    },
-    "components": {
-      "type": "array",
-      "minItems": 1,
-      "items" : {"$ref" : "#/$defs/component_object"}
-    },
-    "unit_cell": {"$ref" : "#/$defs/unit_cell_object"},
-    "tile_assembly": {
-      "type": "array",
-      "minItems": 1,
-      "items" : {"$ref" : "#/$defs/tile_assembly_object"}
-    },
-    "materials" : {
+  "type" : "object", 
+  "required" : ["tile_model", "tile_assembly"],
+  "additionalProperties" : false,
+  "properties" : {
+    "tile_model" : {
       "type" : "array",
-      "minItems" : 6, 
-      "maxItems" : 6,
-      "items" : {"$ref" : "common.schema.json#/$defs/material_entry"},
-      "allOf": [
-        {"contains": {"properties": {"module": {"const": "base_material"}}}},
-        {"contains": {"properties": {"module": {"const": "front_material"}}}},
-        {"contains": {"properties": {"module": {"const": "pcb_material"}}}},
-        {"contains": {"properties": {"module": {"const": "pixel_material"}}}},
-        {"contains": {"properties": {"module": {"const": "sipm_active_material"}}}},
-        {"contains": {"properties": {"module": {"const": "sipm_capsule_material"}}}}
-      ]
-    }
+      "minItems" : 1,
+      "items" : {"$ref" : "#/$defs/tile_model_object"}
+    },
+    "tile_assembly" : {
+      "type" : "array",
+      "minItems" : 1,
+      "items" : {"$ref" : "#/$defs/tile_assembly_object"}
+    } 
   }
 }

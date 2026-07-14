@@ -1,7 +1,7 @@
 /* * * * * * * * * * * * * * * * * * * * * * * *  
- * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
- * @file        : SLArBaseModule.hh
- * @created     : mercoledì ago 07, 2019 13:24:21 CEST
+ * @author      : Daniele Guffanti (Univerity and INFN Milano-Bicocca)
+ * @file        : SLArBaseModule.cc
+ * @created     : Wed Aug 07, 2019 13:24:21 CEST
  */
 
 #include "detector/SLArBaseDetModule.hh"
@@ -12,31 +12,26 @@
 #include "G4RotationMatrix.hh"
 
 
-SLArBaseDetModule::SLArBaseDetModule() 
-  : fMaterial(nullptr), fModLV(nullptr), fModSV(nullptr), 
-  fRot(nullptr), fVec(0., 0., 0.), fName(""), fID(999)
+SLArBaseDetModule::SLArBaseDetModule() : fName{}
 {
   fGeoInfo = new SLArGeoInfo();
 }
 
-SLArBaseDetModule::SLArBaseDetModule(const SLArBaseDetModule &base)
-{
-  fMaterial = base.fMaterial;
-  fGeoInfo  = base.fGeoInfo ;
-  fModLV    = base.fModLV   ;
-  fModSV    = base.fModSV   ;
-  fModPV    = base.fModPV   ;
-  fRot      = base.fRot     ;
-  fVec      = base.fVec     ;
-  fName     = base.fName    ;
-  fID       = base.fID      ; 
-}
+SLArBaseDetModule::SLArBaseDetModule(const SLArBaseDetModule &base) : 
+  fMaterial( base.fMaterial ),
+  fGeoInfo( new SLArGeoInfo(*base.fGeoInfo) ),
+  fMatInfo( base.fMatInfo ),
+  fModLV( base.fModLV ? base.fModLV : nullptr ),
+  fModSV( base.fModSV ? base.fModSV : nullptr ),
+  fModPV( base.fModPV ? base.fModPV : nullptr ),
+  fRot( base.fRot ? new G4RotationMatrix(*base.fRot) : nullptr ),
+  fTranslation( base.fTranslation ),
+  fID( base.fID ),
+  fName( base.fName )
+{ }
 
 SLArBaseDetModule::~SLArBaseDetModule() {
   if (fGeoInfo) {delete fGeoInfo; fGeoInfo = nullptr;}
-  //if (fModPV )  {delete fModPV  ; fModPV   = nullptr;}
-  if (fModLV )  {delete fModLV  ; fModLV   = nullptr;}
-  if (fModSV )  {delete fModSV  ; fModSV   = nullptr;}
 }
 
 void SLArBaseDetModule::SetSolidVolume(G4VSolid* sol_vol)
@@ -49,22 +44,37 @@ void SLArBaseDetModule::SetLogicVolume(G4LogicalVolume* log_vol)
   fModLV = log_vol;
 }
   
-G4VPhysicalVolume* SLArBaseDetModule::GetModPV(
-        G4String                          name,
-        G4RotationMatrix*                 rot,
-        const G4ThreeVector               &vec,
-        G4LogicalVolume*                  mlv,
-        G4bool                            pMany,
-        G4int                             pCopyNo)
+G4VPhysicalVolume* SLArBaseDetModule::BuildAndPlacePV(
+        G4String            name,
+        G4RotationMatrix*   rot,
+        const G4ThreeVector &vec,
+        G4LogicalVolume*    mlv,
+        G4bool              pMany,
+        G4int               pCopyNo)
 {
   fRot  = rot;
-  fName = name;
-  fVec  = vec;
+  fTranslation  = vec;
   if (pCopyNo == 0) pCopyNo = fID;
   else fID = pCopyNo;
 
-  fModPV = new G4PVPlacement(fRot,fVec, 
-      fModLV, fName, mlv, pMany, pCopyNo, true);
+  fModPV = new G4PVPlacement(fRot,fTranslation, 
+      fModLV, name, mlv, pMany, pCopyNo, true);
+  return fModPV;
+}
+
+G4VPhysicalVolume* SLArBaseDetModule::BuildAndPlacePV(
+        G4String            name,
+        const G4Transform3D tr,
+        G4LogicalVolume*    mlv,
+        G4bool              pMany,
+        G4int               pCopyNo)
+{
+  fRot = new G4RotationMatrix(tr.getRotation());
+  fTranslation = tr.getTranslation();
+  if (pCopyNo == 0) pCopyNo = fID;
+  else fID = pCopyNo;
+
+  fModPV = new G4PVPlacement(tr, fModLV, name, mlv, pMany, pCopyNo, true);
   return fModPV;
 }
 

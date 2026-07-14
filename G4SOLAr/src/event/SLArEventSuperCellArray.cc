@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArEventSuperCellArray.cc
  * @created     Thur Oct 20, 2022 16:16:03 CEST
  */

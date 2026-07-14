@@ -1,5 +1,5 @@
 /**
- * @author      Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        SLArBacktrackerManager.cc
  * @created     Friday Sep 29, 2023 12:56:18 CEST
  */
@@ -30,31 +30,45 @@ G4bool SLArBacktrackerManager::RegisterBacktracker(const EBacktracker id, const 
   G4String bkt_name = "";
 
   switch (id) {
-    case kTrkID:
+    case backtracker::EBacktracker::kTrkID:
       {
-        if (name.empty()) bkt_name = BacktrackerLabel[id];
+        if (name.empty()) bkt_name = BacktrackerLabel[static_cast<int>(id)];
         fBacktrackers.push_back( new SLArBacktrackerTrkID( bkt_name ));
         status = true;
         break;
       }
-    case kAncestorID:
+    case backtracker::EBacktracker::kAncestorID:
       {
-        if (name.empty()) bkt_name = BacktrackerLabel[id];
+        if (name.empty()) bkt_name = backtracker::BacktrackerLabel[static_cast<int>(id)];
         fBacktrackers.push_back( new SLArBacktrackerAncestorID( bkt_name ));
         status = true;
         break;
       }
-    case kOpticalProc:
+    case backtracker::EBacktracker::kOpticalProc:
       {
-        if (name.empty()) bkt_name = BacktrackerLabel[id];
+        if (name.empty()) bkt_name = backtracker::BacktrackerLabel[static_cast<int>(id)];
         fBacktrackers.push_back( new SLArBacktrackerOpticalProcess( bkt_name ));
         status = true;
         break;
       }
-    case kSiPMNr:
+    case backtracker::EBacktracker::kSiPMNr:
       {
-        if (name.empty()) bkt_name = BacktrackerLabel[id];
+        if (name.empty()) bkt_name = BacktrackerLabel[static_cast<int>(id)];
         fBacktrackers.push_back( new SLArBacktrackerSiPMNr( bkt_name ));
+        status = true;
+        break;
+      }
+    case backtracker::EBacktracker::kOriginVolID:
+      {
+        if (name.empty()) bkt_name = BacktrackerLabel[static_cast<int>(id)];
+        fBacktrackers.push_back( new SLArBacktrackerOriginVolID( bkt_name ));
+        status = true;
+        break;
+      }
+    case backtracker::EBacktracker::kWavelength: 
+      {
+        if (name.empty()) bkt_name = BacktrackerLabel[static_cast<int>(id)];
+        fBacktrackers.push_back( new SLArBacktrackerWavelength( bkt_name ));
         status = true;
         break;
       }
@@ -65,7 +79,7 @@ G4bool SLArBacktrackerManager::RegisterBacktracker(const EBacktracker id, const 
   }
 
   printf("SLArBacktrackerManager::Registered backtracker %s with status [%i]\n", 
-      BacktrackerLabel[id].data(), status);
+      BacktrackerLabel[static_cast<int>(id)].data(), status);
   //getchar();
 
   return status;

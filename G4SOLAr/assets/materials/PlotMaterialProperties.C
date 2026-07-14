@@ -1,5 +1,5 @@
 /**
- * @author      : Daniele Guffanti (daniele.guffanti@mib.infn.it)
+ * @author      : Daniele Guffanti (University and INFN Milano-Bicocca)
  * @file        : PlotMaterialProperties
  * @created     : sabato set 10, 2022 13:56:21 CEST
  */
