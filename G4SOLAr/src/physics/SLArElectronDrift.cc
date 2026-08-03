@@ -4,16 +4,18 @@
  * @created     Thur Nov 10, 2022 18:26:54 CET
  */
 
+#include <G4ThreeVector.hh>
 #include <cmath>
 
 #include "physics/SLArElectronDrift.hh"
+#include "detector/SLArDetectorConstruction.hh"
 #include "SLArAnalysisManager.hh"
 #include "SLArBacktrackerManager.hh"
 #include "event/SLArEventAnode.hh"
 #include "event/SLArEventChargeHit.hh"
 #include "config/SLArCfgAnode.hh"
 
-#include "G4SystemOfUnits.hh"
+#include "G4RunManager.hh"
 #include "Randomize.hh"
 #include "G4Poisson.hh"
 
@@ -45,6 +47,13 @@ void SLArElectronDrift::Drift(const int& n,
   G4ThreeVector anodePos = 
     G4ThreeVector(anodeCfg->GetX(), anodeCfg->GetY(), anodeCfg->GetZ()); 
 
+  const SLArDetectorConstruction* detector = static_cast<const SLArDetectorConstruction*>
+    (G4RunManager::GetRunManager()->GetUserDetectorConstruction());
+  const auto& tpc = detector->GetDetTPCs().at(anodeCfg->GetTPCID());
+  const auto& tpcPos = tpc->GetModPV()->GetTranslation();
+
+  anodePos += tpcPos;
+
   // Step assessment 
   G4ThreeVector stepVec = postPos - prePos;
   double stepLen = stepVec.mag();
@@ -59,9 +68,17 @@ void SLArElectronDrift::Drift(const int& n,
   const int n_per_segment = static_cast<int>( n / nSegments );
   const int n_remaining = static_cast<int>(n % nSegments);
 
+#ifdef SLAR_DEBUG
+  printf("Drifting %i electrons in %i segments (n_elec_per_seg = %i + %i)\n", 
+      n, nSegments, n_per_segment, n_remaining);
+#endif
+
   for (unsigned int iseg =0; iseg < nSegments; iseg++) {
 
     int n_elec_segment = n_per_segment + (iseg < n_remaining ? 1 : 0);
+#ifdef SLAR_DEBUG
+    printf("Segment %i/%i: %i electrons\n", iseg, nSegments, n_elec_segment);
+#endif
     if (n_elec_segment == 0) continue;
 
     // Compute segment position and time
@@ -96,7 +113,7 @@ void SLArElectronDrift::Drift(const int& n,
     printf("axis projection: [%.0f, %.0f]\n", pos_local.dot(anodeXaxis), pos_local.dot(anodeYaxis)); 
     printf("Drift len = %g mm, time: %g ns, f_surv = %.2f%% - σ(L) = %g mm, σ(T) = %g mm\n", 
         driftLength, driftTime, f_surv*100, diffLengthL, diffLengthT);
-    //getchar(); 
+    getchar(); 
 #endif
 
     G4int n_elec_anode = G4Poisson(n_elec_segment*f_surv); 

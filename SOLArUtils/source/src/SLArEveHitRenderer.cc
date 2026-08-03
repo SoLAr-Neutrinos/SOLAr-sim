@@ -77,9 +77,9 @@ void SLArEveHitRenderer::RenderHits(const reco::hitvarContainerPtr& hit_vars)
             hit_vars.hit_y->at(ihit),
             hit_vars.hit_z->at(ihit)};
         const double xlar[3] = {
-            xtpc[0] - tpc_pos[0],
-            xtpc[1] - tpc_pos[1],
-            xtpc[2] - tpc_pos[2]};
+            xtpc[0],
+            xtpc[1],
+            xtpc[2]};
         double xglob[3] = {};
         lar_target.fTransform->LocalToMaster(xlar, xglob);
 
