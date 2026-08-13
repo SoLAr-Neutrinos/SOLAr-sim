@@ -51,6 +51,7 @@ public:
 
   void SetVisAttributes(const int depth = 0);
 
+  SLArMaterialsInfo& GetPixelMaterialsInfo() {return fPixelMatInfo;}
   SLArBaseDetModule* GetUnitCell() {return fUnitCell;}
   SLArBaseDetModule* GetChargePixel() {return fChargePix;}
   SLArDetSiPM* GetSiPM() {return fSiPM;}
@@ -70,6 +71,8 @@ private:
   SLArBaseDetModule* fChargePix = {};
   SLArDetSiPM* fSiPM = {};
   SLArBaseDetModule* fUnitCell = {}; 
+
+  SLArMaterialsInfo fPixelMatInfo = {};
 
   G4String fMaterialDBPath = {};
   SLArMaterial*  fMatReadoutTile = {}; 

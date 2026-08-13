@@ -419,6 +419,16 @@ void SLArDetectorConstruction::SetupReadoutTile(const rapidjson::Value& jtilemod
 
   readout_tile->GetGeoInfo()->ReadFromJSON(jtilemodel["dimensions"].GetArray()); 
   readout_tile->GetMaterialsInfo().ReadFromJSON(jtilemodel);
+  
+  for (const auto& comp : jtilemodel["components"].GetArray()) {
+    if (comp.HasMember("name") && comp["name"].IsString()) {
+      G4String comp_name = comp["name"].GetString();
+      if (comp_name == "pixel") {
+        readout_tile->GetPixelMaterialsInfo().ReadFromJSON(comp); 
+      }
+    }
+  }
+
   readout_tile->BuildComponentsDefinition(jtilemodel["components"]); 
   readout_tile->BuildUnitCellStructure(jtilemodel["unit_cell"]); 
   readout_tile->BuildMaterial(fMaterialDBFile);
@@ -1083,7 +1093,7 @@ G4VPhysicalVolume* SLArDetectorConstruction::Construct()
         opdet->SetVisAttributes(1);
       }
       else if (opdet->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell) {
-        opdet->SetVisAttributes(2);
+        if (opdet->GetModPV()) opdet->SetVisAttributes(2);
       }
     }
   }
@@ -1162,6 +1172,12 @@ void SLArDetectorConstruction::ConstructSDandField()
   if (fOpDetCatalog.empty() == false) {
     for (auto& opdet : fOpDetCatalog) {
       if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell) {
+        if (opdet.second->GetModPV() == nullptr) {
+          G4Exception("SLArDetectorConstruction::ConstructSDandField()",
+              "SuperCellNotPlaced", JustWarning,
+              "SuperCell is not placed in the geometry, cannot set SD");
+          continue;
+        }
         auto superCellSD
           = new SLArSuperCellSD(SDname="/pds/opdet_"+opdet.first, opdet.first+"_opdet_coll"); 
         SDman->AddNewDetector(superCellSD); 
@@ -1312,7 +1328,7 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
     fSiPM->BuildLogicalSkinSurface();
   }
 
-  // Get PMTSystem Configuration
+  // Get OpDet System Configuration
   SLArAnalysisManager* SLArAnaMgr = SLArAnalysisManager::Instance();
   SLArCfgSystemSuperCell&  pdsCfg = SLArAnaMgr->GetPDSCfg();
 

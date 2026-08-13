@@ -1,7 +1,18 @@
 {
+  "LArTarget": {
+    "shape": "tub",
+    "base_material": "LAr",
+    "dimensions": [
+      {"name": "radius", "val": 100, "unit": "cm" },
+      {"name": "length", "val": 160, "unit": "cm" }
+    ],
+    "position": {"xyz": [0, 0, 0], "unit": "cm"},
+    "rot": {"val": [0,-90,0], "unit": "degree" }
+  },
   "TPC" : [
     {"copyID" : 10, 
       "shape" : "box",
+      "base_material" : "LAr",
       "position": {"xyz" : [0, 0, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
       "dimensions" : [
@@ -10,9 +21,16 @@
         {"name" : "tpc_z"  , "val" : 46.0, "unit" :  "cm"}
       ], 
       "field_cage" : {
+        "materials" : [
+          {"module": "base_material", "material": "LAr"},
+          {"module": "conductor_material", "material": "Steel"}
+        ],
         "corner_radius" : {"val" : 1, "unit" : "cm"}, 
         "thickness" : {"val" : 2.5, "unit" : "mm"}, 
-        "wall_distance" : {"val" : 10, "unit" : "cm"},
+        "transverse_dimensions" : [
+          {"val" : 33.0, "unit" : "cm"},
+          {"val" : 33.0, "unit" : "cm"}
+        ],
         "spacing" : {"val" : 10, "unit" : "mm"}, 
         "height_long_side" : {"val" : 10, "unit" : "mm"},
         "height_short_side" : {"val" : 10, "unit" : "mm"}
@@ -22,6 +40,7 @@
   "Cathode" : [
     {"copyID": 15, 
       "shape" : "box",
+      "base_material" : "CopperPassive",
       "position" : {"xyz": [14.95, 0, 0], "unit" : "cm"}, 
       "dimensions" : [
         {"name" : "dim_x", "val" : 1.00, "unit" : "mm"},
@@ -33,6 +52,7 @@
   "Anode" : [
     {"copyID" : 50, 
       "tpcID" : 10,
+      "base_material" : "LAr",
       "position" : {"xyz" : [-15.5, 0, 0], "unit" : "cm"}, 
       "normal" : [1, 0, 0],
       "rot" : {"val" : [0, 0, -90], "unit" : "degree"}, 

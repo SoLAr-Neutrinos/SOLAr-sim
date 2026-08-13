@@ -16,6 +16,10 @@
         "components" : [
           {
             "name" : "pixel", 
+            "materials" : [
+              {"module" : "base_material" , "material" : "LAr"},
+              {"module" : "pixel_material" , "material" : "CopperPassive"}
+            ],
             "dimensions" : [
               {"name" : "pix_x" , "val" : 2.3, "unit" : "mm" },
               {"name" : "pix_y" , "val" : 0.5, "unit" : "mm" },
@@ -24,6 +28,11 @@
           }, 
           {
             "name" : "sipm", 
+            "materials" : [
+              {"module" : "base_material" , "material" : "LAr"},
+              {"module" : "sipm_active_material" , "material" : "SiliconActive"},
+              {"module" : "sipm_capsule_material" , "material" : "SiliconPassive"}
+            ],
             "dimensions" : [
               {"name" : "sipm_fill_factor",    "val"  : 0.85 }, 
               {"name" : "sipm_x", "val" : 6.8, "unit" : "mm" },

@@ -1,9 +1,9 @@
 {
-"LArTarget" : {
-  "base_material" : "LAr",
-  "position" : {"xyz" : [0, 0, 0], "unit" : "m"}
-},
-"TPC" : [
+  "LArTarget" : {
+    "base_material" : "LAr",
+    "position" : {"xyz" : [0, 0, 0], "unit" : "m"}
+  },
+  "TPC" : [
     {"copyID" : 10, 
       "shape" : "box",
       "base_material" : "LAr",
@@ -53,14 +53,14 @@
   ],
   "Cathode" : [
     {"copyID": 99, 
-     "shape" : "box",
-     "base_material" : "FR4",
-     "position" : {"xyz": [0, 0, 0], "unit" : "cm"}, 
-     "dimensions" : [
-       {"name" : "dim_x", "val" : 14.00, "unit" : "m"},
-       {"name" : "dim_y", "val" :  1.00, "unit" : "mm" },
-       {"name" : "dim_z", "val" : 60.00, "unit" : "m" }
-     ]
+      "shape" : "box",
+      "base_material" : "FR4",
+      "position" : {"xyz": [0, 0, 0], "unit" : "cm"}, 
+      "dimensions" : [
+        {"name" : "dim_x", "val" : 14.00, "unit" : "m"},
+        {"name" : "dim_y", "val" :  1.00, "unit" : "mm" },
+        {"name" : "dim_z", "val" : 60.00, "unit" : "m" }
+      ]
     }
   ],
   "Anode" : [

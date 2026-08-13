@@ -3,6 +3,11 @@
     {
       "module_type" : "SuperCell",
       "name" : "SuperCell",
+      "materials" : [
+        {"module": "base_material", "material": "LAr"},
+        {"module": "lightguide_material", "material": "Plastic"},
+        {"module": "sensitive_coating_material", "material": "PTP_sensitive"}
+      ],
       "dimensions" : [
         {"name" : "cell_z"   , "val" : 60.0, "unit" : "cm"}, 
         {"name" : "cell_x"   , "val" : 20.0, "unit" : "cm"}, 

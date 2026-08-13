@@ -95,6 +95,10 @@ if(NOT RAPIDJSON_DIR)
 endif()
 find_package(RapidJSON REQUIRED PATHS ${RAPIDJSON_DIR} NO_DEFAULT_PATH)
 
+if (RapidJSON_FOUND)
+  message(STATUS "RapidJSON found: include at ${RapidJSON_INCLUDE_DIR}")
+endif()
+
 # 2. BxDecay0
 if(NOT BXDECAY0_DIR)
   set(BXDECAY0_DIR "${SOLARSIM_EXT_DIR}/bxdecay0")
@@ -104,9 +108,6 @@ find_package(BxDecay0 REQUIRED COMPONENTS Geant4 CONFIG PATHS ${BXDECAY0_DIR} NO
 if(BxDecay0_FOUND)
   message(STATUS "BxDecay0 found: include at ${BxDecay0_INCLUDE_DIR}")
   list(APPEND CMAKE_PREFIX_PATH ${BXDECAY0_DIR})
-endif()
-if (RapidJSON_FOUND)
-  message(STATUS "RapidJSON found: include at ${RapidJSON_INCLUDE_DIR}")
 endif()
 
 # 3. MARLEY

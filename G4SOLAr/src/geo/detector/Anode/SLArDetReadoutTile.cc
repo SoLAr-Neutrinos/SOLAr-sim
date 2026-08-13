@@ -297,7 +297,7 @@ void SLArDetReadoutTile::BuildMaterial(G4String materials_db)
   fMatCopper->SetMaterialID(fMatInfo.GetMaterial("front_material"));
   fMatCopper->BuildMaterialFromDB(materials_db);
 
-  fMatChargePix->SetMaterialID(fMatInfo.GetMaterial("pixel_material"));
+  fMatChargePix->SetMaterialID(fPixelMatInfo.GetMaterial("pixel_material"));
   fMatChargePix->BuildMaterialFromDB(materials_db);
 }
 
