@@ -32,7 +32,8 @@ SLArRunAction::SLArRunAction()
     fEventAction(nullptr), 
     fElectronDrift(nullptr), 
     fFastLightSimDispatcher(nullptr),
-    fFastLightSimMessenger(nullptr)
+    fFastLightSimMessenger(nullptr),
+    fFastLightSimEnabled(false)
 { 
   SLArAnalysisManager* anamgr = SLArAnalysisManager::Instance();
   fTRandomInterface = new SLArRandom(); 

@@ -77,7 +77,7 @@ void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
         if (trj_container) {
           auto trj_vector = trj_container->GetVector();
           for (auto &tt : *trj_vector) {
-            auto t = (SLArTrajectory*)tt;
+            auto t = (G4Trajectory*)tt;
             if (t->GetTrackID() == aTrack->GetTrackID()) {
               fpTrackingManager->SetTrajectory( t );
               break;
@@ -132,8 +132,8 @@ void SLArTrackingAction::PreUserTrackingAction(const G4Track* aTrack)
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
-  SLArTrajectory* trajectory =
-    (SLArTrajectory*)fpTrackingManager->GimmeTrajectory();
+  G4Trajectory* trajectory =
+    (G4Trajectory*)fpTrackingManager->GimmeTrajectory();
 
   const G4TrackStatus status = aTrack->GetTrackStatus();
 
@@ -148,7 +148,10 @@ void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
 
   if (aTrack->GetParticleDefinition() != G4OpticalPhoton::OpticalPhotonDefinition()) {
     if (fpTrackingManager->GetStoreTrajectory() == true) {
-      trajectory->SetDrawTrajectory(true);
+      SLArTrajectory* strajectory = dynamic_cast<SLArTrajectory*>(trajectory);
+      if (strajectory) {
+        strajectory->SetDrawTrajectory(true);
+      }
     }
 
     SetupSecondaries(aTrack, debug);
@@ -173,7 +176,8 @@ void SLArTrackingAction::PostUserTrackingAction(const G4Track* aTrack){
       SetupSecondariesFromOpticalPhoton(aTrack, debug);
 
       if(trackInformation->GetForceDrawTrajectory()) {
-        trajectory->SetDrawTrajectory(true);
+        SLArTrajectory* strajectory = dynamic_cast<SLArTrajectory*>(trajectory);
+        strajectory->SetDrawTrajectory(true);
       }
 
       if (status != fSuspend) {
