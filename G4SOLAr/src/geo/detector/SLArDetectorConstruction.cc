@@ -315,6 +315,8 @@ SLArDetSiPM* SLArDetectorConstruction::InitSiPM(const rapidjson::Value& jsipm) {
   auto sipm = new SLArDetSiPM(); 
   debug::require_json_member(jsipm, "dimensions");
   debug::require_json_type(jsipm["dimensions"], rapidjson::kArrayType);
+  debug::require_json_member(jsipm, "materials");
+  debug::require_json_type(jsipm["materials"], rapidjson::kArrayType);
   sipm->Init(jsipm);
   sipm->GetGeoInfo()->ReadFromJSON(jsipm["dimensions"].GetArray()); 
   return sipm;

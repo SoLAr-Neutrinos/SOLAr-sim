@@ -37,6 +37,12 @@ class SLArDetSiPM : public SLArOpticalDetector
     G4LogicalSkinSurface* BuildLogicalSkinSurface();
     SLArBaseDetModule* GetActiveVolume() { return fSiPMActive; }
     SLArBaseDetModule* GetActiveVolume() const { return fSiPMActive; }
+    inline void Init(const rapidjson::Value& jconf) override {
+      SLArOpticalDetector::Init(jconf); 
+
+      fGeoInfo->ReadFromJSON(jconf["dimensions"].GetArray());
+      fMatInfo.ReadFromJSON(jconf);
+    }
 
   private:
     SLArMaterial*  fBaseMaterial = {};
