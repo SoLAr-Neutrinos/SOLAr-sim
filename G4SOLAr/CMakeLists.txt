@@ -27,7 +27,8 @@ option(SLAR_EXTERNAL "Build code with special external background features" OFF)
 option(SLAR_EXTERNAL_PARTICLE "Define external background particle of interest" OFF)
 option(SLAR_CRY_INTERFACE "Build interface to CRY cosmic shower generator" OFF)
 option(SLAR_RADSRC_INTERFACE "Build interface to RadSrc composite gamma spectrum generator" OFF)
-option(SLAR_USE_G4CASCADE "Use G4CASCADE for hadronic interactions" ON)
+option(SLAR_USE_G4CASCADE "Use G4CASCADE for gamma cascade from n-capture" OFF)
+option(SLAR_USE_NUDEX "Use NuDex for for gamma cascade from n-capture" OFF)
 
 if (SLAR_PROFILE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
@@ -44,6 +45,21 @@ if(WITH_GEANT4_UIVIS)
 else()
   find_package(Geant4 REQUIRED)
 endif()
+# if Geant4 is > 11.1.3 and G4CASCADE is enabled, then return an error 
+# G4CASCADE is not compatible with Geant4 > 11.1.3
+if (SLAR_USE_G4CASCADE)
+  if (Geant4_VERSION VERSION_GREATER "11.1.3")
+    message(FATAL_ERROR "G4CASCADE is not compatible with Geant4 > 11.1.3. Please use Geant4 <= 11.1.3")
+  endif()
+endif()
+# if Geant4 is < 11.3.0 and NuDex is enabled, then return an error
+# NuDex is not compatible with Geant4 < 11.3.0
+if (SLAR_USE_NUDEX)
+  if (Geant4_VERSION VERSION_LESS "11.3.0")
+    message(FATAL_ERROR "NuDex is not compatible with Geant4 < 11.3.0. Please use Geant4 >= 11.3.0")
+  endif()
+endif()
+
 
 find_package(ROOT REQUIRED COMPONENTS RIO Core)
 
