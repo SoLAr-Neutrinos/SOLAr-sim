@@ -76,15 +76,18 @@ class SLArMaterialsInfo {
         return const_cast<G4String&>(it->second); // Return the material name
       } 
 
-      G4ExceptionDescription ed; 
-      ed << "Module " << str << " not found in the materials catalog.";
-      G4Exception("SLArMaterialInfo::GetMaterial", "SLArMaterialInfo001", FatalException, ed);
+      debug::fatal_error(
+          "SLArMaterialInfo::GetMaterial", "SLArMaterialInfo001", 
+          "Module " + str + " not found in the materials catalog."
+          );
       return ""; 
     }
 
     inline bool ReadFromJSON(const rapidjson::Value::ConstArray& jmats) {
       debug::require_json_object_in_array(jmats, "module", rapidjson::kStringType, "base_material");
+      size_t index = 0; 
       for (const auto& entry : jmats) {
+        debug::ScopedErrorContext context("materials[" + std::to_string(index++) + "]");
         debug::require_json_type(entry, rapidjson::kObjectType);
         debug::require_json_member(entry, "module");
         debug::require_json_member(entry, "material");
