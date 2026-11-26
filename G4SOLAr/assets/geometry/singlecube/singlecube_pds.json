@@ -6,7 +6,7 @@
       "materials" : [
         {"module": "base_material", "material": "LAr"},
         {"module": "lightguide_material", "material": "Plastic"},
-        {"module": "sensitive_coating_material", "material": "PTP"}
+        {"module": "sensitive_coating_material", "material": "PTP_sensitive"}
       ],
       "dimensions" : [
         {"name" : "cell_z"   , "val" : 60.0, "unit" : "cm"}, 
