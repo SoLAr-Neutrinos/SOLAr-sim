@@ -4,12 +4,17 @@
       "shape" : "box",
       "position": {"xyz" : [0, 0, 0], "unit" : "cm"},
       "electric_field" : {"val" : 500, "unit" : "volt/cm", "direction" : [1, 0, 0]},
+      "base_material" : "LAr",
       "dimensions" : [
         {"name" : "tpc_x"  , "val" : 35.0, "unit" :  "cm"},
         {"name" : "tpc_y"  , "val" : 46.0, "unit" :  "cm"},
         {"name" : "tpc_z"  , "val" : 46.0, "unit" :  "cm"}
       ], 
       "field_cage" : {
+        "materials" : [
+          {"module": "base_material", "material": "LAr"},
+          {"module": "conductor_material", "material": "Steel"}
+        ],
         "corner_radius" : {"val" : 1, "unit" : "cm"}, 
         "thickness" : {"val" : 2.5, "unit" : "mm"}, 
         "wall_distance" : {"val" : 10, "unit" : "cm"},
@@ -22,6 +27,7 @@
   "Cathode" : [
     {"copyID": 15, 
       "shape" : "box",
+      "base_material" : "CopperPassive",
       "position" : {"xyz": [14.95, 0, 0], "unit" : "cm"}, 
       "dimensions" : [
         {"name" : "dim_x", "val" : 1.00, "unit" : "mm"},
@@ -36,6 +42,7 @@
       "position" : {"xyz" : [-15.5, 0, 0], "unit" : "cm"}, 
       "normal" : [1, 0, 0],
       "rot" : {"val" : [0, 0, -90], "unit" : "degree"}, 
+      "base_material" : "LAr",
       "tile_assembly" : "StdReadoutPlane", 
       "dimensions" : [
         {"name" : "dim_y", "val" : 1.00, "unit" : "cm"},

@@ -1,0 +1,12 @@
+{
+  "name" : "pixel", 
+  "materials" : [
+    {"module" : "base_material", "material" : "CopperPassive"}
+  ],
+  "dimensions" : [
+    {"name" : "pix_x" , "val" : 2.3, "unit" : "mm" },
+    {"name" : "pix_y" , "val" : 0.5, "unit" : "mm" },
+    {"name" : "pix_z" , "val" : 2.3, "unit" : "mm" }
+  ]
+}
+

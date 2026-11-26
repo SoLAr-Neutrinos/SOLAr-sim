@@ -1,0 +1,15 @@
+{
+  "name" : "sipm", 
+  "materials" : [
+    {"module" : "base_material", "material" : "LAr"}, 
+    {"module" : "sipm_active_material",  "material" : "SiliconActive"},
+    {"module" : "sipm_capsule_material", "material" : "SiliconPassive"}
+  ],
+  "dimensions" : [
+    {"name" : "sipm_fill_factor",    "val"  : 0.85 }, 
+    {"name" : "sipm_x", "val" : 6.8, "unit" : "mm" },
+    {"name" : "sipm_y", "val" : 1.2, "unit" : "mm" },
+    {"name" : "sipm_z", "val" : 6.8, "unit" : "mm" }
+  ]
+}
+
