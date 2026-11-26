@@ -102,6 +102,13 @@ void SLArDetReadoutTile::BuildPCB()
 void SLArDetReadoutTile::BuildChargePix()
 {
   G4cout << "Building ReadoutTile ChargePixel..." << G4endl;
+  const auto& charge_pix_matdb = fChargePix->GetMaterialsInfo();
+  fMatChargePix = new SLArMaterial();
+  fMatChargePix->SetMaterialID(
+      charge_pix_matdb.GetMaterial("base_material"));
+  
+  fMatChargePix->BuildMaterialFromDB(fMaterialDBPath);
+  
   fChargePix->SetMaterial(fMatChargePix->GetMaterial());
 
   fChargePix->SetSolidVolume(
@@ -119,8 +126,18 @@ void SLArDetReadoutTile::BuildChargePix()
 
 void SLArDetReadoutTile::BuildUnitCell() {
   //--------------------------  Build Unit Cell components
-  BuildChargePix(); 
+  {
+    debug::ScopedErrorContext context(
+        "SLArDetReadoutTile::BuildUnitCell / "
+        + fName + " / charge pixel "); 
+
+    BuildChargePix(); 
+  }
+  
   if (fSiPM) {
+    debug::ScopedErrorContext context(
+        "SLArDetReadoutTile::BuildUnitCell / "
+        + fName + " / SiPM ");
     fSiPM->BuildMaterials( fMaterialDBPath );
     fSiPM->BuildOpticalDetector();
     fSiPM->BuildLogicalSkinSurface();
@@ -285,7 +302,6 @@ void SLArDetReadoutTile::BuildMaterial(G4String materials_db)
 
   fMatPCB         = new SLArMaterial();
   fMatCopper      = new SLArMaterial();
-  fMatChargePix   = new SLArMaterial(); 
   fMatReadoutTile = new SLArMaterial();
 
   fMatReadoutTile->SetMaterialID(fMatInfo.GetMaterial("base_material"));
@@ -297,8 +313,6 @@ void SLArDetReadoutTile::BuildMaterial(G4String materials_db)
   fMatCopper->SetMaterialID(fMatInfo.GetMaterial("front_material"));
   fMatCopper->BuildMaterialFromDB(materials_db);
 
-  fMatChargePix->SetMaterialID(fMatInfo.GetMaterial("pixel_material"));
-  fMatChargePix->BuildMaterialFromDB(materials_db);
 }
 
 void SLArDetReadoutTile::BuildComponentsDefinition(const rapidjson::Value& comps) 

@@ -203,7 +203,10 @@ void SLArDetectorConstruction::Init() {
   // Initialize Photodetectors
   if (d.HasMember("OpDetModules")) {
     debug::require_json_type(d["OpDetModules"], rapidjson::kArrayType);
+
+    size_t opdet_idx = 0; 
     for (const auto &jopdet : d["OpDetModules"].GetArray()) {
+      debug::ScopedErrorContext opdet_context("OpDetModules[" + std::to_string(opdet_idx++) + "]");
       debug::require_json_type(jopdet, rapidjson::kObjectType);
       debug::require_json_member(jopdet, "module_type");
       debug::require_json_member(jopdet, "name");
@@ -413,6 +416,7 @@ void SLArDetectorConstruction::SetupReadoutTile(const rapidjson::Value& jtilemod
   auto& readout_tile = fReadoutTileCatalog.at(model_name); 
   printf("SLArDetectorConstruction::SetupReadoutTile: %s [%p]\n", 
       model_name.c_str(), static_cast<void*>(readout_tile));
+  debug::ScopedErrorContext rt_context("SetupReadoutTile["+ model_name+"]");
 
   debug::require_json_member(jtilemodel,  "materials");
   debug::require_json_member(jtilemodel, "dimensions"); 
@@ -488,7 +492,9 @@ void SLArDetectorConstruction::InitReadoutTile(const rapidjson::Value& pixsys)
 void SLArDetectorConstruction::InitAnode(const rapidjson::Value& jconf) {
   assert(jconf.IsArray()); 
 
+  size_t anode_idx = 0;
   for (const auto &janode : jconf.GetArray()) {
+    debug::ScopedErrorContext anode_context("Anode[" + std::to_string(anode_idx++) + "]");
     SLArDetAnodeAssembly* detAnode = new SLArDetAnodeAssembly(); 
     detAnode->Init(janode); 
     fAnodes.insert( std::make_pair(detAnode->GetID(), detAnode) ); 
@@ -1287,6 +1293,7 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
 {
   for (auto& opdet : fOpDetCatalog) {
     printf("SLArDetectorConstruction::BuildAndPlaceOpDets: Building OpDet %s\n", opdet.first.data());
+    debug::ScopedErrorContext opdet_context("Optical Detector " + opdet.first + " / build");
     opdet.second->BuildMaterials(fMaterialDBFile);
     if (opdet.second->GetOpDetType() == SLArOpticalDetector::EOpDetType::kSuperCell)
     {
@@ -1303,12 +1310,14 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
   }
 
   if (fSuperCell) {
+    debug::ScopedErrorContext opdet_context("Optical Detector (SuperCell) / build"); 
     fSuperCell->BuildMaterials(fMaterialDBFile);
     fSuperCell->BuildOpticalDetector();
     fSuperCell->BuildLogicalSkinSurface();
   }
 
   if (fSiPM) {
+    debug::ScopedErrorContext opdet_context("Optical Detector (SiPM) / build"); 
     fSiPM->BuildMaterials(fMaterialDBFile);
     fSiPM->BuildOpticalDetector();
     fSiPM->BuildLogicalSkinSurface();
@@ -1320,6 +1329,7 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
 
   printf("-- Building OpDet arrays\n");
   for (auto &array_ : fOpDetArray) {
+    debug::ScopedErrorContext opdet_array_context("OpDetArray[" + std::to_string(array_.first) +"]");
     auto opdetarray = array_.second; 
     auto opdetarray_id = array_.first; 
     opdetarray->BuildMaterial(fMaterialDBFile); 
@@ -1346,6 +1356,7 @@ void SLArDetectorConstruction::BuildAndPlaceOpDets()
     printf("---- Placing OpDet Array %i in TPC %i\n", opdetarray_id, opdetarray->GetTPCID());
     opdetarray->BuildAndPlacePV("pds_"+std::to_string(opdetarray_id), 
         rot, pos, mother_lv, 0, opdetarray_id); 
+    opdetarray->GetModLV()->SetVisAttributes( G4Colour(0, 0, 1) );
 
     auto array_cfg = opdetarray->BuildOpDetArrayCfg( fOpDetCatalog ); 
     array_cfg.SetX( pos.x() ); array_cfg.SetPhysX( glb_pos.x() );
@@ -1376,6 +1387,7 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
   printf("SLArDetectorConstruction::BuildAndPlaceAnode()...\n");
   for (auto &rt : fReadoutTileCatalog) {
     printf("---- Building readout tile %s\n", rt.first.c_str()); 
+    debug::ScopedErrorContext rt_context("ReadoutTile " + rt.first + " / build");
     rt.second->BuildMaterial(fMaterialDBFile); 
     rt.second->BuildReadoutTile(); 
     rt.second->GetSiPM()->BuildLogicalSkinSurface(); 
@@ -1383,6 +1395,7 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
 
   for (auto &mt : fReadoutMegaTile) {
     printf("-- Building readout tile assembly %s\n", mt.first.data());
+    debug::ScopedErrorContext rt_context("MegaTile " + mt.first + " / build");
     if (mt.second->GetBaseTileModel().empty()) {
       printf("SLArDetectorConstruction::BuildAndPlaceAnode: "
           "No base tile model defined for megatile %s\n", mt.first.c_str());
@@ -1406,6 +1419,7 @@ void SLArDetectorConstruction::BuildAndPlaceAnode() {
   for (auto &anode_ : fAnodes) {
     auto anode = anode_.second; 
     auto anode_id = anode_.first; 
+    debug::ScopedErrorContext anode_context("Anode[" + std::to_string(anode_id) + "] / build");
     anode->BuildMaterial(fMaterialDBFile); 
     printf("---- Building anode volume with %s tile assembly\n", 
         anode->GetTileAssemblyModel().c_str() );

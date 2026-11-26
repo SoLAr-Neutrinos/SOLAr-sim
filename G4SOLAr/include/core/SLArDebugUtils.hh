@@ -17,6 +17,39 @@
 #include "rapidjson/allocators.h"
 
 namespace debug {
+
+  inline std::string& error_context() {
+    static thread_local std::string context;
+    return context;
+  }
+
+  class ScopedErrorContext {
+    public:
+      explicit ScopedErrorContext(const std::string& label)
+        : previous_(error_context()) {
+          if (!error_context().empty()) error_context() += " / ";
+          error_context() += label;
+        }
+
+      ~ScopedErrorContext() {
+        error_context() = std::move(previous_);
+      }
+
+      ScopedErrorContext(const ScopedErrorContext&) = delete;
+      ScopedErrorContext& operator=(const ScopedErrorContext&) = delete;
+
+    private:
+      std::string previous_;
+  };
+
+  inline void fatal_error(const char* origin, const char* code,
+      const std::string& message) {
+    const std::string full_message = error_context().empty()
+      ? message
+      : "[" + error_context() + "] " + message;
+    G4Exception(origin, code, FatalException, full_message.c_str());
+  }
+
   inline const char* JsonTypeName(rapidjson::Type type) {
     switch (type) {
       case rapidjson::kNullType:   return "Null";
@@ -79,7 +112,7 @@ namespace debug {
             G4String err_msg = G4String("JSON member \"") + member_name +
               "\" has unexpected type. Expected: " + JsonTypeName(expected_type) +
               ", got: " + JsonTypeName(entry[member_name].GetType());
-            G4Exception("debug::require_json_object_in_array", "JsonDebug000", FatalException, err_msg);
+            fatal_error("debug::require_json_object_in_array", "JsonDebug000", err_msg);
             return;
           }
 
@@ -88,7 +121,7 @@ namespace debug {
             if (value == expected_value) return;
           } catch (...) {
             G4String err_msg = G4String("Failed to extract value for member \"") + member_name + "\"";
-            G4Exception("debug::require_json_object_in_array", "JsonDebug001", FatalException, err_msg);
+            fatal_error("debug::require_json_object_in_array", "JsonDebug001", err_msg);
             return;
           }
         }
@@ -96,7 +129,7 @@ namespace debug {
 
       G4String err_msg = G4String("No JSON object in array has member \"") + member_name +
         "\" with expected value: " + to_string_for_error(expected_value);
-      G4Exception("debug::require_json_object_in_array", "JsonDebug000", FatalException, err_msg);
+      fatal_error("debug::require_json_object_in_array", "JsonDebug000", err_msg);
       return;
     }
 
@@ -132,7 +165,7 @@ namespace debug {
   {
     if (obj.HasMember(member_name) == false) {
       G4String err_msg = G4String("Missing required JSON member: ") + member_name;
-      G4Exception("debug::require_json_member", "JsonDebug001", FatalException, err_msg);
+      fatal_error("debug::require_json_member", "JsonDebug001", err_msg);
     }
   }
 
@@ -148,7 +181,7 @@ namespace debug {
     for (const auto& member_name : member_names) {
       err_msg += G4String("\"") + member_name + "\" ";
     }
-    G4Exception("debug::require_json_member", "JsonDebug001", FatalException, err_msg);
+    fatal_error("debug::require_json_member", "JsonDebug001", err_msg);
   }
 
   inline void require_json_array(
@@ -157,12 +190,12 @@ namespace debug {
   {
     if (obj.IsArray() == false) {
       G4String err_msg = G4String("Expected JSON value to be an array, got: ") + JsonTypeName(obj.GetType());
-      G4Exception("debug::require_json_array", "JsonDebug001", FatalException, err_msg);
+      fatal_error("debug::require_json_array", "JsonDebug001", err_msg);
     }
     if (expected_size > 0 && obj.Size() != expected_size) {
       G4String err_msg = G4String("Expected JSON array of size ") + std::to_string(expected_size) +
         ", got size: " + std::to_string(obj.Size());
-      G4Exception("debug::require_json_array", "JsonDebug002", FatalException, err_msg);
+      fatal_error("debug::require_json_array", "JsonDebug002", err_msg);
     }
   }
 
@@ -175,7 +208,7 @@ namespace debug {
         JsonTypeName(expected_type) + 
         G4String(", got: ") + 
         JsonTypeName(obj.GetType());
-      G4Exception("debug::require_json_type", "JsonDebug002", FatalException, err_msg);
+      fatal_error("debug::require_json_type", "JsonDebug002", err_msg);
     }
   }
 
@@ -183,14 +216,14 @@ namespace debug {
     if (j.HasMember("val") == false) {
       G4String msg = "SLArGPSDirectionGenerator::Config ERROR: ";
       msg += "Field \"" + field + "\" must have a \"val\" field\n";
-      G4Exception("debug::check_json_value_field", "JsonDebug003", FatalException, msg);
+      fatal_error("debug::check_json_value_field", "JsonDebug003", msg);
     }
 
     const auto& jval = j["val"];
     if (jval.IsNumber() == false && jval.IsArray() == false) {
       G4String msg = "SLArGPSDirectionGenerator::CheckJSONFieldIsSValue ERROR: ";
       msg += "Field \"val\" must be a number or an array\n";
-      G4Exception("debug::check_json_value_field", "JsonDebug004", FatalException, msg);
+      fatal_error("debug::check_json_value_field", "JsonDebug004", msg);
     }
 
     if (j.HasMember("unit")) {
